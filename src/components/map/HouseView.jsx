@@ -51,26 +51,56 @@ const FRONT_ZONES = [
 ];
 
 // ── BACK VIEW ZONES ──────────────────────────────────────────────────────────
+// Image: ~1402×768. x%=left/1402*100, y%=top/768*100, w%=w/1402*100, h%=h/768*100
 const BACK_ZONES = [
-  { id: "roof_b",     label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                x: 5,   y: 2,   w: 88,  h: 26, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  { id: "solar_b",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 25,  y: 3,   w: 22,  h: 10, color: "rgba(234,179,8,0.38)",   stroke: "#eab308" },
-  { id: "win_2nd_bl", label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 7,   y: 18,  w: 14,  h: 14, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "win_2nd_bc", label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 30,  y: 16,  w: 36,  h: 16, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "win_2nd_br", label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 72,  y: 20,  w: 14,  h: 12, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "balcony_b",  label: "Residential Addition",      desc: "Balcony / deck addition",                      x: 27,  y: 30,  w: 42,  h: 10, color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  { id: "win_1st_b",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 40,  w: 42,  h: 18, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "door_b",     label: "Door Replacement",          desc: "Exterior / sliding door installation",         x: 35,  y: 42,  w: 26,  h: 20, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
-  { id: "ac_b",       label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 8,   y: 48,  w: 12,  h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  { id: "patio_b",    label: "Patio / Slab",              desc: "Concrete patio or slab",                       x: 27,  y: 60,  w: 42,  h: 10, color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  { id: "pool_b",     label: "Pool & Spa",                desc: "New swimming pool / spa installation",         x: 22,  y: 68,  w: 52,  h: 22, color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  { id: "pdeck_b",    label: "Pool Deck",                 desc: "Pool deck construction",                       x: 18,  y: 63,  w: 60,  h: 30, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "pequip_b",   label: "Pool Equipment",            desc: "Pump, filter, equipment changes",              x: 15,  y: 68,  w: 8,   h: 10, color: "rgba(249,115,22,0.38)",  stroke: "#f97316" },
-  { id: "fence_b",    label: "Fence / Gate",              desc: "Fence and gate installation",                  x: 0,   y: 38,  w: 6,   h: 52, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  { id: "fence_b2",   label: "Fence / Gate",              desc: "Fence and gate installation",                  x: 93,  y: 38,  w: 7,   h: 52, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  { id: "fireplace",  label: "Fireplace / Chimney",       desc: "Fireplace or chimney installation",            x: 74,  y: 55,  w: 10,  h: 18, color: "rgba(239,68,68,0.3)",    stroke: "#ef4444" },
-  { id: "pergola_b",  label: "Pergola",                   desc: "Pergola or gazebo structure",                  x: 75,  y: 45,  w: 15,  h: 18, color: "rgba(217,119,6,0.28)",   stroke: "#d97706" },
-  { id: "irrig_b",    label: "Irrigation System",         desc: "Landscape / sprinkler system",                 x: 6,   y: 58,  w: 16,  h: 12, color: "rgba(16,185,129,0.28)",  stroke: "#10b981" },
-  { id: "spa_b",      label: "Spa / Hot Tub",             desc: "Spa or hot tub installation",                  x: 73,  y: 68,  w: 8,   h: 10, color: "rgba(168,85,247,0.35)",  stroke: "#a855f7" },
+  // Main roof (large upper polygon)
+  { id: "roof_b",      label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 12,  y: 9,   w: 73,  h: 22, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  // Left lower roof section
+  { id: "roof_bl",     label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 8,   y: 31,  w: 27,  h: 9,  color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  // Right lower roof section
+  { id: "roof_br",     label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 83,  y: 31,  w: 5,   h: 5,  color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  // 2nd floor window left (narrow)
+  { id: "win_2nd_l",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 22,  y: 25,  w: 2,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 2nd floor window center-left
+  { id: "win_2nd_cl",  label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 33,  y: 25,  w: 8,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 2nd floor large center window / balcony doors
+  { id: "win_2nd_c",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 51,  y: 24,  w: 9,   h: 12, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 2nd floor window right
+  { id: "win_2nd_r",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 64,  y: 25,  w: 9,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // Balcony railing
+  { id: "balcony_b",   label: "Residential Addition",     desc: "Balcony / deck addition",                     x: 30,  y: 34,  w: 50,  h: 7,  color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  // 1st floor windows left
+  { id: "win_1st_l",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 20,  y: 41,  w: 7,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 1st floor windows center-left
+  { id: "win_1st_cl",  label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 33,  y: 40,  w: 7,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 1st floor windows center
+  { id: "win_1st_c",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 43,  y: 40,  w: 8,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // 1st floor windows right
+  { id: "win_1st_r",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 64,  y: 41,  w: 9,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  // Sliding doors (1st floor center cluster)
+  { id: "slide_door",  label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 44,  y: 39,  w: 20,  h: 17, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
+  // Sliding door far right
+  { id: "slide_dr2",   label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 64,  y: 40,  w: 8,   h: 15, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
+  // Door upper center (2nd floor)
+  { id: "door_top",    label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 47,  y: 24,  w: 5,   h: 13, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
+  // Covered patio overhead structure
+  { id: "cov_patio",   label: "Covered Patio",            desc: "Covered patio / outdoor structure permit",    x: 43,  y: 34,  w: 36,  h: 8,  color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
+  // A/C units (left side)
+  { id: "ac_b",        label: "A/C Replacement",          desc: "Air conditioning change-out (≤5 tons)",       x: 8,   y: 45,  w: 12,  h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  // Pool pump equipment
+  { id: "pool_pump_b", label: "Pool Equipment",           desc: "Pump, filter, equipment changes",             x: 17,  y: 55,  w: 7,   h: 10, color: "rgba(249,115,22,0.45)",  stroke: "#f97316" },
+  // Pool
+  { id: "pool_b",      label: "Pool & Spa",               desc: "New swimming pool / spa installation",        x: 26,  y: 57,  w: 45,  h: 22, color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  // Paved patio / deck surround
+  { id: "patio_b",     label: "Patio / Slab",             desc: "Paver patio or concrete slab",                x: 19,  y: 52,  w: 73,  h: 30, color: "rgba(245,158,11,0.15)",  stroke: "#f59e0b" },
+  // Pergola
+  { id: "pergola_b",   label: "Pergola",                  desc: "Pergola or gazebo structure",                 x: 56,  y: 39,  w: 16,  h: 30, color: "rgba(217,119,6,0.32)",   stroke: "#d97706" },
+  // Fence left
+  { id: "fence_bl",    label: "Fence / Gate",             desc: "Fence and gate installation",                 x: 0,   y: 50,  w: 6,   h: 35, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  // Fence right
+  { id: "fence_br",    label: "Fence / Gate",             desc: "Fence and gate installation",                 x: 76,  y: 44,  w: 24,  h: 50, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  // Irrigation / landscaping
+  { id: "irrig_b",     label: "Irrigation System",        desc: "Landscape / sprinkler system",                x: 0,   y: 52,  w: 18,  h: 20, color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
 ];
 
 // ── EAGLE EYE (FLOOR PLAN) ZONES ────────────────────────────────────────────
