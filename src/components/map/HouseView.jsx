@@ -214,37 +214,88 @@ const COMMERCIAL_LEGEND = [
 
 const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
 
+// Natural image dimensions for each view (width × height in px)
+const IMAGE_DIMS = {
+  front:      { w: 1366, h: 750 },
+  back:       { w: 1402, h: 768 },
+  eagle:      { w: 1366, h: 768 },
+  commercial: { w: 1366, h: 768 },
+};
+
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
+  const [imgRect, setImgRect] = useState(null);
+  const containerRef = useRef(null);
+  const imgRef = useRef(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
   const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
   const imgSrc = IMAGES[view]      || IMAGES.front;
+  const dims   = IMAGE_DIMS[view]  || IMAGE_DIMS.front;
+
+  // Compute the actual rendered rect of the image inside object-contain container
+  const computeRect = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const imgAspect = dims.w / dims.h;
+    const conAspect = cw / ch;
+    let rw, rh, rx, ry;
+    if (imgAspect > conAspect) {
+      // letterbox top/bottom
+      rw = cw;
+      rh = cw / imgAspect;
+      rx = 0;
+      ry = (ch - rh) / 2;
+    } else {
+      // pillarbox left/right
+      rh = ch;
+      rw = ch * imgAspect;
+      rx = (cw - rw) / 2;
+      ry = 0;
+    }
+    setImgRect({ x: rx, y: ry, w: rw, h: rh });
+  };
+
+  useEffect(() => {
+    computeRect();
+    const ro = new ResizeObserver(computeRect);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [view]);
 
   return (
     <div className="space-y-4">
       <div
+        ref={containerRef}
         className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 select-none"
         style={{ aspectRatio: "16/9" }}
       >
         <AnimatePresence mode="wait">
           <motion.img
             key={view}
+            ref={imgRef}
             src={imgSrc}
             alt={`House ${view} view`}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain"
             draggable={false}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
+            onLoad={computeRect}
           />
         </AnimatePresence>
 
-        {/* Permit zone overlays */}
-        {zones.map((zone) => {
+        {/* Permit zone overlays — positioned relative to actual rendered image */}
+        {imgRect && zones.map((zone) => {
           const isHovered = hoveredZone === zone.id;
           const visible   = showHighlights || isHovered;
+          const left   = imgRect.x + (zone.x / 100) * imgRect.w;
+          const top    = imgRect.y + (zone.y / 100) * imgRect.h;
+          const width  = (zone.w / 100) * imgRect.w;
+          const height = (zone.h / 100) * imgRect.h;
           return (
             <div
               key={zone.id}
@@ -253,10 +304,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
               onMouseLeave={() => setHoveredZone(null)}
               className="absolute cursor-pointer transition-all duration-150"
               style={{
-                left:            `${zone.x}%`,
-                top:             `${zone.y}%`,
-                width:           `${zone.w}%`,
-                height:          `${zone.h}%`,
+                left,  top,  width,  height,
                 backgroundColor: visible ? zone.color : "transparent",
                 border:          visible
                   ? `2px ${isHovered ? "solid" : "dashed"} ${zone.stroke}`
