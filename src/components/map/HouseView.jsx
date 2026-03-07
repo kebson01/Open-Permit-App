@@ -149,7 +149,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       <div
         ref={containerRef}
         className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 select-none"
-        style={{ aspectRatio: "1270/672" }}
+        style={{ aspectRatio: "1280/720" }}
       >
         {/* House illustration */}
         <img
