@@ -41,20 +41,22 @@ body {
   background-color: #f8fafc;
 }
 
-.gradient-primary {
-  background: linear-gradient(135deg, #0f172a, #1d4ed8);
-}
+@layer components {
+  .gradient-primary {
+    background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
+  }
 
-.gradient-navy {
-  background: linear-gradient(135deg, #0a0a0a, #111827);
-}
+  .gradient-navy {
+    background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%) !important;
+  }
 
-.text-gold {
-  color: #3b82f6;
-}
+  .text-gold {
+    color: #3b82f6;
+  }
 
-.bg-gold {
-  background-color: #3b82f6;
+  .bg-gold {
+    background-color: #3b82f6;
+  }
 }
 
 /* Custom scrollbar */
