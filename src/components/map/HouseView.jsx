@@ -19,7 +19,7 @@ const FRONT_ZONES = [
   // Solar panel cluster right
   { id: "solar_r",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 52,  y: 4,   w: 15,  h: 16, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
   // 2nd floor window left
-  { id: "win_2nd_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 27,  w: 8,   w: 8,  h: 12, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
+  { id: "win_2nd_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 27,  w: 8,   h: 12, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
   // 2nd floor window right / large
   { id: "win_2nd_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 55,  y: 26,  w: 10,  h: 11, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
   // Balcony railing
