@@ -8,225 +8,157 @@ const IMAGES = {
   commercial: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/14ddcdcb6_commercialProperty.png",
 };
 
-// ── FRONT VIEW ZONES ─────────────────────────────────────────────────────────
-// Coordinates derived from image-map (image: 1366×750)
-// x% = left/1366*100, y% = top/750*100, w% = width/1366*100, h% = height/750*100
+// Natural image dimensions for each view (width × height in px) — must match SVG viewBox
+const IMAGE_DIMS = {
+  front:      { w: 1375, h: 750 },
+  back:       { w: 1402, h: 768 },
+  eagle:      { w: 1366, h: 768 },
+  commercial: { w: 2040, h: 1280 },
+};
+
+// ── FRONT VIEW ZONES (polygon points from SVG viewBox 0 0 1375 750) ──────────
 const FRONT_ZONES = [
-  // Roof — large polygon covering the entire roofline area
-  { id: "roof",       label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                x: 30,  y: 2,   w: 51,  h: 28, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  // Solar panel cluster left
-  { id: "solar_l",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 38,  y: 6,   w: 12,  h: 14, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
-  // Solar panel cluster right
-  { id: "solar_r",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 52,  y: 4,   w: 15,  h: 16, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
-  // 2nd floor window left
-  { id: "win_2nd_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 27,  w: 8,   h: 12, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
-  // 2nd floor window right / large
-  { id: "win_2nd_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 55,  y: 26,  w: 10,  h: 11, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
-  // Balcony railing
-  { id: "balcony",    label: "Residential Addition",      desc: "Balcony / room addition",                      x: 36,  y: 33,  w: 16,  h: 6,  color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  // 1st floor large windows right
-  { id: "win_1st_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 52,  y: 44,  w: 12,  h: 15, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
-  // 1st floor window left
-  { id: "win_1st_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 42,  w: 7,   h: 13, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
-  // Garage door
-  { id: "garage",     label: "Garage Door",               desc: "Garage door replacement",                      x: 18,  y: 40,  w: 7,   h: 12, color: "rgba(249,115,22,0.32)",  stroke: "#f97316" },
-  // Electrical panel
-  { id: "elec_panel", label: "Electrical Service",        desc: "Panel upgrade / service change",               x: 72,  y: 44,  w: 2,   h: 7,  color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
-  // A/C unit
-  { id: "ac",         label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 70,  y: 52,  w: 8,   h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  // Pool
-  { id: "pool",       label: "Pool & Spa",                desc: "New swimming pool / spa installation",         x: 82,  y: 47,  w: 14,  h: 9,  color: "rgba(6,182,212,0.35)",   stroke: "#06b6d4" },
-  // Pool pump
-  { id: "pool_pump",  label: "Pool Equipment",            desc: "Pump, filter, equipment changes",              x: 93,  y: 51,  w: 5,   h: 6,  color: "rgba(249,115,22,0.4)",   stroke: "#f97316" },
-  // Concrete driveway
-  { id: "driveway",   label: "Driveway (Paver)",          desc: "Paver / concrete driveway installation",       x: 0,   y: 62,  w: 24,  h: 12, color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
-  // Walkway to front door
-  { id: "walkway",    label: "Walkway / Sidewalk",        desc: "Concrete paths and sidewalk",                  x: 14,  y: 58,  w: 32,  h: 14, color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
-  // Sidewalk at street
-  { id: "sidewalk",   label: "Walkway / Sidewalk",        desc: "Public sidewalk / curb installation",          x: 0,   y: 74,  w: 32,  h: 6,  color: "rgba(156,163,175,0.28)", stroke: "#9ca3af" },
-  // Landscaping / lawn
-  { id: "landscape",  label: "Irrigation System",         desc: "Landscape / sprinkler system",                 x: 0,   y: 52,  w: 18,  h: 15, color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
-  // New construction (full house outline, subtle)
-  { id: "newconst",   label: "New Construction",          desc: "New home construction permit",                 x: 14,  y: 2,   w: 66,  h: 72, color: "rgba(99,102,241,0.05)",  stroke: "#6366f1" },
+  { id: "window-1",          label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "376,278 477,278 477,366 376,366",                                                                                                                                                                    color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-2",          label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "754,274 884,274 884,357 754,357",                                                                                                                                                                    color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-3",          label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "713,458 869,458 869,569 713,569",                                                                                                                                                                    color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "ac-unit",           label: "A/C Replacement",        desc: "Air conditioning change-out (≤5 tons)",      points: "969,575 965,629 1019,642 1069,605 1059,556 1019,548",                                                                                                                                                color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  { id: "electrical-panel",  label: "Electrical Service",     desc: "Panel upgrade / service change",             points: "986,473 986,525 1012,527 1011,473",                                                                                                                                                                  color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
+  { id: "concrete-driveway", label: "Driveway (Paver)",       desc: "Paver / concrete driveway installation",     points: "1,583 2,648 327,573 298,550 276,561 183,578 149,580 116,578 92,564",                                                                                                                                  color: "rgba(107,114,128,0.35)", stroke: "#6b7280" },
+  { id: "garage-door",       label: "Garage Door",            desc: "Garage door replacement",                    points: "249,439 249,522 288,529 298,547 313,550 319,507 324,500 339,520 338,440",                                                                                                                             color: "rgba(249,115,22,0.35)",  stroke: "#f97316" },
+  { id: "solar-panel-1",     label: "Solar Panels",           desc: "Photovoltaic system installation",           points: "581,156 532,212 556,215 536,244 637,244 661,210 630,205 655,178 626,182 642,155",                                                                                                                     color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  { id: "solar-panel-2",     label: "Solar Panels",           desc: "Photovoltaic system installation",           points: "724,133 700,160 731,158 709,184 741,183 726,211 755,211 736,243 853,240 875,204 838,202 853,173 820,173 834,149 803,149 816,123",                                                                      color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  { id: "roof-1",            label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "342,347 205,402 341,411",                                                                                                                                                                             color: "rgba(239,68,68,0.3)",    stroke: "#ef4444" },
+  { id: "roof-2",            label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "731,361 674,420 942,431 1100,406 1039,375 922,390 883,366",                                                                                                                                           color: "rgba(239,68,68,0.3)",    stroke: "#ef4444" },
+  { id: "roof-3",            label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "413,150 538,175 641,130 684,139 698,131 822,117 1103,273 930,244 855,244 876,205 842,201 856,173 823,170 837,147 805,147 820,126 716,134 700,158 724,161 711,182 734,185 720,212 749,215 738,254 691,244 638,249 660,206 642,201 656,177 628,178 644,152 583,155 531,215 549,218 519,260", color: "rgba(239,68,68,0.22)", stroke: "#ef4444" },
+  { id: "walk-way-1",        label: "Walkway / Sidewalk",     desc: "Concrete paths and sidewalk",                points: "199,602 425,633 202,703 296,725 616,612 522,597 475,618 268,585",                                                                                                                                     color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
+  { id: "walk-way-2",        label: "Walkway / Sidewalk",     desc: "Concrete paths and sidewalk",                points: "60,750 131,728 216,751",                                                                                                                                                                              color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
+  { id: "sidewalk",          label: "Walkway / Sidewalk",     desc: "Public sidewalk / curb installation",        points: "1,667 1,700 229,751 431,748",                                                                                                                                                                         color: "rgba(156,163,175,0.28)", stroke: "#9ca3af" },
+  { id: "pool",              label: "Pool & Spa",             desc: "New swimming pool / spa installation",       points: "1125,490 1085,508 1078,542 1266,555 1314,503",                                                                                                                                                         color: "rgba(6,182,212,0.35)",   stroke: "#06b6d4" },
+  { id: "pool-pump",         label: "Pool Equipment",         desc: "Pump, filter, equipment changes",            points: "1272,530 1342,530 1342,581 1272,581",                                                                                                                                                                  color: "rgba(249,115,22,0.45)",  stroke: "#f97316" },
 ];
 
-// ── BACK VIEW ZONES ──────────────────────────────────────────────────────────
-// Image: ~1402×768. x%=left/1402*100, y%=top/768*100, w%=w/1402*100, h%=h/768*100
+// ── BACK VIEW ZONES (polygon points from SVG viewBox -09 8 1402 745 → normalize to 0 0 1402 768) ──
 const BACK_ZONES = [
-  // Main roof (large upper polygon)
-  { id: "roof_b",      label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 12,  y: 9,   w: 73,  h: 22, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  // Left lower roof section
-  { id: "roof_bl",     label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 8,   y: 31,  w: 27,  h: 9,  color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  // Right lower roof section
-  { id: "roof_br",     label: "Roof / Re-Roof",           desc: "Roofing replacement or repair",               x: 83,  y: 31,  w: 5,   h: 5,  color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  // 2nd floor window left (narrow)
-  { id: "win_2nd_l",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 22,  y: 25,  w: 2,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 2nd floor window center-left
-  { id: "win_2nd_cl",  label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 33,  y: 25,  w: 8,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 2nd floor large center window / balcony doors
-  { id: "win_2nd_c",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 51,  y: 24,  w: 9,   h: 12, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 2nd floor window right
-  { id: "win_2nd_r",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 64,  y: 25,  w: 9,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // Balcony railing
-  { id: "balcony_b",   label: "Residential Addition",     desc: "Balcony / deck addition",                     x: 30,  y: 34,  w: 50,  h: 7,  color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  // 1st floor windows left
-  { id: "win_1st_l",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 20,  y: 41,  w: 7,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 1st floor windows center-left
-  { id: "win_1st_cl",  label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 33,  y: 40,  w: 7,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 1st floor windows center
-  { id: "win_1st_c",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 43,  y: 40,  w: 8,   h: 11, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // 1st floor windows right
-  { id: "win_1st_r",   label: "Window Replacement",       desc: "Impact windows / retrofit windows",           x: 64,  y: 41,  w: 9,   h: 10, color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
-  // Sliding doors (1st floor center cluster)
-  { id: "slide_door",  label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 44,  y: 39,  w: 20,  h: 17, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
-  // Sliding door far right
-  { id: "slide_dr2",   label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 64,  y: 40,  w: 8,   h: 15, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
-  // Door upper center (2nd floor)
-  { id: "door_top",    label: "Door Replacement",         desc: "Sliding / exterior door installation",        x: 47,  y: 24,  w: 5,   h: 13, color: "rgba(139,92,246,0.28)",  stroke: "#8b5cf6" },
-  // Covered patio overhead structure
-  { id: "cov_patio",   label: "Covered Patio",            desc: "Covered patio / outdoor structure permit",    x: 43,  y: 34,  w: 36,  h: 8,  color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  // A/C units (left side)
-  { id: "ac_b",        label: "A/C Replacement",          desc: "Air conditioning change-out (≤5 tons)",       x: 8,   y: 45,  w: 12,  h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  // Pool pump equipment
-  { id: "pool_pump_b", label: "Pool Equipment",           desc: "Pump, filter, equipment changes",             x: 17,  y: 55,  w: 7,   h: 10, color: "rgba(249,115,22,0.45)",  stroke: "#f97316" },
-  // Pool
-  { id: "pool_b",      label: "Pool & Spa",               desc: "New swimming pool / spa installation",        x: 26,  y: 57,  w: 45,  h: 22, color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  // Paved patio / deck surround
-  { id: "patio_b",     label: "Patio / Slab",             desc: "Paver patio or concrete slab",                x: 19,  y: 52,  w: 73,  h: 30, color: "rgba(245,158,11,0.15)",  stroke: "#f59e0b" },
-  // Pergola
-  { id: "pergola_b",   label: "Pergola",                  desc: "Pergola or gazebo structure",                 x: 56,  y: 39,  w: 16,  h: 30, color: "rgba(217,119,6,0.32)",   stroke: "#d97706" },
-  // Fence left
-  { id: "fence_bl",    label: "Fence / Gate",             desc: "Fence and gate installation",                 x: 0,   y: 50,  w: 6,   h: 35, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  // Fence right
-  { id: "fence_br",    label: "Fence / Gate",             desc: "Fence and gate installation",                 x: 76,  y: 44,  w: 24,  h: 50, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  // Irrigation / landscaping
-  { id: "irrig_b",     label: "Irrigation System",        desc: "Landscape / sprinkler system",                x: 0,   y: 52,  w: 18,  h: 20, color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
+  { id: "roof-1",       label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "458,92 176,227 424,238 614,230 841,235 907,233 1085,234 1193,225 978,106 870,113 788,68 672,73 610,103",                                                                                                                                               color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  { id: "roof-2",       label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "197,332 121,363 396,401 421,397 349,355",                                                                                                                                                                                                              color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  { id: "roof-3",       label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              points: "1175,311 1172,346 1185,357 1238,337",                                                                                                                                                                                                                 color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  { id: "window-1",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "314,253 313,324 341,330 339,251",                                                                                                                                                                                                                     color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-2",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "292,410 293,498 317,498 315,412",                                                                                                                                                                                                                     color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-3",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "468,253 472,344 574,330 575,251",                                                                                                                                                                                                                     color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-4",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "361,422 363,510 392,520 391,421",                                                                                                                                                                                                                     color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-5",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "907,250 907,329 1031,335 1031,255",                                                                                                                                                                                                                   color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "window-6",     label: "Window Replacement",     desc: "Impact windows / retrofit windows",          points: "471,417 473,517 575,490 573,401",                                                                                                                                                                                                                     color: "rgba(59,130,246,0.35)",  stroke: "#3b82f6" },
+  { id: "slide-door-1", label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "619,395 623,499 686,480 686,392 659,388",                                                                                                                                                                                                             color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "slide-door-2", label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "718,393 716,477 825,495 822,406",                                                                                                                                                                                                                     color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "slide-door-3", label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "854,410 856,502 839,495 839,410",                                                                                                                                                                                                                     color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "slide-door-4", label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "909,414 906,509 1011,527 1013,426",                                                                                                                                                                                                                   color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "slide-door-5", label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "715,246 716,344 827,354 824,250",                                                                                                                                                                                                                     color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "door",         label: "Door Replacement",       desc: "Sliding / exterior door installation",       points: "661,347 689,347 689,249 663,251",                                                                                                                                                                                                                     color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "pool-pump",    label: "Pool Equipment",         desc: "Pump, filter, equipment changes",            points: "251,580 325,580 325,649 251,649",                                                                                                                                                                                                                     color: "rgba(249,115,22,0.45)",  stroke: "#f97316" },
+  { id: "ac-unit",      label: "A/C Replacement",        desc: "Air conditioning change-out (≤5 tons)",      points: "154,471 123,480 121,520 188,544 216,534 218,517 221,487",                                                                                                                                                                                             color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  { id: "fence-1",      label: "Fence / Gate",           desc: "Fence and gate installation",                points: "1,579 2,645 88,696 309,767 620,766",                                                                                                                                                                                                                  color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  { id: "fence-2",      label: "Fence / Gate",           desc: "Fence and gate installation",                points: "1072,469 1068,527 1089,515 1125,525 1123,561 1170,569 1186,528 1220,534 1231,545 1253,541 1262,536 1273,554 1284,524 1302,515 1317,517 1368,534 1155,764 1175,768 1272,762 1336,683 1354,635 1370,601 1385,583 1402,556 1400,513",                      color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  { id: "fence-3",      label: "Fence / Gate",           desc: "Fence and gate installation",                points: "2,388 2,414 16,414 54,424 76,413 125,408 139,408 145,381 134,372",                                                                                                                                                                                   color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  { id: "pool",         label: "Pool & Spa",             desc: "New swimming pool / spa installation",       points: "625,533 373,619 802,726 973,621 680,568 726,555",                                                                                                                                                                                                     color: "rgba(6,182,212,0.35)",   stroke: "#06b6d4" },
+  { id: "paver-patio-1",label: "Patio / Slab",           desc: "Paver patio or concrete slab",               points: "981,555 1003,550 1028,560 1058,536 1027,528 687,477 618,502 280,612 322,642 373,619 625,530 716,553 686,566 966,620 799,726 768,767 909,768 1048,764 1073,743 1001,709 1032,670 1048,616",                                                             color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
+  { id: "paver-patio-2",label: "Patio / Slab",           desc: "Paver patio or concrete slab",               points: "374,619 322,647 771,768 799,727",                                                                                                                                                                                                                    color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
+  { id: "covered-patio",label: "Covered Patio",          desc: "Covered patio / outdoor structure permit",   points: "686,347 614,362 615,386 1017,428 1065,411 1069,382",                                                                                                                                                                                                 color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
+  { id: "pergola",      label: "Pergola",                desc: "Pergola or gazebo structure",                 points: "961,402 793,456 803,484 800,713 817,714 827,531 869,486 1009,507 1061,574 1059,748 1073,745 1086,548 1097,520 1193,464 1198,491 1192,619 1207,629 1222,455 1231,433",                                                                                 color: "rgba(217,119,6,0.35)",   stroke: "#d97706" },
 ];
 
-// ── EAGLE EYE (FLOOR PLAN) ZONES ────────────────────────────────────────────
+// ── EAGLE EYE (FLOOR PLAN) ZONES — kept as rect-based (no source image map) ──
 const EAGLE_ZONES = [
-  { id: "roof_e",     label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                x: 0,   y: 0,   w: 55,  h: 45, color: "rgba(239,68,68,0.15)",   stroke: "#ef4444" },
-  { id: "kitchen",    label: "Residential Remodel",       desc: "Kitchen remodel / interior renovation",        x: 56,  y: 12,  w: 18,  h: 18, color: "rgba(245,158,11,0.28)",  stroke: "#f59e0b" },
-  { id: "greatroom",  label: "Residential Remodel",       desc: "Great room / living area renovation",          x: 34,  y: 12,  w: 22,  h: 22, color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
-  { id: "dining",     label: "Residential Remodel",       desc: "Dining area renovation",                       x: 47,  y: 20,  w: 12,  h: 14, color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
-  { id: "bathroom_e", label: "Plumbing",                  desc: "Bathroom plumbing / fixture installation",     x: 74,  y: 12,  w: 14,  h: 16, color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  { id: "bedroom1",   label: "Residential Remodel",       desc: "Bedroom renovation",                           x: 6,   y: 12,  w: 22,  h: 18, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "bedroom2",   label: "Residential Remodel",       desc: "Bedroom renovation",                           x: 2,   y: 46,  w: 26,  h: 22, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "homeoffice", label: "Residential Remodel",       desc: "Home office renovation",                       x: 18,  y: 32,  w: 18,  h: 16, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "mudroom",    label: "Residential Remodel",       desc: "Mudroom / entry renovation",                   x: 47,  y: 34,  w: 16,  h: 12, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "walkin",     label: "Residential Remodel",       desc: "Walk-in closet renovation",                    x: 74,  y: 28,  w: 14,  h: 14, color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "balcony_e",  label: "Residential Addition",      desc: "Upper balcony / deck addition",                x: 34,  y: 2,   w: 40,  h: 12, color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  { id: "driveway_e", label: "Driveway (Paver)",          desc: "Paver driveway installation",                  x: 75,  y: 10,  w: 25,  h: 38, color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  { id: "pool_e",     label: "Pool & Spa",                desc: "New swimming pool / spa installation",         x: 60,  y: 62,  w: 38,  h: 36, color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  { id: "pdeck_e",    label: "Pool Deck",                 desc: "Pool deck construction",                       x: 55,  y: 55,  w: 44,  h: 44, color: "rgba(245,158,11,0.15)",  stroke: "#f59e0b" },
-  { id: "ac_e",       label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 0,   y: 46,  w: 8,   h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  { id: "ac_e2",      label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 0,   y: 68,  w: 8,   h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  { id: "panel_e",    label: "Electrical Service",        desc: "Panel upgrade, service change",                x: 36,  y: 42,  w: 6,   h: 8,  color: "rgba(234,179,8,0.48)",   stroke: "#eab308" },
-  { id: "plumb_e",    label: "Plumbing",                  desc: "Plumbing rough-in, fixtures, re-pipe",         x: 28,  y: 46,  w: 12,  h: 12, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
-  { id: "fence_e",    label: "Fence / Gate",              desc: "Fence and gate installation",                  x: 0,   y: 0,   w: 4,   h: 98, color: "rgba(34,197,94,0.25)",   stroke: "#22c55e" },
-  { id: "lawn_e",     label: "Irrigation System",         desc: "Landscape / sprinkler system",                 x: 4,   y: 78,  w: 52,  h: 20, color: "rgba(16,185,129,0.22)",  stroke: "#10b981" },
+  { id: "roof_e",     label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                points: "0,0 751,0 751,346 0,346",                                                   color: "rgba(239,68,68,0.15)",   stroke: "#ef4444" },
+  { id: "kitchen",    label: "Residential Remodel",       desc: "Kitchen remodel / interior renovation",        points: "765,92 1012,92 1012,230 765,230",                                            color: "rgba(245,158,11,0.28)",  stroke: "#f59e0b" },
+  { id: "greatroom",  label: "Residential Remodel",       desc: "Great room / living area renovation",          points: "464,92 765,92 765,261 464,261",                                              color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
+  { id: "bathroom_e", label: "Plumbing",                  desc: "Bathroom plumbing / fixture installation",     points: "1011,92 1203,92 1203,215 1011,215",                                          color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "bedroom1",   label: "Residential Remodel",       desc: "Bedroom renovation",                           points: "82,92 383,92 383,230 82,230",                                                color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
+  { id: "bedroom2",   label: "Residential Remodel",       desc: "Bedroom renovation",                           points: "27,353 382,353 382,522 27,522",                                              color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
+  { id: "balcony_e",  label: "Residential Addition",      desc: "Upper balcony / deck addition",                points: "464,15 1011,15 1011,107 464,107",                                            color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  { id: "driveway_e", label: "Driveway (Paver)",          desc: "Paver driveway installation",                  points: "1025,77 1366,77 1366,368 1025,368",                                          color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
+  { id: "pool_e",     label: "Pool & Spa",                desc: "New swimming pool / spa installation",         points: "820,476 1366,476 1366,768 820,768",                                          color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "pdeck_e",    label: "Pool Deck",                 desc: "Pool deck construction",                       points: "751,422 1366,422 1366,768 751,768",                                          color: "rgba(245,158,11,0.15)",  stroke: "#f59e0b" },
+  { id: "ac_e",       label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        points: "0,353 109,353 109,430 0,430",                                                color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  { id: "panel_e",    label: "Electrical Service",        desc: "Panel upgrade, service change",                points: "491,322 573,322 573,384 491,384",                                            color: "rgba(234,179,8,0.48)",   stroke: "#eab308" },
+  { id: "fence_e",    label: "Fence / Gate",              desc: "Fence and gate installation",                  points: "0,0 55,0 55,768 0,768",                                                      color: "rgba(34,197,94,0.25)",   stroke: "#22c55e" },
+  { id: "lawn_e",     label: "Irrigation System",         desc: "Landscape / sprinkler system",                 points: "55,599 765,599 765,768 55,768",                                              color: "rgba(16,185,129,0.22)",  stroke: "#10b981" },
+];
+
+// ── COMMERCIAL VIEW ZONES (polygon points from SVG viewBox 0 0 2040 1280) ────
+const COMMERCIAL_ZONES = [
+  { id: "light-pole",    label: "Light Pole / Utility",          desc: "Light pole or utility boring permit",                    points: "688,626 802,626 802,805 688,805",                                                                                                                                                                                           color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
+  { id: "ev-chargers",   label: "EV Charging Station",           desc: "Electric vehicle charging station installation",         points: "1534,893 1780,893 1780,1155 1534,1155",                                                                                                                                                                                     color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  { id: "asphalt",       label: "Parking Lot / Paving",          desc: "Asphalt repair / milling & paving / seal coat & stripe", points: "683,960 619,958 574,1209 1540,1191 1520,951",                                                                                                                                                                               color: "rgba(107,114,128,0.32)", stroke: "#6b7280" },
+  { id: "sidewalk-rep",  label: "Sidewalk / Curb",               desc: "Sidewalk repair",                                        points: "6,1226 898,1208 2003,1193 2037,1269 900,1276 -1,1278",                                                                                                                                                                      color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
+  { id: "sign",          label: "Sign Permit",                   desc: "Commercial signage installation",                        points: "610,897 614,864 780,873 780,946 618,949",                                                                                                                                                                                   color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
+  { id: "hvac-rooftop",  label: "HVAC / Mechanical",             desc: "Rooftop mounted HVAC / mechanical equipment",            points: "898,49 992,49 992,121 898,121",                                                                                                                                                                                             color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  { id: "driveway-1",    label: "Driveway / Walkway",            desc: "Driveway or walkway construction",                       points: "748,242 683,613 827,626 829,398 825,242",                                                                                                                                                                                   color: "rgba(107,114,128,0.32)", stroke: "#6b7280" },
+  { id: "driveway-2",    label: "Driveway / Walkway",            desc: "Driveway or walkway construction",                       points: "1346,233 1344,293 1330,300 1326,425 1366,468 1404,494 1411,501 1484,501 1390,235",                                                                                                                                           color: "rgba(107,114,128,0.32)", stroke: "#6b7280" },
+  { id: "driveway-3",    label: "Driveway / Walkway",            desc: "Driveway or walkway construction",                       points: "1422,647 1366,694 1415,902 1504,902 1458,747 1469,730 1486,711 1498,701 1482,653",                                                                                                                                           color: "rgba(107,114,128,0.32)", stroke: "#6b7280" },
+  { id: "door-comm-1",   label: "Door Replacement",              desc: "Commercial door installation",                           points: "863,577 945,577 945,665 863,665",                                                                                                                                                                                           color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "door-comm-2",   label: "Door Replacement",              desc: "Commercial door installation",                           points: "927,353 1008,353 1008,452 927,452",                                                                                                                                                                                         color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "door-comm-3",   label: "Door Replacement",              desc: "Commercial door installation",                           points: "1041,573 1118,573 1118,665 1041,665",                                                                                                                                                                                       color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "door-comm-4",   label: "Door Replacement",              desc: "Commercial door installation",                           points: "1211,569 1299,569 1299,664 1211,664",                                                                                                                                                                                       color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "door-comm-5",   label: "Door Replacement",              desc: "Commercial door installation",                           points: "1127,345 1211,345 1211,459 1127,459",                                                                                                                                                                                       color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "driveway-4",    label: "Driveway / Walkway",            desc: "Driveway or walkway construction",                       points: "840,622 809,622 804,718 1021,711 1024,911 782,924 777,953 1529,946 1529,920 1171,922 1149,712 1316,703 1308,660 1064,665 912,664 842,662",                                                                                   color: "rgba(107,114,128,0.32)", stroke: "#6b7280" },
 ];
 
 const LEGENDS = {
   front: [
-    { label: "Roof / Re-Roof",          color: "#ef4444" },
-    { label: "Solar Panels",            color: "#eab308" },
-    { label: "Window Replacement",      color: "#3b82f6" },
-    { label: "Hurricane Shutters",      color: "#a855f7" },
-    { label: "Garage Door",             color: "#f97316" },
-    { label: "Door Replacement",        color: "#8b5cf6" },
-    { label: "A/C Replacement",         color: "#0ea5e9" },
-    { label: "Residential Addition",    color: "#6366f1" },
-    { label: "New Construction",        color: "#6366f1" },
-    { label: "Fence / Gate",            color: "#22c55e" },
-    { label: "Driveway / Walkway",      color: "#6b7280" },
-    { label: "Pool & Spa",              color: "#06b6d4" },
-    { label: "Pergola",                 color: "#d97706" },
-    { label: "Irrigation System",       color: "#10b981" },
-    { label: "Swale",                   color: "#10b981" },
+    { label: "Roof / Re-Roof",       color: "#ef4444" },
+    { label: "Solar Panels",         color: "#eab308" },
+    { label: "Window Replacement",   color: "#3b82f6" },
+    { label: "Garage Door",          color: "#f97316" },
+    { label: "A/C Replacement",      color: "#0ea5e9" },
+    { label: "Electrical Service",   color: "#eab308" },
+    { label: "Pool & Spa",           color: "#06b6d4" },
+    { label: "Pool Equipment",       color: "#f97316" },
+    { label: "Driveway / Walkway",   color: "#6b7280" },
   ],
   back: [
-    { label: "Roof / Re-Roof",          color: "#ef4444" },
-    { label: "Solar Panels",            color: "#eab308" },
-    { label: "Window Replacement",      color: "#3b82f6" },
-    { label: "Door Replacement",        color: "#8b5cf6" },
-    { label: "A/C Replacement",         color: "#0ea5e9" },
-    { label: "Balcony / Addition",      color: "#6366f1" },
-    { label: "Pool & Spa",              color: "#06b6d4" },
-    { label: "Pool Deck",               color: "#f59e0b" },
-    { label: "Pool Equipment",          color: "#f97316" },
-    { label: "Spa / Hot Tub",           color: "#a855f7" },
-    { label: "Patio / Slab",            color: "#6b7280" },
-    { label: "Fireplace / Chimney",     color: "#ef4444" },
-    { label: "Pergola",                 color: "#d97706" },
-    { label: "Fence / Gate",            color: "#22c55e" },
-    { label: "Irrigation System",       color: "#10b981" },
+    { label: "Roof / Re-Roof",       color: "#ef4444" },
+    { label: "Window Replacement",   color: "#3b82f6" },
+    { label: "Door Replacement",     color: "#8b5cf6" },
+    { label: "A/C Replacement",      color: "#0ea5e9" },
+    { label: "Pool & Spa",           color: "#06b6d4" },
+    { label: "Pool Equipment",       color: "#f97316" },
+    { label: "Patio / Slab",         color: "#f59e0b" },
+    { label: "Covered Patio",        color: "#6b7280" },
+    { label: "Pergola",              color: "#d97706" },
+    { label: "Fence / Gate",         color: "#22c55e" },
   ],
   eagle: [
-    { label: "Roof / Re-Roof",          color: "#ef4444" },
-    { label: "Residential Remodel",     color: "#f59e0b" },
-    { label: "Plumbing",                color: "#06b6d4" },
-    { label: "Electrical Service",      color: "#eab308" },
-    { label: "A/C Replacement",         color: "#0ea5e9" },
-    { label: "Balcony / Addition",      color: "#6366f1" },
-    { label: "Pool & Spa",              color: "#06b6d4" },
-    { label: "Pool Deck",               color: "#f59e0b" },
-    { label: "Driveway",                color: "#6b7280" },
-    { label: "Fence / Gate",            color: "#22c55e" },
-    { label: "Irrigation System",       color: "#10b981" },
+    { label: "Roof / Re-Roof",       color: "#ef4444" },
+    { label: "Residential Remodel",  color: "#f59e0b" },
+    { label: "Plumbing",             color: "#06b6d4" },
+    { label: "Electrical Service",   color: "#eab308" },
+    { label: "A/C Replacement",      color: "#0ea5e9" },
+    { label: "Residential Addition", color: "#6366f1" },
+    { label: "Pool & Spa",           color: "#06b6d4" },
+    { label: "Pool Deck",            color: "#f59e0b" },
+    { label: "Driveway",             color: "#6b7280" },
+    { label: "Fence / Gate",         color: "#22c55e" },
+    { label: "Irrigation System",    color: "#10b981" },
   ],
 };
 
-// ── COMMERCIAL VIEW ZONES ────────────────────────────────────────────────────
-const COMMERCIAL_ZONES = [
-  { id: "com_building",   label: "Commercial Building Permit",  desc: "New commercial construction or major structural work",         x: 0,   y: 2,   w: 45,  h: 48, color: "rgba(239,68,68,0.18)",   stroke: "#ef4444" },
-  { id: "com_roof",       label: "Commercial Roof",             desc: "Commercial roofing replacement or repair",                    x: 2,   y: 2,   w: 43,  h: 22, color: "rgba(239,68,68,0.28)",   stroke: "#ef4444" },
-  { id: "com_hvac",       label: "HVAC / Mechanical",           desc: "Rooftop units, ductwork, mechanical system installation",     x: 4,   y: 4,   w: 36,  h: 16, color: "rgba(14,165,233,0.35)",  stroke: "#0ea5e9" },
-  { id: "com_facade",     label: "Storefront / Facade",         desc: "Storefront glazing, exterior facade renovation",              x: 0,   y: 34,  w: 44,  h: 16, color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  { id: "com_sign",       label: "Sign Permit",                 desc: "Commercial signage installation",                             x: 0,   y: 50,  w: 12,  h: 8,  color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
-  { id: "com_office",     label: "Commercial Building Permit",  desc: "Office building construction or renovation",                  x: 58,  y: 2,   w: 28,  h: 38, color: "rgba(239,68,68,0.18)",   stroke: "#ef4444" },
-  { id: "com_parking",    label: "Parking Lot / Paving",        desc: "Parking lot paving, striping, and ADA compliance",            x: 20,  y: 50,  w: 50,  h: 35, color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  { id: "com_ev",         label: "EV Charging Station",         desc: "Electric vehicle charging station installation",              x: 55,  y: 62,  w: 12,  h: 18, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
-  { id: "com_excavation", label: "Excavation / Grading",        desc: "Site excavation, grading, and earthwork permit",              x: 68,  y: 42,  w: 32,  h: 40, color: "rgba(180,83,9,0.32)",    stroke: "#b45309" },
-  { id: "com_utility",    label: "Utility / Underground",       desc: "Underground utility installation (water, sewer, electric)",   x: 0,   y: 58,  w: 22,  h: 30, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
-  { id: "com_fire",       label: "Fire Suppression",            desc: "Fire sprinkler system installation or modification",          x: 2,   y: 5,   w: 42,  h: 44, color: "rgba(239,68,68,0.08)",   stroke: "#ef4444" },
-  { id: "com_electric",   label: "Electrical Service",          desc: "Service panel upgrade, switchgear, electrical distribution",  x: 46,  y: 38,  w: 14,  h: 14, color: "rgba(234,179,8,0.38)",   stroke: "#eab308" },
-  { id: "com_sidewalk",   label: "Sidewalk / Curb",             desc: "Sidewalk, curb, and gutter installation",                     x: 0,   y: 72,  w: 20,  h: 16, color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
-  { id: "com_landscape",  label: "Irrigation System",           desc: "Commercial landscape and irrigation system",                  x: 0,   y: 42,  w: 20,  h: 18, color: "rgba(16,185,129,0.28)",  stroke: "#10b981" },
-  { id: "com_fence",      label: "Fence / Barrier",             desc: "Commercial fencing or barrier installation",                  x: 0,   y: 86,  w: 70,  h: 8,  color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  { id: "com_dumpster",   label: "Dumpster Enclosure",          desc: "Dumpster pad and enclosure construction",                     x: 46,  y: 52,  w: 10,  h: 10, color: "rgba(107,114,128,0.35)", stroke: "#6b7280" },
-];
-
 const COMMERCIAL_LEGEND = [
-  { label: "Commercial Building",   color: "#ef4444" },
   { label: "HVAC / Mechanical",     color: "#0ea5e9" },
-  { label: "Storefront / Facade",   color: "#6366f1" },
+  { label: "Door Replacement",      color: "#8b5cf6" },
   { label: "Sign Permit",           color: "#eab308" },
   { label: "Parking Lot / Paving",  color: "#6b7280" },
   { label: "EV Charging Station",   color: "#eab308" },
-  { label: "Excavation / Grading",  color: "#b45309" },
-  { label: "Utility / Underground", color: "#06b6d4" },
-  { label: "Electrical Service",    color: "#eab308" },
+  { label: "Driveway / Walkway",    color: "#6b7280" },
+  { label: "Light Pole / Utility",  color: "#eab308" },
   { label: "Sidewalk / Curb",       color: "#9ca3af" },
-  { label: "Irrigation System",     color: "#10b981" },
-  { label: "Fence / Barrier",       color: "#22c55e" },
 ];
 
 const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
-
-// Natural image dimensions for each view (width × height in px)
-const IMAGE_DIMS = {
-  front:      { w: 1366, h: 750 },
-  back:       { w: 1402, h: 768 },
-  eagle:      { w: 1366, h: 768 },
-  commercial: { w: 1366, h: 768 },
-};
 
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
   const [imgRect, setImgRect] = useState(null);
   const containerRef = useRef(null);
-  const imgRef = useRef(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
   const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
@@ -243,17 +175,9 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     const conAspect = cw / ch;
     let rw, rh, rx, ry;
     if (imgAspect > conAspect) {
-      // letterbox top/bottom
-      rw = cw;
-      rh = cw / imgAspect;
-      rx = 0;
-      ry = (ch - rh) / 2;
+      rw = cw; rh = cw / imgAspect; rx = 0; ry = (ch - rh) / 2;
     } else {
-      // pillarbox left/right
-      rh = ch;
-      rw = ch * imgAspect;
-      rx = (cw - rw) / 2;
-      ry = 0;
+      rh = ch; rw = ch * imgAspect; rx = (cw - rw) / 2; ry = 0;
     }
     setImgRect({ x: rx, y: ry, w: rw, h: rh });
   };
@@ -265,6 +189,27 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     return () => ro.disconnect();
   }, [view]);
 
+  // Scale polygon points string from image coords to rendered pixel coords
+  const scalePoints = (pointsStr) => {
+    return pointsStr.trim().split(/\s+/).map(pair => {
+      const [px, py] = pair.split(",").map(Number);
+      const sx = imgRect.x + (px / dims.w) * imgRect.w;
+      const sy = imgRect.y + (py / dims.h) * imgRect.h;
+      return `${sx},${sy}`;
+    }).join(" ");
+  };
+
+  // Compute bounding box center for tooltip placement
+  const getBBoxCenter = (pointsStr) => {
+    const pairs = pointsStr.trim().split(/\s+/).map(p => p.split(",").map(Number));
+    const xs = pairs.map(p => p[0]);
+    const ys = pairs.map(p => p[1]);
+    return {
+      cx: (Math.min(...xs) + Math.max(...xs)) / 2,
+      cy: Math.min(...ys),
+    };
+  };
+
   return (
     <div className="space-y-4">
       <div
@@ -275,7 +220,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         <AnimatePresence mode="wait">
           <motion.img
             key={view}
-            ref={imgRef}
             src={imgSrc}
             alt={`House ${view} view`}
             className="absolute inset-0 w-full h-full object-contain"
@@ -288,62 +232,62 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
           />
         </AnimatePresence>
 
-        {/* Permit zone overlays — positioned relative to actual rendered image */}
-        {imgRect && zones.map((zone) => {
-          const isHovered = hoveredZone === zone.id;
-          const visible   = showHighlights || isHovered;
-          const left   = imgRect.x + (zone.x / 100) * imgRect.w;
-          const top    = imgRect.y + (zone.y / 100) * imgRect.h;
-          const width  = (zone.w / 100) * imgRect.w;
-          const height = (zone.h / 100) * imgRect.h;
-          return (
-            <div
-              key={zone.id}
-              onClick={() => onZoneClick(zone.label, zone.desc)}
-              onMouseEnter={() => setHoveredZone(zone.id)}
-              onMouseLeave={() => setHoveredZone(null)}
-              className="absolute cursor-pointer transition-all duration-150"
-              style={{
-                left,  top,  width,  height,
-                backgroundColor: visible ? zone.color : "transparent",
-                border:          visible
-                  ? `2px ${isHovered ? "solid" : "dashed"} ${zone.stroke}`
-                  : "2px solid transparent",
-                borderRadius:    "5px",
-                boxShadow:       isHovered ? `0 0 0 2px ${zone.stroke}55` : "none",
-                zIndex:          isHovered ? 10 : 1,
-              }}
-            >
-              {isHovered && (
-                <div
-                  className="absolute z-20 pointer-events-none"
-                  style={{
-                    bottom:    "calc(100% + 6px)",
-                    left:      "50%",
-                    transform: "translateX(-50%)",
-                    whiteSpace:"nowrap",
-                  }}
-                >
-                  <div className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow-xl"
-                    style={{ background: "rgba(0,0,0,0.85)" }}>
-                    {zone.label}
-                  </div>
-                  <div className="flex justify-center">
-                    <div className="w-0 h-0"
-                      style={{
-                        borderLeft:  "6px solid transparent",
-                        borderRight: "6px solid transparent",
-                        borderTop:   "6px solid rgba(0,0,0,0.85)",
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {/* SVG overlay — perfectly aligned to image via scaled polygon points */}
+        {imgRect && (
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ zIndex: 2 }}
+          >
+            {zones.map((zone) => {
+              const isHovered = hoveredZone === zone.id;
+              const visible   = showHighlights || isHovered;
+              const scaled    = scalePoints(zone.points);
+              const { cx, cy } = getBBoxCenter(zone.points.trim().split(/\s+/).map(p => {
+                const [px, py] = p.split(",").map(Number);
+                return `${imgRect.x + (px / dims.w) * imgRect.w},${imgRect.y + (py / dims.h) * imgRect.h}`;
+              }).join(" "));
 
-        <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow">
+              return (
+                <g key={zone.id} style={{ pointerEvents: "all", cursor: "pointer" }}
+                  onClick={() => onZoneClick(zone.label, zone.desc)}
+                  onMouseEnter={() => setHoveredZone(zone.id)}
+                  onMouseLeave={() => setHoveredZone(null)}
+                >
+                  <polygon
+                    points={scaled}
+                    fill={visible ? zone.color : "transparent"}
+                    stroke={visible ? zone.stroke : "transparent"}
+                    strokeWidth={isHovered ? 2.5 : 1.5}
+                    strokeDasharray={isHovered ? "0" : "5,4"}
+                    style={{ transition: "fill 0.15s, stroke 0.15s" }}
+                  />
+                  {isHovered && (
+                    <g>
+                      <rect
+                        x={cx - 70} y={cy - 34}
+                        width={140} height={24}
+                        rx={5} ry={5}
+                        fill="rgba(0,0,0,0.85)"
+                      />
+                      <text
+                        x={cx} y={cy - 17}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize={11}
+                        fontWeight="600"
+                        style={{ pointerEvents: "none", userSelect: "none" }}
+                      >
+                        {zone.label}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
+        <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow" style={{ zIndex: 3 }}>
           {showHighlights ? "Click any highlighted zone" : "Hover to discover permit zones"}
         </div>
       </div>
