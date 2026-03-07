@@ -9,26 +9,45 @@ const IMAGES = {
 };
 
 // ── FRONT VIEW ZONES ─────────────────────────────────────────────────────────
+// Coordinates derived from image-map (image: 1366×750)
+// x% = left/1366*100, y% = top/750*100, w% = width/1366*100, h% = height/750*100
 const FRONT_ZONES = [
-  { id: "roof",       label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                x: 10,  y: 2,   w: 80,  h: 22, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
-  { id: "solar",      label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 30,  y: 3,   w: 20,  h: 10, color: "rgba(234,179,8,0.38)",   stroke: "#eab308" },
-  { id: "win_2nd_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 12,  y: 20,  w: 18,  h: 12, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "win_2nd_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 52,  y: 18,  w: 28,  h: 13, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "balcony",    label: "Residential Addition",      desc: "Balcony / room addition",                      x: 32,  y: 26,  w: 20,  h: 8,  color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  { id: "win_1st_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 14,  y: 42,  w: 14,  h: 15, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "win_1st_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 55,  y: 40,  w: 24,  h: 18, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
-  { id: "garage",     label: "Garage Door",               desc: "Garage door replacement",                      x: 10,  y: 33,  w: 16,  h: 25, color: "rgba(249,115,22,0.3)",   stroke: "#f97316" },
-  { id: "shutters",   label: "Hurricane Shutters",        desc: "Accordion, panel, roll-down shutters",         x: 54,  y: 39,  w: 25,  h: 20, color: "rgba(168,85,247,0.22)",  stroke: "#a855f7" },
-  { id: "ac",         label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 68,  y: 55,  w: 10,  h: 10, color: "rgba(14,165,233,0.38)",  stroke: "#0ea5e9" },
-  { id: "door",       label: "Door Replacement",          desc: "Exterior door installation",                   x: 44,  y: 46,  w: 10,  h: 22, color: "rgba(139,92,246,0.3)",   stroke: "#8b5cf6" },
-  { id: "fence",      label: "Fence / Gate",              desc: "Fence and gate installation",                  x: 0,   y: 45,  w: 10,  h: 40, color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
-  { id: "driveway",   label: "Driveway (Paver)",          desc: "Paver driveway installation",                  x: 0,   y: 68,  w: 30,  h: 25, color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  { id: "walkway",    label: "Walkway / Sidewalk",        desc: "Concrete paths",                               x: 35,  y: 72,  w: 14,  h: 22, color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
-  { id: "landscaping",label: "Irrigation System",         desc: "Landscape / sprinkler system",                 x: 10,  y: 60,  w: 30,  h: 12, color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
-  { id: "pool_peek",  label: "Pool & Spa",                desc: "New swimming pool / spa installation",         x: 82,  y: 48,  w: 18,  h: 22, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
-  { id: "pergola_f",  label: "Pergola",                   desc: "Pergola or gazebo structure",                  x: 80,  y: 36,  w: 20,  h: 16, color: "rgba(217,119,6,0.28)",   stroke: "#d97706" },
-  { id: "swale",      label: "Swale",                     desc: "Drainage swale modification",                  x: 0,   y: 91,  w: 55,  h: 9,  color: "rgba(16,185,129,0.2)",   stroke: "#10b981" },
-  { id: "newconst",   label: "New Construction",          desc: "New home construction",                        x: 10,  y: 2,   w: 80,  h: 88, color: "rgba(99,102,241,0.06)",  stroke: "#6366f1" },
+  // Roof — large polygon covering the entire roofline area
+  { id: "roof",       label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                x: 30,  y: 2,   w: 51,  h: 28, color: "rgba(239,68,68,0.22)",   stroke: "#ef4444" },
+  // Solar panel cluster left
+  { id: "solar_l",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 38,  y: 6,   w: 12,  h: 14, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
+  // Solar panel cluster right
+  { id: "solar_r",    label: "Solar Panels",              desc: "Photovoltaic system installation",             x: 52,  y: 4,   w: 15,  h: 16, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
+  // 2nd floor window left
+  { id: "win_2nd_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 27,  w: 8,   w: 8,  h: 12, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
+  // 2nd floor window right / large
+  { id: "win_2nd_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 55,  y: 26,  w: 10,  h: 11, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
+  // Balcony railing
+  { id: "balcony",    label: "Residential Addition",      desc: "Balcony / room addition",                      x: 36,  y: 33,  w: 16,  h: 6,  color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  // 1st floor large windows right
+  { id: "win_1st_r",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 52,  y: 44,  w: 12,  h: 15, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
+  // 1st floor window left
+  { id: "win_1st_l",  label: "Window Replacement",        desc: "Impact windows / retrofit windows",            x: 27,  y: 42,  w: 7,   h: 13, color: "rgba(59,130,246,0.32)",  stroke: "#3b82f6" },
+  // Garage door
+  { id: "garage",     label: "Garage Door",               desc: "Garage door replacement",                      x: 18,  y: 40,  w: 7,   h: 12, color: "rgba(249,115,22,0.32)",  stroke: "#f97316" },
+  // Electrical panel
+  { id: "elec_panel", label: "Electrical Service",        desc: "Panel upgrade / service change",               x: 72,  y: 44,  w: 2,   h: 7,  color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
+  // A/C unit
+  { id: "ac",         label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        x: 70,  y: 52,  w: 8,   h: 10, color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  // Pool
+  { id: "pool",       label: "Pool & Spa",                desc: "New swimming pool / spa installation",         x: 82,  y: 47,  w: 14,  h: 9,  color: "rgba(6,182,212,0.35)",   stroke: "#06b6d4" },
+  // Pool pump
+  { id: "pool_pump",  label: "Pool Equipment",            desc: "Pump, filter, equipment changes",              x: 93,  y: 51,  w: 5,   h: 6,  color: "rgba(249,115,22,0.4)",   stroke: "#f97316" },
+  // Concrete driveway
+  { id: "driveway",   label: "Driveway (Paver)",          desc: "Paver / concrete driveway installation",       x: 0,   y: 62,  w: 24,  h: 12, color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
+  // Walkway to front door
+  { id: "walkway",    label: "Walkway / Sidewalk",        desc: "Concrete paths and sidewalk",                  x: 14,  y: 58,  w: 32,  h: 14, color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
+  // Sidewalk at street
+  { id: "sidewalk",   label: "Walkway / Sidewalk",        desc: "Public sidewalk / curb installation",          x: 0,   y: 74,  w: 32,  h: 6,  color: "rgba(156,163,175,0.28)", stroke: "#9ca3af" },
+  // Landscaping / lawn
+  { id: "landscape",  label: "Irrigation System",         desc: "Landscape / sprinkler system",                 x: 0,   y: 52,  w: 18,  h: 15, color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
+  // New construction (full house outline, subtle)
+  { id: "newconst",   label: "New Construction",          desc: "New home construction permit",                 x: 14,  y: 2,   w: 66,  h: 72, color: "rgba(99,102,241,0.05)",  stroke: "#6366f1" },
 ];
 
 // ── BACK VIEW ZONES ──────────────────────────────────────────────────────────
