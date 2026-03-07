@@ -20,7 +20,7 @@ export default function HeroSection() {
           transition={{ duration: 0.7 }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-blue-200 text-sm mb-6">
-            <Shield className="w-4 h-4 text-[#ffcc00]" />
+            <Shield className="w-4 h-4 text-blue-400" />
             Trusted by South Florida Municipalities
           </div>
           
