@@ -48,11 +48,13 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Home from './pages/Home';
+import InteractiveMap from './pages/InteractiveMap';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Home": Home,
+    "InteractiveMap": InteractiveMap,
 }
 
 export const pagesConfig = {
