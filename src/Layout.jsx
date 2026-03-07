@@ -131,7 +131,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center justify-between h-16">
             <Link to={createPageUrl("Home")} className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-[#ffcc00]" />
+                <Building2 className="w-5 h-5 text-blue-400" />
               </div>
               <span className="text-white font-bold text-lg tracking-tight hidden sm:block">Saint's Permitting</span>
             </Link>
