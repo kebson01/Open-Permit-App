@@ -38,7 +38,9 @@ export default function InteractiveMap() {
   };
 
   const views = [
-    { id: "all", label: "Residential Home", icon: Home },
+    { id: "front", label: "Front View",     icon: Home },
+    { id: "back",  label: "Back View",      icon: ArrowLeft },
+    { id: "eagle", label: "Eagle Eye / Floor Plan", icon: LayoutGrid },
   ];
 
   return (
