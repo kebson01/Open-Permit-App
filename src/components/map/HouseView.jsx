@@ -147,150 +147,319 @@ const C = {
 
 function ResidentialExterior({ showHighlights, onZone }) {
   const zones = [
-    // id, x, y, w, h, color, shape (rect default)
-    { id: "roof",          x: 100, y: 30,  w: 560, h: 160, color: C.red,    shape: "poly", points: "100,190 380,30 660,190" },
-    { id: "solar",         x: 430, y: 70,  w: 160, h: 70,  color: C.yellow  },
-    { id: "chimney",       x: 200, y: 50,  w: 50,  h: 80,  color: C.orange  },
-    { id: "window_front",  x: 140, y: 240, w: 120, h: 100, color: C.cyan    },
-    { id: "window_front",  x: 300, y: 240, w: 120, h: 100, color: C.cyan    },
-    { id: "door_front",    x: 330, y: 330, w: 100, h: 140, color: C.purple  },
-    { id: "garage_door",   x: 500, y: 230, w: 190, h: 160, color: C.orange  },
-    { id: "shutters",      x: 130, y: 235, w: 135, h: 110, color: C.indigo  },
-    { id: "ev_charger",    x: 500, y: 395, w: 70,  h: 50,  color: C.green   },
-    { id: "driveway",      x: 490, y: 440, w: 250, h: 70,  color: C.gray    },
-    { id: "walkway",       x: 310, y: 470, w: 130, h: 50,  color: C.teal    },
-    { id: "fence",         x: 50,  y: 200, w: 40,  h: 280, color: C.green   },
-    { id: "fence",         x: 670, y: 200, w: 40,  h: 280, color: C.green   },
-    { id: "retaining_wall",x: 55,  y: 460, w: 200, h: 30,  color: C.amber   },
-    { id: "tree",          x: 600, y: 340, w: 80,  h: 100, color: C.green   },
-    { id: "swale",         x: 50,  y: 490, w: 660, h: 20,  color: C.blue    },
-    { id: "shed",          x: 620, y: 390, w: 100, h: 90,  color: C.amber   },
+    { id: "roof",          shape: "poly", points: "60,230 400,40 740,230", x: 200, y: 100, w: 400, h: 120, color: C.red    },
+    { id: "solar",         x: 460, y: 90,  w: 180, h: 80,  color: C.yellow  },
+    { id: "chimney",       x: 175, y: 65,  w: 55,  h: 95,  color: C.orange  },
+    { id: "window_front",  x: 105, y: 270, w: 130, h: 110, color: C.cyan    },
+    { id: "window_front",  x: 310, y: 270, w: 130, h: 110, color: C.cyan    },
+    { id: "door_front",    x: 345, y: 350, w: 105, h: 150, color: C.purple  },
+    { id: "shutters",      x: 93,  y: 263, w: 150, h: 125, color: C.indigo  },
+    { id: "garage_door",   x: 505, y: 255, w: 210, h: 180, color: C.orange  },
+    { id: "ev_charger",    x: 512, y: 435, w: 65,  h: 45,  color: C.green   },
+    { id: "driveway",      x: 498, y: 478, w: 252, h: 42,  color: C.gray    },
+    { id: "walkway",       x: 328, y: 498, w: 145, h: 22,  color: C.teal    },
+    { id: "fence",         x: 18,  y: 240, w: 35,  h: 280, color: C.green   },
+    { id: "fence",         x: 747, y: 240, w: 35,  h: 280, color: C.green   },
+    { id: "retaining_wall",x: 18,  y: 490, w: 200, h: 22,  color: C.amber   },
+    { id: "swale",         x: 18,  y: 510, w: 764, h: 16,  color: C.blue    },
+    { id: "shed",          x: 8,   y: 370, w: 90,  h: 120, color: C.amber   },
+    { id: "tree",          x: 660, y: 340, w: 90,  h: 130, color: C.green   },
   ];
 
   return (
-    <svg viewBox="0 0 760 520" className="w-full h-full">
-      {/* Sky */}
+    <svg viewBox="0 0 800 530" className="w-full h-full">
       <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#dbeafe" />
+        <linearGradient id="sky_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#bfdbfe" />
+          <stop offset="60%" stopColor="#dbeafe" />
           <stop offset="100%" stopColor="#eff6ff" />
         </linearGradient>
-        <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#86efac" />
-          <stop offset="100%" stopColor="#4ade80" />
+        <linearGradient id="ground_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4ade80" />
+          <stop offset="100%" stopColor="#16a34a" />
         </linearGradient>
-        <linearGradient id="rooftile" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#b45309" />
-          <stop offset="100%" stopColor="#78350f" />
+        <linearGradient id="roof_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#b91c1c" />
+          <stop offset="100%" stopColor="#7f1d1d" />
         </linearGradient>
+        <linearGradient id="wall_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fef9c3" />
+          <stop offset="100%" stopColor="#fef3c7" />
+        </linearGradient>
+        <linearGradient id="wall2_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fde68a" />
+          <stop offset="100%" stopColor="#fcd34d" />
+        </linearGradient>
+        <linearGradient id="driveway_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d1d5db" />
+          <stop offset="100%" stopColor="#9ca3af" />
+        </linearGradient>
+        <linearGradient id="garage_ext" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f1f5f9" />
+          <stop offset="100%" stopColor="#e2e8f0" />
+        </linearGradient>
+        {/* Roof tile pattern */}
+        <pattern id="rooftiles" x="0" y="0" width="30" height="18" patternUnits="userSpaceOnUse">
+          <rect width="30" height="18" fill="#b91c1c" />
+          <rect x="0" y="9" width="15" height="9" fill="#991b1b" rx="0" />
+          <rect x="15" y="0" width="15" height="9" fill="#991b1b" rx="0" />
+          <line x1="0" y1="9" x2="30" y2="9" stroke="#7f1d1d" strokeWidth="0.5" />
+          <line x1="15" y1="0" x2="15" y2="18" stroke="#7f1d1d" strokeWidth="0.5" />
+        </pattern>
+        {/* Brick pattern */}
+        <pattern id="brick_ext" x="0" y="0" width="40" height="20" patternUnits="userSpaceOnUse">
+          <rect width="40" height="20" fill="#d97706" />
+          <rect x="1" y="1" width="36" height="8" fill="#b45309" rx="1" />
+          <rect x="21" y="11" width="18" height="8" fill="#b45309" rx="1" />
+          <rect x="1" y="11" width="16" height="8" fill="#b45309" rx="1" />
+        </pattern>
+        <pattern id="sidewalk_ext" x="0" y="0" width="36" height="24" patternUnits="userSpaceOnUse">
+          <rect width="36" height="24" fill="#cbd5e1" />
+          <rect x="1" y="1" width="34" height="22" fill="#e2e8f0" rx="1" />
+        </pattern>
+        <filter id="shadow_ext">
+          <feDropShadow dx="2" dy="4" stdDeviation="4" floodOpacity="0.25" />
+        </filter>
       </defs>
 
-      {/* Background */}
-      <rect width="760" height="520" fill="url(#sky)" />
-      <rect y="450" width="760" height="70" fill="url(#grass)" />
+      {/* === SKY === */}
+      <rect width="800" height="530" fill="url(#sky_ext)" />
 
-      {/* Foundation */}
-      <rect x="90" y="460" width="580" height="30" fill="#94a3b8" rx="2" />
+      {/* Clouds */}
+      <ellipse cx="120" cy="70" rx="55" ry="22" fill="white" opacity="0.85" />
+      <ellipse cx="155" cy="58" rx="38" ry="20" fill="white" opacity="0.9" />
+      <ellipse cx="90" cy="62" rx="30" ry="16" fill="white" opacity="0.8" />
+      <ellipse cx="620" cy="55" rx="65" ry="24" fill="white" opacity="0.75" />
+      <ellipse cx="665" cy="44" rx="40" ry="20" fill="white" opacity="0.8" />
 
-      {/* House body */}
-      <rect x="90" y="190" width="580" height="275" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="2" />
+      {/* === GROUND / LAWN === */}
+      <rect y="470" width="800" height="60" fill="url(#ground_ext)" />
+      {/* Grass texture lines */}
+      {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(i => (
+        <line key={`g${i}`} x1={20+i*55} y1="470" x2={28+i*55} y2="460" stroke="#15803d" strokeWidth="1.5" opacity="0.6" />
+      ))}
 
-      {/* Roof */}
-      <polygon points="80,195 380,25 680,195" fill="url(#rooftile)" stroke="#92400e" strokeWidth="2" />
-      <polygon points="80,195 380,25 680,195" fill="none" stroke="#92400e" strokeWidth="1.5" />
+      {/* === FOUNDATION === */}
+      <rect x="90" y="458" width="620" height="18" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
+      {/* Foundation bricks */}
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <rect key={`fb${i}`} x={93+i*60} y={460} width="55" height="14" fill="#78716c" stroke="#57534e" strokeWidth="0.5" rx="1" />
+      ))}
 
-      {/* Chimney */}
-      <rect x="195" y="45" width="55" height="90" fill="#a8a29e" stroke="#78716c" strokeWidth="1.5" />
-      <rect x="190" y="40" width="65" height="12" fill="#78716c" rx="1" />
+      {/* === MAIN HOUSE WALL === */}
+      {/* Left wing */}
+      <rect x="90" y="230" width="415" height="230" fill="url(#wall_ext)" stroke="#d97706" strokeWidth="1.5" filter="url(#shadow_ext)" />
+      {/* Wall detail lines (siding) */}
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <line key={`siding${i}`} x1="90" y1={250+i*21} x2="505" y2={250+i*21} stroke="#fde68a" strokeWidth="1" opacity="0.6" />
+      ))}
+      {/* Garage section */}
+      <rect x="495" y="248" width="225" height="212" fill="url(#wall2_ext)" stroke="#d97706" strokeWidth="1.5" />
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <line key={`siding2${i}`} x1="495" y1={265+i*19} x2="720" y2={265+i*19} stroke="#fcd34d" strokeWidth="1" opacity="0.5" />
+      ))}
 
-      {/* Solar panels */}
-      <rect x="380" y="60" width="180" height="80" fill="#1e3a5f" rx="2" stroke="#3b82f6" strokeWidth="1" />
+      {/* === ROOF === */}
+      {/* Main gable roof */}
+      <polygon points="60,232 400,42 740,232" fill="url(#rooftiles)" />
+      <polygon points="60,232 400,42 740,232" fill="none" stroke="#7f1d1d" strokeWidth="2.5" />
+      {/* Roof ridge */}
+      <line x1="400" y1="42" x2="400" y2="232" stroke="#7f1d1d" strokeWidth="1" strokeDasharray="4,3" opacity="0.4" />
+      {/* Fascia board */}
+      <polygon points="55,232 400,38 745,232 740,242 400,52 60,242" fill="#92400e" />
+      {/* Soffit / overhang underside */}
+      <polygon points="60,242 90,232 710,232 740,242" fill="#d6d3d1" />
+
+      {/* === CHIMNEY === */}
+      <rect x="172" y="58" width="58" height="100" fill="url(#brick_ext)" stroke="#92400e" strokeWidth="1.5" />
+      <rect x="167" y="52" width="68" height="14" fill="#78350f" rx="2" />
+      {/* Smoke */}
+      <ellipse cx="201" cy="42" rx="8" ry="5" fill="#94a3b8" opacity="0.4" />
+      <ellipse cx="197" cy="33" rx="6" ry="4" fill="#94a3b8" opacity="0.3" />
+      <ellipse cx="204" cy="24" rx="5" ry="4" fill="#94a3b8" opacity="0.2" />
+
+      {/* === SOLAR PANELS === */}
+      <rect x="458" y="88" width="185" height="82" fill="#1e3a5f" rx="3" stroke="#3b82f6" strokeWidth="1.5" />
       {[0,1,2].map(col => [0,1].map(row => (
-        <rect key={`s${col}${row}`} x={385 + col*58} y={65 + row*36} width="52" height="30" fill="#1e40af" stroke="#60a5fa" strokeWidth="0.5" />
+        <g key={`solar${col}${row}`}>
+          <rect x={463+col*60} y={93+row*37} width="55" height="32" fill="#1d4ed8" stroke="#60a5fa" strokeWidth="0.8" rx="1" />
+          <line x1={463+col*60} y1={109+row*37} x2={518+col*60} y2={109+row*37} stroke="#93c5fd" strokeWidth="0.5" />
+          <line x1={491+col*60} y1={93+row*37} x2={491+col*60} y2={125+row*37} stroke="#93c5fd" strokeWidth="0.5" />
+        </g>
       )))}
+      {/* Panel mounting frame */}
+      <rect x="458" y="88" width="185" height="82" fill="none" stroke="#60a5fa" strokeWidth="1.5" rx="3" />
 
-      {/* Garage */}
-      <rect x="490" y="225" width="200" height="165" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
-      {/* Garage panels */}
-      {[0,1,2].map(i => (
-        <rect key={`gp${i}`} x="495" y={230 + i*40} width="190" height="36" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.5" />
+      {/* === GARAGE DOOR === */}
+      <rect x="505" y="255" width="205" height="185" fill="url(#garage_ext)" stroke="#94a3b8" strokeWidth="2" rx="2" />
+      {/* Garage door panels */}
+      {[0,1,2,3].map(i => (
+        <g key={`gd${i}`}>
+          <rect x="508" y={258+i*44} width="199" height="40" fill={i%2===0 ? "#f8fafc" : "#f1f5f9"} stroke="#cbd5e1" strokeWidth="0.8" />
+          {/* Panel detail lines */}
+          <line x1="608" y1={258+i*44} x2="608" y2={298+i*44} stroke="#e2e8f0" strokeWidth="1" />
+        </g>
       ))}
-      <line x1="585" y1="225" x2="585" y2="390" stroke="#94a3b8" strokeWidth="1" />
+      {/* Garage door handle */}
+      <rect x="598" y="426" width="18" height="8" fill="#94a3b8" rx="3" />
+      {/* Garage door trim */}
+      <rect x="503" y="253" width="209" height="189" fill="none" stroke="#92400e" strokeWidth="3" rx="3" />
 
-      {/* Windows */}
-      <rect x="135" y="235" width="130" height="100" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" rx="3" />
-      <line x1="200" y1="235" x2="200" y2="335" stroke="#0ea5e9" strokeWidth="1" />
-      <line x1="135" y1="285" x2="265" y2="285" stroke="#0ea5e9" strokeWidth="1" />
+      {/* === WINDOWS === */}
+      {/* Left window with shutters */}
+      {/* Left shutter */}
+      <rect x="93" y="262" width="20" height="115" fill="#1d4ed8" rx="2" stroke="#1e40af" strokeWidth="1" />
+      {[0,1,2,3,4].map(i => <line key={`ls${i}`} x1="93" y1={272+i*20} x2="113" y2={272+i*20} stroke="#1e40af" strokeWidth="1" />)}
+      {/* Window */}
+      <rect x="113" y="268" width="125" height="110" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2.5" rx="3" />
+      <rect x="113" y="268" width="125" height="110" fill="none" stroke="#0284c7" strokeWidth="3" rx="3" />
+      {/* Window panes */}
+      <line x1="175" y1="268" x2="175" y2="378" stroke="#0ea5e9" strokeWidth="2" />
+      <line x1="113" y1="323" x2="238" y2="323" stroke="#0ea5e9" strokeWidth="2" />
+      {/* Window sill */}
+      <rect x="108" y="376" width="135" height="8" fill="#94a3b8" rx="2" />
+      {/* Right shutter */}
+      <rect x="238" y="262" width="20" height="115" fill="#1d4ed8" rx="2" stroke="#1e40af" strokeWidth="1" />
+      {[0,1,2,3,4].map(i => <line key={`rs${i}`} x1="238" y1={272+i*20} x2="258" y2={272+i*20} stroke="#1e40af" strokeWidth="1" />)}
+      {/* Window reflection */}
+      <polygon points="118,273 155,273 135,310" fill="white" opacity="0.25" />
 
-      <rect x="295" y="235" width="130" height="100" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2" rx="3" />
-      <line x1="360" y1="235" x2="360" y2="335" stroke="#0ea5e9" strokeWidth="1" />
-      <line x1="295" y1="285" x2="425" y2="285" stroke="#0ea5e9" strokeWidth="1" />
+      {/* Center window */}
+      {/* Left shutter */}
+      <rect x="298" y="262" width="20" height="115" fill="#1d4ed8" rx="2" stroke="#1e40af" strokeWidth="1" />
+      {[0,1,2,3,4].map(i => <line key={`ls2${i}`} x1="298" y1={272+i*20} x2="318" y2={272+i*20} stroke="#1e40af" strokeWidth="1" />)}
+      {/* Window */}
+      <rect x="318" y="268" width="125" height="110" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="2.5" rx="3" />
+      <rect x="318" y="268" width="125" height="110" fill="none" stroke="#0284c7" strokeWidth="3" rx="3" />
+      <line x1="380" y1="268" x2="380" y2="378" stroke="#0ea5e9" strokeWidth="2" />
+      <line x1="318" y1="323" x2="443" y2="323" stroke="#0ea5e9" strokeWidth="2" />
+      <rect x="313" y="376" width="135" height="8" fill="#94a3b8" rx="2" />
+      <rect x="443" y="262" width="20" height="115" fill="#1d4ed8" rx="2" stroke="#1e40af" strokeWidth="1" />
+      {[0,1,2,3,4].map(i => <line key={`rs2${i}`} x1="443" y1={272+i*20} x2="463" y2={272+i*20} stroke="#1e40af" strokeWidth="1" />)}
+      <polygon points="323,273 360,273 343,310" fill="white" opacity="0.25" />
 
-      {/* Front door */}
-      <rect x="325" y="325" width="110" height="145" fill="#7c3aed" rx="5" stroke="#4c1d95" strokeWidth="2" />
-      <circle cx="418" cy="398" r="6" fill="#fbbf24" />
-      <rect x="335" y="340" width="40" height="55" fill="#5b21b6" rx="3" />
-      <rect x="385" y="340" width="40" height="55" fill="#5b21b6" rx="3" />
+      {/* === FRONT DOOR === */}
+      {/* Door frame */}
+      <rect x="340" y="345" width="115" height="115" fill="#3730a3" rx="4" stroke="#1e1b4b" strokeWidth="3" />
+      {/* Door panels */}
+      <rect x="348" y="353" width="45" height="40" fill="#312e81" rx="3" stroke="#4338ca" strokeWidth="1" />
+      <rect x="401" y="353" width="45" height="40" fill="#312e81" rx="3" stroke="#4338ca" strokeWidth="1" />
+      <rect x="348" y="401" width="45" height="50" fill="#312e81" rx="3" stroke="#4338ca" strokeWidth="1" />
+      <rect x="401" y="401" width="45" height="50" fill="#312e81" rx="3" stroke="#4338ca" strokeWidth="1" />
+      {/* Door handles */}
+      <rect x="390" y="390" width="8" height="22" fill="#fbbf24" rx="3" />
+      <circle cx="394" cy="388" r="4" fill="#f59e0b" />
+      <rect x="397" y="390" width="8" height="22" fill="#fbbf24" rx="3" />
+      <circle cx="401" cy="388" r="4" fill="#f59e0b" />
+      {/* Door transom window */}
+      <rect x="340" y="330" width="115" height="18" fill="#bae6fd" stroke="#0ea5e9" strokeWidth="1.5" rx="2" />
+      <line x1="397" y1="330" x2="397" y2="348" stroke="#0ea5e9" strokeWidth="1" />
+      {/* Door step */}
+      <rect x="325" y="458" width="148" height="10" fill="#94a3b8" rx="2" />
+      <rect x="330" y="452" width="138" height="8" fill="#b0bec5" rx="2" />
+      {/* Porch lights */}
+      <rect x="333" y="340" width="8" height="20" fill="#92400e" rx="2" />
+      <ellipse cx="337" cy="338" rx="6" ry="4" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
+      <rect x="452" y="340" width="8" height="20" fill="#92400e" rx="2" />
+      <ellipse cx="456" cy="338" rx="6" ry="4" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
 
-      {/* Shutters */}
-      <rect x="120" y="230" width="18" height="110" fill="#3b82f6" rx="2" />
-      <rect x="278" y="230" width="18" height="110" fill="#3b82f6" rx="2" />
+      {/* === FENCE === */}
+      {/* Left fence section */}
+      <rect x="18" y="398" width="72" height="8" fill="#92400e" rx="2" />
+      <rect x="18" y="430" width="72" height="8" fill="#92400e" rx="2" />
+      {[0,1,2,3,4].map(i => (
+        <g key={`lf${i}`}>
+          <rect x={20+i*14} y={390} width="8" height="55" fill="#a16207" rx="2" />
+          <polygon points={`${20+i*14},390 ${24+i*14},383 ${28+i*14},390`} fill="#a16207" />
+        </g>
+      ))}
+      {/* Right fence section */}
+      <rect x="710" y="398" width="72" height="8" fill="#92400e" rx="2" />
+      <rect x="710" y="430" width="72" height="8" fill="#92400e" rx="2" />
+      {[0,1,2,3,4].map(i => (
+        <g key={`rf${i}`}>
+          <rect x={712+i*14} y={390} width="8" height="55" fill="#a16207" rx="2" />
+          <polygon points={`${712+i*14},390 ${716+i*14},383 ${720+i*14},390`} fill="#a16207" />
+        </g>
+      ))}
 
-      {/* Fence posts */}
+      {/* === DRIVEWAY === */}
+      <polygon points="498,460 752,460 760,530 490,530" fill="url(#driveway_ext)" />
+      {/* Driveway expansion joints */}
+      <line x1="625" y1="460" x2="625" y2="530" stroke="#9ca3af" strokeWidth="1.5" strokeDasharray="8,5" />
+      <line x1="544" y1="460" x2="522" y2="530" stroke="#9ca3af" strokeWidth="1" strokeDasharray="6,4" />
+      <line x1="706" y1="460" x2="718" y2="530" stroke="#9ca3af" strokeWidth="1" strokeDasharray="6,4" />
+      {/* EV charger box */}
+      <rect x="510" y="435" width="52" height="48" fill="#064e3b" rx="5" stroke="#059669" strokeWidth="2" />
+      <rect x="516" y="441" width="40" height="28" fill="#065f46" rx="3" />
+      <text x="536" y="460" textAnchor="middle" fill="#34d399" fontSize="14" fontWeight="bold">⚡</text>
+      <rect x="530" y="473" width="12" height="6" fill="#34d399" rx="1" />
+
+      {/* === WALKWAY === */}
+      <rect x="328" y="465" width="142" height="36" fill="url(#sidewalk_ext)" stroke="#94a3b8" strokeWidth="1" />
+      <line x1="346" y1="465" x2="346" y2="501" stroke="#94a3b8" strokeWidth="1" />
+      <line x1="364" y1="465" x2="364" y2="501" stroke="#94a3b8" strokeWidth="1" />
+      <line x1="400" y1="465" x2="400" y2="501" stroke="#94a3b8" strokeWidth="1" />
+      <line x1="436" y1="465" x2="436" y2="501" stroke="#94a3b8" strokeWidth="1" />
+      <line x1="454" y1="465" x2="454" y2="501" stroke="#94a3b8" strokeWidth="1" />
+
+      {/* === RETAINING WALL === */}
+      <rect x="18" y="452" width="200" height="22" fill="#92400e" rx="2" stroke="#78350f" strokeWidth="1.5" />
       {[0,1,2,3,4,5,6].map(i => (
-        <rect key={`f${i}`} x={45 + i*0} y={210 + i*0} width="8" height="260" fill="#a16207" rx="1"
-          transform={`translate(${45}, ${200 + i*38})`} />
+        <line key={`rw${i}`} x1={48+i*25} y1="452" x2={48+i*25} y2="474" stroke="#78350f" strokeWidth="1" />
       ))}
-      <rect x="45" y="200" width="8" height="280" fill="#a16207" rx="1" />
-      <rect x="680" y="200" width="8" height="280" fill="#a16207" rx="1" />
-      <rect x="45" y="250" width="645" height="6" fill="#ca8a04" rx="1" />
-      <rect x="45" y="340" width="645" height="6" fill="#ca8a04" rx="1" />
 
-      {/* Shed */}
-      <rect x="615" y="400" width="90" height="80" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
-      <polygon points="610,400 660,375 715,400" fill="#b45309" stroke="#92400e" strokeWidth="1.5" />
+      {/* === SWALE === */}
+      <rect x="18" y="472" width="764" height="14" fill="#7dd3fc" opacity="0.5" rx="4" />
+      <line x1="18" y1="479" x2="782" y2="479" stroke="#38bdf8" strokeWidth="1" opacity="0.6" />
 
-      {/* Tree */}
-      <rect x="640" y="380" width="12" height="70" fill="#92400e" />
-      <circle cx="646" cy="355" r="40" fill="#16a34a" opacity="0.9" />
-      <circle cx="626" cy="370" r="28" fill="#15803d" opacity="0.8" />
-      <circle cx="666" cy="368" r="30" fill="#166534" opacity="0.7" />
+      {/* === SHED === */}
+      <rect x="10" y="368" width="82" height="110" fill="#d97706" stroke="#92400e" strokeWidth="2" />
+      {/* Shed siding */}
+      {[0,1,2,3,4].map(i => (
+        <line key={`sh${i}`} x1="10" y1={385+i*18} x2="92" y2={385+i*18} stroke="#b45309" strokeWidth="1" />
+      ))}
+      {/* Shed roof */}
+      <polygon points="4,370 51,348 96,370" fill="#92400e" stroke="#78350f" strokeWidth="2" />
+      {/* Shed door */}
+      <rect x="32" y="415" width="30" height="63" fill="#b45309" rx="2" stroke="#92400e" strokeWidth="1" />
+      <circle cx="57" cy="448" r="3" fill="#fbbf24" />
 
-      {/* Driveway */}
-      <polygon points="485,450 750,450 750,510 460,510" fill="#94a3b8" opacity="0.7" />
-      {/* Driveway lines */}
-      <line x1="617" y1="450" x2="617" y2="510" stroke="#64748b" strokeWidth="1" strokeDasharray="8,6" />
+      {/* === TREES === */}
+      {/* Large oak tree right side */}
+      <rect x="700" y="385" width="14" height="85" fill="#7c2d12" rx="2" />
+      <circle cx="707" cy="360" r="42" fill="#15803d" />
+      <circle cx="685" cy="378" r="30" fill="#16a34a" />
+      <circle cx="729" cy="372" r="28" fill="#14532d" />
+      <circle cx="707" cy="345" r="24" fill="#15803d" opacity="0.9" />
+      {/* Palm tree left of garage */}
+      <rect x="484" y="390" width="8" height="70" fill="#7c2d12" rx="2" />
+      <ellipse cx="488" cy="388" rx="2" ry="18" fill="#4ade80" transform="rotate(-30 488 388)" />
+      <ellipse cx="488" cy="388" rx="2" ry="18" fill="#4ade80" transform="rotate(10 488 388)" />
+      <ellipse cx="488" cy="388" rx="2" ry="18" fill="#4ade80" transform="rotate(50 488 388)" />
+      <ellipse cx="488" cy="388" rx="2" ry="18" fill="#22c55e" transform="rotate(-10 488 388)" />
+      <ellipse cx="488" cy="388" rx="2" ry="18" fill="#22c55e" transform="rotate(30 488 388)" />
 
-      {/* Walkway */}
-      <rect x="305" y="465" width="145" height="45" fill="#b0bec5" rx="2" />
+      {/* === HOUSE NUMBER === */}
+      <rect x="390" y="305" width="22" height="22" fill="#1e3a5f" rx="3" />
+      <text x="401" y="321" textAnchor="middle" fill="#ffcc00" fontSize="10" fontWeight="bold">42</text>
 
-      {/* EV Charger */}
-      <rect x="495" y="390" width="50" height="50" fill="#065f46" rx="4" stroke="#064e3b" strokeWidth="1.5" />
-      <text x="520" y="421" textAnchor="middle" fill="#34d399" fontSize="16" fontWeight="bold">⚡</text>
-
-      {/* Retaining wall */}
-      <rect x="50" y="458" width="210" height="18" fill="#92400e" rx="2" stroke="#78350f" strokeWidth="1" />
-
-      {/* Swale */}
-      <rect x="45" y="488" width="670" height="12" fill="#7dd3fc" opacity="0.6" rx="3" />
+      {/* === MAILBOX === */}
+      <rect x="768" y="445" width="18" height="12" fill="#1e40af" rx="3" />
+      <rect x="766" y="457" width="4" height="14" fill="#64748b" rx="1" />
 
       {/* ZONE OVERLAYS */}
       {zones.map((zone, i) => {
         const permitName = RES_EXTERIOR_MAP[zone.id] || zone.id;
         const label = ZONE_LABELS[zone.id] || zone.id;
         return (
-          <ZoneOverlay
-            key={zone.id + i}
-            zone={zone}
-            showHighlights={showHighlights}
-            onClick={() => onZone(permitName)}
-            label={label}
-          />
+          <ZoneOverlay key={zone.id + i} zone={zone} showHighlights={showHighlights} onClick={() => onZone(permitName)} label={label} />
         );
       })}
 
-      {/* Labels */}
-      <text x="380" y="14" textAnchor="middle" fill="#1e40af" fontSize="11" fontWeight="bold">RESIDENTIAL — EXTERIOR VIEW</text>
+      {/* Title bar */}
+      <rect x="0" y="0" width="800" height="20" fill="rgba(30,58,138,0.85)" />
+      <text x="400" y="14" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" letterSpacing="1">RESIDENTIAL — EXTERIOR VIEW · Click any highlighted area</text>
     </svg>
   );
 }
