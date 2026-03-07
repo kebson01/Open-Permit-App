@@ -25,12 +25,7 @@ export default function InteractiveMap() {
 
   const handleZoneClick = (permitName) => {
     const found = permits.find(p => p.name === permitName);
-    if (found) {
-      setSelectedPermit(found);
-    } else {
-      // Show a stub popup if permit exists in master list but not in DB yet
-      setSelectedPermit({ name: permitName, description: "Contact your local building department for full requirements on this permit type." });
-    }
+    if (found) setSelectedPermit(found);
   };
 
   const handleCityApply = () => {
@@ -38,10 +33,9 @@ export default function InteractiveMap() {
   };
 
   const views = [
-    { id: "front",          label: "Residential Exterior", icon: Home },
-    { id: "interior",       label: "Residential Interior", icon: Home },
-    { id: "commercial_ext", label: "Commercial Exterior",  icon: Building2 },
-    { id: "commercial_int", label: "Commercial Interior",  icon: Building2 },
+    { id: "front", label: "Front View", icon: Home },
+    { id: "back", label: "Back View", icon: Home },
+    { id: "commercial", label: "Commercial", icon: Building2 },
   ];
 
   return (
@@ -55,19 +49,19 @@ export default function InteractiveMap() {
       {/* Controls Bar */}
       <div className="flex flex-wrap gap-3 mb-6 items-center">
         {/* View toggles */}
-        <div className="flex flex-wrap bg-white rounded-xl border border-gray-200 p-1 shadow-sm gap-0.5">
+        <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
           {views.map(v => (
             <button
               key={v.id}
               onClick={() => setView(v.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 view === v.id
                   ? "gradient-primary text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              <v.icon className="w-3.5 h-3.5" />
-              <span>{v.label}</span>
+              <v.icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{v.label}</span>
             </button>
           ))}
         </div>
