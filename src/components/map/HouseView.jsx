@@ -145,9 +145,10 @@ const C = {
 // Each returns an SVG-based house diagram with <rect>/<polygon> zones
 // ─────────────────────────────────────────────
 
+// Real photo-based exterior — zones positioned over actual house photo
 function ResidentialExterior({ showHighlights, onZone }) {
   const zones = [
-    { id: "roof",          shape: "poly", points: "60,230 400,40 740,230", x: 200, y: 100, w: 400, h: 120, color: C.red    },
+    { id: "roof",          x: 60,  y: 15,  w: 680, h: 195, color: C.red,   shape: "poly", points: "60,210 400,15 740,210" },
     { id: "solar",         x: 460, y: 90,  w: 180, h: 80,  color: C.yellow  },
     { id: "chimney",       x: 175, y: 65,  w: 55,  h: 95,  color: C.orange  },
     { id: "window_front",  x: 105, y: 270, w: 130, h: 110, color: C.cyan    },
