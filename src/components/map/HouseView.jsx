@@ -169,7 +169,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
-  const legend = LEGENDS[view]     || LEGENDS.front;
+  const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
   const imgSrc = IMAGES[view]      || IMAGES.front;
 
   return (
