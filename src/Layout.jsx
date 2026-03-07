@@ -163,7 +163,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-white/10 bg-[#2c5282]/95 backdrop-blur">
+          <div className="md:hidden border-t border-white/10 backdrop-blur" style={{ backgroundColor: "rgba(15,23,42,0.97)" }}>
             {navLinks.map(link => (
               <Link
                 key={link.page}
