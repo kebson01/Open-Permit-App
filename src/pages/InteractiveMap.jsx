@@ -23,9 +23,14 @@ export default function InteractiveMap() {
     queryFn: () => base44.entities.PermitType.list(),
   });
 
-  const handleZoneClick = (permitName) => {
+  const handleZoneClick = (permitName, permitDesc) => {
     const found = permits.find(p => p.name === permitName);
-    if (found) setSelectedPermit(found);
+    if (found) {
+      setSelectedPermit(found);
+    } else {
+      // Create a lightweight permit object from the zone data for permits not yet in DB
+      setSelectedPermit({ name: permitName, description: permitDesc || "", typical_requirements: [], documents_needed: [] });
+    }
   };
 
   const handleCityApply = () => {
