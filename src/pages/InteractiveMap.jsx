@@ -12,7 +12,7 @@ const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Coop
 
 export default function InteractiveMap() {
   const urlParams = new URLSearchParams(window.location.search);
-  const [view, setView] = useState("exterior");
+  const [view, setView] = useState("all");
   const [showHighlights, setShowHighlights] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState(null);
@@ -38,9 +38,7 @@ export default function InteractiveMap() {
   };
 
   const views = [
-    { id: "exterior", label: "Front / Exterior", icon: Home },
-    { id: "backyard", label: "Backyard", icon: Home },
-    { id: "interior", label: "Interior / Inside", icon: Building2 },
+    { id: "all", label: "Residential Home", icon: Home },
   ];
 
   return (
