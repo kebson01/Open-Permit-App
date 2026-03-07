@@ -38,9 +38,9 @@ export default function InteractiveMap() {
   };
 
   const views = [
-    { id: "front", label: "Front View", icon: Home },
-    { id: "back", label: "Back View", icon: Home },
-    { id: "commercial", label: "Commercial", icon: Building2 },
+    { id: "exterior", label: "Front / Exterior", icon: Home },
+    { id: "backyard", label: "Backyard", icon: Home },
+    { id: "interior", label: "Interior / Inside", icon: Building2 },
   ];
 
   return (
