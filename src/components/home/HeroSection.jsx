@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export default function HeroSection() {
   return (
-    <section className="relative gradient-navy overflow-hidden">
+    <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #111827 100%)" }}>
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-white blur-3xl" />
