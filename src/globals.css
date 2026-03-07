@@ -3,35 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --navy-dark: #1a2d40;
-  --navy-mid: #35475e;
-  --blue-primary: #2c5282;
-  --blue-accent: #3182ce;
-  --gold: #ffcc00;
-  --gold-dark: #e6b800;
+  --navy-dark: #0a0a0a;
+  --navy-mid: #1a1a2e;
+  --blue-primary: #1d4ed8;
+  --blue-accent: #3b82f6;
+  --gold: #3b82f6;
+  --gold-dark: #2563eb;
 }
 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 215 28% 17%;
+    --foreground: 0 0% 7%;
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
+    --card-foreground: 0 0% 7%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
-    --primary: 213 56% 34%;
+    --popover-foreground: 0 0% 7%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 20% 29%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 47 100% 50%;
-    --accent-foreground: 215 28% 17%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 214 20% 85%;
-    --input: 214 20% 85%;
-    --ring: 213 56% 34%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 221 83% 53%;
     --radius: 0.625rem;
   }
 }
