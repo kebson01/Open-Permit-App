@@ -33,9 +33,10 @@ export default function InteractiveMap() {
   };
 
   const views = [
-    { id: "front", label: "Front View", icon: Home },
-    { id: "back", label: "Back View", icon: Home },
-    { id: "commercial", label: "Commercial", icon: Building2 },
+    { id: "front",          label: "Residential Exterior", icon: Home },
+    { id: "interior",       label: "Residential Interior", icon: Home },
+    { id: "commercial_ext", label: "Commercial Exterior",  icon: Building2 },
+    { id: "commercial_int", label: "Commercial Interior",  icon: Building2 },
   ];
 
   return (
