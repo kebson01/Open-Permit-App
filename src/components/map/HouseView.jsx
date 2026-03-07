@@ -766,7 +766,9 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-white" style={{ aspectRatio: "16/10" }}>
-      <Component showHighlights={showHighlights} onZone={onZoneClick} />
+      <div className="w-full h-full">
+        <Component showHighlights={showHighlights} onZone={onZoneClick} />
+      </div>
     </div>
   );
 }
