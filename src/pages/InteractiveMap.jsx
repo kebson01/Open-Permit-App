@@ -55,19 +55,19 @@ export default function InteractiveMap() {
       {/* Controls Bar */}
       <div className="flex flex-wrap gap-3 mb-6 items-center">
         {/* View toggles */}
-        <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+        <div className="flex flex-wrap bg-white rounded-xl border border-gray-200 p-1 shadow-sm gap-0.5">
           {views.map(v => (
             <button
               key={v.id}
               onClick={() => setView(v.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 view === v.id
                   ? "gradient-primary text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              <v.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{v.label}</span>
+              <v.icon className="w-3.5 h-3.5" />
+              <span>{v.label}</span>
             </button>
           ))}
         </div>
