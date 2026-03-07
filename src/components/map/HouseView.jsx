@@ -128,7 +128,42 @@ const LEGENDS = {
   ],
 };
 
-const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES };
+// ── COMMERCIAL VIEW ZONES ────────────────────────────────────────────────────
+const COMMERCIAL_ZONES = [
+  { id: "com_building",   label: "Commercial Building Permit",  desc: "New commercial construction or major structural work",         x: 0,   y: 2,   w: 45,  h: 48, color: "rgba(239,68,68,0.18)",   stroke: "#ef4444" },
+  { id: "com_roof",       label: "Commercial Roof",             desc: "Commercial roofing replacement or repair",                    x: 2,   y: 2,   w: 43,  h: 22, color: "rgba(239,68,68,0.28)",   stroke: "#ef4444" },
+  { id: "com_hvac",       label: "HVAC / Mechanical",           desc: "Rooftop units, ductwork, mechanical system installation",     x: 4,   y: 4,   w: 36,  h: 16, color: "rgba(14,165,233,0.35)",  stroke: "#0ea5e9" },
+  { id: "com_facade",     label: "Storefront / Facade",         desc: "Storefront glazing, exterior facade renovation",              x: 0,   y: 34,  w: 44,  h: 16, color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  { id: "com_sign",       label: "Sign Permit",                 desc: "Commercial signage installation",                             x: 0,   y: 50,  w: 12,  h: 8,  color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  { id: "com_office",     label: "Commercial Building Permit",  desc: "Office building construction or renovation",                  x: 58,  y: 2,   w: 28,  h: 38, color: "rgba(239,68,68,0.18)",   stroke: "#ef4444" },
+  { id: "com_parking",    label: "Parking Lot / Paving",        desc: "Parking lot paving, striping, and ADA compliance",            x: 20,  y: 50,  w: 50,  h: 35, color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
+  { id: "com_ev",         label: "EV Charging Station",         desc: "Electric vehicle charging station installation",              x: 55,  y: 62,  w: 12,  h: 18, color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
+  { id: "com_excavation", label: "Excavation / Grading",        desc: "Site excavation, grading, and earthwork permit",              x: 68,  y: 42,  w: 32,  h: 40, color: "rgba(180,83,9,0.32)",    stroke: "#b45309" },
+  { id: "com_utility",    label: "Utility / Underground",       desc: "Underground utility installation (water, sewer, electric)",   x: 0,   y: 58,  w: 22,  h: 30, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
+  { id: "com_fire",       label: "Fire Suppression",            desc: "Fire sprinkler system installation or modification",          x: 2,   y: 5,   w: 42,  h: 44, color: "rgba(239,68,68,0.08)",   stroke: "#ef4444" },
+  { id: "com_electric",   label: "Electrical Service",          desc: "Service panel upgrade, switchgear, electrical distribution",  x: 46,  y: 38,  w: 14,  h: 14, color: "rgba(234,179,8,0.38)",   stroke: "#eab308" },
+  { id: "com_sidewalk",   label: "Sidewalk / Curb",             desc: "Sidewalk, curb, and gutter installation",                     x: 0,   y: 72,  w: 20,  h: 16, color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
+  { id: "com_landscape",  label: "Irrigation System",           desc: "Commercial landscape and irrigation system",                  x: 0,   y: 42,  w: 20,  h: 18, color: "rgba(16,185,129,0.28)",  stroke: "#10b981" },
+  { id: "com_fence",      label: "Fence / Barrier",             desc: "Commercial fencing or barrier installation",                  x: 0,   y: 86,  w: 70,  h: 8,  color: "rgba(34,197,94,0.28)",   stroke: "#22c55e" },
+  { id: "com_dumpster",   label: "Dumpster Enclosure",          desc: "Dumpster pad and enclosure construction",                     x: 46,  y: 52,  w: 10,  h: 10, color: "rgba(107,114,128,0.35)", stroke: "#6b7280" },
+];
+
+const COMMERCIAL_LEGEND = [
+  { label: "Commercial Building",   color: "#ef4444" },
+  { label: "HVAC / Mechanical",     color: "#0ea5e9" },
+  { label: "Storefront / Facade",   color: "#6366f1" },
+  { label: "Sign Permit",           color: "#eab308" },
+  { label: "Parking Lot / Paving",  color: "#6b7280" },
+  { label: "EV Charging Station",   color: "#eab308" },
+  { label: "Excavation / Grading",  color: "#b45309" },
+  { label: "Utility / Underground", color: "#06b6d4" },
+  { label: "Electrical Service",    color: "#eab308" },
+  { label: "Sidewalk / Curb",       color: "#9ca3af" },
+  { label: "Irrigation System",     color: "#10b981" },
+  { label: "Fence / Barrier",       color: "#22c55e" },
+];
+
+const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
 
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
