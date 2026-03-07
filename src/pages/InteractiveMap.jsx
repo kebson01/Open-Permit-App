@@ -12,7 +12,7 @@ const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Coop
 
 export default function InteractiveMap() {
   const urlParams = new URLSearchParams(window.location.search);
-  const [view, setView] = useState("all");
+  const [view, setView] = useState("front");
   const [showHighlights, setShowHighlights] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState(null);

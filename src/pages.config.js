@@ -47,18 +47,18 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Home from './pages/Home';
 import FeeCalculator from './pages/FeeCalculator';
-import PermitInfo from './pages/PermitInfo';
+import Home from './pages/Home';
 import InteractiveMap from './pages/InteractiveMap';
+import PermitInfo from './pages/PermitInfo';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
     "FeeCalculator": FeeCalculator,
-    "PermitInfo": PermitInfo,
+    "Home": Home,
     "InteractiveMap": InteractiveMap,
+    "PermitInfo": PermitInfo,
 }
 
 export const pagesConfig = {
