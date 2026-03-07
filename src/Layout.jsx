@@ -126,7 +126,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
-      <nav className="gradient-primary sticky top-0 z-40 shadow-lg">
+      <nav className="sticky top-0 z-40 shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <Link to={createPageUrl("Home")} className="flex items-center gap-2.5">
