@@ -190,7 +190,7 @@ export default function Layout({ children, currentPageName }) {
       <footer className="gradient-navy text-gray-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-5 h-5 text-[#ffcc00]" />
+            <Building2 className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">Saint's Permitting System</span>
           </div>
           <p className="text-sm">© {new Date().getFullYear()} Saint's Interactive Permitting System. All rights reserved.</p>
