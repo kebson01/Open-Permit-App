@@ -25,7 +25,12 @@ export default function InteractiveMap() {
 
   const handleZoneClick = (permitName) => {
     const found = permits.find(p => p.name === permitName);
-    if (found) setSelectedPermit(found);
+    if (found) {
+      setSelectedPermit(found);
+    } else {
+      // Show a stub popup if permit exists in master list but not in DB yet
+      setSelectedPermit({ name: permitName, description: "Contact your local building department for full requirements on this permit type." });
+    }
   };
 
   const handleCityApply = () => {
