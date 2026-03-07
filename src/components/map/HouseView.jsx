@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const HOUSE_IMAGE = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ba3e9a8c2_ResidentialHouse.png";
+const HOUSE_IMAGE = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/da7676c7b_image_d0f54e86.png";
 
 // The image is 1270×672 px (approx 1.89:1 ratio)
 // Zones are defined as percentages (0–100) of the image width/height
