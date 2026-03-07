@@ -8,125 +8,102 @@ const HOUSE_IMAGE = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/
 // so they work at any rendered size.
 
 // ─────────────────────────────────────────────
-//  ALL ZONES — one view, one image
-//  The uploaded illustration already shows
-//  exterior, interior cut-away, pool, pergola,
-//  shed, solar, garage, fence, generator, etc.
+//  ALL ZONES — matched to the labeled guide image
+//  Coordinates are % of image width/height
 // ─────────────────────────────────────────────
 const ALL_ZONES = [
-  // ── ROOF ──────────────────────────────────────────
-  { id: "roof",        label: "Roof / Re-Roof",         desc: "Roofing replacement or repair",              x: 22,  y: 1,   w: 55,  h: 18,  color: "rgba(239,68,68,0.25)",   stroke: "#ef4444" },
+  // ── NEW CONSTRUCTION (left open framing, upper-left) ─
+  { id: "newconst",    label: "New Construction",            desc: "New home construction — early stages",         x: 21,  y: 5,   w: 16,  h: 38, color: "rgba(99,102,241,0.2)",   stroke: "#6366f1" },
 
-  // ── SOLAR PANELS (on roof, top-center) ───────────
-  { id: "solar",       label: "Solar Panel",             desc: "Photovoltaic system installation",           x: 37,  y: 2,   w: 20,  h: 12,  color: "rgba(234,179,8,0.35)",   stroke: "#eab308" },
+  // ── SOLAR PANELS (top-center roof) ───────────────────
+  { id: "solar",       label: "Solar Panels",                desc: "Photovoltaic system installation",              x: 36,  y: 3,   w: 20,  h: 13, color: "rgba(234,179,8,0.4)",    stroke: "#eab308" },
 
-  // ── UPPER WINDOWS (2nd floor left framing) ───────
-  { id: "win_upper",   label: "Window Replacement",      desc: "Impact windows, retrofit windows",           x: 23,  y: 20,  w: 14,  h: 10,  color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
+  // ── ROOF / RE-ROOF (full roof span) ──────────────────
+  { id: "roof",        label: "Roof / Re-Roof",              desc: "Installing roofing materials & construction",   x: 22,  y: 2,   w: 53,  h: 19, color: "rgba(239,68,68,0.2)",    stroke: "#ef4444" },
 
-  // ── UPPER WINDOWS right ───────────────────────────
-  { id: "win_upper2",  label: "Window Replacement",      desc: "Impact windows, retrofit windows",           x: 55,  y: 18,  w: 14,  h: 10,  color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
+  // ── WINDOW REPLACEMENT (upper right windows) ─────────
+  { id: "win_right",   label: "Window Replacement",          desc: "New impact windows in front entrance install",  x: 56,  y: 16,  w: 14,  h: 12, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
 
-  // ── HURRICANE SHUTTERS (roller visible left wall) ─
-  { id: "shutters",    label: "Hurricane Shutters",      desc: "Accordion, panel, roll-down shutters",       x: 31,  y: 56,  w: 8,   h: 12,  color: "rgba(168,85,247,0.35)",  stroke: "#a855f7" },
+  // ── HURRICANE SHUTTERS (right side, accordion) ───────
+  { id: "shutters",    label: "Hurricane Shutters",          desc: "Accordion shutters installed",                  x: 57,  y: 28,  w: 9,   h: 13, color: "rgba(168,85,247,0.35)",  stroke: "#a855f7" },
 
-  // ── GARAGE DOOR ───────────────────────────────────
-  { id: "garage",      label: "Garage Door",             desc: "Garage door replacement",                    x: 13,  y: 42,  w: 18,  h: 22,  color: "rgba(249,115,22,0.3)",   stroke: "#f97316" },
+  // ── A/C REPLACEMENT (upper left, split system unit) ──
+  { id: "ac",          label: "A/C Replacement",             desc: "New split system and instant unit",             x: 7,   y: 22,  w: 11,  h: 13, color: "rgba(14,165,233,0.35)",  stroke: "#0ea5e9" },
 
-  // ── FRONT DOOR ────────────────────────────────────
-  { id: "door",        label: "Door Replacement",        desc: "Exterior door installation",                 x: 33,  y: 54,  w: 7,   h: 18,  color: "rgba(139,92,246,0.3)",   stroke: "#8b5cf6" },
+  // ── GENERATOR (left side exterior) ───────────────────
+  { id: "gen",         label: "Generator",                   desc: "Emergency generator installation",              x: 4,   y: 36,  w: 9,   h: 11, color: "rgba(220,38,38,0.35)",   stroke: "#dc2626" },
 
-  // ── FENCE / GATE (front left) ────────────────────
-  { id: "fence_front", label: "Fence / Gate",            desc: "Fence and gate installation",                x: 0,   y: 52,  w: 13,  h: 30,  color: "rgba(34,197,94,0.3)",    stroke: "#22c55e" },
+  // ── TEMPORARY ELECTRIC SERVICE (utility pole left) ───
+  { id: "tempelec",    label: "Temporary Electric Service",  desc: "Temporary power pole",                         x: 0,   y: 33,  w: 7,   h: 30, color: "rgba(234,179,8,0.25)",   stroke: "#eab308" },
 
-  // ── FENCE right side ─────────────────────────────
-  { id: "fence_right", label: "Fence / Gate",            desc: "Fence and gate installation",                x: 77,  y: 30,  w: 8,   h: 38,  color: "rgba(34,197,94,0.3)",    stroke: "#22c55e" },
+  // ── EV CHARGER + GARAGE DOOR (garage front) ──────────
+  { id: "garage",      label: "EV / Garage Door",            desc: "EV charger & garage door replacement",          x: 13,  y: 42,  w: 17,  h: 24, color: "rgba(249,115,22,0.3)",   stroke: "#f97316" },
 
-  // ── DRIVEWAY (concrete, front-left) ──────────────
-  { id: "driveway",    label: "Driveway (Concrete)",     desc: "Concrete driveway installation",             x: 0,   y: 68,  w: 28,  h: 20,  color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
+  // ── ELECTRICAL SERVICE (panel, interior left wall) ───
+  { id: "panel",       label: "Electrical Service",          desc: "Panel upgrade, service change",                 x: 37,  y: 30,  w: 4,   h: 8,  color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
 
-  // ── DRIVEWAY PAVER ────────────────────────────────
-  { id: "paver",       label: "Driveway (Paver)",        desc: "Paver driveway installation",                x: 3,   y: 75,  w: 20,  h: 12,  color: "rgba(180,83,9,0.25)",    stroke: "#b45309" },
+  // ── HVAC (ducts, interior center) ────────────────────
+  { id: "hvac",        label: "A/C Replacement (HVAC)",      desc: "Air conditioning change-out (≤5 tons)",         x: 41,  y: 38,  w: 12,  h: 14, color: "rgba(14,165,233,0.3)",   stroke: "#0ea5e9" },
 
-  // ── WALKWAY / SIDEWALK (left street edge) ────────
-  { id: "walkway",     label: "Walkway / Sidewalk",      desc: "Pedestrian walkway construction",            x: 0,   y: 85,  w: 30,  h: 10,  color: "rgba(156,163,175,0.3)",  stroke: "#9ca3af" },
+  // ── RESIDENTIAL REMODEL (ground floor cut-away) ──────
+  { id: "remodel",     label: "Residential Remodel",         desc: "Interior alterations / renovations",            x: 38,  y: 50,  w: 24,  h: 22, color: "rgba(245,158,11,0.25)",  stroke: "#f59e0b" },
 
-  // ── SWALE (bottom strip) ─────────────────────────
-  { id: "swale",       label: "Swale",                   desc: "Drainage swale modification",                x: 0,   y: 91,  w: 40,  h: 9,   color: "rgba(16,185,129,0.2)",   stroke: "#10b981" },
+  // ── PLUMBING (center-bottom interior) ────────────────
+  { id: "plumbing",    label: "Plumbing",                    desc: "Plumbing rough-in, fixtures, re-pipe",          x: 43,  y: 62,  w: 10,  h: 12, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
 
-  // ── NEW CONSTRUCTION / ADDITION (left open frame) ─
-  { id: "addition",    label: "Residential Addition",    desc: "Room additions, extensions",                 x: 21,  y: 14,  w: 16,  h: 42,  color: "rgba(99,102,241,0.2)",   stroke: "#6366f1" },
+  // ── WINDOW REPLACEMENT lower (front ground floor) ────
+  { id: "win_lower",   label: "Window Replacement",          desc: "New impact windows",                            x: 28,  y: 63,  w: 12,  h: 10, color: "rgba(59,130,246,0.3)",   stroke: "#3b82f6" },
 
-  // ── REMODEL (interior cut-away, ground floor) ────
-  { id: "remodel",     label: "Residential Remodel",     desc: "Interior alterations/renovations",           x: 37,  y: 40,  w: 25,  h: 30,  color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
+  // ── WALKWAY / SIDEWALK (center-bottom) ───────────────
+  { id: "walkway",     label: "Walkway / Sidewalk",          desc: "Concrete paths",                                x: 28,  y: 78,  w: 16,  h: 10, color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
 
-  // ── NEW CONSTRUCTION (whole home shell) ──────────
-  { id: "newconst",    label: "New Construction",        desc: "New home construction",                      x: 21,  y: 1,   w: 57,  h: 72,  color: "rgba(99,102,241,0.08)",  stroke: "#6366f1" },
+  // ── SWALE (bottom center-left) ───────────────────────
+  { id: "swale",       label: "Swale",                       desc: "Swale modification",                            x: 20,  y: 88,  w: 28,  h: 9,  color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
 
-  // ── ELECTRICAL SERVICE PANEL (left exterior wall) ─
-  { id: "panel",       label: "Electrical Service",      desc: "Panel upgrade, service change",              x: 37,  y: 35,  w: 4,   h: 8,   color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  // ── DRIVEWAY CONCRETE (front left) ───────────────────
+  { id: "driveway",    label: "Driveway (Concrete)",         desc: "Concrete driveway installation",                x: 5,   y: 68,  w: 22,  h: 18, color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
 
-  // ── EV CHARGER (garage wall interior) ────────────
-  { id: "ev",          label: "EV Charger",              desc: "Electric vehicle charging station",          x: 15,  y: 52,  w: 6,   h: 7,   color: "rgba(14,165,233,0.35)",  stroke: "#0ea5e9" },
+  // ── DRIVEWAY PAVER (far left bottom) ─────────────────
+  { id: "paver",       label: "Driveway (Paver)",            desc: "Paver driveway installation",                   x: 0,   y: 80,  w: 14,  h: 14, color: "rgba(180,83,9,0.3)",     stroke: "#b45309" },
 
-  // ── LOW VOLTAGE ALARM (upper interior wall) ───────
-  { id: "alarm",       label: "Low Voltage Alarm",       desc: "Security/fire alarm systems",                x: 57,  y: 20,  w: 5,   h: 7,   color: "rgba(220,38,38,0.35)",   stroke: "#dc2626" },
+  // ── FENCE / GATE (left front) ────────────────────────
+  { id: "fence",       label: "Fence / Gate",                desc: "Fence and gate installation",                   x: 0,   y: 52,  w: 14,  h: 28, color: "rgba(34,197,94,0.3)",    stroke: "#22c55e" },
 
-  // ── WATER HEATER (interior utility, right of kitchen) ─
-  { id: "wh",          label: "Water Heater",            desc: "Water heater replacement (≤80 gal)",         x: 55,  y: 30,  w: 5,   h: 10,  color: "rgba(239,68,68,0.35)",   stroke: "#ef4444" },
+  // ── LANDSCAPE SYSTEM (front yard) ────────────────────
+  { id: "irrig",       label: "Irrigation System",           desc: "Landscape / sprinkler system",                  x: 8,   y: 62,  w: 16,  h: 10, color: "rgba(16,185,129,0.3)",   stroke: "#10b981" },
 
-  // ── GAS SYSTEM (piping, interior right) ──────────
-  { id: "gas",         label: "Gas System",              desc: "LP/natural gas piping and outlets",          x: 59,  y: 40,  w: 5,   h: 14,  color: "rgba(249,115,22,0.35)",  stroke: "#f97316" },
+  // ── PERGOLA (right back, wooden structure) ───────────
+  { id: "pergola",     label: "Pergola",                     desc: "Pergola or gazebo structure",                   x: 77,  y: 28,  w: 15,  h: 22, color: "rgba(217,119,6,0.3)",    stroke: "#d97706" },
 
-  // ── BACKFLOW PREVENTER (exterior left near meter) ─
-  { id: "backflow",    label: "Backflow Preventer",      desc: "Backflow device installation",               x: 8,   y: 60,  w: 5,   h: 7,   color: "rgba(16,185,129,0.35)",  stroke: "#10b981" },
+  // ── SHED (far right) ─────────────────────────────────
+  { id: "shed",        label: "Shed (≤150 sq ft)",           desc: "Accessory structure / shed permit",             x: 92,  y: 36,  w: 8,   h: 20, color: "rgba(120,53,15,0.35)",   stroke: "#78350f" },
 
-  // ── TEMP ELECTRIC (utility pole left) ────────────
-  { id: "tempelec",    label: "Temporary Electric Service", desc: "30-day construction power",               x: 2,   y: 30,  w: 6,   h: 28,  color: "rgba(234,179,8,0.25)",   stroke: "#eab308" },
+  // ── DECK (right mid, wood deck) ──────────────────────
+  { id: "deck",        label: "Deck",                        desc: "Wood or composite deck",                        x: 62,  y: 50,  w: 16,  h: 18, color: "rgba(120,53,15,0.3)",    stroke: "#92400e" },
 
-  // ── A/C REPLACEMENT (HVAC inside + ducts) ────────
-  { id: "ac",          label: "A/C Replacement",         desc: "Air conditioning change-out (≤5 tons)",      x: 60,  y: 22,  w: 7,   h: 14,  color: "rgba(14,165,233,0.35)",  stroke: "#0ea5e9" },
+  // ── PATIO / SLAB (center-right ground) ───────────────
+  { id: "patio",       label: "Patio / Slab",                desc: "Concrete patio or slab",                        x: 58,  y: 65,  w: 14,  h: 12, color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
 
-  // ── GENERATOR (right side backyard) ──────────────
-  { id: "gen",         label: "Generator",               desc: "Emergency generator installation",           x: 86,  y: 54,  w: 8,   h: 11,  color: "rgba(220,38,38,0.3)",    stroke: "#dc2626" },
+  // ── POOL & SPA (right lower) ─────────────────────────
+  { id: "pool",        label: "Pool & Spa",                  desc: "New swimming pool / spa installation",          x: 68,  y: 58,  w: 22,  h: 28, color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
 
-  // ── POOL ─────────────────────────────────────────
-  { id: "pool",        label: "Pool",                    desc: "New swimming pool installation",             x: 72,  y: 56,  w: 19,  h: 26,  color: "rgba(6,182,212,0.3)",    stroke: "#06b6d4" },
+  // ── POOL SPA (small spa beside pool) ─────────────────
+  { id: "poolspa",     label: "Pool Spa",                    desc: "Spa / hot tub installation",                    x: 66,  y: 68,  w: 6,   h: 10, color: "rgba(168,85,247,0.35)",  stroke: "#a855f7" },
 
-  // ── POOL DECK (concrete surround) ────────────────
-  { id: "pdeck",       label: "Pool Deck",               desc: "Pool deck construction",                     x: 69,  y: 54,  w: 25,  h: 30,  color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
+  // ── POOL DECK (surround) ─────────────────────────────
+  { id: "pdeck",       label: "Pool Deck",                   desc: "Pool deck construction",                        x: 58,  y: 78,  w: 32,  h: 10, color: "rgba(245,158,11,0.25)",  stroke: "#f59e0b" },
 
-  // ── POOL RESURFACING (inside pool) ───────────────
-  { id: "presurf",     label: "Pool Resurfacing",        desc: "Pool replastering and tile",                 x: 73,  y: 58,  w: 17,  h: 20,  color: "rgba(34,211,238,0.25)",  stroke: "#22d3ee" },
+  // ── POOL HEATER (far right, gas-fired) ───────────────
+  { id: "pheater",     label: "Pool Heater (gas-fired)",     desc: "Gas or electric pool heater",                   x: 90,  y: 60,  w: 8,   h: 10, color: "rgba(239,68,68,0.35)",   stroke: "#ef4444" },
 
-  // ── POOL HEATER (right of pool) ──────────────────
-  { id: "pheater",     label: "Pool Heater",             desc: "Gas or electric pool heater",                x: 90,  y: 64,  w: 5,   h: 7,   color: "rgba(239,68,68,0.3)",    stroke: "#ef4444" },
+  // ── POOL RESURFACING ─────────────────────────────────
+  { id: "presurf",     label: "Pool Resurfacing",            desc: "Pool replastering and tile",                    x: 90,  y: 70,  w: 8,   h: 8,  color: "rgba(34,211,238,0.35)",  stroke: "#22d3ee" },
 
-  // ── POOL EQUIPMENT (pump/filter) ─────────────────
-  { id: "pequip",      label: "Pool Equipment",          desc: "Pump, filter, equipment changes",            x: 90,  y: 72,  w: 5,   h: 7,   color: "rgba(249,115,22,0.3)",   stroke: "#f97316" },
+  // ── POOL EQUIPMENT (pump, far right bottom) ──────────
+  { id: "pequip",      label: "Pool Equipment",              desc: "Pump, filter, equipment changes",               x: 90,  y: 78,  w: 8,   h: 10, color: "rgba(249,115,22,0.35)",  stroke: "#f97316" },
 
-  // ── SPA / HOT TUB (top-right of pool area) ───────
-  { id: "spa",         label: "Spa / Hot Tub",           desc: "Spa or hot tub installation",                x: 88,  y: 58,  w: 6,   h: 7,   color: "rgba(168,85,247,0.3)",   stroke: "#a855f7" },
-
-  // ── PERGOLA (right rear of house) ────────────────
-  { id: "pergola",     label: "Pergola",                 desc: "Pergola or gazebo structure",                x: 78,  y: 32,  w: 14,  h: 20,  color: "rgba(217,119,6,0.3)",    stroke: "#d97706" },
-
-  // ── DECK (right side wooden deck) ────────────────
-  { id: "deck",        label: "Deck",                    desc: "Wood or composite deck",                     x: 62,  y: 55,  w: 14,  h: 18,  color: "rgba(120,53,15,0.3)",    stroke: "#92400e" },
-
-  // ── PATIO / SLAB ─────────────────────────────────
-  { id: "patio",       label: "Patio / Slab",            desc: "Concrete patio or slab",                    x: 62,  y: 70,  w: 10,  h: 12,  color: "rgba(107,114,128,0.3)",  stroke: "#6b7280" },
-
-  // ── SHED (far right) ─────────────────────────────
-  { id: "shed",        label: "Shed",                    desc: "Accessory structure/shed (≤150 sq ft)",      x: 93,  y: 40,  w: 7,   h: 16,  color: "rgba(120,53,15,0.3)",    stroke: "#78350f" },
-
-  // ── SCREEN ENCLOSURE (pool cage outline) ─────────
-  { id: "screen",      label: "Screen Enclosure",        desc: "Pool cage, screen room",                     x: 69,  y: 52,  w: 26,  h: 33,  color: "rgba(14,165,233,0.12)",  stroke: "#0ea5e9" },
-
-  // ── IRRIGATION ───────────────────────────────────
-  { id: "irrig",       label: "Irrigation System",       desc: "Sprinkler system installation",              x: 14,  y: 62,  w: 18,  h: 12,  color: "rgba(16,185,129,0.25)",  stroke: "#10b981" },
-
-  // ── RETAINING WALL (right boundary) ──────────────
-  { id: "retwall",     label: "Retaining Wall",          desc: "Retaining wall construction",                x: 97,  y: 40,  w: 3,   h: 30,  color: "rgba(180,83,9,0.3)",     stroke: "#b45309" },
+  // ── SWALE right ──────────────────────────────────────
+  { id: "swale_r",     label: "Swale",                       desc: "Swale modification",                            x: 73,  y: 50,  w: 18,  h: 8,  color: "rgba(16,185,129,0.2)",   stroke: "#10b981" },
 ];
 
 const LEGEND = [
