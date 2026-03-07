@@ -42,19 +42,19 @@ body {
 }
 
 .gradient-primary {
-  background: linear-gradient(135deg, #2c5282, #3182ce);
+  background: linear-gradient(135deg, #0f172a, #1d4ed8);
 }
 
 .gradient-navy {
-  background: linear-gradient(135deg, #1a2d40, #35475e);
+  background: linear-gradient(135deg, #0a0a0a, #111827);
 }
 
 .text-gold {
-  color: #ffcc00;
+  color: #3b82f6;
 }
 
 .bg-gold {
-  background-color: #ffcc00;
+  background-color: #3b82f6;
 }
 
 /* Custom scrollbar */
