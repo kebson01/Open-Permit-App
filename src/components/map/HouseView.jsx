@@ -144,15 +144,15 @@ const LEGENDS = {
 };
 
 const COMMERCIAL_LEGEND = [
-  { label: "EV Charging Station",        color: "#eab308" },
+  { label: "EV Charging Station",        color: "#22c55e" },
   { label: "Light Pole / Utility",       color: "#eab308" },
   { label: "Underground Drainage",       color: "#06b6d4" },
-  { label: "Asphalt / Milling & Paving", color: "#6b7280" },
-  { label: "Seal Coat & Striping",       color: "#9ca3af" },
-  { label: "Sidewalk / Curb",            color: "#9ca3af" },
-  { label: "Pavement / Earthwork",       color: "#f59e0b" },
+  { label: "Asphalt / Milling & Paving", color: "#1e293b" },
+  { label: "Seal Coat & Striping",       color: "#64748b" },
+  { label: "Sidewalk / Curb",            color: "#94a3b8" },
+  { label: "Pavement / Earthwork",       color: "#f97316" },
   { label: "Utility Boring",             color: "#8b5cf6" },
-  { label: "Sign Permit",                color: "#eab308" },
+  { label: "Sign Permit",                color: "#ef4444" },
 ];
 
 const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
