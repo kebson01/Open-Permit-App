@@ -34,7 +34,7 @@ export default function AdminCityManager() {
   });
 
   if (!currentUser) return <div className="p-8 text-center text-gray-500">Loading...</div>;
-  if (currentUser.role !== "admin") {
+  if (currentUser.role !== "admin" && currentUser.role !== "city_admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -46,7 +46,13 @@ export default function AdminCityManager() {
     );
   }
 
-  const filtered = cities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
+  const isSuperAdmin = currentUser.role === "admin";
+  const cityAdminAssignedCity = currentUser.assigned_city_id;
+  
+  let filtered = cities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
+  if (!isSuperAdmin && cityAdminAssignedCity) {
+    filtered = filtered.filter(c => c.id === cityAdminAssignedCity);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
