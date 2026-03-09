@@ -27,11 +27,16 @@ const PERMIT_IMAGES = {
   "Plumbing":               "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
   "Irrigation System":      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
   "HVAC / Mechanical":      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/e34f517e0_ACReplacement.jpg",
-  "Sign Permit":            "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=80",
-  "Parking Lot / Paving":   "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
-  "EV Charging Station":    "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
-  "Light Pole / Utility":   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-  "Sidewalk / Curb":        "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/fda47a212_DrivewayWalkway.jpg",
+  "Sign Permit":                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/989d5c998_SignPermit.jpg",
+  "Parking Lot / Paving":       "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
+  "EV Charging Station":        "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
+  "Light Pole / Utility":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Sidewalk / Curb":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/42a12b803_SidewalkCurb.jpg",
+  "Asphalt / Milling & Paving": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/823c36c44_AsphaltMillingPaving.jpg",
+  "Seal Coat & Striping":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
+  "Pavement / Earthwork":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/5c06ae79a_PavementEarthwork.jpg",
+  "Utility Boring":             "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ac952087e_UtilityBoring.jpg",
+  "Underground Drainage":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
 };
 
 export default function PermitPopup({ permit, city, onClose }) {
