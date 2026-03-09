@@ -163,7 +163,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const containerRef = useRef(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
-  const legend = view === "commercial" ? COMMERCIAL_LEGEND : view === "engineering" ? ENGINEERING_LEGEND : (LEGENDS[view] || LEGENDS.front);
+  const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
   const imgSrc = IMAGES[view]      || IMAGES.front;
   const dims   = IMAGE_DIMS[view]  || IMAGE_DIMS.front;
 
