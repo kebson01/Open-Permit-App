@@ -48,7 +48,6 @@ export default function InteractiveMap() {
     { id: "back",       label: "Back View",          icon: ArrowLeft },
     { id: "eagle",      label: "Floor Plan",         icon: LayoutGrid },
     { id: "commercial",  label: "Commercial",         icon: Building2 },
-    { id: "engineering", label: "Engineering",        icon: HardHat },
   ];
 
   return (
