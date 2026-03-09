@@ -270,7 +270,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
               const scaled    = scalePoints(zone.points);
               const { cx, cy } = getBBoxCenter(zone.points.trim().split(/\s+/).map(p => {
                 const [px, py] = p.split(",").map(Number);
-                return `${imgRect.x + (px / dims.w) * imgRect.w},${imgRect.y + (py / dims.h) * imgRect.h}`;
+                return `${imgRect.x + (px / imgRect.nw) * imgRect.w},${imgRect.y + (py / imgRect.nh) * imgRect.h}`;
               }).join(" "));
 
               return (
