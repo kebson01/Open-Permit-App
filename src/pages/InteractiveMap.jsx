@@ -54,7 +54,7 @@ export default function InteractiveMap() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Interactive Permit Map</h1>
+        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
         <p className="text-gray-500 mt-1">Click on any area of the illustrated home — inside or outside — to explore permit requirements</p>
       </div>
 
