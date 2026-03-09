@@ -13,8 +13,7 @@ const IMAGE_DIMS = {
   front:      { w: 1375, h: 750 },
   back:       { w: 1402, h: 768 },
   eagle:      { w: 1366, h: 768 },
-  commercial:  { w: 2040, h: 1280 },
-  engineering: { w: 1456, h: 816 },
+  commercial: { w: 1456, h: 816 },
 };
 
 // ── FRONT VIEW ZONES (polygon points from SVG viewBox 0 0 1375 750) ──────────
