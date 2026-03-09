@@ -53,6 +53,7 @@ import PermitGuide from './pages/PermitGuide';
 import PermitInfo from './pages/PermitInfo';
 import AdminCityManager from './pages/AdminCityManager';
 import CityPortal from './pages/CityPortal';
+import CityPortalPublic from './pages/CityPortalPublic';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +64,7 @@ export const PAGES = {
     "PermitInfo": PermitInfo,
     "AdminCityManager": AdminCityManager,
     "CityPortal": CityPortal,
+    "CityPortalPublic": CityPortalPublic,
 }
 
 export const pagesConfig = {
