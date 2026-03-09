@@ -71,7 +71,7 @@ export default function CityPortalPublic() {
               <Building2 className="w-7 h-7 text-white" />
               <div>
                 <h1 className="text-2xl font-bold">{city.name}</h1>
-                <p className="text-blue-100 text-sm">{city.county} County, {city.state} — Permitting Services</p>
+                <p className="text-gray-700 text-sm">{city.county} County, {city.state} — Permitting Services</p>
               </div>
             </div>
             {city.portal_url && (
