@@ -92,6 +92,32 @@ const EAGLE_ZONES = [
   { id: "lawn_e",     label: "Irrigation System",         desc: "Landscape / sprinkler system",                 points: "55,599 765,599 765,768 55,768",                                              color: "rgba(16,185,129,0.22)",  stroke: "#10b981" },
 ];
 
+// ── ENGINEERING VIEW ZONES (polygon points from SVG viewBox 0 0 1456 816) ────
+// Source image-map coords were for 1024×574 — scale factor: x*1456/1024, y*816/574
+const ENGINEERING_ZONES = [
+  { id: "ev-chargers",         label: "EV Charging Station",        desc: "Electric vehicle charging station installation",         points: "1584,636 1244,881 1316,929 1584,688",                                                                                                                                                        color: "rgba(234,179,8,0.45)",   stroke: "#eab308" },
+  { id: "light-pole",          label: "Light Pole / Utility",       desc: "Light pole installation permit",                         points: "1448,440 1485,441 1464,839 1436,839",                                                                                                                                                        color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
+  { id: "underground-drain",   label: "Underground Drainage",       desc: "Underground drainage / stormwater system",               points: "860,822 707,888 939,1087 1281,1087 1294,1061 1026,909",                                                                                                                                      color: "rgba(6,182,212,0.35)",   stroke: "#06b6d4" },
+  { id: "asphalt",             label: "Asphalt / Milling & Paving", desc: "Asphalt repair, milling & paving",                       points: "475,578 1049,397 1178,455 609,651",                                                                                                                                                          color: "rgba(107,114,128,0.38)", stroke: "#6b7280" },
+  { id: "seal-coat",           label: "Seal Coat & Striping",       desc: "Seal coat and parking lot striping",                     points: "590,677 1157,461 1387,535 940,774 894,757 803,794",                                                                                                                                           color: "rgba(107,114,128,0.28)", stroke: "#9ca3af" },
+  { id: "sidewalk-rep",        label: "Sidewalk / Curb",            desc: "Sidewalk repair / curb replacement",                     points: "378,605 754,867 808,835 432,581",                                                                                                                                                            color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
+  { id: "pavement",            label: "Pavement / Earthwork",       desc: "Pavement construction or earthwork permit",              points: "1718,330 1524,564 1676,622 1546,766 1497,813 1439,1087 1812,1080 1997,614 1995,475 1877,347",                                                                                                 color: "rgba(245,158,11,0.28)",  stroke: "#f59e0b" },
+  { id: "utility-boring",      label: "Utility Boring",             desc: "Underground utility boring permit",                      points: "171,723 169,828 714,979 714,847 419,744 240,688",                                                                                                                                            color: "rgba(139,92,246,0.32)",  stroke: "#8b5cf6" },
+  { id: "signs",               label: "Sign Permit",                desc: "Commercial signage installation",                        points: "1356,870 1350,943 1443,982 1450,893",                                                                                                                                                        color: "rgba(234,179,8,0.5)",    stroke: "#eab308" },
+];
+
+const ENGINEERING_LEGEND = [
+  { label: "EV Charging Station",        color: "#eab308" },
+  { label: "Light Pole / Utility",       color: "#eab308" },
+  { label: "Underground Drainage",       color: "#06b6d4" },
+  { label: "Asphalt / Milling & Paving", color: "#6b7280" },
+  { label: "Seal Coat & Striping",       color: "#9ca3af" },
+  { label: "Sidewalk / Curb",            color: "#9ca3af" },
+  { label: "Pavement / Earthwork",       color: "#f59e0b" },
+  { label: "Utility Boring",             color: "#8b5cf6" },
+  { label: "Sign Permit",                color: "#eab308" },
+];
+
 // ── COMMERCIAL VIEW ZONES (polygon points from SVG viewBox 0 0 2040 1280) ────
 const COMMERCIAL_ZONES = [
   { id: "light-pole",    label: "Light Pole / Utility",          desc: "Light pole or utility boring permit",                    points: "688,626 802,626 802,805 688,805",                                                                                                                                                                                           color: "rgba(234,179,8,0.42)",   stroke: "#eab308" },
