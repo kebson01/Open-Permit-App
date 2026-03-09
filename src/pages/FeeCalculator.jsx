@@ -8,7 +8,7 @@ import PermitSelector from "../components/calculator/PermitSelector";
 import ProjectDetails from "../components/calculator/ProjectDetails";
 import FeeResults from "../components/calculator/FeeResults";
 
-const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
 function calculateFee(feeRule, details) {
   if (!feeRule) return null;
