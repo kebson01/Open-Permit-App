@@ -215,10 +215,12 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
   // Scale polygon points string from image coords to rendered pixel coords
   const scalePoints = (pointsStr) => {
+    const nw = imgRect.nw;
+    const nh = imgRect.nh;
     return pointsStr.trim().split(/\s+/).map(pair => {
       const [px, py] = pair.split(",").map(Number);
-      const sx = imgRect.x + (px / dims.w) * imgRect.w;
-      const sy = imgRect.y + (py / dims.h) * imgRect.h;
+      const sx = imgRect.x + (px / nw) * imgRect.w;
+      const sy = imgRect.y + (py / nh) * imgRect.h;
       return `${sx},${sy}`;
     }).join(" ");
   };
