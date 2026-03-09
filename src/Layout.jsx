@@ -11,6 +11,8 @@ const navLinks = [
   { name: "Fee Calculator", page: "FeeCalculator", icon: Calculator },
 ];
 
+// Role-based nav links added dynamically below
+
 function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
