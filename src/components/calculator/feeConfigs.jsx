@@ -37,7 +37,7 @@ export const WESTON_CONFIG = {
       category: "building",
       description: "New residential or commercial structure, or addition to existing structure",
       calcType: "tiered_cost",
-      inputs: ["constructionCost", "propertyType"],
+      inputs: ["constructionCost"],
       feeConfig: {
         base_fee: 119.11,
         tiers: [
