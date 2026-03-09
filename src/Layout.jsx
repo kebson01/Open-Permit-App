@@ -145,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
             <div />
 
             <div className="hidden md:flex items-center gap-1">
-              {navLinks.map(link => (
+              {[...navLinks, ...adminLinks].map(link => (
                 <Link
                   key={link.page}
                   to={createPageUrl(link.page)}
