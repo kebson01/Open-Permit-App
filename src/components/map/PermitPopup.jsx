@@ -30,7 +30,7 @@ const PERMIT_IMAGES = {
   "Sign Permit":                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/989d5c998_SignPermit.jpg",
   "Parking Lot / Paving":       "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
   "EV Charging Station":        "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
-  "Light Pole / Utility":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Light Pole / Utility":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/db4cdd086_LightPoleUtility.jpg",
   "Sidewalk / Curb":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/42a12b803_SidewalkCurb.jpg",
   "Asphalt / Milling & Paving": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/823c36c44_AsphaltMillingPaving.jpg",
   "Seal Coat & Striping":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
