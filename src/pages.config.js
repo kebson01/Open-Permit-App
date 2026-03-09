@@ -47,24 +47,24 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AdminCityManager from './pages/AdminCityManager';
+import CityPortal from './pages/CityPortal';
+import CityPortalPublic from './pages/CityPortalPublic';
 import FeeCalculator from './pages/FeeCalculator';
 import Home from './pages/Home';
 import PermitGuide from './pages/PermitGuide';
 import PermitInfo from './pages/PermitInfo';
-import AdminCityManager from './pages/AdminCityManager';
-import CityPortal from './pages/CityPortal';
-import CityPortalPublic from './pages/CityPortalPublic';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminCityManager": AdminCityManager,
+    "CityPortal": CityPortal,
+    "CityPortalPublic": CityPortalPublic,
     "FeeCalculator": FeeCalculator,
     "Home": Home,
     "PermitGuide": PermitGuide,
     "PermitInfo": PermitInfo,
-    "AdminCityManager": AdminCityManager,
-    "CityPortal": CityPortal,
-    "CityPortalPublic": CityPortalPublic,
 }
 
 export const pagesConfig = {
