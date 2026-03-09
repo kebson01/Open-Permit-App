@@ -124,6 +124,17 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
+
+  const adminLinks = currentUser?.role === "admin"
+    ? [{ name: "City Manager", page: "AdminCityManager", icon: Settings }]
+    : currentUser?.role === "city_admin"
+    ? [{ name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }]
+    : [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
