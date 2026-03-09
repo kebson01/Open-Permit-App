@@ -136,6 +136,12 @@ export default function Layout({ children, currentPageName }) {
     ? [{ name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }]
     : [];
 
+  const isCityPortal = currentPageName === "CityPortalPublic";
+
+  if (isCityPortal) {
+    return <div className="min-h-screen bg-[#f8fafc]">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
