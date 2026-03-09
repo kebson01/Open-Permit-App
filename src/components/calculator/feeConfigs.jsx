@@ -55,7 +55,7 @@ export const WESTON_CONFIG = {
       category: "building",
       description: "Interior or exterior renovation of an existing residential structure",
       calcType: "tiered_cost",
-      inputs: ["constructionCost", "propertyType"],
+      inputs: ["constructionCost"],
       feeConfig: {
         base_fee: 119.11,
         tiers: [
@@ -73,7 +73,7 @@ export const WESTON_CONFIG = {
       category: "building",
       description: "Commercial interior tenant improvements or build-out",
       calcType: "tiered_cost",
-      inputs: ["constructionCost", "squareFeet"],
+      inputs: ["constructionCost"],
       feeConfig: {
         base_fee: 119.11,
         tiers: [
