@@ -50,6 +50,16 @@ export default function PermitPopup({ permit, city, onClose }) {
           </button>
         </div>
         
+        {PERMIT_IMAGES[permit.name] && (
+          <div className="w-full h-44 overflow-hidden rounded-none">
+            <img
+              src={PERMIT_IMAGES[permit.name]}
+              alt={permit.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         <div className="p-6 space-y-5">
           <p className="text-gray-600 text-sm leading-relaxed">{permit.description}</p>
           
