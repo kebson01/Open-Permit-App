@@ -48,7 +48,7 @@ export default function FeeCalculatorEmbed({ city }) {
         <div>
           <h2 className="text-xl font-bold text-gray-800">Permit Fee Calculator</h2>
           {cityConfig.effective_date && (
-            <p className="text-xs text-gray-400">Fee schedule effective: {cityConfig.effective_date}</p>
+            <p className="text-xs text-gray-600">Fee schedule effective: {cityConfig.effective_date}</p>
           )}
         </div>
       </div>
