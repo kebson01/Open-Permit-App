@@ -172,7 +172,7 @@ export default function Layout({ children, currentPageName }) {
 
         {mobileOpen && (
           <div className="md:hidden border-t border-white/10 backdrop-blur" style={{ backgroundColor: "rgba(15,23,42,0.97)" }}>
-            {navLinks.map(link => (
+            {[...navLinks, ...adminLinks].map(link => (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
