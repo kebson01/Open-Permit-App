@@ -49,7 +49,6 @@
  */
 import FeeCalculator from './pages/FeeCalculator';
 import Home from './pages/Home';
-import InteractiveMap from './pages/InteractiveMap';
 import PermitInfo from './pages/PermitInfo';
 import PermitGuide from './pages/PermitGuide';
 import __Layout from './Layout.jsx';
@@ -58,7 +57,6 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "FeeCalculator": FeeCalculator,
     "Home": Home,
-    "InteractiveMap": InteractiveMap,
     "PermitInfo": PermitInfo,
     "PermitGuide": PermitGuide,
 }
