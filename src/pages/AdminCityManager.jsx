@@ -91,10 +91,10 @@ export default function AdminCityManager() {
                       <button
                         className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors"
                         onClick={() => {
-                          const base = window.location.origin + window.location.pathname.replace(/\?.*$/, "").replace(/[^/]*$/, "");
-                          const pagePath = createPageUrl("CityPortalPublic");
-                          const url = `${window.location.origin}${pagePath}?slug=${city.slug}`;
+                          const pagePath = createPageUrl(`CityPortalPublic?slug=${city.slug}`);
+                          const url = `${window.location.origin}${pagePath}`;
                           navigator.clipboard.writeText(url);
+                          alert("Portal URL copied:\n" + url);
                         }}
                         title="Copy portal URL"
                       >
