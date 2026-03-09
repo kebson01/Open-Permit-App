@@ -142,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
   const isCityPortal = currentPageName === "CityPortalPublic";
 
   if (isCityPortal) {
-    return <div className="min-h-screen bg-[#f8fafc]">{children}</div>;
+    return <>{children}</>;
   }
 
   return (
