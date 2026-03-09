@@ -67,7 +67,7 @@ export default function PermitGuideEmbed({ city }) {
 
       <HouseView view={view} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
 
-      <p className="text-center text-sm text-gray-400 mt-3">
+      <p className="text-center text-sm text-gray-600 mt-3">
         Click any highlighted area to explore permit requirements
       </p>
 
