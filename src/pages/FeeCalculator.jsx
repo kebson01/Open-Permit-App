@@ -61,7 +61,12 @@ function calculateFee(feeRule, details) {
 
 export default function FeeCalculator() {
   const urlParams = new URLSearchParams(window.location.search);
-  const [city, setCity] = useState(urlParams.get("city") || sessionStorage.getItem("selectedCity") || "");
+  const urlCity = urlParams.get("city") || "";
+  const urlCities = urlParams.get("cities");
+  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : DEFAULT_CITIES);
+  const singleCity = CITIES.length === 1;
+
+  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
   const [selectedPermit, setSelectedPermit] = useState(urlParams.get("permit") || "");
   const [details, setDetails] = useState({
     constructionCost: 0,
