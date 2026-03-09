@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Building2, Calculator, Map, AlertCircle } from "lucide-react";
+import { Building2, Calculator, Map, AlertCircle, ExternalLink } from "lucide-react";
 import FeeCalculatorEmbed from "@/components/city/FeeCalculatorEmbed";
 import PermitGuideEmbed from "@/components/city/PermitGuideEmbed";
 
