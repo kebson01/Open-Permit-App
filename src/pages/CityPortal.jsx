@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Shield, Phone, MapPin, Globe, Calendar, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel";
-import CityFormModal from "@/components/admin/CityFormModal";
+import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
+import CityFormModal from "@/components/admin/CityFormModal.jsx";
 
 export default function CityPortal() {
   const [currentUser, setCurrentUser] = useState(null);
