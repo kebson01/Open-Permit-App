@@ -11,7 +11,7 @@ const features = [
   },
   {
     icon: MousePointerClick,
-    title: "Interactive Map",
+    title: "Visual Permit Guide",
     desc: "Click on parts of a home to learn which permit you need — visual and intuitive.",
     color: "bg-emerald-50 text-emerald-600",
   },

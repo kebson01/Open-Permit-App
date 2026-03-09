@@ -5,7 +5,7 @@ import { Map, DollarSign, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
 const actions = [
-  { label: "Explore Interactive Map", icon: Map, page: "InteractiveMap", emoji: "🗺️" },
+  { label: "Visual Permit Guide", icon: Map, page: "InteractiveMap", emoji: "🏠" },
   { label: "Calculate Fees", icon: DollarSign, page: "FeeCalculator", emoji: "💵" },
   { label: "General Permit Info", icon: BookOpen, page: "PermitInfo", emoji: "📘" },
 ];
