@@ -36,7 +36,7 @@ export default function HeroSection() {
           
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              to={createPageUrl("InteractiveMap")}
+              to={createPageUrl("PermitGuide")}
               className="group inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-[#3182ce] hover:bg-[#2b6cb0] text-white font-semibold text-base shadow-lg shadow-blue-900/30 transition-all hover:shadow-xl"
             >
               Explore Permits
