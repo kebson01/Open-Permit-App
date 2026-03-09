@@ -188,7 +188,7 @@ const COMMERCIAL_LEGEND = [
   { label: "Sidewalk / Curb",       color: "#9ca3af" },
 ];
 
-const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
+const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES, engineering: ENGINEERING_ZONES };
 
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
