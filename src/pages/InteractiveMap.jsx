@@ -100,23 +100,25 @@ export default function InteractiveMap() {
           Browse Permits
         </Button>
 
-        {/* City selector */}
-        <div className="flex items-center gap-2 ml-auto">
-          <MapPin className="w-4 h-4 text-gray-400" />
-          <Select value={city} onValueChange={setCity}>
-            <SelectTrigger className="w-44 rounded-xl h-9 text-sm">
-              <SelectValue placeholder="Select city..." />
-            </SelectTrigger>
-            <SelectContent>
-              {CITIES.map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-9 text-sm">
-            Apply
-          </Button>
-        </div>
+        {/* City selector — hidden when locked to a single city */}
+        {!singleCity && (
+          <div className="flex items-center gap-2 ml-auto">
+            <MapPin className="w-4 h-4 text-gray-400" />
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger className="w-44 rounded-xl h-9 text-sm">
+                <SelectValue placeholder="Select city..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CITIES.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-9 text-sm">
+              Apply
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* City indicator */}
