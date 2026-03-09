@@ -66,12 +66,25 @@ export default function CityPortalPublic() {
       {/* City Header */}
       <div className="gradient-primary text-white px-6 py-6">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3">
-            <Building2 className="w-7 h-7 text-blue-200" />
-            <div>
-              <h1 className="text-2xl font-bold">{city.name}</h1>
-              <p className="text-blue-200 text-sm">{city.county} County, {city.state} — Permitting Services</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-7 h-7 text-blue-200" />
+              <div>
+                <h1 className="text-2xl font-bold">{city.name}</h1>
+                <p className="text-blue-200 text-sm">{city.county} County, {city.state} — Permitting Services</p>
+              </div>
             </div>
+            {city.portal_url && (
+              <a
+                href={city.portal_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-xl transition-all"
+              >
+                <ExternalLink className="w-4 h-4" />
+                City Portal
+              </a>
+            )}
           </div>
 
           {/* Tabs */}
