@@ -50,7 +50,7 @@ export default function PermitGuideEmbed({ city }) {
               }`}
             >
               <v.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{v.label}</span>
+              <span className="hidden sm:inline font-medium">{v.label}</span>
             </button>
           ))}
         </div>

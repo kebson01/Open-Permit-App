@@ -28,7 +28,7 @@ export default function CityPortalPublic() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-400 text-sm">Loading...</div>
+        <div className="text-gray-600 text-sm">Loading...</div>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function CityPortalPublic() {
         <div className="text-center max-w-sm">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
           <h2 className="text-xl font-semibold text-gray-700">City Not Found</h2>
-          <p className="text-gray-500 mt-1 text-sm">
+          <p className="text-gray-700 mt-1 text-sm">
             This portal link is invalid or the city has not been configured.
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function CityPortalPublic() {
         <div className="text-center max-w-sm">
           <Building2 className="w-10 h-10 text-blue-300 mx-auto mb-3" />
           <h2 className="text-xl font-semibold text-gray-700">{city.name}</h2>
-          <p className="text-gray-500 mt-1 text-sm">No services have been enabled for this portal yet.</p>
+          <p className="text-gray-700 mt-1 text-sm">No services have been enabled for this portal yet.</p>
         </div>
       </div>
     );
@@ -68,7 +68,7 @@ export default function CityPortalPublic() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Building2 className="w-7 h-7 text-blue-200" />
+              <Building2 className="w-7 h-7 text-white" />
               <div>
                 <h1 className="text-2xl font-bold">{city.name}</h1>
                 <p className="text-blue-100 text-sm">{city.county} County, {city.state} — Permitting Services</p>
