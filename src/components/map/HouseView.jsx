@@ -114,6 +114,7 @@ const LEGENDS = {
     { label: "Roof / Re-Roof",       color: "#ef4444" },
     { label: "Solar Panels",         color: "#eab308" },
     { label: "Window Replacement",   color: "#3b82f6" },
+    { label: "Door Replacement",     color: "#8b5cf6" },
     { label: "Garage Door",          color: "#f97316" },
     { label: "A/C Replacement",      color: "#0ea5e9" },
     { label: "Electrical Service",   color: "#eab308" },
