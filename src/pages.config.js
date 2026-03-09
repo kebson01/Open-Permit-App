@@ -49,16 +49,16 @@
  */
 import FeeCalculator from './pages/FeeCalculator';
 import Home from './pages/Home';
-import PermitInfo from './pages/PermitInfo';
 import PermitGuide from './pages/PermitGuide';
+import PermitInfo from './pages/PermitInfo';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "FeeCalculator": FeeCalculator,
     "Home": Home,
-    "PermitInfo": PermitInfo,
     "PermitGuide": PermitGuide,
+    "PermitInfo": PermitInfo,
 }
 
 export const pagesConfig = {

@@ -129,12 +129,7 @@ export default function Layout({ children, currentPageName }) {
       <nav className="sticky top-0 z-40 shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
-            <Link to={createPageUrl("Home")} className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-blue-400" />
-              </div>
-              <span className="text-white font-bold text-lg tracking-tight hidden sm:block">Saint's Permitting</span>
-            </Link>
+            <div />
 
             <div className="hidden md:flex items-center gap-1">
               {navLinks.map(link => (
