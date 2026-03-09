@@ -14,8 +14,9 @@ export default function CityPortalPublic() {
 
   useEffect(() => {
     if (!slug) { setLoading(false); return; }
-    base44.entities.City.filter({ slug }).then(results => {
-      const found = results[0] || null;
+    base44.entities.City.list().then(all => {
+      // Match by slug first, then fallback to name match
+      const found = all.find(c => c.slug === slug) || all.find(c => c.name?.toLowerCase().replace(/\s+/g, "-") === slug) || null;
       setCity(found);
       if (found?.enabled_services?.length > 0) {
         setActiveTab(found.enabled_services[0]);
