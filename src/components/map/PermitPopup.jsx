@@ -4,6 +4,36 @@ import { createPageUrl } from "@/utils";
 import { X, FileText, Calculator, ExternalLink, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const PERMIT_IMAGES = {
+  "Roof / Re-Roof":         "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da3c?w=600&q=80",
+  "Solar Panels":           "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&q=80",
+  "Window Replacement":     "https://images.unsplash.com/photo-1604709177225-055f99402ea3?w=600&q=80",
+  "Door Replacement":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Garage Door":            "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80",
+  "A/C Replacement":        "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
+  "Electrical Service":     "https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=600&q=80",
+  "Pool & Spa":             "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80",
+  "Pool Equipment":         "https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=600&q=80",
+  "Pool Deck":              "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600&q=80",
+  "Driveway (Paver)":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Driveway / Walkway":     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Walkway / Sidewalk":     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Fence / Gate":           "https://images.unsplash.com/photo-1558618047-f4c0d6b5c0d6?w=600&q=80",
+  "Patio / Slab":           "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80",
+  "Covered Patio":          "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=600&q=80",
+  "Pergola":                "https://images.unsplash.com/photo-1598977703796-cc75c0e78dde?w=600&q=80",
+  "Residential Remodel":    "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&q=80",
+  "Residential Addition":   "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80",
+  "Plumbing":               "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
+  "Irrigation System":      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
+  "HVAC / Mechanical":      "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
+  "Sign Permit":            "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=80",
+  "Parking Lot / Paving":   "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
+  "EV Charging Station":    "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
+  "Light Pole / Utility":   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Sidewalk / Curb":        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+};
+
 export default function PermitPopup({ permit, city, onClose }) {
   if (!permit) return null;
 
