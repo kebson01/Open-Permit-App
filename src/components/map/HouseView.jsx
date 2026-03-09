@@ -160,19 +160,17 @@ const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, c
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
   const [imgRect, setImgRect] = useState(null);
-  const [naturalDims, setNaturalDims] = useState(IMAGE_DIMS[view] || IMAGE_DIMS.front);
   const containerRef = useRef(null);
-  const imgRef = useRef(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
   const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
   const imgSrc = IMAGES[view]      || IMAGES.front;
+  const dims   = IMAGE_DIMS[view]  || IMAGE_DIMS.front;
 
   // Compute the actual rendered rect of the image inside object-contain container
-  const computeRect = (nw, nh) => {
+  const computeRect = () => {
     const container = containerRef.current;
     if (!container) return;
-    const dims = { w: nw, h: nh };
     const cw = container.clientWidth;
     const ch = container.clientHeight;
     const imgAspect = dims.w / dims.h;
@@ -183,44 +181,22 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     } else {
       rh = ch; rw = ch * imgAspect; rx = (cw - rw) / 2; ry = 0;
     }
-    setImgRect({ x: rx, y: ry, w: rw, h: rh, nw, nh });
-  };
-
-  const handleImgLoad = (e) => {
-    const { naturalWidth: nw, naturalHeight: nh } = e.target;
-    setNaturalDims({ w: nw, h: nh });
-    computeRect(nw, nh);
+    setImgRect({ x: rx, y: ry, w: rw, h: rh });
   };
 
   useEffect(() => {
-    // If image already loaded (cached), read natural dims directly
-    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth) {
-      const nw = imgRef.current.naturalWidth;
-      const nh = imgRef.current.naturalHeight;
-      setNaturalDims({ w: nw, h: nh });
-      computeRect(nw, nh);
-    } else {
-      const fallback = IMAGE_DIMS[view] || IMAGE_DIMS.front;
-      computeRect(fallback.w, fallback.h);
-    }
-    const ro = new ResizeObserver(() => {
-      const nd = imgRef.current?.naturalWidth
-        ? { w: imgRef.current.naturalWidth, h: imgRef.current.naturalHeight }
-        : (IMAGE_DIMS[view] || IMAGE_DIMS.front);
-      computeRect(nd.w, nd.h);
-    });
+    computeRect();
+    const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, [view]);
 
   // Scale polygon points string from image coords to rendered pixel coords
   const scalePoints = (pointsStr) => {
-    const nw = imgRect.nw;
-    const nh = imgRect.nh;
     return pointsStr.trim().split(/\s+/).map(pair => {
       const [px, py] = pair.split(",").map(Number);
-      const sx = imgRect.x + (px / nw) * imgRect.w;
-      const sy = imgRect.y + (py / nh) * imgRect.h;
+      const sx = imgRect.x + (px / dims.w) * imgRect.w;
+      const sy = imgRect.y + (py / dims.h) * imgRect.h;
       return `${sx},${sy}`;
     }).join(" ");
   };
@@ -246,7 +222,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         <AnimatePresence mode="wait">
           <motion.img
             key={view}
-            ref={imgRef}
             src={imgSrc}
             alt={`House ${view} view`}
             className="absolute inset-0 w-full h-full object-contain"
@@ -255,7 +230,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            onLoad={handleImgLoad}
+            onLoad={computeRect}
           />
         </AnimatePresence>
 
@@ -271,7 +246,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
               const scaled    = scalePoints(zone.points);
               const { cx, cy } = getBBoxCenter(zone.points.trim().split(/\s+/).map(p => {
                 const [px, py] = p.split(",").map(Number);
-                return `${imgRect.x + (px / imgRect.nw) * imgRect.w},${imgRect.y + (py / imgRect.nh) * imgRect.h}`;
+                return `${imgRect.x + (px / dims.w) * imgRect.w},${imgRect.y + (py / dims.h) * imgRect.h}`;
               }).join(" "));
 
               return (
