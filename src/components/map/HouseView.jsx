@@ -246,6 +246,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         <AnimatePresence mode="wait">
           <motion.img
             key={view}
+            ref={imgRef}
             src={imgSrc}
             alt={`House ${view} view`}
             className="absolute inset-0 w-full h-full object-contain"
@@ -254,7 +255,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            onLoad={computeRect}
+            onLoad={handleImgLoad}
           />
         </AnimatePresence>
 
