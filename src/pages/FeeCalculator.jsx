@@ -133,30 +133,34 @@ export default function FeeCalculator() {
         <p className="text-gray-500">Calculate estimated fees for your permit application</p>
       </div>
 
-      {/* City Selector */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <MapPin className="w-4 h-4 text-[#2c5282]" />
-          <span className="text-sm font-medium text-gray-700">Select City:</span>
-          <Select value={city} onValueChange={setCity}>
-            <SelectTrigger className="w-48 rounded-xl">
-              <SelectValue placeholder="Choose city..." />
-            </SelectTrigger>
-            <SelectContent>
-              {CITIES.map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {(permitsLoading || feesLoading) && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
-        </div>
-        {city && (
-          <div className="mt-2 flex items-center gap-2">
-            <Info className="w-3.5 h-3.5 text-gray-400" />
-            <p className="text-xs text-gray-400">Fee schedule effective October 2025</p>
+      {/* City Selector — hidden when locked to a single city */}
+      {!singleCity ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <MapPin className="w-4 h-4 text-[#2c5282]" />
+            <span className="text-sm font-medium text-gray-700">Select City:</span>
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger className="w-48 rounded-xl">
+                <SelectValue placeholder="Choose city..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CITIES.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(permitsLoading || feesLoading) && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        city && (
+          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
+            <MapPin className="w-4 h-4 text-[#2c5282]" />
+            <span className="text-sm font-medium text-[#2c5282]">City: {city}</span>
+            {(permitsLoading || feesLoading) && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+          </div>
+        )
+      )}
 
       {/* Permit Selector */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
