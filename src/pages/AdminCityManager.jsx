@@ -63,11 +63,13 @@ export default function AdminCityManager() {
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Building2 className="w-6 h-6 text-blue-600" /> City Manager
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Manage municipalities and their fee schedules</p>
+            <p className="text-gray-500 text-sm mt-1">{isSuperAdmin ? "Manage municipalities and their fee schedules" : "Manage your city configuration"}</p>
           </div>
-          <Button onClick={() => { setEditingCity(null); setShowCityForm(true); }} className="gradient-primary text-white">
-            <Plus className="w-4 h-4" /> Add City
-          </Button>
+          {isSuperAdmin && (
+            <Button onClick={() => { setEditingCity(null); setShowCityForm(true); }} className="gradient-primary text-white">
+              <Plus className="w-4 h-4" /> Add City
+            </Button>
+          )}
         </div>
 
         {/* Search */}
