@@ -133,7 +133,10 @@ export default function Layout({ children, currentPageName }) {
   const adminLinks = currentUser?.role === "admin"
     ? [{ name: "City Manager", page: "AdminCityManager", icon: Settings }]
     : currentUser?.role === "city_admin"
-    ? [{ name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }]
+    ? [
+        { name: "City Settings", page: "AdminCityManager", icon: Settings },
+        { name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }
+      ]
     : [];
 
   const isCityPortal = currentPageName === "CityPortalPublic";
