@@ -109,18 +109,22 @@ export default function AdminCityManager() {
                         <Copy className="w-3 h-3" /> Copy URL
                       </button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { setInviteTargetCity(city); setShowInviteModal(true); }}
-                    >
-                      <Users className="w-3.5 h-3.5" /> Invite Admin
-                    </Button>
+                    {isSuperAdmin && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setInviteTargetCity(city); setShowInviteModal(true); }}
+                        >
+                          <Users className="w-3.5 h-3.5" /> Invite Admin
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteCityMutation.mutate(city.id)}>
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </Button>
+                      </>
+                    )}
                     <Button variant="ghost" size="icon" onClick={() => { setEditingCity(city); setShowCityForm(true); }}>
                       <Pencil className="w-4 h-4 text-gray-500" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteCityMutation.mutate(city.id)}>
-                      <Trash2 className="w-4 h-4 text-red-400" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => setExpandedCity(expandedCity === city.id ? null : city.id)}>
                       {expandedCity === city.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
