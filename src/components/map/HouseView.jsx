@@ -11,7 +11,7 @@ const IMAGES = {
 // Natural image dimensions for each view (width × height in px) — must match SVG viewBox
 const IMAGE_DIMS = {
   front:      { w: 1375, h: 750 },
-  back:       { w: 1402, h: 768 },
+  back:       { w: 1380, h: 768 },
   eagle:      { w: 1366, h: 768 },
   commercial: { w: 1400, h: 760 },
 };
