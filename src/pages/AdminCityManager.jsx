@@ -85,7 +85,19 @@ export default function AdminCityManager() {
                     <h3 className="font-semibold text-gray-900">{city.name}</h3>
                     <p className="text-sm text-gray-500">{city.county} County, {city.state}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {city.slug && (
+                      <button
+                        className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors"
+                        onClick={() => {
+                          const url = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, "")}/CityPortalPublic?slug=${city.slug}`;
+                          navigator.clipboard.writeText(url);
+                        }}
+                        title="Copy portal URL"
+                      >
+                        <Copy className="w-3 h-3" /> Copy URL
+                      </button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
