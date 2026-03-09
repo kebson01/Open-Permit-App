@@ -36,7 +36,7 @@ const PERMIT_IMAGES = {
   "Seal Coat & Striping":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
   "Pavement / Earthwork":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/5c06ae79a_PavementEarthwork.jpg",
   "Utility Boring":             "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ac952087e_UtilityBoring.jpg",
-  "Underground Drainage":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Underground Drainage":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
 };
 
 export default function PermitPopup({ permit, city, onClose }) {
