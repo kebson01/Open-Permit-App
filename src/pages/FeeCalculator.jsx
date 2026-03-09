@@ -1,124 +1,52 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Calculator, MapPin, Loader2, Info } from "lucide-react";
+import { Calculator, MapPin, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import PermitSelector from "../components/calculator/PermitSelector";
-import ProjectDetails from "../components/calculator/ProjectDetails";
-import FeeResults from "../components/calculator/FeeResults";
+import PermitSelectorV2 from "../components/calculator/PermitSelectorV2";
+import ProjectDetailsV2 from "../components/calculator/ProjectDetailsV2";
+import FeeResultsV2 from "../components/calculator/FeeResultsV2";
+import { CITY_FEE_CONFIGS, calculatePermitFee, WESTON_CONFIG } from "../components/calculator/feeConfigs";
 
-const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
-
-function calculateFee(feeRule, details) {
-  if (!feeRule) return null;
-
-  const breakdown = [];
-  let permitFee = feeRule.base_fee || 0;
-
-  if (feeRule.calculation_method === "per_cost" && details.constructionCost) {
-    const costFee = details.constructionCost * (feeRule.rate_per_unit || 0);
-    permitFee = Math.max(costFee, feeRule.minimum_fee || 0);
-    breakdown.push({ label: "Permit Fee (based on construction cost)", amount: permitFee });
-  } else if (feeRule.calculation_method === "per_sqft" && details.squareFeet) {
-    const sqftFee = feeRule.base_fee + (details.squareFeet * (feeRule.rate_per_unit || 0));
-    permitFee = Math.max(sqftFee, feeRule.minimum_fee || 0);
-    breakdown.push({ label: "Permit Fee (based on square footage)", amount: permitFee });
-  } else if (feeRule.calculation_method === "per_unit" && details.units) {
-    const unitFee = feeRule.base_fee + (details.units * (feeRule.rate_per_unit || 0));
-    permitFee = Math.max(unitFee, feeRule.minimum_fee || 0);
-    breakdown.push({ label: "Permit Fee (based on units)", amount: permitFee });
-  } else if (feeRule.calculation_method === "per_linear_ft" && details.linearFeet) {
-    const linearFee = feeRule.base_fee + (details.linearFeet * (feeRule.rate_per_unit || 0));
-    permitFee = Math.max(linearFee, feeRule.minimum_fee || 0);
-    breakdown.push({ label: "Permit Fee (based on linear feet)", amount: permitFee });
-  } else {
-    breakdown.push({ label: "Permit Fee (flat rate)", amount: permitFee });
-  }
-
-  let total = permitFee;
-
-  if (feeRule.plan_review_percentage > 0) {
-    const planReview = permitFee * (feeRule.plan_review_percentage / 100);
-    breakdown.push({ label: `Plan Review Fee (${feeRule.plan_review_percentage}%)`, amount: planReview });
-    total += planReview;
-  }
-
-  if (feeRule.technology_surcharge > 0) {
-    const techFee = permitFee * (feeRule.technology_surcharge / 100);
-    breakdown.push({ label: `Technology Surcharge (${feeRule.technology_surcharge}%)`, amount: techFee });
-    total += techFee;
-  }
-
-  if (feeRule.rainy_day_surcharge > 0) {
-    const rainyFee = permitFee * (feeRule.rainy_day_surcharge / 100);
-    breakdown.push({ label: `Rainy Day Fund (${feeRule.rainy_day_surcharge}%)`, amount: rainyFee });
-    total += rainyFee;
-  }
-
-  return { total, breakdown };
-}
+const DEFAULT_CITIES = Object.keys(CITY_FEE_CONFIGS);
+const ALL_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
 export default function FeeCalculator() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlCity = urlParams.get("city") || "";
   const urlCities = urlParams.get("cities");
-  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : DEFAULT_CITIES);
+  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : ALL_CITIES);
   const singleCity = CITIES.length === 1;
 
-  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
-  const [selectedPermit, setSelectedPermit] = useState(urlParams.get("permit") || "");
-  const [details, setDetails] = useState({
-    constructionCost: 0,
-    squareFeet: 0,
-    units: 0,
-    linearFeet: 0,
-    projectType: "new",
-    propertyType: "single_family",
-    roofType: "shingle",
-  });
+  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
+  const [selectedPermitId, setSelectedPermitId] = useState(urlParams.get("permit") || "");
+  const [details, setDetails] = useState({});
   const [results, setResults] = useState(null);
 
-  const { data: permits = [], isLoading: permitsLoading } = useQuery({
-    queryKey: ["permits"],
-    queryFn: () => base44.entities.PermitType.list(),
-  });
+  const cityConfig = CITY_FEE_CONFIGS[city] || null;
+  const selectedPermit = cityConfig?.permits.find(p => p.id === selectedPermitId) || null;
 
-  const { data: feeRules = [], isLoading: feesLoading } = useQuery({
-    queryKey: ["feeRules"],
-    queryFn: () => base44.entities.FeeRule.list(),
-  });
+  useEffect(() => {
+    if (city) sessionStorage.setItem("selectedCity", city);
+    setSelectedPermitId("");
+    setDetails({});
+    setResults(null);
+  }, [city]);
+
+  useEffect(() => {
+    setDetails({});
+    setResults(null);
+  }, [selectedPermitId]);
 
   const handleCalculate = () => {
-    let rule = feeRules.find(r => r.permit_type === selectedPermit && r.city_name === city);
-    if (!rule) {
-      rule = feeRules.find(r => r.permit_type === selectedPermit);
-    }
-    if (!rule) {
-      rule = {
-        calculation_method: "flat",
-        base_fee: 75,
-        technology_surcharge: 3,
-        rainy_day_surcharge: 1,
-        plan_review_percentage: 0,
-      };
-    }
-    const result = calculateFee(rule, details);
+    if (!selectedPermit || !cityConfig) return;
+    const result = calculatePermitFee(selectedPermit, details, cityConfig);
     setResults(result);
   };
 
   const handleReset = () => {
-    setSelectedPermit("");
-    setDetails({
-      constructionCost: 0, squareFeet: 0, units: 0, linearFeet: 0,
-      projectType: "new", propertyType: "single_family", roofType: "shingle",
-    });
+    setSelectedPermitId("");
+    setDetails({});
     setResults(null);
   };
-
-  useEffect(() => {
-    if (city) sessionStorage.setItem("selectedCity", city);
-  }, [city]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -130,71 +58,76 @@ export default function FeeCalculator() {
           </div>
           <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Permit Fee Calculator</h1>
         </div>
-        <p className="text-gray-500">Calculate estimated fees for your permit application</p>
+        <p className="text-gray-500">Calculate estimated permit fees based on official municipal fee schedules</p>
       </div>
 
-      {/* City Selector — hidden when locked to a single city */}
-      {!singleCity ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <MapPin className="w-4 h-4 text-[#2c5282]" />
-            <span className="text-sm font-medium text-gray-700">Select City:</span>
+      {/* City Selector */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <MapPin className="w-4 h-4 text-[#2c5282]" />
+          <span className="text-sm font-medium text-gray-700">Municipality:</span>
+          {singleCity ? (
+            <span className="font-semibold text-[#2c5282]">{city}</span>
+          ) : (
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-48 rounded-xl">
+              <SelectTrigger className="w-52 rounded-xl">
                 <SelectValue placeholder="Choose city..." />
               </SelectTrigger>
               <SelectContent>
                 {CITIES.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                  <SelectItem key={c} value={c}>
+                    {c}
+                    {!CITY_FEE_CONFIGS[c] && <span className="text-gray-400 ml-1">(coming soon)</span>}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {(permitsLoading || feesLoading) && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
-          </div>
+          )}
+          {cityConfig && (
+            <span className="text-xs text-gray-400 ml-auto">
+              Fee schedule effective: {cityConfig.effective_date}
+            </span>
+          )}
         </div>
-      ) : (
-        city && (
-          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
-            <MapPin className="w-4 h-4 text-[#2c5282]" />
-            <span className="text-sm font-medium text-[#2c5282]">City: {city}</span>
-            {(permitsLoading || feesLoading) && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+
+        {!cityConfig && city && (
+          <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-700">
+              Fee schedule for <strong>{city}</strong> is not yet configured. Currently showing Weston fees as a reference.
+              Contact us to add your municipality's fee schedule.
+            </p>
           </div>
-        )
-      )}
+        )}
+      </div>
 
       {/* Permit Selector */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-        <PermitSelector
-          permits={permits}
-          selectedPermit={selectedPermit}
-          onSelect={setSelectedPermit}
+        <PermitSelectorV2
+          permits={(cityConfig || WESTON_CONFIG).permits}
+          selectedPermitId={selectedPermitId}
+          onSelect={setSelectedPermitId}
         />
       </div>
 
       {/* Project Details */}
       {selectedPermit && (
-        <ProjectDetails
-          selectedPermit={selectedPermit}
+        <ProjectDetailsV2
+          permit={selectedPermit}
           details={details}
           setDetails={setDetails}
+          onCalculate={handleCalculate}
         />
       )}
 
-      {/* Calculate Button */}
-      {selectedPermit && (
-        <div className="sticky bottom-4 mt-6 z-10">
-          <Button
-            onClick={handleCalculate}
-            className="w-full gradient-primary text-white rounded-xl h-12 text-base font-semibold shadow-xl shadow-blue-900/20"
-          >
-            <Calculator className="w-5 h-5 mr-2" />
-            Calculate Estimated Fee
-          </Button>
-        </div>
-      )}
-
       {/* Results */}
-      <FeeResults results={results} city={city} onReset={handleReset} />
+      <FeeResultsV2
+        results={results}
+        permit={selectedPermit}
+        city={city}
+        cityConfig={cityConfig}
+        onReset={handleReset}
+      />
     </div>
   );
 }
