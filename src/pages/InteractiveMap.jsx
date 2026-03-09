@@ -8,15 +8,21 @@ import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
 
-const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
 export default function InteractiveMap() {
   const urlParams = new URLSearchParams(window.location.search);
+  // ?cities=Miami,Hialeah  overrides the default list; ?city=Miami pre-selects & locks to one city
+  const urlCity = urlParams.get("city") || "";
+  const urlCities = urlParams.get("cities");
+  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : DEFAULT_CITIES);
+  const singleCity = CITIES.length === 1;
+
   const [view, setView] = useState("front");
   const [showHighlights, setShowHighlights] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState(null);
-  const [city, setCity] = useState(urlParams.get("city") || sessionStorage.getItem("selectedCity") || "");
+  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
 
   const { data: permits = [] } = useQuery({
     queryKey: ["permits"],
