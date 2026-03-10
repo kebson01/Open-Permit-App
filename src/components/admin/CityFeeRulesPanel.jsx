@@ -515,15 +515,16 @@ function ImportExportPanel({ city, rules, onImported }) {
 
   const handleDownloadTemplate = () => {
     const template = {
+      ...WESTON_TEMPLATE,
       city: city.name,
       city_id: city.id,
-      fee_rules: [SAMPLE_RULE]
+      _instructions: "Edit the fee_rules array to match this city's schedule. Upload this file to replace all existing rules. 'tiers_config' must be a JSON string. Use null for max=Infinity in tiers."
     };
     const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `fee_rules_template.json`;
+    a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules_template.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
