@@ -54,6 +54,7 @@ import FeeCalculator from './pages/FeeCalculator';
 import Home from './pages/Home';
 import PermitGuide from './pages/PermitGuide';
 import PermitInfo from './pages/PermitInfo';
+import PropertyGuide from './pages/PropertyGuide';
 import __Layout from './Layout.jsx';
 
 
@@ -65,6 +66,7 @@ export const PAGES = {
     "Home": Home,
     "PermitGuide": PermitGuide,
     "PermitInfo": PermitInfo,
+    "PropertyGuide": PropertyGuide,
 }
 
 export const pagesConfig = {
