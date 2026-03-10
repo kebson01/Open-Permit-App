@@ -7,6 +7,7 @@ import { Building2, Plus, Pencil, Trash2, ChevronDown, ChevronUp, Shield, Users,
 import { createPageUrl } from "@/utils";
 import CityFormModal from "@/components/admin/CityFormModal.jsx";
 import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
+import CityPermitTypesPanel from "@/components/admin/CityPermitTypesPanel.jsx";
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 
 export default function AdminCityManager() {
