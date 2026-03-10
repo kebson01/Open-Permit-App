@@ -1,280 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, Settings2, AlertCircle } from "lucide-react";
+import {
+  Download, Upload, FileJson, Trash2, CheckCircle2, AlertCircle,
+  Settings2, ChevronDown, ChevronUp, Plus, Pencil
+} from "lucide-react";
 
-const CATEGORIES = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
-const CALC_TYPES = [
-  { value: "flat", label: "Flat Fee" },
-  { value: "flat_per_unit", label: "Flat Fee × Units" },
-  { value: "flat_plus_units", label: "Base + Per Additional Unit" },
-  { value: "flat_plus_linear", label: "Base + Per Linear Foot" },
-  { value: "flat_plus_pct", label: "Base + % of Cost" },
-  { value: "tiered_cost", label: "Tiered Construction Cost" },
-  { value: "per_sqft_tier", label: "Tiered Square Footage" },
-  { value: "eng_cost_tier", label: "Engineering Cost Tier" },
-];
-const INPUT_FIELDS = [
-  { value: "constructionCost", label: "Construction Cost ($)" },
-  { value: "openings", label: "Openings / Devices" },
-  { value: "units", label: "Units / Count" },
-  { value: "floors", label: "Floors" },
-  { value: "linearFeet", label: "Linear Feet" },
-  { value: "sprinklerHeads", label: "Sprinkler Heads" },
-  { value: "alarmDevices", label: "Alarm Devices" },
-  { value: "squareFeet", label: "Square Feet" },
-];
-
-// Tier editor for tiered configs
-function TierEditor({ tiers, onChange, columns }) {
-  const addTier = () => onChange([...tiers, {}]);
-  const updateTier = (i, key, val) => {
-    const updated = tiers.map((t, idx) => idx === i ? { ...t, [key]: val === "" ? undefined : parseFloat(val) || val } : t);
-    onChange(updated);
-  };
-  const removeTier = (i) => onChange(tiers.filter((_, idx) => idx !== i));
-
-  return (
-    <div>
-      <label className="text-xs text-gray-500 mb-1.5 block font-medium">Fee Tiers</label>
-      <div className="space-y-2">
-        {tiers.map((tier, i) => (
-          <div key={i} className="flex gap-2 items-center bg-gray-50 rounded-lg p-2">
-            {columns.map(col => (
-              <div key={col.key} className="flex-1">
-                <label className="text-xs text-gray-400 block mb-0.5">{col.label}</label>
-                <Input
-                  type="number"
-                  className="h-8 text-xs"
-                  value={tier[col.key] === Infinity || tier[col.key] == null ? "" : tier[col.key]}
-                  onChange={e => updateTier(i, col.key, e.target.value)}
-                  placeholder={col.placeholder || ""}
-                />
-              </div>
-            ))}
-            <button onClick={() => removeTier(i)} className="mt-4 p-1 text-red-400 hover:text-red-600">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button onClick={addTier} className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
-        <Plus className="w-3 h-3" /> Add Tier
-      </button>
-    </div>
-  );
-}
-
-function FeeRuleForm({ rule, cityId, cityName, onSaved, onCancel }) {
-  const [form, setForm] = useState(rule || {
-    city_id: cityId, city_name: cityName,
-    calc_type: "flat", category: "building",
-    include_city_surcharges: false,
-  });
-  const [tiers, setTiers] = useState(() => {
-    try { return JSON.parse(rule?.tiers_config || "[]"); } catch { return []; }
-  });
-  const [saving, setSaving] = useState(false);
-
-  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
-  const num = (key) => form[key] ?? "";
-
-  const tierColumns = {
-    tiered_cost: [
-      { key: "min", label: "Min Cost ($)", placeholder: "0" },
-      { key: "max", label: "Max Cost (blank=∞)", placeholder: "∞" },
-      { key: "base", label: "Tier Base ($)", placeholder: "0" },
-      { key: "rate", label: "Rate (decimal)", placeholder: "0.0155" },
-    ],
-    per_sqft_tier: [
-      { key: "max", label: "Max Sq Ft (blank=∞)", placeholder: "∞" },
-      { key: "fee", label: "Flat Fee ($)", placeholder: "0" },
-      { key: "base", label: "Or Base ($)", placeholder: "" },
-      { key: "rate_per_sqft", label: "Rate/sqft ($)", placeholder: "" },
-    ],
-    eng_cost_tier: [
-      { key: "min", label: "Min Cost ($)", placeholder: "0" },
-      { key: "max", label: "Max Cost (blank=∞)", placeholder: "∞" },
-      { key: "base", label: "Base Fee ($)", placeholder: "0" },
-      { key: "rate", label: "Rate (decimal)", placeholder: "0.05" },
-    ],
-  };
-
-  const isTiered = ["tiered_cost", "per_sqft_tier", "eng_cost_tier"].includes(form.calc_type);
-  const needsInput = form.calc_type !== "flat";
-
-  const handleSave = async () => {
-    setSaving(true);
-    const data = { ...form };
-    const numFields = ["flat_fee","fee_per_unit","base_fee","rate_per_unit","base_includes_ft",
-      "rate_per_linear_ft","rate_percentage","cost_threshold","technology_admin_fee","planning_zoning_fee",
-      "unit_threshold","sort_order"];
-    numFields.forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
-    if (isTiered) {
-      const cleanTiers = tiers.map(t => {
-        const clean = { ...t };
-        Object.keys(clean).forEach(k => { if (clean[k] !== "" && clean[k] !== undefined) clean[k] = parseFloat(clean[k]) || clean[k]; });
-        if (clean.max == null || clean.max === "") clean.max = null; // null = Infinity placeholder
-        return clean;
-      });
-      data.tiers_config = JSON.stringify(cleanTiers);
-    }
-    if (!data.permit_id) data.permit_id = data.permit_name?.toLowerCase().replace(/[^a-z0-9]+/g, "_") || data.id;
-    if (rule?.id) await base44.entities.FeeRule.update(rule.id, data);
-    else await base44.entities.FeeRule.create(data);
-    setSaving(false);
-    onSaved();
-  };
-
-  return (
-    <div className="bg-white border border-blue-200 rounded-xl p-5 mt-2 space-y-4">
-      <h4 className="font-semibold text-gray-800 text-sm">{rule ? "Edit Fee Rule" : "Add Fee Rule"}</h4>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Permit Name *</label>
-          <Input value={form.permit_name || ""} onChange={e => set("permit_name", e.target.value)} placeholder="e.g. New Construction" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Category</label>
-          <select className="w-full h-9 border border-input rounded-md px-3 text-sm bg-background" value={form.category || "building"} onChange={e => set("category", e.target.value)}>
-            {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-          </select>
-        </div>
-        <div className="col-span-2">
-          <label className="text-xs text-gray-500 mb-1 block">Description</label>
-          <Input value={form.description || ""} onChange={e => set("description", e.target.value)} placeholder="What this permit covers" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Calculation Method *</label>
-          <select className="w-full h-9 border border-input rounded-md px-3 text-sm bg-background" value={form.calc_type} onChange={e => set("calc_type", e.target.value)}>
-            {CALC_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-        </div>
-        {needsInput && !isTiered && (
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">User Input Field</label>
-            <select className="w-full h-9 border border-input rounded-md px-3 text-sm bg-background" value={form.input_field || ""} onChange={e => set("input_field", e.target.value)}>
-              <option value="">Select...</option>
-              {INPUT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* Flat fee fields based on calc type */}
-      <div className="grid grid-cols-3 gap-3">
-        {form.calc_type === "flat" && (
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Flat Fee ($)</label>
-            <Input type="number" value={num("flat_fee")} onChange={e => set("flat_fee", e.target.value)} placeholder="0.00" />
-          </div>
-        )}
-        {form.calc_type === "flat_per_unit" && (<>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Fee Per Unit ($)</label>
-            <Input type="number" value={num("fee_per_unit")} onChange={e => set("fee_per_unit", e.target.value)} placeholder="0.00" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Unit Label</label>
-            <Input value={form.unit_label || ""} onChange={e => set("unit_label", e.target.value)} placeholder="doors, floors..." />
-          </div>
-        </>)}
-        {form.calc_type === "flat_plus_units" && (<>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Base Fee ($)</label>
-            <Input type="number" value={num("base_fee")} onChange={e => set("base_fee", e.target.value)} placeholder="0.00" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Units in Base</label>
-            <Input type="number" value={num("unit_threshold")} onChange={e => set("unit_threshold", e.target.value)} placeholder="1" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Rate / Extra Unit ($)</label>
-            <Input type="number" value={num("rate_per_unit")} onChange={e => set("rate_per_unit", e.target.value)} placeholder="0.00" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Unit Label</label>
-            <Input value={form.unit_label || ""} onChange={e => set("unit_label", e.target.value)} placeholder="heads, openings..." />
-          </div>
-        </>)}
-        {form.calc_type === "flat_plus_linear" && (<>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Base Fee ($)</label>
-            <Input type="number" value={num("base_fee")} onChange={e => set("base_fee", e.target.value)} placeholder="0.00" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Feet in Base</label>
-            <Input type="number" value={num("base_includes_ft")} onChange={e => set("base_includes_ft", e.target.value)} placeholder="100" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Rate / Linear Ft ($)</label>
-            <Input type="number" value={num("rate_per_linear_ft")} onChange={e => set("rate_per_linear_ft", e.target.value)} placeholder="0.00" />
-          </div>
-        </>)}
-        {form.calc_type === "tiered_cost" && (
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Base Fee ($)</label>
-            <Input type="number" value={num("base_fee")} onChange={e => set("base_fee", e.target.value)} placeholder="119.11" />
-          </div>
-        )}
-        {form.calc_type === "flat_plus_pct" && (<>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Base Fee ($)</label>
-            <Input type="number" value={num("base_fee")} onChange={e => set("base_fee", e.target.value)} placeholder="0.00" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Rate (%)</label>
-            <Input type="number" value={num("rate_percentage")} onChange={e => set("rate_percentage", e.target.value)} placeholder="3.75" />
-          </div>
-        </>)}
-        {(form.calc_type === "tiered_cost") && (
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Cost Threshold ($)</label>
-            <Input type="number" value={num("cost_threshold")} onChange={e => set("cost_threshold", e.target.value)} placeholder="1000" />
-          </div>
-        )}
-      </div>
-
-      {isTiered && (
-        <TierEditor
-          tiers={tiers}
-          onChange={setTiers}
-          columns={tierColumns[form.calc_type] || []}
-        />
-      )}
-
-      <div className="grid grid-cols-3 gap-3 border-t pt-3">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Technology Fee ($)</label>
-          <Input type="number" value={num("technology_admin_fee")} onChange={e => set("technology_admin_fee", e.target.value)} placeholder="127.00" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Planning/Zoning Fee ($)</label>
-          <Input type="number" value={num("planning_zoning_fee")} onChange={e => set("planning_zoning_fee", e.target.value)} placeholder="0.00" />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Sort Order</label>
-          <Input type="number" value={num("sort_order")} onChange={e => set("sort_order", e.target.value)} placeholder="0" />
-        </div>
-        <div className="col-span-3 flex items-center gap-2">
-          <input type="checkbox" id="surcharges" checked={!!form.include_city_surcharges} onChange={e => set("include_city_surcharges", e.target.checked)} className="w-4 h-4" />
-          <label htmlFor="surcharges" className="text-sm text-gray-700">Apply city-wide surcharges (Board of Rules, DCA, DBPR, Educational)</label>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={handleSave} disabled={saving || !form.permit_name} className="gradient-primary text-white">
-          {saving ? "Saving..." : "Save Fee Rule"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
+// ── Surcharge Panel ─────────────────────────────────────────────────────────
 function SurchargePanel({ city }) {
   const queryClient = useQueryClient();
   const { data: surcharges = [] } = useQuery({
@@ -282,23 +16,26 @@ function SurchargePanel({ city }) {
     queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
   });
   const surcharge = surcharges[0];
+  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const edit = () => setForm(surcharge || { city_id: city.id, city_name: city.name });
+  const startEdit = () => {
+    setForm(surcharge || { city_id: city.id, city_name: city.name });
+    setEditing(true);
+  };
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-  const num = (k) => form?.[k] ?? "";
 
   const handleSave = async () => {
     setSaving(true);
     const data = { ...form };
-    ["technology_admin","board_of_rules_rate","educational_rate","dca_rate","dbpr_rate"]
+    ["technology_admin", "board_of_rules_rate", "educational_rate", "dca_rate", "dbpr_rate"]
       .forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
     if (surcharge?.id) await base44.entities.CitySurcharge.update(surcharge.id, data);
     else await base44.entities.CitySurcharge.create(data);
     queryClient.invalidateQueries({ queryKey: ["citySurcharges", city.id] });
     setSaving(false);
-    setForm(null);
+    setEditing(false);
   };
 
   return (
@@ -307,61 +44,49 @@ function SurchargePanel({ city }) {
         <div className="flex items-center gap-2">
           <Settings2 className="w-4 h-4 text-amber-600" />
           <span className="text-sm font-semibold text-amber-800">City-Wide Surcharges</span>
-          {surcharge && <span className="text-xs text-amber-600 bg-amber-100 rounded-full px-2 py-0.5">{surcharge.effective_date}</span>}
+          {surcharge?.effective_date && (
+            <span className="text-xs text-amber-600 bg-amber-100 rounded-full px-2 py-0.5">{surcharge.effective_date}</span>
+          )}
         </div>
-        <Button size="sm" variant="outline" className="text-amber-700 border-amber-300" onClick={edit}>
-          {surcharge ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          {surcharge ? " Edit" : " Configure"}
+        <Button size="sm" variant="outline" className="text-amber-700 border-amber-300" onClick={startEdit}>
+          {surcharge ? <><Pencil className="w-3.5 h-3.5 mr-1" />Edit</> : <><Plus className="w-3.5 h-3.5 mr-1" />Configure</>}
         </Button>
       </div>
-      {!surcharge && !form && (
-        <div className="flex items-center gap-2 text-xs text-amber-700">
-          <AlertCircle className="w-3.5 h-3.5" /> No surcharges configured. Tiered-cost permits won't include city-wide fees until this is set.
-        </div>
+
+      {!surcharge && !editing && (
+        <p className="text-xs text-amber-700 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5" /> No surcharges configured. Tiered-cost permits won't include city-wide fees.
+        </p>
       )}
-      {surcharge && !form && (
+
+      {surcharge && !editing && (
         <div className="grid grid-cols-5 gap-3 text-xs text-amber-800">
-          <div><p className="text-amber-500">Technology Admin</p><p className="font-semibold">${surcharge.technology_admin}</p></div>
-          <div><p className="text-amber-500">Board of Rules</p><p className="font-semibold">${surcharge.board_of_rules_rate}/1000</p></div>
-          <div><p className="text-amber-500">Educational</p><p className="font-semibold">{(surcharge.educational_rate * 100).toFixed(3)}%</p></div>
-          <div><p className="text-amber-500">DCA Rate</p><p className="font-semibold">{(surcharge.dca_rate * 100).toFixed(1)}%</p></div>
-          <div><p className="text-amber-500">DBPR Rate</p><p className="font-semibold">{(surcharge.dbpr_rate * 100).toFixed(1)}%</p></div>
+          <div><p className="text-amber-500">Tech Admin</p><p className="font-semibold">${surcharge.technology_admin}</p></div>
+          <div><p className="text-amber-500">Board of Rules</p><p className="font-semibold">${surcharge.board_of_rules_rate}/1k</p></div>
+          <div><p className="text-amber-500">Educational</p><p className="font-semibold">{((surcharge.educational_rate || 0) * 100).toFixed(3)}%</p></div>
+          <div><p className="text-amber-500">DCA</p><p className="font-semibold">{((surcharge.dca_rate || 0) * 100).toFixed(1)}%</p></div>
+          <div><p className="text-amber-500">DBPR</p><p className="font-semibold">{((surcharge.dbpr_rate || 0) * 100).toFixed(1)}%</p></div>
         </div>
       )}
-      {form && (
-        <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">Effective Date</label>
-              <Input value={form.effective_date || ""} onChange={e => set("effective_date", e.target.value)} placeholder="October 1, 2025" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">Resolution #</label>
-              <Input value={form.resolution || ""} onChange={e => set("resolution", e.target.value)} placeholder="2026-07" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">Technology Admin Fee ($)</label>
-              <Input type="number" value={num("technology_admin")} onChange={e => set("technology_admin", e.target.value)} placeholder="127.00" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">Board of Rules (per $1,000)</label>
-              <Input type="number" value={num("board_of_rules_rate")} onChange={e => set("board_of_rules_rate", e.target.value)} placeholder="0.52" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">Educational Rate (decimal)</label>
-              <Input type="number" value={num("educational_rate")} onChange={e => set("educational_rate", e.target.value)} placeholder="0.0003" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">DCA Rate (decimal)</label>
-              <Input type="number" value={num("dca_rate")} onChange={e => set("dca_rate", e.target.value)} placeholder="0.01" className="bg-white" />
-            </div>
-            <div>
-              <label className="text-xs text-amber-700 mb-1 block">DBPR Rate (decimal)</label>
-              <Input type="number" value={num("dbpr_rate")} onChange={e => set("dbpr_rate", e.target.value)} placeholder="0.015" className="bg-white" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setForm(null)}>Cancel</Button>
+
+      {editing && form && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div><label className="text-xs text-amber-700 mb-1 block">Effective Date</label>
+            <Input value={form.effective_date || ""} onChange={e => set("effective_date", e.target.value)} placeholder="October 1, 2025" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">Resolution #</label>
+            <Input value={form.resolution || ""} onChange={e => set("resolution", e.target.value)} placeholder="2026-07" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">Technology Admin ($)</label>
+            <Input type="number" value={form.technology_admin ?? ""} onChange={e => set("technology_admin", e.target.value)} placeholder="127.00" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">Board of Rules (per $1,000)</label>
+            <Input type="number" value={form.board_of_rules_rate ?? ""} onChange={e => set("board_of_rules_rate", e.target.value)} placeholder="0.52" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">Educational Rate (decimal)</label>
+            <Input type="number" value={form.educational_rate ?? ""} onChange={e => set("educational_rate", e.target.value)} placeholder="0.0003" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">DCA Rate (decimal)</label>
+            <Input type="number" value={form.dca_rate ?? ""} onChange={e => set("dca_rate", e.target.value)} placeholder="0.01" className="bg-white" /></div>
+          <div><label className="text-xs text-amber-700 mb-1 block">DBPR Rate (decimal)</label>
+            <Input type="number" value={form.dbpr_rate ?? ""} onChange={e => set("dbpr_rate", e.target.value)} placeholder="0.015" className="bg-white" /></div>
+          <div className="col-span-2 flex justify-end gap-2 mt-1">
+            <Button variant="outline" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
             <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-600 hover:bg-amber-700 text-white">
               {saving ? "Saving..." : "Save Surcharges"}
             </Button>
@@ -372,30 +97,225 @@ function SurchargePanel({ city }) {
   );
 }
 
-function FeeRuleRow({ rule, onEdit, onDelete }) {
+// ── Import/Export Panel ──────────────────────────────────────────────────────
+function ImportExportPanel({ city, rules, onImported }) {
+  const fileRef = useRef();
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null); // { success, count, error }
+  const [previewData, setPreviewData] = useState(null);
+
+  const SAMPLE_RULE = {
+    permit_id: "example_permit",
+    permit_name: "Example Permit",
+    category: "building",
+    description: "Description of what this covers",
+    calc_type: "flat",
+    flat_fee: 120.00,
+    technology_admin_fee: 127.00,
+    include_city_surcharges: false,
+    sort_order: 1
+  };
+
+  const handleExport = () => {
+    const exportData = {
+      city: city.name,
+      city_id: city.id,
+      exported_at: new Date().toISOString(),
+      fee_rules: rules.map(r => {
+        const { id, created_date, updated_date, created_by, city_id, city_name, ...rest } = r;
+        return rest;
+      })
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = {
+      city: city.name,
+      city_id: city.id,
+      fee_rules: [SAMPLE_RULE]
+    };
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fee_rules_template.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportResult(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        const feeRules = parsed.fee_rules || parsed;
+        if (!Array.isArray(feeRules)) throw new Error("JSON must contain a 'fee_rules' array.");
+        setPreviewData(feeRules);
+      } catch (err) {
+        setImportResult({ success: false, error: err.message });
+        setPreviewData(null);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleConfirmImport = async () => {
+    if (!previewData) return;
+    setImporting(true);
+    try {
+      // Delete all existing rules for this city
+      for (const rule of rules) {
+        await base44.entities.FeeRule.delete(rule.id);
+      }
+      // Create all new rules from the JSON
+      for (const rule of previewData) {
+        const { id, ...ruleData } = rule;
+        await base44.entities.FeeRule.create({
+          ...ruleData,
+          city_id: city.id,
+          city_name: city.name,
+        });
+      }
+      setImportResult({ success: true, count: previewData.length });
+      setPreviewData(null);
+      onImported();
+    } catch (err) {
+      setImportResult({ success: false, error: err.message });
+    }
+    setImporting(false);
+  };
+
   return (
-    <div className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-white transition-colors group">
-      <div className="flex-1 min-w-0">
-        <span className="font-medium text-gray-800 text-sm">{rule.permit_name}</span>
-        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{rule.category}</span>
-        <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{CALC_TYPES.find(t => t.value === rule.calc_type)?.label || rule.calc_type}</span>
-        <p className="text-xs text-gray-500 mt-0.5">{rule.description || ""}</p>
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <FileJson className="w-4 h-4 text-blue-600" />
+        <span className="text-sm font-semibold text-blue-800">JSON Fee Schedule Management</span>
       </div>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={() => onEdit(rule)} className="p-1.5 rounded hover:bg-gray-100">
-          <Pencil className="w-3.5 h-3.5 text-gray-500" />
-        </button>
-        <button onClick={() => onDelete(rule.id)} className="p-1.5 rounded hover:bg-red-50">
-          <Trash2 className="w-3.5 h-3.5 text-red-400" />
-        </button>
+
+      <p className="text-xs text-blue-700 mb-3">
+        Export the current fee schedule as JSON, edit it externally, then re-upload to update all fees at once.
+      </p>
+
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button size="sm" variant="outline" className="text-blue-700 border-blue-300 bg-white" onClick={handleExport} disabled={rules.length === 0}>
+          <Download className="w-3.5 h-3.5 mr-1" />
+          {rules.length > 0 ? `Export ${rules.length} Rules` : "Export (empty)"}
+        </Button>
+        <Button size="sm" variant="outline" className="text-gray-600 border-gray-300 bg-white" onClick={handleDownloadTemplate}>
+          <Download className="w-3.5 h-3.5 mr-1" /> Download Template
+        </Button>
+        <Button size="sm" className="gradient-primary text-white" onClick={() => fileRef.current?.click()}>
+          <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON
+        </Button>
+        <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
       </div>
+
+      {/* Preview before confirming import */}
+      {previewData && (
+        <div className="border border-blue-300 bg-white rounded-lg p-3 mt-2">
+          <p className="text-sm font-semibold text-gray-800 mb-1">
+            Ready to import {previewData.length} fee rules — this will replace all existing rules for {city.name}.
+          </p>
+          <div className="max-h-40 overflow-y-auto text-xs text-gray-600 mb-3 space-y-1">
+            {previewData.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+                <span className="font-medium">{r.permit_name}</span>
+                <span className="text-gray-400">{r.category} · {r.calc_type}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setPreviewData(null)}>Cancel</Button>
+            <Button size="sm" onClick={handleConfirmImport} disabled={importing} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {importing ? "Importing..." : "Confirm & Replace"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {importResult?.success && (
+        <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-2">
+          <CheckCircle2 className="w-4 h-4" /> Successfully imported {importResult.count} fee rules.
+        </div>
+      )}
+      {importResult?.error && (
+        <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-2">
+          <AlertCircle className="w-4 h-4" /> {importResult.error}
+        </div>
+      )}
     </div>
   );
 }
 
+// ── Rule List (read-only view) ───────────────────────────────────────────────
+function RulesList({ rules }) {
+  const [expanded, setExpanded] = useState(null);
+
+  const grouped = rules
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .reduce((acc, r) => {
+      const cat = r.category || "other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(r);
+      return acc;
+    }, {});
+
+  if (rules.length === 0) return (
+    <p className="text-sm text-gray-400 text-center py-6">No fee rules loaded yet. Upload a JSON file above to get started.</p>
+  );
+
+  return (
+    <div className="space-y-1">
+      {Object.entries(grouped).map(([cat, catRules]) => (
+        <div key={cat} className="mb-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 px-1">{cat} <span className="text-gray-300">({catRules.length})</span></p>
+          {catRules.map(rule => (
+            <div key={rule.id}>
+              <button
+                className="w-full flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 text-left"
+                onClick={() => setExpanded(expanded === rule.id ? null : rule.id)}
+              >
+                <div>
+                  <span className="font-medium text-gray-800 text-sm">{rule.permit_name}</span>
+                  <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{rule.calc_type}</span>
+                </div>
+                {expanded === rule.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+              </button>
+              {expanded === rule.id && (
+                <div className="mx-3 mb-2 px-3 py-2 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
+                  {rule.description && <p>{rule.description}</p>}
+                  {rule.flat_fee != null && <p>Flat Fee: <strong>${rule.flat_fee}</strong></p>}
+                  {rule.base_fee != null && <p>Base Fee: <strong>${rule.base_fee}</strong></p>}
+                  {rule.fee_per_unit != null && <p>Fee per {rule.unit_label || "unit"}: <strong>${rule.fee_per_unit}</strong></p>}
+                  {rule.rate_per_unit != null && <p>Rate per additional {rule.unit_label || "unit"}: <strong>${rule.rate_per_unit}</strong></p>}
+                  {rule.rate_percentage != null && <p>Rate: <strong>{rule.rate_percentage}%</strong></p>}
+                  {rule.technology_admin_fee != null && <p>Technology Admin Fee: <strong>${rule.technology_admin_fee}</strong></p>}
+                  {rule.tiers_config && <p>Tiers: <strong>{JSON.parse(rule.tiers_config || "[]").length} configured</strong></p>}
+                  <p>City surcharges: <strong>{rule.include_city_surcharges ? "Yes" : "No"}</strong></p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Main Panel ───────────────────────────────────────────────────────────────
 export default function CityFeeRulesPanel({ city }) {
-  const [editingRule, setEditingRule] = useState(null);
-  const [showAddForm, setShowAddForm] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: rules = [] } = useQuery({
@@ -403,55 +323,16 @@ export default function CityFeeRulesPanel({ city }) {
     queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
   });
 
-  const deleteRule = useMutation({
-    mutationFn: (id) => base44.entities.FeeRule.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] }),
-  });
-
-  const onSaved = () => {
-    queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });
-    setEditingRule(null);
-    setShowAddForm(false);
-  };
-
-  const grouped = rules.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).reduce((acc, r) => {
-    const cat = r.category || "other";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(r);
-    return acc;
-  }, {});
+  const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });
 
   return (
     <div>
       <SurchargePanel city={city} />
-
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-600">{rules.length} fee rule{rules.length !== 1 ? "s" : ""} configured</p>
-        <Button size="sm" variant="outline" onClick={() => { setEditingRule(null); setShowAddForm(true); }}>
-          <Plus className="w-3.5 h-3.5" /> Add Fee Rule
-        </Button>
+      <ImportExportPanel city={city} rules={rules} onImported={onImported} />
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-gray-500">{rules.length} fee rule{rules.length !== 1 ? "s" : ""} currently loaded</p>
       </div>
-
-      {showAddForm && !editingRule && (
-        <FeeRuleForm cityId={city.id} cityName={city.name} onSaved={onSaved} onCancel={() => setShowAddForm(false)} />
-      )}
-
-      {rules.length === 0 && !showAddForm && (
-        <p className="text-sm text-gray-400 text-center py-4">No fee rules yet. Add your first fee rule above.</p>
-      )}
-
-      {Object.entries(grouped).map(([cat, catRules]) => (
-        <div key={cat} className="mb-3">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 px-3">{cat}</p>
-          {catRules.map(rule =>
-            editingRule?.id === rule.id ? (
-              <FeeRuleForm key={rule.id} rule={editingRule} cityId={city.id} cityName={city.name} onSaved={onSaved} onCancel={() => setEditingRule(null)} />
-            ) : (
-              <FeeRuleRow key={rule.id} rule={rule} onEdit={setEditingRule} onDelete={(id) => deleteRule.mutate(id)} />
-            )
-          )}
-        </div>
-      ))}
+      <RulesList rules={rules} />
     </div>
   );
 }
