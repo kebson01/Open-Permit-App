@@ -9,6 +9,7 @@ const navLinks = [
   { name: "Home", page: "Home", icon: Building2 },
   { name: "Visual Permit Guide", page: "PermitGuide", icon: Map },
   { name: "Fee Calculator", page: "FeeCalculator", icon: Calculator },
+  { name: "Property Guide", page: "PropertyGuide", icon: HardHat },
 ];
 
 // Role-based nav links added dynamically below
