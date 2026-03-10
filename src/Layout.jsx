@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, Layers } from "lucide-react";
+import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 
@@ -9,7 +9,6 @@ const navLinks = [
   { name: "Home", page: "Home", icon: Building2 },
   { name: "Visual Permit Guide", page: "PermitGuide", icon: Map },
   { name: "Fee Calculator", page: "FeeCalculator", icon: Calculator },
-  { name: "Zoning & Engineering", page: "ZoningGuide", icon: Layers },
 ];
 
 // Role-based nav links added dynamically below
