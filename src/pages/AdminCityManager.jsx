@@ -13,6 +13,7 @@ import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 export default function AdminCityManager() {
   const [currentUser, setCurrentUser] = useState(null);
   const [expandedCity, setExpandedCity] = useState(null);
+  const [activeTab, setActiveTab] = useState({});
   const [showCityForm, setShowCityForm] = useState(false);
   const [editingCity, setEditingCity] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
