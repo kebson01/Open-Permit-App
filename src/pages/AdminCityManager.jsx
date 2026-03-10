@@ -134,8 +134,30 @@ export default function AdminCityManager() {
                   </div>
                 </div>
                 {expandedCity === city.id && (
-                  <div className="border-t border-gray-100 px-5 py-4 bg-gray-50">
-                    <CityFeeRulesPanel city={city} />
+                  <div className="border-t border-gray-100 bg-gray-50">
+                    {/* Tabs */}
+                    <div className="flex gap-0 border-b border-gray-200">
+                      {["permit_types", "fee_rules"].map(tab => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(prev => ({ ...prev, [city.id]: tab }))}
+                          className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                            (activeTab[city.id] || "permit_types") === tab
+                              ? "border-blue-600 text-blue-700 bg-white"
+                              : "border-transparent text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          {tab === "permit_types" ? "Permit Types & Requirements" : "Fee Rules"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="px-5 py-4">
+                      {(activeTab[city.id] || "permit_types") === "permit_types" ? (
+                        <CityPermitTypesPanel city={city} />
+                      ) : (
+                        <CityFeeRulesPanel city={city} />
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
