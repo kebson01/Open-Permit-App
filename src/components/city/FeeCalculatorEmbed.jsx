@@ -29,7 +29,7 @@ export default function FeeCalculatorEmbed({ city }) {
 
   const selectedPermit = cityConfig?.permits.find(p => p.id === selectedPermitId) || null;
 
-  useEffect(() => {
+  React.useEffect(() => {
     setDetails({});
     setResults(null);
   }, [selectedPermitId]);
