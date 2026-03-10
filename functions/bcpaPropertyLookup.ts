@@ -16,8 +16,28 @@ Look up this property: "${address}"
 
 Provide accurate data using:
 1. BCPA.net records for folio, owner, land use, lot size, year built, assessed value
-2. The specific city's zoning code (Weston, Coral Springs, Fort Lauderdale, Hollywood, Miramar, Pembroke Pines, Cooper City, Davie, etc.) for setbacks, height limits, coverage
-3. FEMA NFHL for flood zone designation
+2. The specific city's zoning code for setbacks, height limits, coverage. Use these EXACT Broward County zoning setbacks:
+
+BROWARD COUNTY zoning districts (applies when city uses county code, marked with * on BCPA):
+- RS-1: Front 25, Rear 25, Side 10 ft, Height 35 ft, Coverage 33%
+- RS-2: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 33%
+- RS-3: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 35%
+- RS-4: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 40%
+- RS-5: Front 25, Rear 20, Side 7.5 ft, Height 35 ft, Coverage 45%
+
+WESTON (uses own code): Front 25, Rear 20, Side 7.5 ft, Height 35 ft, Coverage 40%
+CORAL SPRINGS RS-3/4/5: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 35%
+FORT LAUDERDALE RS-8: Front 25, Rear 25, Side 5 ft, Height 35 ft, Coverage 40%
+COOPER CITY R-1-A: Front 25, Rear 30, Side 15 ft, Height 30 ft, Coverage 33%
+COOPER CITY R-1-B: Front 25, Rear 25, Side 7.5 ft, Height 30 ft, Coverage 35%
+HOLLYWOOD RS-6000: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 40%
+DAVIE RS-4: Front 25, Rear 25, Side 7.5 ft, Height 35 ft, Coverage 40%
+MIRAMAR RS: Front 25, Rear 20, Side 7.5 ft, Height 35 ft, Coverage 40%
+PEMBROKE PINES RS: Front 25, Rear 20, Side 7.5 ft, Height 35 ft, Coverage 40%
+
+3. FEMA NFHL for flood zone designation (search the address on msc.fema.gov)
+
+IMPORTANT: Use the setback table above. Do NOT invent setbacks. If the zoning district is not listed, use the closest match and note it.
 
 For building_projects, analyze what is allowed based on the property's zoning district and provide at least these 6 types: ADU/Guest House, Swimming Pool, Privacy Fence, Home Addition, Accessory Shed, Solar Panels.
 
