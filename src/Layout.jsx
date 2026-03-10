@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard } from "lucide-react";
+import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, Layers } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 
