@@ -132,7 +132,7 @@ export default function PropertyGuide() {
 
             {/* Disclaimer */}
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-500">
-              <strong>Disclaimer:</strong> This tool uses AI-assisted BCPA data lookups for informational purposes only. Always verify zoning, setbacks, and permit requirements with your city's building department before beginning any construction. Flood zone data is based on FEMA NFHL maps and may not reflect the latest revisions.
+              <strong>Disclaimer:</strong> Property data is sourced from the city's official dataset. Building project analysis is AI-assisted for informational purposes only. Always verify zoning, setbacks, and permit requirements with your city's building department before beginning any construction.
             </div>
           </>
         )}
