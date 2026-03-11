@@ -37,7 +37,7 @@ export default function PropertyGuide() {
             </h1>
           </div>
           <p className="text-blue-200 text-sm max-w-2xl">
-            Powered by BCPA (Broward County Property Appraiser) data — understand your zoning, setbacks, flood zone, and what you can build on your property.
+            Powered by the city's official property dataset — understand your zoning, setbacks, flood zone, and what you can build on your property.
           </p>
         </div>
       </div>
