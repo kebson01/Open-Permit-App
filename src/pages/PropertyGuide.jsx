@@ -52,7 +52,7 @@ export default function PropertyGuide() {
             <div className="w-16 h-16 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
             <div className="text-center">
               <p className="font-semibold text-gray-700">Looking up your property…</p>
-              <p className="text-sm text-gray-500 mt-1">Checking BCPA records, zoning codes &amp; flood maps</p>
+              <p className="text-sm text-gray-500 mt-1">Searching city property dataset &amp; generating zoning analysis</p>
             </div>
           </div>
         )}
