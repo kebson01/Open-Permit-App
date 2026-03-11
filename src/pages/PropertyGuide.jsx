@@ -15,7 +15,7 @@ export default function PropertyGuide() {
     setLoading(true);
     setError(null);
     setData(null);
-    const res = await base44.functions.invoke("bcpaPropertyLookup", { address });
+    const res = await base44.functions.invoke("propertyLookup", { address });
     const result = res.data;
     if (result?.error) {
       setError(result.error);
