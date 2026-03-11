@@ -141,9 +141,9 @@ export default function PropertyGuide() {
         {!loading && !data && !error && (
           <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
             <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-gray-600 font-semibold text-lg mb-1">Enter a Broward County Address</h3>
+            <h3 className="text-gray-600 font-semibold text-lg mb-1">Enter a Property Address</h3>
             <p className="text-sm text-gray-400 max-w-md mx-auto">
-              We'll pull your property details from BCPA, look up your zoning district, setback requirements, flood zone designation, and show you exactly what you can build.
+              We'll look up your property from the city's official dataset, retrieve your zoning district, setback requirements, flood zone, and show you exactly what you can build.
             </p>
           </div>
         )}
