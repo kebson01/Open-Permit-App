@@ -88,10 +88,10 @@ export default function PropertyGuide() {
                     </div>
                   )}
                   <a
-                    href={`https://www.bcpa.net/RecInfo.asp?URL_SF=${encodeURIComponent(data.folio || "")}`}
+                    href={data.folio ? `https://www.bcpa.net/RecInfo.asp?URL_Folio=${encodeURIComponent(data.folio)}` : '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    className={`flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium ${!data.folio ? 'hidden' : ''}`}
                   >
                     View on BCPA.net <ExternalLink className="w-3 h-3" />
                   </a>
