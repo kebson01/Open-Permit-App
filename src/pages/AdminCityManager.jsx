@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 import CityFormModal from "@/components/admin/CityFormModal.jsx";
 import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
 import CityPermitTypesPanel from "@/components/admin/CityPermitTypesPanel.jsx";
+import CodeOfOrdinancesPanel from "@/components/admin/CodeOfOrdinancesPanel.jsx";
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 
 export default function AdminCityManager() {
