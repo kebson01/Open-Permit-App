@@ -144,25 +144,34 @@ Deno.serve(async (req) => {
   // Parse ordinances
   const records = parseOrdinances(text);
 
-  // Bulk insert in batches of 50
+  // Read offset and limit from payload
+  const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+  const offset = body.offset || 0;
+  const limit = body.limit || 100;
+  const slice = records.slice(offset, offset + limit);
+
+  // Insert sequentially with small delay to avoid rate limits
   let created = 0;
   let errors = 0;
-  const batchSize = 50;
 
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, i + batchSize);
-    const results = await Promise.allSettled(
-      batch.map(r => base44.asServiceRole.entities.CodeOfOrdinance.create(r))
-    );
-    created += results.filter(r => r.status === 'fulfilled').length;
-    errors += results.filter(r => r.status === 'rejected').length;
+  for (const r of slice) {
+    try {
+      await base44.asServiceRole.entities.CodeOfOrdinance.create(r);
+      created++;
+      await new Promise(resolve => setTimeout(resolve, 120));
+    } catch (e) {
+      errors++;
+    }
   }
 
   return Response.json({
     success: true,
-    parsed: records.length,
+    total_parsed: records.length,
+    offset,
+    limit,
+    slice_size: slice.length,
     created,
     errors,
-    sample: records.slice(0, 3)
+    next_offset: offset + limit < records.length ? offset + limit : null
   });
 });
