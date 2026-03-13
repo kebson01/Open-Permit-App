@@ -32,10 +32,28 @@ export default function PropertyGuide() {
     // Try partial street number + name combo
     if (!props.length && q.includes(" ")) {
       const parts = q.split(" ");
+      const streetTypes = ["RD","DR","AVE","ST","BLVD","LN","CT","PL","WAY","TER","CIR","PL","PKWY","HWY","PATH","WALK","SQ","LOOP"];
+      const lastWord = parts[parts.length - 1];
+      const hasStreetType = streetTypes.includes(lastWord);
+
+      // Try with number + full street name (minus street type if present)
+      const streetNameParts = parts.slice(1);
+      const streetName = hasStreetType
+        ? streetNameParts.slice(0, -1).join(" ")
+        : streetNameParts.join(" ");
+
       props = await base44.entities.Property.filter(
-        { SITUS_STREET_NUMBER: parts[0], SITUS_STREET_NAME: parts.slice(1).join(" ") },
+        { SITUS_STREET_NUMBER: parts[0], SITUS_STREET_NAME: streetName },
         "-updated_date", 20
       );
+
+      // Also try without street number (just street name minus type)
+      if (!props.length && hasStreetType) {
+        props = await base44.entities.Property.filter(
+          { SITUS_STREET_NAME: streetName },
+          "-updated_date", 50
+        );
+      }
     }
 
     setResults(props);
