@@ -110,6 +110,8 @@ export default function PropertyDetail({ property: p, onBack }) {
           {!p.SALE_DATE_1 && <p className="text-sm text-gray-400">No sales history available</p>}
         </Section>
       </div>
+
+      <PropertyCityPanel property={p} />
     </div>
   );
 }
