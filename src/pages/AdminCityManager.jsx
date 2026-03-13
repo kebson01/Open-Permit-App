@@ -138,7 +138,7 @@ export default function AdminCityManager() {
                   <div className="border-t border-gray-100 bg-gray-50">
                     {/* Tabs */}
                     <div className="flex gap-0 border-b border-gray-200">
-                      {["permit_types", "fee_rules"].map(tab => (
+                      {["permit_types", "fee_rules", "ordinances"].map(tab => (
                         <button
                           key={tab}
                           onClick={() => setActiveTab(prev => ({ ...prev, [city.id]: tab }))}
@@ -148,13 +148,15 @@ export default function AdminCityManager() {
                               : "border-transparent text-gray-500 hover:text-gray-700"
                           }`}
                         >
-                          {tab === "permit_types" ? "Permit Types & Requirements" : "Fee Rules"}
+                          {tab === "permit_types" ? "Permit Types" : tab === "fee_rules" ? "Fee Rules" : "Code of Ordinances"}
                         </button>
                       ))}
                     </div>
                     <div className="px-5 py-4">
                       {(activeTab[city.id] || "permit_types") === "permit_types" ? (
                         <CityPermitTypesPanel city={city} />
+                      ) : (activeTab[city.id]) === "ordinances" ? (
+                        <CodeOfOrdinancesPanel city={city} />
                       ) : (
                         <CityFeeRulesPanel city={city} />
                       )}
