@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.entities.CodeOfOrdinance.create(r);
       created++;
-      await new Promise(resolve => setTimeout(resolve, 120));
+      await new Promise(resolve => setTimeout(resolve, 400));
     } catch (e) {
       errors++;
     }
