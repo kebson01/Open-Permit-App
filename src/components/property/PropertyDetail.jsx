@@ -1,5 +1,6 @@
 import { ArrowLeft, MapPin, User, DollarSign, Home, Calendar, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PropertyCityPanel from "@/components/property/PropertyCityPanel";
 
 function Row({ label, value }) {
   if (!value && value !== 0) return null;
