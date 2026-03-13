@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Search, Home, MapPin, User, DollarSign, Calendar, Building2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import PropertyCard from "@/components/property/PropertyCard";
-import PropertyDetail from "@/components/property/PropertyDetail";
+import PropertyCard from "@/components/property/PropertyCard.jsx";
+import PropertyDetail from "@/components/property/PropertyDetail.jsx";
 
 export default function PropertyGuide() {
   const [query, setQuery] = useState("");
