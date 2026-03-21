@@ -160,16 +160,23 @@ const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, c
 
 export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [hoveredZone, setHoveredZone] = useState(null);
+  const [tappedZone, setTappedZone] = useState(null);
   const [imgRect, setImgRect] = useState(null);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const lastTouchDist = useRef(null);
+  const lastTouchCenter = useRef(null);
+  const isPanning = useRef(false);
+  const panStart = useRef(null);
 
   const zones  = VIEW_ZONES[view]  || FRONT_ZONES;
   const legend = view === "commercial" ? COMMERCIAL_LEGEND : (LEGENDS[view] || LEGENDS.front);
   const imgSrc = IMAGES[view]      || IMAGES.front;
   const dims   = IMAGE_DIMS[view]  || IMAGE_DIMS.front;
 
-  // Compute the actual rendered rect of the image inside object-contain container
-  const computeRect = () => {
+  const computeRect = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
     const cw = container.clientWidth;
@@ -183,17 +190,78 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       rh = ch; rw = ch * imgAspect; rx = (cw - rw) / 2; ry = 0;
     }
     setImgRect({ x: rx, y: ry, w: rw, h: rh });
-  };
+  }, [dims]);
 
   useEffect(() => {
     computeRect();
     const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
+  }, [view, computeRect]);
+
+  // Reset zoom/pan on view change
+  useEffect(() => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+    setTappedZone(null);
   }, [view]);
+
+  // Touch handlers for pinch-zoom and pan
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist.current = Math.sqrt(dx * dx + dy * dy);
+      lastTouchCenter.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+      isPanning.current = false;
+    } else if (e.touches.length === 1 && scale > 1) {
+      isPanning.current = true;
+      panStart.current = { x: e.touches[0].clientX - offset.x, y: e.touches[0].clientY - offset.y };
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && lastTouchDist.current !== null) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const newDist = Math.sqrt(dx * dx + dy * dy);
+      const ratio = newDist / lastTouchDist.current;
+      setScale(s => Math.min(Math.max(s * ratio, 1), 4));
+      lastTouchDist.current = newDist;
+    } else if (e.touches.length === 1 && isPanning.current && panStart.current) {
+      e.preventDefault();
+      setOffset({
+        x: e.touches[0].clientX - panStart.current.x,
+        y: e.touches[0].clientY - panStart.current.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastTouchDist.current = null;
+    isPanning.current = false;
+    if (scale <= 1) setOffset({ x: 0, y: 0 });
+  };
+
+  const handleZoneClick = (zone) => {
+    setTappedZone(prev => prev === zone.id ? null : zone.id);
+    onZoneClick(zone.label, zone.desc);
+  };
+
+  const handleZoneTap = (e, zone) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTappedZone(prev => prev === zone.id ? null : zone.id);
+    onZoneClick(zone.label, zone.desc);
+  };
 
   // Scale polygon points string from image coords to rendered pixel coords
   const scalePoints = (pointsStr) => {
+    if (!imgRect) return "";
     return pointsStr.trim().split(/\s+/).map(pair => {
       const [px, py] = pair.split(",").map(Number);
       const sx = imgRect.x + (px / dims.w) * imgRect.w;
@@ -203,8 +271,8 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   };
 
   // Compute bounding box center for tooltip placement
-  const getBBoxCenter = (pointsStr) => {
-    const pairs = pointsStr.trim().split(/\s+/).map(p => p.split(",").map(Number));
+  const getBBoxCenter = (scaledPoints) => {
+    const pairs = scaledPoints.trim().split(/\s+/).map(p => p.split(",").map(Number));
     const xs = pairs.map(p => p[0]);
     const ys = pairs.map(p => p[1]);
     return {
@@ -215,83 +283,131 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
   return (
     <div className="space-y-4">
-      <div
-        ref={containerRef}
-        className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 select-none"
-        style={{ aspectRatio: "16/9" }}
-      >
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={view}
-            src={imgSrc}
-            alt={`House ${view} view`}
-            className="absolute inset-0 w-full h-full object-contain"
-            draggable={false}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            onLoad={computeRect}
-          />
-        </AnimatePresence>
-
-        {/* SVG overlay — perfectly aligned to image via scaled polygon points */}
-        {imgRect && (
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 2 }}
+      {/* Zoom controls */}
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-xs text-gray-400 mr-1 hidden sm:block">Pinch or use buttons to zoom</span>
+        <span className="text-xs text-gray-400 mr-1 sm:hidden">Pinch to zoom · Tap zones</span>
+        <button
+          onClick={() => setScale(s => Math.min(s + 0.5, 4))}
+          className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+        >
+          <ZoomIn className="w-4 h-4 text-gray-600" />
+        </button>
+        <button
+          onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }}
+          className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+        >
+          <ZoomOut className="w-4 h-4 text-gray-600" />
+        </button>
+        {scale > 1 && (
+          <button
+            onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}
+            className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
-            {zones.map((zone) => {
-              const isHovered = hoveredZone === zone.id;
-              const visible   = showHighlights || isHovered;
-              const scaled    = scalePoints(zone.points);
-              const { cx, cy } = getBBoxCenter(zone.points.trim().split(/\s+/).map(p => {
-                const [px, py] = p.split(",").map(Number);
-                return `${imgRect.x + (px / dims.w) * imgRect.w},${imgRect.y + (py / dims.h) * imgRect.h}`;
-              }).join(" "));
-
-              return (
-                <g key={zone.id} style={{ pointerEvents: "all", cursor: "pointer" }}
-                  onClick={() => onZoneClick(zone.label, zone.desc)}
-                  onMouseEnter={() => setHoveredZone(zone.id)}
-                  onMouseLeave={() => setHoveredZone(null)}
-                >
-                  <polygon
-                    points={scaled}
-                    fill={visible ? zone.color : "transparent"}
-                    stroke={visible ? zone.stroke : "transparent"}
-                    strokeWidth={isHovered ? 2.5 : 1.5}
-                    strokeDasharray={isHovered ? "0" : "5,4"}
-                    style={{ transition: "fill 0.15s, stroke 0.15s" }}
-                  />
-                  {isHovered && (
-                    <g>
-                      <rect
-                        x={cx - 70} y={cy - 34}
-                        width={140} height={24}
-                        rx={5} ry={5}
-                        fill="rgba(0,0,0,0.85)"
-                      />
-                      <text
-                        x={cx} y={cy - 17}
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize={11}
-                        fontWeight="600"
-                        style={{ pointerEvents: "none", userSelect: "none" }}
-                      >
-                        {zone.label}
-                      </text>
-                    </g>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
+            <Maximize2 className="w-4 h-4 text-gray-600" />
+          </button>
         )}
+        {scale > 1 && (
+          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>
+        )}
+      </div>
 
-        <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow" style={{ zIndex: 3 }}>
-          {showHighlights ? "Click any highlighted zone" : "Hover to discover permit zones"}
+      <div
+        ref={wrapperRef}
+        className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 select-none touch-none"
+        style={{ aspectRatio: "16/9" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          ref={containerRef}
+          className="relative w-full h-full"
+          style={{
+            transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+            transformOrigin: "center center",
+            transition: isPanning.current ? "none" : "transform 0.1s ease-out",
+          }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={view}
+              src={imgSrc}
+              alt={`House ${view} view`}
+              className="absolute inset-0 w-full h-full object-contain"
+              draggable={false}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onLoad={computeRect}
+            />
+          </AnimatePresence>
+
+          {/* SVG overlay */}
+          {imgRect && (
+            <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
+              {zones.map((zone) => {
+                const isHovered = hoveredZone === zone.id;
+                const isTapped  = tappedZone === zone.id;
+                const isActive  = isHovered || isTapped;
+                const visible   = showHighlights || isActive;
+                const scaled    = scalePoints(zone.points);
+                const { cx, cy } = getBBoxCenter(scaled);
+
+                return (
+                  <g key={zone.id}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleZoneClick(zone)}
+                    onTouchEnd={(e) => handleZoneTap(e, zone)}
+                    onMouseEnter={() => setHoveredZone(zone.id)}
+                    onMouseLeave={() => setHoveredZone(null)}
+                  >
+                    {/* Larger invisible hit area for touch */}
+                    <polygon
+                      points={scaled}
+                      fill="transparent"
+                      stroke="transparent"
+                      strokeWidth={20}
+                      style={{ pointerEvents: "all" }}
+                    />
+                    <polygon
+                      points={scaled}
+                      fill={visible ? zone.color : "transparent"}
+                      stroke={visible ? zone.stroke : "transparent"}
+                      strokeWidth={isActive ? 2.5 : 1.5}
+                      strokeDasharray={isActive ? "0" : "5,4"}
+                      style={{ transition: "fill 0.15s, stroke 0.15s", pointerEvents: "none" }}
+                    />
+                    {isActive && (
+                      <g style={{ pointerEvents: "none" }}>
+                        <rect
+                          x={cx - 75} y={cy - 36}
+                          width={150} height={28}
+                          rx={6} ry={6}
+                          fill="rgba(0,0,0,0.88)"
+                        />
+                        <text
+                          x={cx} y={cy - 17}
+                          textAnchor="middle"
+                          fill="white"
+                          fontSize={12}
+                          fontWeight="600"
+                          style={{ userSelect: "none" }}
+                        >
+                          {zone.label}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          )}
+
+          <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow" style={{ zIndex: 3 }}>
+            {showHighlights ? "Tap any highlighted zone" : "Tap to discover permit zones"}
+          </div>
         </div>
       </div>
 
@@ -299,7 +415,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {showHighlights && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Permit Zones Legend</p>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
             {legend.map(item => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: item.color, opacity: 0.85 }} />
