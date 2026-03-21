@@ -164,8 +164,10 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const [imgRect, setImgRect] = useState(null);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
+  const fullscreenRef = useRef(null);
   const lastTouchDist = useRef(null);
   const lastTouchCenter = useRef(null);
   const isPanning = useRef(false);
