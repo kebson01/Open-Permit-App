@@ -198,8 +198,14 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     computeRect();
     const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [view, computeRect]);
+    window.addEventListener("resize", computeRect);
+    window.addEventListener("orientationchange", () => setTimeout(computeRect, 100));
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", computeRect);
+      window.removeEventListener("orientationchange", computeRect);
+    };
+  }, [view, computeRect, isFullscreen]);
 
   // Reset zoom/pan on view change
   useEffect(() => {
