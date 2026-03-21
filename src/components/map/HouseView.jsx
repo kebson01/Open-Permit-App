@@ -375,12 +375,12 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {isFullscreen && (
         <div
           className="fixed z-50 bg-black"
-          style={{ top: 0, left: 0, width: "100vw", height: "100dvh" }}
+          style={{ top: 0, left: 0, right: 0, bottom: 0 }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div style={zoomWrapStyle}>
+          <div style={{ ...zoomWrapStyle, position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
             <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
           </div>
           <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
