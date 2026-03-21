@@ -195,19 +195,22 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   }, [dims]);
 
   useEffect(() => {
-    // Small delay allows the DOM to settle after fullscreen toggle
-    const t = setTimeout(computeRect, 50);
+    const t1 = setTimeout(computeRect, 50);
+    const t2 = setTimeout(computeRect, 300);
     const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
-    window.addEventListener("resize", computeRect);
-    return () => { clearTimeout(t); };
-    window.addEventListener("orientationchange", () => {
+    const onOrient = () => {
       setTimeout(computeRect, 100);
       setTimeout(computeRect, 400);
-    });
+    };
+    window.addEventListener("resize", computeRect);
+    window.addEventListener("orientationchange", onOrient);
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
       ro.disconnect();
       window.removeEventListener("resize", computeRect);
+      window.removeEventListener("orientationchange", onOrient);
     };
   }, [view, computeRect, isFullscreen]);
 
