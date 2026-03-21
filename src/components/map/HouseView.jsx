@@ -426,7 +426,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 relative" ref={containerRef}>
+          <div className="flex-1 relative">
             <MapContent inFullscreen />
           </div>
         </div>
