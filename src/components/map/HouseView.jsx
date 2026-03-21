@@ -379,7 +379,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {isFullscreen && (
         <div
           className="fixed z-50 bg-black"
-          style={{ top: 0, left: 0, right: 0, bottom: 0 }}
+          style={{ top: 0, left: 0, width: "100vw", height: "100dvh" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
