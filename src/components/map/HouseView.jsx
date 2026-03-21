@@ -333,14 +333,13 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {!isFullscreen && (
         <div
           className="rounded-2xl shadow-xl border border-gray-200 w-full"
-          style={{ position: "relative", paddingTop: "56.25%", overflow: "hidden", backgroundColor: "#111827" }}
+          style={{ position: "relative", aspectRatio: "16/9", overflow: "hidden", backgroundColor: "#111827" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Absolutely fill the padded area */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-            <div style={{ ...zoomTransformStyle, position: "relative", width: "100%", height: "100%" }}>
+          <div style={{ position: "absolute", inset: 0 }}>
+            <div style={{ ...zoomTransformStyle, width: "100%", height: "100%" }}>
               <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
             </div>
           </div>
