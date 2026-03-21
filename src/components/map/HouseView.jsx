@@ -329,26 +329,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
   return (
     <div className="space-y-4">
-      {/* Zoom controls */}
-      <div className="flex items-center justify-end gap-2">
-        <span className="text-xs text-gray-400 mr-1 hidden sm:block">Pinch or use buttons to zoom</span>
-        <span className="text-xs text-gray-400 mr-1 sm:hidden">Pinch to zoom · Tap zones</span>
-        <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50">
-          <ZoomIn className="w-4 h-4 text-gray-600" />
-        </button>
-        <button onClick={() => { setScale(s => { const n = Math.max(s - 0.5, 1); if (n <= 1) setOffset({ x: 0, y: 0 }); return n; }); }} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50">
-          <ZoomOut className="w-4 h-4 text-gray-600" />
-        </button>
-        {scale > 1 && (
-          <>
-            <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50">
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>
-          </>
-        )}
-      </div>
-
       {/* Normal view */}
       {!isFullscreen && (
         <div
@@ -363,6 +343,23 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             <div style={{ ...zoomTransformStyle, position: "relative", width: "100%", height: "100%" }}>
               <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
             </div>
+          </div>
+          {/* Zoom controls overlaid inside the map */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+            <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button onClick={() => { setScale(s => { const n = Math.max(s - 0.5, 1); if (n <= 1) setOffset({ x: 0, y: 0 }); return n; }); }} className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            {scale > 1 && (
+              <>
+                <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
+                  <X className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-medium text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/10">{Math.round(scale * 100)}%</span>
+              </>
+            )}
           </div>
           <button
             onClick={() => setIsFullscreen(true)}
