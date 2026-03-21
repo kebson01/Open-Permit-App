@@ -208,6 +208,19 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     setTappedZone(null);
   }, [view]);
 
+  // Handle ESC key to exit fullscreen
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") setIsFullscreen(false); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // Lock body scroll in fullscreen
+  useEffect(() => {
+    document.body.style.overflow = isFullscreen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isFullscreen]);
+
   // Touch handlers for pinch-zoom and pan
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
