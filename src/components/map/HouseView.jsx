@@ -202,7 +202,7 @@ function MapCanvas({ view, showHighlights, onZoneClick }) {
   };
 
   return (
-    <div ref={containerRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} className="bg-gray-900 overflow-hidden select-none touch-none">
+    <div ref={containerRef} style={{ position: "absolute", inset: 0 }} className="bg-gray-900 overflow-hidden select-none touch-none">
       <AnimatePresence mode="wait">
         <motion.img
           key={view}
