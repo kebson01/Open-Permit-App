@@ -420,7 +420,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {/* Normal view */}
       {!isFullscreen && (
         <div className="relative rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900" style={{ aspectRatio: "16/9" }}>
-          {mapInner}
+          <MapCanvas />
           <button
             onClick={() => setIsFullscreen(true)}
             className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
@@ -434,8 +434,9 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {/* Fullscreen overlay */}
       {isFullscreen && (
         <div className="fixed z-50 bg-black" style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
+          <MapCanvas />
           {/* Floating controls */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-auto">
             <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
               <ZoomIn className="w-4 h-4" />
             </button>
@@ -450,10 +451,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
           >
             <X className="w-5 h-5" />
           </button>
-          {/* Map fills entire screen */}
-          <div className="absolute inset-0">
-            {mapInner}
-          </div>
         </div>
       )}
 
