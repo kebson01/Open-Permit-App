@@ -302,11 +302,11 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     };
   };
 
-  const MapContent = ({ inFullscreen = false }) => (
+  // Shared map content JSX (inlined to avoid re-mounting on every render)
+  const mapInner = (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden bg-gray-900 select-none touch-none ${inFullscreen ? "w-full h-full" : "rounded-2xl shadow-xl border border-gray-200"}`}
-      style={inFullscreen ? {} : { aspectRatio: "16/9" }}
+      className="relative overflow-hidden bg-gray-900 select-none touch-none w-full h-full"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -379,15 +379,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
           {showHighlights ? "Tap any highlighted zone" : "Tap to discover permit zones"}
         </div>
       </div>
-
-      {/* Fullscreen toggle button overlaid on image */}
-      <button
-        onClick={() => setIsFullscreen(f => !f)}
-        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
-        title={inFullscreen ? "Exit fullscreen" : "Fullscreen"}
-      >
-        {inFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-      </button>
     </div>
   );
 
@@ -413,12 +404,24 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         )}
       </div>
 
-      <MapContent />
+      {/* Normal view */}
+      {!isFullscreen && (
+        <div className="relative rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900" style={{ aspectRatio: "16/9" }}>
+          {mapInner}
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+            title="Fullscreen"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
-        <div className="fixed z-50 bg-black flex flex-col" ref={fullscreenRef} style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700">
+        <div className="fixed z-50 bg-black flex flex-col" style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
+          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700 flex-shrink-0">
             <div className="flex items-center gap-2">
               <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
                 <ZoomIn className="w-4 h-4" />
@@ -432,14 +435,14 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 relative">
-            <MapContent inFullscreen />
+          <div className="flex-1 relative min-h-0">
+            {mapInner}
           </div>
         </div>
       )}
 
       {/* Legend */}
-      {showHighlights && (
+      {showHighlights && !isFullscreen && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Permit Zones Legend</p>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
