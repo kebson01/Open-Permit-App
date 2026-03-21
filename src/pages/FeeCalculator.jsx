@@ -49,43 +49,42 @@ export default function FeeCalculator() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-            <Calculator className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">Permit Fee Calculator</h1>
+      <div className="mb-5 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+          <Calculator className="w-4 h-4 text-white" />
         </div>
-        <p className="text-gray-500">Calculate estimated permit fees based on official municipal fee schedules</p>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-800 leading-tight">Permit Fee Calculator</h1>
+          <p className="text-gray-400 text-xs sm:text-sm">Based on official municipal fee schedules</p>
+        </div>
       </div>
 
       {/* City Selector */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
-          <MapPin className="w-4 h-4 text-[#2c5282]" />
-          <span className="text-sm font-medium text-gray-700">Municipality:</span>
+          <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
+          <span className="text-sm font-medium text-gray-700">City:</span>
           {singleCity ? (
-            <span className="font-semibold text-[#2c5282]">{city}</span>
+            <span className="font-semibold text-blue-700">{city}</span>
           ) : (
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-52 rounded-xl">
+              <SelectTrigger className="w-44 sm:w-52 rounded-xl text-sm">
                 <SelectValue placeholder="Choose city..." />
               </SelectTrigger>
               <SelectContent>
                 {CITIES.map(c => (
                   <SelectItem key={c} value={c}>
-                    {c}
-                    {!CITY_FEE_CONFIGS[c] && <span className="text-gray-400 ml-1">(coming soon)</span>}
+                    {c}{!CITY_FEE_CONFIGS[c] && " (soon)"}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
           {cityConfig && (
-            <span className="text-xs text-gray-400 ml-auto">
-              Fee schedule effective: {cityConfig.effective_date}
+            <span className="text-xs text-gray-400 ml-auto hidden sm:block">
+              Effective: {cityConfig.effective_date}
             </span>
           )}
         </div>
@@ -94,15 +93,14 @@ export default function FeeCalculator() {
           <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
             <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-amber-700">
-              Fee schedule for <strong>{city}</strong> is not yet configured. Currently showing Weston fees as a reference.
-              Contact us to add your municipality's fee schedule.
+              Fee schedule for <strong>{city}</strong> not yet configured. Showing Weston as reference.
             </p>
           </div>
         )}
       </div>
 
       {/* Permit Selector */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
         <PermitSelectorV2
           permits={(cityConfig || WESTON_CONFIG).permits}
           selectedPermitId={selectedPermitId}
@@ -110,7 +108,6 @@ export default function FeeCalculator() {
         />
       </div>
 
-      {/* Project Details */}
       {selectedPermit && (
         <ProjectDetailsV2
           permit={selectedPermit}
@@ -120,7 +117,6 @@ export default function FeeCalculator() {
         />
       )}
 
-      {/* Results */}
       <FeeResultsV2
         results={results}
         permit={selectedPermit}
