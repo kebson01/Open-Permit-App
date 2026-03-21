@@ -57,52 +57,56 @@ export default function PermitGuide() {
       </div>
 
       {/* Controls Bar */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center">
-        <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
-          {views.map(v => (
-            <button
-              key={v.id}
-              onClick={() => setView(v.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                view === v.id
-                  ? "gradient-primary text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <v.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{v.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <Button variant="outline" size="sm" onClick={() => setShowHighlights(!showHighlights)} className="rounded-xl">
-          {showHighlights ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-          {showHighlights ? "Hide Areas" : "Show Areas"}
-        </Button>
-
-        <Button variant="outline" size="sm" onClick={() => setPanelOpen(true)} className="rounded-xl">
-          <List className="w-4 h-4 mr-2" />
-          Browse Permits
-        </Button>
-
-        {!singleCity && (
-          <div className="flex items-center gap-2 ml-auto">
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-44 rounded-xl h-9 text-sm">
-                <SelectValue placeholder="Select city..." />
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-9 text-sm">
-              Apply
-            </Button>
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm overflow-x-auto">
+            {views.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  view === v.id
+                    ? "gradient-primary text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <v.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{v.label}</span>
+              </button>
+            ))}
           </div>
-        )}
+
+          <Button variant="outline" size="sm" onClick={() => setShowHighlights(!showHighlights)} className="rounded-xl">
+            {showHighlights ? <EyeOff className="w-4 h-4 mr-1.5" /> : <Eye className="w-4 h-4 mr-1.5" />}
+            <span className="hidden sm:inline">{showHighlights ? "Hide Areas" : "Show Areas"}</span>
+            <span className="sm:hidden">{showHighlights ? "Hide" : "Show"}</span>
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={() => setPanelOpen(true)} className="rounded-xl">
+            <List className="w-4 h-4 mr-1.5" />
+            <span className="hidden sm:inline">Browse Permits</span>
+            <span className="sm:hidden">Browse</span>
+          </Button>
+
+          {!singleCity && (
+            <div className="flex items-center gap-2 ml-auto">
+              <MapPin className="w-4 h-4 text-gray-400 hidden sm:block" />
+              <Select value={city} onValueChange={setCity}>
+                <SelectTrigger className="w-36 sm:w-44 rounded-xl h-9 text-sm">
+                  <SelectValue placeholder="Select city..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CITIES.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-9 text-sm">
+                Apply
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {city && (
