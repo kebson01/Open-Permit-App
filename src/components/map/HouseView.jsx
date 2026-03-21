@@ -199,7 +199,10 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", computeRect);
-    window.addEventListener("orientationchange", () => setTimeout(computeRect, 100));
+    window.addEventListener("orientationchange", () => {
+      setTimeout(computeRect, 100);
+      setTimeout(computeRect, 400);
+    });
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", computeRect);
