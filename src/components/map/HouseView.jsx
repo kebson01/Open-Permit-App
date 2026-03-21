@@ -439,7 +439,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             <X className="w-5 h-5" />
           </button>
           {/* Map fills entire screen */}
-          <div className="w-full h-full">
+          <div className="absolute inset-0">
             {mapInner}
           </div>
         </div>
