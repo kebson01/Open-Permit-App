@@ -321,11 +321,12 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     if (scale <= 1) setOffset({ x: 0, y: 0 });
   };
 
-  const zoomWrapStyle = {
-    position: "absolute", inset: 0,
+  const zoomTransformStyle = {
     transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
     transformOrigin: "center center",
     transition: isPanning.current ? "none" : "transform 0.1s ease-out",
+    width: "100%",
+    height: "100%",
   };
 
   return (
