@@ -195,10 +195,12 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   }, [dims]);
 
   useEffect(() => {
-    computeRect();
+    // Small delay allows the DOM to settle after fullscreen toggle
+    const t = setTimeout(computeRect, 50);
     const ro = new ResizeObserver(computeRect);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", computeRect);
+    return () => { clearTimeout(t); };
     window.addEventListener("orientationchange", () => {
       setTimeout(computeRect, 100);
       setTimeout(computeRect, 400);
