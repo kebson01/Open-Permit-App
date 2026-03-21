@@ -360,10 +360,8 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div style={{ position: "absolute", inset: 0 }}>
-            <div style={zoomTransformStyle}>
-              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
-            </div>
+          <div style={zoomTransformStyle}>
+            <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
           </div>
           <button
             onClick={() => setIsFullscreen(true)}
