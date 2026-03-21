@@ -146,20 +146,25 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
+  const allLinks = [...navLinks, ...adminLinks];
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
       <nav className="sticky top-0 z-40 shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
-            <div />
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <Link to="/" className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-400" />
+              <span className="text-white font-bold text-sm sm:text-base hidden xs:block">Saint's Permits</span>
+            </Link>
 
             <div className="hidden md:flex items-center gap-1">
-              {[...navLinks, ...adminLinks].map(link => (
+              {allLinks.map(link => (
                 <Link
                   key={link.page}
                   to={createPageUrl(link.page)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                     currentPageName === link.page
                       ? "bg-white/20 text-white"
                       : "text-blue-100 hover:bg-white/10 hover:text-white"
@@ -181,16 +186,16 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-white/10 backdrop-blur" style={{ backgroundColor: "rgba(15,23,42,0.97)" }}>
-            {[...navLinks, ...adminLinks].map(link => (
+          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.98)" }}>
+            {allLinks.map(link => (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium ${
+                className={`flex items-center gap-3 px-5 py-4 text-sm font-medium border-b border-white/5 ${
                   currentPageName === link.page
                     ? "bg-white/15 text-white"
-                    : "text-blue-100 hover:bg-white/10"
+                    : "text-blue-100"
                 }`}
               >
                 <link.icon className="w-4 h-4" />
@@ -204,8 +209,24 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <main className="flex-1">{children}</main>
 
+      {/* Bottom nav for mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex">
+        {navLinks.slice(0, 4).map(link => (
+          <Link
+            key={link.page}
+            to={createPageUrl(link.page)}
+            className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
+              currentPageName === link.page ? "text-blue-600" : "text-gray-500"
+            }`}
+          >
+            <link.icon className={`w-5 h-5 ${currentPageName === link.page ? "text-blue-600" : "text-gray-400"}`} />
+            <span className="truncate text-[10px]">{link.name}</span>
+          </Link>
+        ))}
+      </nav>
+
       {/* Footer */}
-      <footer className="gradient-navy text-gray-400 py-8">
+      <footer className="gradient-navy text-gray-400 py-8 pb-20 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Building2 className="w-5 h-5 text-blue-400" />
