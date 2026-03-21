@@ -183,6 +183,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     if (!container) return;
     const cw = container.clientWidth;
     const ch = container.clientHeight;
+    if (!cw || !ch) return;
     const imgAspect = dims.w / dims.h;
     const conAspect = cw / ch;
     let rw, rh, rx, ry;
@@ -195,19 +196,24 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   }, [dims]);
 
   useEffect(() => {
-    const t1 = setTimeout(computeRect, 50);
-    const t2 = setTimeout(computeRect, 300);
-    const ro = new ResizeObserver(computeRect);
+    setImgRect(null);
+    const t1 = setTimeout(computeRect, 30);
+    const t2 = setTimeout(computeRect, 200);
+    const t3 = setTimeout(computeRect, 500);
+    const ro = new ResizeObserver(() => {
+      computeRect();
+    });
     if (containerRef.current) ro.observe(containerRef.current);
     const onOrient = () => {
-      setTimeout(computeRect, 100);
-      setTimeout(computeRect, 400);
+      setTimeout(computeRect, 150);
+      setTimeout(computeRect, 500);
     };
     window.addEventListener("resize", computeRect);
     window.addEventListener("orientationchange", onOrient);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
       ro.disconnect();
       window.removeEventListener("resize", computeRect);
       window.removeEventListener("orientationchange", onOrient);
