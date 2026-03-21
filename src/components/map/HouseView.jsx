@@ -387,8 +387,10 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div style={zoomTransformStyle}>
-            <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+            <div style={{ ...zoomTransformStyle, position: "relative", width: "100%", height: "100%" }}>
+              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
+            </div>
           </div>
           <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
             <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
