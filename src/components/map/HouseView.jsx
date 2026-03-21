@@ -354,7 +354,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {!isFullscreen && (
         <div
           className="relative rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900"
-          style={{ aspectRatio: "16/9", maxHeight: "56vw" }}
+          style={{ aspectRatio: "16/9", maxHeight: "min(56vw, 60vh)" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
