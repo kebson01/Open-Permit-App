@@ -304,6 +304,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
   const MapContent = ({ inFullscreen = false }) => (
     <div
+      ref={containerRef}
       className={`relative overflow-hidden bg-gray-900 select-none touch-none ${inFullscreen ? "w-full h-full" : "rounded-2xl shadow-xl border border-gray-200"}`}
       style={inFullscreen ? {} : { aspectRatio: "16/9" }}
       onTouchStart={handleTouchStart}
@@ -311,7 +312,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       onTouchEnd={handleTouchEnd}
     >
       <div
-        ref={containerRef}
         className="relative w-full h-full"
         style={{
           transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
