@@ -357,8 +357,8 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {/* Normal view */}
       {!isFullscreen && (
         <div
-          className="relative rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900 w-full"
-          style={{ paddingTop: "56.25%" }}
+          className="rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900 w-full"
+          style={{ position: "relative", paddingTop: "56.25%" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
