@@ -307,6 +307,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     <div
       ref={containerRef}
       className="relative overflow-hidden bg-gray-900 select-none touch-none w-full h-full"
+      style={{ minHeight: 0 }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
