@@ -49,82 +49,72 @@ export default function PermitGuide() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div className="px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">Tap any area of the illustrated property to explore permit requirements</p>
+      <div className="mb-4">
+        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
+        <p className="text-gray-500 mt-0.5 text-xs sm:text-base">Tap any area to explore permit requirements</p>
       </div>
 
       {/* Controls Bar */}
-      <div className="flex flex-col gap-3 mb-4">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm overflow-x-auto">
-            {views.map(v => (
-              <button
-                key={v.id}
-                onClick={() => setView(v.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  view === v.id
-                    ? "gradient-primary text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                <v.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{v.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <Button variant="outline" size="sm" onClick={() => setShowHighlights(!showHighlights)} className="rounded-xl">
-            {showHighlights ? <EyeOff className="w-4 h-4 mr-1.5" /> : <Eye className="w-4 h-4 mr-1.5" />}
-            <span className="hidden sm:inline">{showHighlights ? "Hide Areas" : "Show Areas"}</span>
-            <span className="sm:hidden">{showHighlights ? "Hide" : "Show"}</span>
-          </Button>
-
-          <Button variant="outline" size="sm" onClick={() => setPanelOpen(true)} className="rounded-xl">
-            <List className="w-4 h-4 mr-1.5" />
-            <span className="hidden sm:inline">Browse Permits</span>
-            <span className="sm:hidden">Browse</span>
-          </Button>
-
-          {!singleCity && (
-            <div className="flex items-center gap-2 ml-auto">
-              <MapPin className="w-4 h-4 text-gray-400 hidden sm:block" />
-              <Select value={city} onValueChange={setCity}>
-                <SelectTrigger className="w-36 sm:w-44 rounded-xl h-9 text-sm">
-                  <SelectValue placeholder="Select city..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CITIES.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-9 text-sm">
-                Apply
-              </Button>
-            </div>
-          )}
+      <div className="flex flex-wrap gap-2 items-center mb-3">
+        {/* View switcher */}
+        <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+          {views.map(v => (
+            <button
+              key={v.id}
+              onClick={() => setView(v.id)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                view === v.id ? "gradient-primary text-white shadow-sm" : "text-gray-600"
+              }`}
+            >
+              <v.icon className="w-3.5 h-3.5" />
+              <span>{v.label}</span>
+            </button>
+          ))}
         </div>
+
+        <button
+          onClick={() => setShowHighlights(!showHighlights)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-600"}`}
+        >
+          {showHighlights ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {showHighlights ? "Hide" : "Show"}
+        </button>
+
+        <button
+          onClick={() => setPanelOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600"
+        >
+          <List className="w-3.5 h-3.5" />
+          Browse
+        </button>
+
+        {!singleCity && (
+          <div className="flex items-center gap-2 ml-auto">
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger className="w-32 sm:w-40 rounded-xl h-8 text-xs">
+                <SelectValue placeholder="City..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-8 text-xs px-3">
+              Apply
+            </Button>
+          </div>
+        )}
       </div>
 
       {city && (
-        <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
-          <MapPin className="w-4 h-4 text-[#2c5282]" />
-          <span className="text-sm font-medium text-[#2c5282]">Viewing permits for: {city}</span>
+        <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-xl border border-blue-100">
+          <MapPin className="w-3.5 h-3.5 text-blue-600" />
+          <span className="text-xs font-medium text-blue-700">{city}</span>
         </div>
       )}
 
       <HouseView view={view} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
-
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-400">
-          {showHighlights
-            ? "Highlighted areas are clickable — hover and click to see permit details"
-            : "Hover over the image to discover clickable permit zones"}
-        </p>
-      </div>
 
       {selectedPermit && (
         <PermitPopup permit={selectedPermit} city={city} onClose={() => setSelectedPermit(null)} />
