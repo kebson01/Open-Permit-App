@@ -417,7 +417,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col" ref={fullscreenRef} style={{ height: "100dvh" }}>
+        <div className="fixed z-50 bg-black flex flex-col" ref={fullscreenRef} style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
           <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700">
             <div className="flex items-center gap-2">
               <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
