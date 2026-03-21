@@ -315,18 +315,16 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     };
   };
 
-  // Shared map content JSX (inlined to avoid re-mounting on every render)
-  const mapInner = (
+  const MapCanvas = () => (
     <div
       ref={containerRef}
-      className="relative overflow-hidden bg-gray-900 select-none touch-none w-full h-full"
-      style={{ minHeight: 0 }}
+      className="absolute inset-0 overflow-hidden bg-gray-900 select-none touch-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className="relative w-full h-full"
+        className="absolute inset-0"
         style={{
           transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
           transformOrigin: "center center",
