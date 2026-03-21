@@ -325,11 +325,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
     transformOrigin: "center center",
     transition: isPanning.current ? "none" : "transform 0.1s ease-out",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
   };
 
   return (
