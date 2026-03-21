@@ -208,7 +208,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", computeRect);
-      window.removeEventListener("orientationchange", computeRect);
     };
   }, [view, computeRect, isFullscreen]);
 
