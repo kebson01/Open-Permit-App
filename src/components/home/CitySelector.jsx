@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { MapPin, ChevronDown } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -14,55 +14,42 @@ export default function CitySelector() {
   const handleApply = () => {
     if (city) {
       sessionStorage.setItem("selectedCity", city);
-      navigate(createPageUrl("InteractiveMap") + `?city=${encodeURIComponent(city)}`);
+      navigate(createPageUrl("PermitGuide") + `?city=${encodeURIComponent(city)}`);
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-md mx-auto">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="gradient-primary px-6 py-4">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-[#ffcc00]" />
-            <h3 className="text-white font-bold text-lg">Select Your City</h3>
-          </div>
+        <div className="gradient-primary px-5 py-3.5 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-yellow-300" />
+          <h3 className="text-white font-bold text-base">Select Your City</h3>
         </div>
-        
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">State</label>
-              <div className="px-4 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-600 border border-gray-100">Florida</div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">County</label>
-              <div className="px-4 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-600 border border-gray-100">Broward County</div>
-            </div>
+
+        <div className="p-5 space-y-3">
+          <div className="flex gap-3">
+            <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-500 border border-gray-100">🌴 Florida</div>
+            <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-500 border border-gray-100">🏢 Broward</div>
           </div>
-          
-          <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">City</label>
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="rounded-xl h-11">
-                <SelectValue placeholder="Choose a city..." />
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
+
+          <Select value={city} onValueChange={setCity}>
+            <SelectTrigger className="rounded-xl h-11">
+              <SelectValue placeholder="Choose a city..." />
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button
             onClick={handleApply}
             disabled={!city}
-            className="w-full gradient-primary hover:opacity-90 text-white rounded-xl h-11 font-semibold"
+            className="w-full gradient-primary text-white rounded-xl h-11 font-semibold"
           >
-            Apply & Explore
+            Explore Permits →
           </Button>
-          
-          <p className="text-center text-xs text-gray-400">Supporting multiple cities across South Florida</p>
         </div>
       </div>
     </div>

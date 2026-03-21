@@ -1,36 +1,32 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Map, DollarSign, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { Map, DollarSign, BookOpen, Building } from "lucide-react";
 
 const actions = [
-  { label: "Visual Permit Guide", icon: Map, page: "PermitGuide", emoji: "🏠" },
-  { label: "Calculate Fees", icon: DollarSign, page: "FeeCalculator", emoji: "💵" },
-  { label: "General Permit Info", icon: BookOpen, page: "PermitInfo", emoji: "📘" },
+  { label: "Visual Permit Guide", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "Tap any part of a home", color: "bg-blue-50 border-blue-100 text-blue-600" },
+  { label: "Fee Calculator", icon: DollarSign, page: "FeeCalculator", emoji: "💵", desc: "Estimate permit costs", color: "bg-emerald-50 border-emerald-100 text-emerald-600" },
+  { label: "Permit Info", icon: BookOpen, page: "PermitInfo", emoji: "📘", desc: "Browse permit types", color: "bg-amber-50 border-amber-100 text-amber-600" },
+  { label: "Property Guide", icon: Building, page: "PropertyGuide", emoji: "🏗️", desc: "Search any property", color: "bg-purple-50 border-purple-100 text-purple-600" },
 ];
 
 export default function QuickActions() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {actions.map((action, i) => (
-        <motion.div
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {actions.map((action) => (
+        <Link
           key={action.label}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.1 }}
+          to={createPageUrl(action.page)}
+          className={`group flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all active:scale-95`}
         >
-          <Link
-            to={createPageUrl(action.page)}
-            className="group flex items-center gap-3 px-5 py-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-blue-200 transition-all"
-          >
-            <span className="text-2xl">{action.emoji}</span>
-            <span className="font-semibold text-gray-700 group-hover:text-[#2c5282] transition-colors text-sm">
-              {action.label}
-            </span>
-          </Link>
-        </motion.div>
+          <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-xl`}>
+            {action.emoji}
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800 text-sm leading-tight">{action.label}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{action.desc}</p>
+          </div>
+        </Link>
       ))}
     </div>
   );
