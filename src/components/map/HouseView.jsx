@@ -296,135 +296,142 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     };
   };
 
+  const MapContent = ({ inFullscreen = false }) => (
+    <div
+      ref={inFullscreen ? null : wrapperRef}
+      className={`relative overflow-hidden bg-gray-900 select-none touch-none ${inFullscreen ? "w-full h-full" : "rounded-2xl shadow-xl border border-gray-200"}`}
+      style={inFullscreen ? {} : { aspectRatio: "16/9" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div
+        ref={inFullscreen ? null : containerRef}
+        className="relative w-full h-full"
+        style={{
+          transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+          transformOrigin: "center center",
+          transition: isPanning.current ? "none" : "transform 0.1s ease-out",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={view}
+            src={imgSrc}
+            alt={`House ${view} view`}
+            className="absolute inset-0 w-full h-full object-contain"
+            draggable={false}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onLoad={computeRect}
+          />
+        </AnimatePresence>
+
+        {imgRect && (
+          <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
+            {zones.map((zone) => {
+              const isHovered = hoveredZone === zone.id;
+              const isTapped  = tappedZone === zone.id;
+              const isActive  = isHovered || isTapped;
+              const visible   = showHighlights || isActive;
+              const scaled    = scalePoints(zone.points);
+              const { cx, cy } = getBBoxCenter(scaled);
+
+              return (
+                <g key={zone.id}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleZoneClick(zone)}
+                  onTouchEnd={(e) => handleZoneTap(e, zone)}
+                  onMouseEnter={() => setHoveredZone(zone.id)}
+                  onMouseLeave={() => setHoveredZone(null)}
+                >
+                  <polygon points={scaled} fill="transparent" stroke="transparent" strokeWidth={20} style={{ pointerEvents: "all" }} />
+                  <polygon
+                    points={scaled}
+                    fill={visible ? zone.color : "transparent"}
+                    stroke={visible ? zone.stroke : "transparent"}
+                    strokeWidth={isActive ? 2.5 : 1.5}
+                    strokeDasharray={isActive ? "0" : "5,4"}
+                    style={{ transition: "fill 0.15s, stroke 0.15s", pointerEvents: "none" }}
+                  />
+                  {isActive && (
+                    <g style={{ pointerEvents: "none" }}>
+                      <rect x={cx - 75} y={cy - 36} width={150} height={28} rx={6} ry={6} fill="rgba(0,0,0,0.88)" />
+                      <text x={cx} y={cy - 17} textAnchor="middle" fill="white" fontSize={12} fontWeight="600" style={{ userSelect: "none" }}>
+                        {zone.label}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
+        <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow" style={{ zIndex: 3 }}>
+          {showHighlights ? "Tap any highlighted zone" : "Tap to discover permit zones"}
+        </div>
+      </div>
+
+      {/* Fullscreen toggle button overlaid on image */}
+      <button
+        onClick={() => setIsFullscreen(f => !f)}
+        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+        title={inFullscreen ? "Exit fullscreen" : "Fullscreen"}
+      >
+        {inFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {/* Zoom controls */}
       <div className="flex items-center justify-end gap-2">
         <span className="text-xs text-gray-400 mr-1 hidden sm:block">Pinch or use buttons to zoom</span>
         <span className="text-xs text-gray-400 mr-1 sm:hidden">Pinch to zoom · Tap zones</span>
-        <button
-          onClick={() => setScale(s => Math.min(s + 0.5, 4))}
-          className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-        >
+        <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors">
           <ZoomIn className="w-4 h-4 text-gray-600" />
         </button>
-        <button
-          onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }}
-          className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-        >
+        <button onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors">
           <ZoomOut className="w-4 h-4 text-gray-600" />
         </button>
         {scale > 1 && (
-          <button
-            onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}
-            className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-          >
-            <Maximize2 className="w-4 h-4 text-gray-600" />
-          </button>
-        )}
-        {scale > 1 && (
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>
+          <>
+            <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors">
+              <X className="w-4 h-4 text-gray-600" />
+            </button>
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>
+          </>
         )}
       </div>
 
-      <div
-        ref={wrapperRef}
-        className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 select-none touch-none"
-        style={{ aspectRatio: "16/9" }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          ref={containerRef}
-          className="relative w-full h-full"
-          style={{
-            transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
-            transformOrigin: "center center",
-            transition: isPanning.current ? "none" : "transform 0.1s ease-out",
-          }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={view}
-              src={imgSrc}
-              alt={`House ${view} view`}
-              className="absolute inset-0 w-full h-full object-contain"
-              draggable={false}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              onLoad={computeRect}
-            />
-          </AnimatePresence>
+      <MapContent />
 
-          {/* SVG overlay */}
-          {imgRect && (
-            <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
-              {zones.map((zone) => {
-                const isHovered = hoveredZone === zone.id;
-                const isTapped  = tappedZone === zone.id;
-                const isActive  = isHovered || isTapped;
-                const visible   = showHighlights || isActive;
-                const scaled    = scalePoints(zone.points);
-                const { cx, cy } = getBBoxCenter(scaled);
-
-                return (
-                  <g key={zone.id}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleZoneClick(zone)}
-                    onTouchEnd={(e) => handleZoneTap(e, zone)}
-                    onMouseEnter={() => setHoveredZone(zone.id)}
-                    onMouseLeave={() => setHoveredZone(null)}
-                  >
-                    {/* Larger invisible hit area for touch */}
-                    <polygon
-                      points={scaled}
-                      fill="transparent"
-                      stroke="transparent"
-                      strokeWidth={20}
-                      style={{ pointerEvents: "all" }}
-                    />
-                    <polygon
-                      points={scaled}
-                      fill={visible ? zone.color : "transparent"}
-                      stroke={visible ? zone.stroke : "transparent"}
-                      strokeWidth={isActive ? 2.5 : 1.5}
-                      strokeDasharray={isActive ? "0" : "5,4"}
-                      style={{ transition: "fill 0.15s, stroke 0.15s", pointerEvents: "none" }}
-                    />
-                    {isActive && (
-                      <g style={{ pointerEvents: "none" }}>
-                        <rect
-                          x={cx - 75} y={cy - 36}
-                          width={150} height={28}
-                          rx={6} ry={6}
-                          fill="rgba(0,0,0,0.88)"
-                        />
-                        <text
-                          x={cx} y={cy - 17}
-                          textAnchor="middle"
-                          fill="white"
-                          fontSize={12}
-                          fontWeight="600"
-                          style={{ userSelect: "none" }}
-                        >
-                          {zone.label}
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          )}
-
-          <div className="absolute bottom-2 right-3 text-white/60 text-xs pointer-events-none drop-shadow" style={{ zIndex: 3 }}>
-            {showHighlights ? "Tap any highlighted zone" : "Tap to discover permit zones"}
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col" ref={fullscreenRef}>
+          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              {scale > 1 && <span className="text-xs font-medium text-blue-400 bg-blue-900/50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>}
+            </div>
+            <button onClick={() => setIsFullscreen(false)} className="w-9 h-9 rounded-xl bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 relative" ref={containerRef}>
+            <MapContent inFullscreen />
           </div>
         </div>
-      </div>
+      )}
 
       {/* Legend */}
       {showHighlights && (
