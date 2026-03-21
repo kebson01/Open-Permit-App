@@ -354,7 +354,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {!isFullscreen && (
         <div
           className="relative rounded-2xl shadow-xl border border-gray-200 overflow-hidden bg-gray-900"
-          style={{ height: "clamp(260px, 45vh, 600px)" }}
+          style={{ height: "clamp(200px, 56.25vw, 600px)" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
