@@ -1,26 +1,25 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { motion } from "framer-motion";
 
 const permitCategories = [
   {
     title: "Building Permits",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=250&fit=crop",
+    emoji: "🏗️",
     items: ["New construction", "Additions", "Roofing", "Pools", "Fences", "Hurricane shutters"],
   },
   {
-    title: "Electrical Permits",
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=250&fit=crop",
+    title: "Electrical",
+    emoji: "⚡",
     items: ["Service upgrades", "Wiring", "A/C units", "Solar panels", "Generators"],
   },
   {
-    title: "Plumbing Permits",
-    image: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=250&fit=crop",
+    title: "Plumbing",
+    emoji: "🔧",
     items: ["Water heaters", "Gas lines", "Irrigation", "Backflow prevention"],
   },
   {
     title: "Zoning & Planning",
-    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=250&fit=crop",
+    emoji: "📐",
     items: ["Land use", "Variances", "Site plans", "Sign permits"],
   },
 ];
@@ -29,43 +28,32 @@ export default function PermitTypeCards() {
   const [expanded, setExpanded] = useState(null);
 
   return (
-    <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4 scrollbar-thin">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {permitCategories.map((cat, i) => (
-        <motion.div
-          key={cat.title}
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.1 }}
-          className="flex-shrink-0 w-72 snap-start"
-        >
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
-            <div className="relative h-40">
-              <img src={cat.image} alt={cat.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <h3 className="absolute bottom-4 left-4 text-white font-bold text-lg">{cat.title}</h3>
+        <div key={cat.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <button
+            onClick={() => setExpanded(expanded === i ? null : i)}
+            className="w-full p-4 text-left flex flex-col gap-2"
+          >
+            <span className="text-2xl">{cat.emoji}</span>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-gray-800 text-xs sm:text-sm leading-tight">{cat.title}</h3>
+              {expanded === i ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
             </div>
-            <div className="p-4">
-              <button
-                onClick={() => setExpanded(expanded === i ? null : i)}
-                className="flex items-center justify-between w-full text-sm text-gray-600 hover:text-[#2c5282] transition-colors"
-              >
-                <span>{expanded === i ? "Hide details" : "View common types"}</span>
-                {expanded === i ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {expanded === i && (
-                <ul className="mt-3 space-y-1.5">
-                  {cat.items.map(item => (
-                    <li key={item} className="text-sm text-gray-500 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#3182ce]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
+          </button>
+          {expanded === i && (
+            <div className="px-4 pb-4 border-t border-gray-50">
+              <ul className="mt-2 space-y-1.5">
+                {cat.items.map(item => (
+                  <li key={item} className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <div className="w-1 h-1 rounded-full bg-blue-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-        </motion.div>
+          )}
+        </div>
       ))}
     </div>
   );
