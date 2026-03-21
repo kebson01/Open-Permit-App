@@ -420,22 +420,25 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
-        <div className="fixed z-50 bg-black flex flex-col" style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
-                <ZoomIn className="w-4 h-4" />
-              </button>
-              <button onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }} className="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
-                <ZoomOut className="w-4 h-4" />
-              </button>
-              {scale > 1 && <span className="text-xs font-medium text-blue-400 bg-blue-900/50 px-2 py-1 rounded-lg">{Math.round(scale * 100)}%</span>}
-            </div>
-            <button onClick={() => setIsFullscreen(false)} className="w-9 h-9 rounded-xl bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center transition-colors">
-              <X className="w-5 h-5" />
+        <div className="fixed z-50 bg-black" style={{ top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100dvh" }}>
+          {/* Floating controls */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+            <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
+              <ZoomIn className="w-4 h-4" />
             </button>
+            <button onClick={() => { setScale(s => Math.max(s - 0.5, 1)); if (scale <= 1.5) setOffset({ x: 0, y: 0 }); }} className="w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            {scale > 1 && <span className="text-xs font-medium text-blue-400 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/10">{Math.round(scale * 100)}%</span>}
           </div>
-          <div className="flex-1 relative min-h-0">
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* Map fills entire screen */}
+          <div className="w-full h-full">
             {mapInner}
           </div>
         </div>
