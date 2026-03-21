@@ -329,7 +329,8 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             key={view}
             src={imgSrc}
             alt={`House ${view} view`}
-            className="absolute inset-0 w-full h-full object-contain"
+            className="absolute inset-0 w-full h-full"
+            style={{ objectFit: "contain", objectPosition: "center center" }}
             draggable={false}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
