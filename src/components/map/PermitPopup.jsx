@@ -106,7 +106,18 @@ export default function PermitPopup({ permit, city, onClose }) {
             </div>
           )}
           
-          <ZonePhotoAnalyzer permitName={permit.name} permitDescription={permit.description} />
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-[2px]">
+            <div className="bg-white rounded-[10px] overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span className="text-white text-xs font-bold tracking-wide uppercase">AI Photo Analysis</span>
+                <span className="ml-auto text-blue-200 text-xs">New</span>
+              </div>
+              <div className="p-3">
+                <ZonePhotoAnalyzer permitName={permit.name} permitDescription={permit.description} />
+              </div>
+            </div>
+          </div>
 
           <div className="flex gap-3">
             <Link
