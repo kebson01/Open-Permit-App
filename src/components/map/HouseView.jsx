@@ -294,12 +294,48 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const lastTouchDist = useRef(null);
   const isPanning = useRef(false);
   const panStart = useRef(null);
+  const fileInputRef = useRef(null);
+  const [zoneImages, setZoneImages] = useState({}); // { zoneId: [dataUrl, ...] }
+  const [uploadingZone, setUploadingZone] = useState(null);
+  const [lightboxImg, setLightboxImg] = useState(null);
+  const [galleryZone, setGalleryZone] = useState(null);
 
   const legend = LEGENDS[view] || LEGENDS.front;
 
   useEffect(() => {
     setScale(1); setOffset({ x: 0, y: 0 });
   }, [view]);
+
+  const handleUploadRequest = (zoneId) => {
+    setUploadingZone(zoneId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length || !uploadingZone) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setZoneImages(prev => ({
+          ...prev,
+          [uploadingZone]: [...(prev[uploadingZone] || []), ev.target.result]
+        }));
+        setGalleryZone(uploadingZone);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+    setUploadingZone(null);
+  };
+
+  const removeImage = (zoneId, idx) => {
+    setZoneImages(prev => {
+      const updated = [...(prev[zoneId] || [])];
+      updated.splice(idx, 1);
+      return { ...prev, [zoneId]: updated };
+    });
+  };
 
   useEffect(() => {
     document.body.style.overflow = isFullscreen ? "hidden" : "";
