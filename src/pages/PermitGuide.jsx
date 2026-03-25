@@ -118,6 +118,30 @@ export default function PermitGuide() {
 
       <HouseView view={view} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
 
+      {/* AI Photo Analysis Banner */}
+      {!showPhotoAnalyzer ? (
+        <button
+          onClick={() => setShowPhotoAnalyzer(true)}
+          className="mt-4 w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Camera className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-left flex-1">
+            <p className="font-bold text-blue-800 text-sm flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI Photo Analysis
+            </p>
+            <p className="text-blue-600 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
+          </div>
+          <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
+        </button>
+      ) : (
+        <div className="mt-4">
+          <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={permits} />
+        </div>
+      )}
+
       {selectedPermit && (
         <PermitPopup permit={selectedPermit} city={city} onClose={() => setSelectedPermit(null)} />
       )}
