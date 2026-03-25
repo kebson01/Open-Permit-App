@@ -337,6 +337,11 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
     });
   };
 
+  const handleZoneClickWrapper = (permitName, permitDesc, zoneId) => {
+    if (zoneId) setGalleryZone(zoneId);
+    onZoneClick(permitName, permitDesc);
+  };
+
   useEffect(() => {
     document.body.style.overflow = isFullscreen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
