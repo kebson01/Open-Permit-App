@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Camera, Loader2, Sparkles, X, Upload } from "lucide-react";
+import { Camera, Loader2, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function ZonePhotoAnalyzer({ permitName, permitDescription }) {
