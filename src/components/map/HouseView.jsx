@@ -399,7 +399,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         >
           <div style={{ position: "absolute", inset: 0 }}>
             <div style={{ ...zoomTransformStyle, width: "100%", height: "100%" }}>
-              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
+              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} zoneImages={zoneImages} onUploadRequest={handleUploadRequest} />
             </div>
           </div>
           {/* Zoom controls overlaid inside the map */}
