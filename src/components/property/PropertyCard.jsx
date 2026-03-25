@@ -1,14 +1,14 @@
 import { MapPin, Home, User, ChevronRight } from "lucide-react";
 
 function formatAddress(p) {
-  const parts = [
+  if (p.full_address) return p.full_address;
+  return [
     p.SITUS_STREET_NUMBER,
     p.SITUS_STREET_DIRECTION,
     p.SITUS_STREET_NAME,
     p.SITUS_STREET_TYPE,
     p.SITUS_UNIT_NUMBER ? `Unit ${p.SITUS_UNIT_NUMBER}` : null,
-  ].filter(Boolean);
-  return parts.join(" ");
+  ].filter(Boolean).join(" ");
 }
 
 export default function PropertyCard({ property: p, onClick }) {
