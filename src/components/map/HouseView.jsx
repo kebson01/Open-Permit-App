@@ -251,6 +251,29 @@ function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequ
                     </text>
                   </g>
                 )}
+                {isActive && imgRect && (
+                  <foreignObject
+                    x={cx + 80}
+                    y={cy - 40}
+                    width={36}
+                    height={36}
+                    style={{ pointerEvents: "all", overflow: "visible" }}
+                    onClick={(e) => { e.stopPropagation(); onUploadRequest(zone.id); }}
+                  >
+                    <div xmlns="http://www.w3.org/1999/xhtml"
+                      style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: "rgba(0,0,0,0.75)", border: "1px solid rgba(255,255,255,0.2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", backdropFilter: "blur(4px)"
+                      }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                        <circle cx="12" cy="13" r="3"/>
+                      </svg>
+                    </div>
+                  </foreignObject>
+                )}
               </g>
             );
           })}
