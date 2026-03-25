@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2 } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
+import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 
 const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
