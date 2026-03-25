@@ -12,6 +12,7 @@ export default function PropertyGuide() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [liveSearching, setLiveSearching] = useState(false);
 
   const search = async () => {
     if (!query.trim()) return;
