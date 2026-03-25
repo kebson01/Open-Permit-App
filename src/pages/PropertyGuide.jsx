@@ -84,6 +84,18 @@ export default function PropertyGuide() {
       );
     }
 
+    // If nothing found in DB, fall back to live BCPA search
+    if (!props.length) {
+      setLiveSearching(true);
+      try {
+        const res = await base44.functions.invoke("searchBCPA", { address: query.trim() });
+        if (res.data?.properties?.length) {
+          props = res.data.properties;
+        }
+      } catch (_) {}
+      setLiveSearching(false);
+    }
+
     setResults(props);
     setLoading(false);
   };
