@@ -106,6 +106,8 @@ export default function PermitPopup({ permit, city, onClose }) {
             </div>
           )}
           
+          <ZonePhotoAnalyzer permitName={permit.name} permitDescription={permit.description} />
+
           <div className="flex gap-3">
             <Link
               to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(permit.name)}&city=${encodeURIComponent(city || "")}`}
