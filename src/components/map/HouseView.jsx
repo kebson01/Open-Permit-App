@@ -457,6 +457,58 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         </div>
       )}
 
+      {/* Hidden file input */}
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+
+      {/* Zone image gallery (shown below map when a zone with images is active) */}
+      {galleryZone && zoneImages[galleryZone]?.length > 0 && !isFullscreen && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Attached Photos — {galleryZone.replace(/-/g, " ")}
+            </p>
+            <button onClick={() => setGalleryZone(null)} className="text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {zoneImages[galleryZone].map((src, idx) => (
+              <div key={idx} className="relative group">
+                <img
+                  src={src}
+                  alt={`zone photo ${idx + 1}`}
+                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setLightboxImg(src)}
+                />
+                <button
+                  onClick={() => removeImage(galleryZone, idx)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => handleUploadRequest(galleryZone)}
+              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+            >
+              <Camera className="w-5 h-5 mb-1" />
+              <span className="text-xs">Add</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setLightboxImg(null)}>
+          <img src={lightboxImg} alt="lightbox" className="max-w-full max-h-full rounded-xl shadow-2xl" />
+          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Legend */}
       {showHighlights && !isFullscreen && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
