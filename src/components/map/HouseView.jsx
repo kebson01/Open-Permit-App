@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ZoomIn, ZoomOut, Maximize2, X, Camera, Trash2 } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
 
 const IMAGES = {
   front:      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
@@ -134,7 +134,7 @@ const LEGENDS = {
 const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
 
 // Inner map component — always fills its parent via absolute inset-0
-function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequest, activeUploadZone }) {
+function MapCanvas({ view, showHighlights, onZoneClick }) {
   const containerRef = useRef(null);
   const [imgRect, setImgRect] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
@@ -198,7 +198,7 @@ function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequ
     e.preventDefault();
     e.stopPropagation();
     setTappedZone(prev => prev === zone.id ? null : zone.id);
-    onZoneClick(zone.label, zone.desc, zone.id);
+    onZoneClick(zone.label, zone.desc);
   };
 
   return (
@@ -230,7 +230,7 @@ function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequ
             const { cx, cy } = getBBoxCenter(scaled);
             return (
               <g key={zone.id} style={{ cursor: "pointer" }}
-                onClick={() => { setTappedZone(p => p === zone.id ? null : zone.id); onZoneClick(zone.label, zone.desc, zone.id); }}
+                onClick={() => { setTappedZone(p => p === zone.id ? null : zone.id); onZoneClick(zone.label, zone.desc); }}
                 onTouchEnd={(e) => handleZoneTap(e, zone)}
                 onMouseEnter={() => setHoveredZone(zone.id)}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -250,29 +250,6 @@ function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequ
                       {zone.label}
                     </text>
                   </g>
-                )}
-                {isActive && imgRect && (
-                  <foreignObject
-                    x={cx + 80}
-                    y={cy - 40}
-                    width={36}
-                    height={36}
-                    style={{ pointerEvents: "all", overflow: "visible" }}
-                    onClick={(e) => { e.stopPropagation(); onUploadRequest(zone.id); }}
-                  >
-                    <div xmlns="http://www.w3.org/1999/xhtml"
-                      style={{
-                        width: 32, height: 32, borderRadius: 8,
-                        background: "rgba(0,0,0,0.75)", border: "1px solid rgba(255,255,255,0.2)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", backdropFilter: "blur(4px)"
-                      }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-                        <circle cx="12" cy="13" r="3"/>
-                      </svg>
-                    </div>
-                  </foreignObject>
                 )}
               </g>
             );
@@ -294,53 +271,12 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const lastTouchDist = useRef(null);
   const isPanning = useRef(false);
   const panStart = useRef(null);
-  const fileInputRef = useRef(null);
-  const [zoneImages, setZoneImages] = useState({}); // { zoneId: [dataUrl, ...] }
-  const [uploadingZone, setUploadingZone] = useState(null);
-  const [lightboxImg, setLightboxImg] = useState(null);
-  const [galleryZone, setGalleryZone] = useState(null);
 
   const legend = LEGENDS[view] || LEGENDS.front;
 
   useEffect(() => {
     setScale(1); setOffset({ x: 0, y: 0 });
   }, [view]);
-
-  const handleUploadRequest = (zoneId) => {
-    setUploadingZone(zoneId);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length || !uploadingZone) return;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setZoneImages(prev => ({
-          ...prev,
-          [uploadingZone]: [...(prev[uploadingZone] || []), ev.target.result]
-        }));
-        setGalleryZone(uploadingZone);
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
-    setUploadingZone(null);
-  };
-
-  const removeImage = (zoneId, idx) => {
-    setZoneImages(prev => {
-      const updated = [...(prev[zoneId] || [])];
-      updated.splice(idx, 1);
-      return { ...prev, [zoneId]: updated };
-    });
-  };
-
-  const handleZoneClickWrapper = (permitName, permitDesc, zoneId) => {
-    if (zoneId) setGalleryZone(zoneId);
-    onZoneClick(permitName, permitDesc);
-  };
 
   useEffect(() => {
     document.body.style.overflow = isFullscreen ? "hidden" : "";
@@ -404,7 +340,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         >
           <div style={{ position: "absolute", inset: 0 }}>
             <div style={{ ...zoomTransformStyle, width: "100%", height: "100%" }}>
-              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={handleZoneClickWrapper} zoneImages={zoneImages} onUploadRequest={handleUploadRequest} />
+              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
             </div>
           </div>
           {/* Zoom controls overlaid inside the map */}
@@ -444,7 +380,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
         >
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
             <div style={{ ...zoomTransformStyle, position: "relative", width: "100%", height: "100%" }}>
-              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={handleZoneClickWrapper} zoneImages={zoneImages} onUploadRequest={handleUploadRequest} />
+              <MapCanvas view={view} showHighlights={showHighlights} onZoneClick={onZoneClick} />
             </div>
           </div>
           <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
@@ -457,58 +393,6 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
             {scale > 1 && <span className="text-xs font-medium text-blue-400 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/10">{Math.round(scale * 100)}%</span>}
           </div>
           <button onClick={() => setIsFullscreen(false)} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl bg-black/60 backdrop-blur-sm text-white flex items-center justify-center border border-white/10">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Hidden file input */}
-      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-
-      {/* Zone image gallery (shown below map when a zone with images is active) */}
-      {galleryZone && zoneImages[galleryZone]?.length > 0 && !isFullscreen && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Attached Photos — {galleryZone.replace(/-/g, " ")}
-            </p>
-            <button onClick={() => setGalleryZone(null)} className="text-gray-400 hover:text-gray-600">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {zoneImages[galleryZone].map((src, idx) => (
-              <div key={idx} className="relative group">
-                <img
-                  src={src}
-                  alt={`zone photo ${idx + 1}`}
-                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setLightboxImg(src)}
-                />
-                <button
-                  onClick={() => removeImage(galleryZone, idx)}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={() => handleUploadRequest(galleryZone)}
-              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
-            >
-              <Camera className="w-5 h-5 mb-1" />
-              <span className="text-xs">Add</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Lightbox */}
-      {lightboxImg && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setLightboxImg(null)}>
-          <img src={lightboxImg} alt="lightbox" className="max-w-full max-h-full rounded-xl shadow-2xl" />
-          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/10">
             <X className="w-5 h-5" />
           </button>
         </div>
