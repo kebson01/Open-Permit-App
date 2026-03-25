@@ -19,41 +19,64 @@ export default function PropertyGuide() {
     setSearched(true);
     setSelected(null);
 
-    const q = query.trim().toUpperCase();
+    // Strip city/state/zip suffixes (everything after a comma)
+    const cleaned = query.trim().toUpperCase().split(",")[0].trim();
 
-    // Try folio first (exact)
-    let props = await base44.entities.Property.filter({ FOLIO_NUMBER: q }, "-updated_date", 20);
-
-    // If no folio match, try street name
-    if (!props.length) {
-      props = await base44.entities.Property.filter({ SITUS_STREET_NAME: q }, "-updated_date", 50);
+    // Try folio first (all digits, no spaces)
+    if (/^\d+$/.test(cleaned)) {
+      const props = await base44.entities.Property.filter({ FOLIO_NUMBER: cleaned }, "-updated_date", 20);
+      setResults(props);
+      setLoading(false);
+      return;
     }
 
-    // Try partial street number + name combo
-    if (!props.length && q.includes(" ")) {
-      const parts = q.split(" ");
-      const streetTypes = ["RD","DR","AVE","ST","BLVD","LN","CT","PL","WAY","TER","CIR","PL","PKWY","HWY","PATH","WALK","SQ","LOOP"];
-      const lastWord = parts[parts.length - 1];
-      const hasStreetType = streetTypes.includes(lastWord);
+    const DIRECTIONS = ["N","S","E","W","NW","NE","SW","SE","NORTH","SOUTH","EAST","WEST"];
+    const STREET_TYPES = ["RD","DR","AVE","ST","BLVD","LN","CT","PL","WAY","TER","CIR","PKWY","HWY","PATH","WALK","SQ","LOOP","TERR","TRAIL","TR"];
 
-      // Try with number + full street name (minus street type if present)
-      const streetNameParts = parts.slice(1);
-      const streetName = hasStreetType
-        ? streetNameParts.slice(0, -1).join(" ")
-        : streetNameParts.join(" ");
+    const parts = cleaned.split(/\s+/);
+    const streetNum = /^\d+/.test(parts[0]) ? parts[0] : null;
 
+    // Remove street number, leading direction, trailing street type to isolate street name
+    let remaining = streetNum ? parts.slice(1) : parts;
+    if (remaining.length && DIRECTIONS.includes(remaining[0])) remaining = remaining.slice(1);
+    const lastWord = remaining[remaining.length - 1];
+    const hasType = STREET_TYPES.includes(lastWord);
+    const streetName = hasType ? remaining.slice(0, -1).join(" ") : remaining.join(" ");
+    const streetDir = parts.length > 1 && DIRECTIONS.includes(parts[streetNum ? 1 : 0])
+      ? parts[streetNum ? 1 : 0] : null;
+
+    let props = [];
+
+    // 1. Number + direction + name
+    if (streetNum && streetDir && streetName) {
       props = await base44.entities.Property.filter(
-        { SITUS_STREET_NUMBER: parts[0], SITUS_STREET_NAME: streetName },
+        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_DIRECTION: streetDir, SITUS_STREET_NAME: streetName },
         "-updated_date", 20
       );
+    }
 
-      // Also try without street number (just street name minus type)
-      if (!props.length && hasStreetType) {
-        props = await base44.entities.Property.filter(
-          { SITUS_STREET_NAME: streetName },
-          "-updated_date", 50
-        );
-      }
+    // 2. Number + name (no direction)
+    if (!props.length && streetNum && streetName) {
+      props = await base44.entities.Property.filter(
+        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_NAME: streetName },
+        "-updated_date", 20
+      );
+    }
+
+    // 3. Just street name
+    if (!props.length && streetName) {
+      props = await base44.entities.Property.filter(
+        { SITUS_STREET_NAME: streetName },
+        "-updated_date", 50
+      );
+    }
+
+    // 4. Fallback: full cleaned string as street name
+    if (!props.length) {
+      props = await base44.entities.Property.filter(
+        { SITUS_STREET_NAME: cleaned },
+        "-updated_date", 50
+      );
     }
 
     setResults(props);
