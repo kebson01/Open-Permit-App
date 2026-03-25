@@ -12,7 +12,6 @@ export default function PropertyGuide() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [liveSearching, setLiveSearching] = useState(false);
 
   const search = async () => {
     if (!query.trim()) return;
@@ -20,83 +19,13 @@ export default function PropertyGuide() {
     setSearched(true);
     setSelected(null);
 
-    // Strip city/state/zip suffixes (everything after a comma)
-    const cleaned = query.trim().toUpperCase().split(",")[0].trim();
-
-    // Try folio first (all digits, no spaces)
-    if (/^\d+$/.test(cleaned)) {
-      const props = await base44.entities.Property.filter({ FOLIO_NUMBER: cleaned }, "-updated_date", 20);
-      setResults(props);
-      setLoading(false);
-      return;
+    try {
+      const res = await base44.functions.invoke("searchBCPA", { address: query.trim() });
+      setResults(res.data?.properties || []);
+    } catch (_) {
+      setResults([]);
     }
 
-    const DIRECTIONS = ["N","S","E","W","NW","NE","SW","SE","NORTH","SOUTH","EAST","WEST"];
-    const STREET_TYPES = ["RD","DR","AVE","ST","BLVD","LN","CT","PL","WAY","TER","CIR","PKWY","HWY","PATH","WALK","SQ","LOOP","TERR","TRAIL","TR"];
-
-    // Strip ordinal suffixes: 107TH → 107, 1ST → 1, 2ND → 2, etc.
-    const stripOrdinal = (s) => s.replace(/(\d+)(ST|ND|RD|TH)$/, "$1");
-
-    const parts = cleaned.split(/\s+/);
-    const streetNum = /^\d+/.test(parts[0]) ? parts[0] : null;
-
-    // Remove street number, leading direction, trailing street type to isolate street name
-    let remaining = streetNum ? parts.slice(1) : parts;
-    const streetDir = remaining.length && DIRECTIONS.includes(remaining[0]) ? remaining[0] : null;
-    if (streetDir) remaining = remaining.slice(1);
-    const lastWord = remaining[remaining.length - 1];
-    const hasType = STREET_TYPES.includes(lastWord);
-    const streetType = hasType ? lastWord : null;
-    const rawStreetName = hasType ? remaining.slice(0, -1).join(" ") : remaining.join(" ");
-    const streetName = stripOrdinal(rawStreetName);
-
-    let props = [];
-
-    // 1. Number + direction + name + type
-    if (streetNum && streetDir && streetName && streetType) {
-      props = await base44.entities.Property.filter(
-        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_DIRECTION: streetDir, SITUS_STREET_NAME: streetName, SITUS_STREET_TYPE: streetType },
-        "-updated_date", 20
-      );
-    }
-
-    // 2. Number + direction + name
-    if (!props.length && streetNum && streetDir && streetName) {
-      props = await base44.entities.Property.filter(
-        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_DIRECTION: streetDir, SITUS_STREET_NAME: streetName },
-        "-updated_date", 20
-      );
-    }
-
-    // 3. Number + name (no direction)
-    if (!props.length && streetNum && streetName) {
-      props = await base44.entities.Property.filter(
-        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_NAME: streetName },
-        "-updated_date", 20
-      );
-    }
-
-    // 4. Just street name
-    if (!props.length && streetName) {
-      props = await base44.entities.Property.filter(
-        { SITUS_STREET_NAME: streetName },
-        "-updated_date", 50
-      );
-    }
-
-    // If nothing found in DB, fall back to live BCPA search
-    if (!props.length) {
-      setLiveSearching(true);
-      try {
-        const res = await base44.functions.invoke("searchBCPA", { address: query.trim() });
-        if (res.data?.properties?.length) {
-          props = res.data.properties;
-        }
-      } catch (_) {}
-      setLiveSearching(false);
-    }
-
-    setResults(props);
     setLoading(false);
   };
 
