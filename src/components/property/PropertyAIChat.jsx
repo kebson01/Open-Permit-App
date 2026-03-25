@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Sparkles, Send, Loader2, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Send, Globe, ChevronDown, ChevronUp } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
   "What permits do I need for a roof replacement?",
   "Can I add a pool to this property?",
-  "What's the permit fee for window replacements?",
-  "Do I need a permit for a new fence?",
   "What are the setback requirements here?",
+  "Do I need a permit for a new fence?",
+  "What's the permit fee for window replacements?",
 ];
 
 function buildPropertyContext(p) {
@@ -15,66 +15,89 @@ function buildPropertyContext(p) {
     .filter(Boolean).join(" ");
   const totalValue = (p.JUST_LAND_VALUE || 0) + (p.JUST_BUILDING_VALUE || 0) + (p.JUST_OTHER_VALUE || 0);
 
-  return `PROPERTY CONTEXT:
-- Address: ${address}, ${p.SITUS_CITY}, FL ${p.SITUS_ZIP_CODE || ""}
-- Folio: ${p.FOLIO_NUMBER}
-- City: ${p.SITUS_CITY}
-- Year Built: ${p.BLDG_YEAR_BUILT || p.ACTUAL_YEAR_BUILT || "Unknown"}
-- Use Type: ${p.USE_TYPE || "Unknown"}
-- Bedrooms/Baths: ${p.BEDS || "—"} bd / ${p.BATHS || "—"} ba
-- Under Air Sq Ft: ${p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"}
-- Total Sq Ft: ${p.BLDG_TOT_SQ_FOOTAGE?.toLocaleString() || "Unknown"}
-- Lot Sq Ft (GIS): ${p.GIS_SQUARE_FOOT?.toLocaleString() || "Unknown"}
-- Construction Class: ${p.BLDG_CCLASS || "Unknown"}
-- Improvement Quality: ${p.BLDG_IMPROVE_QUAL || "Unknown"}
-- Total Just Value: $${totalValue.toLocaleString()}
-- Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}
-- Owner: ${p.NAME_LINE_1 || "Unknown"}`;
+  return `PROPERTY: ${address}, ${p.SITUS_CITY}, FL ${p.SITUS_ZIP_CODE || ""}
+Folio: ${p.FOLIO_NUMBER} | City: ${p.SITUS_CITY} | Year Built: ${p.BLDG_YEAR_BUILT || p.ACTUAL_YEAR_BUILT || "Unknown"}
+Use Type: ${p.USE_TYPE || "Unknown"} | ${p.BEDS || "—"}bd/${p.BATHS || "—"}ba
+Under Air: ${p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"} sqft | Lot (GIS): ${p.GIS_SQUARE_FOOT?.toLocaleString() || "Unknown"} sqft
+Construction Class: ${p.BLDG_CCLASS || "Unknown"} | Just Value: $${totalValue.toLocaleString()}
+Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}`;
 }
 
 export default function PropertyAIChat({ property }) {
   const [expanded, setExpanded] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: `I'm your AI permit consultant for **${[property.SITUS_STREET_NUMBER, property.SITUS_STREET_NAME].filter(Boolean).join(" ")}** in **${property.SITUS_CITY}**. Ask me anything about permits, fees, setbacks, or feasibility for this specific property.`,
-    },
-  ]);
+  const [conversation, setConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const shortAddress = [property.SITUS_STREET_NUMBER, property.SITUS_STREET_NAME].filter(Boolean).join(" ");
+
   useEffect(() => {
-    if (expanded) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, expanded]);
+    if (expanded && !conversation && !initializing) {
+      initConversation();
+    }
+  }, [expanded]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const initConversation = async () => {
+    setInitializing(true);
+    const ctx = buildPropertyContext(property);
+    const conv = await base44.agents.createConversation({
+      agent_name: "property_permit_consultant",
+      metadata: {
+        name: `${shortAddress} — Permit Consultation`,
+        description: ctx,
+      },
+    });
+
+    // Send initial context message silently
+    await base44.agents.addMessage(conv, {
+      role: "user",
+      content: `[SYSTEM CONTEXT - do not show this to the user, just acknowledge it internally]\n${ctx}\n\nYou are now advising on this specific property. When answering questions, always reference this property's details and search the web for the most current zoning and permit information for ${property.SITUS_CITY}, Florida.`,
+    });
+
+    setConversation(conv);
+    setInitializing(false);
+
+    // Subscribe to updates
+    base44.agents.subscribeToConversation(conv.id, (data) => {
+      const visibleMessages = data.messages.filter(
+        m => !m.content?.startsWith("[SYSTEM CONTEXT")
+      );
+      setMessages(visibleMessages);
+    });
+  };
 
   const send = async (text) => {
     const userText = text || input.trim();
-    if (!userText || loading) return;
+    if (!userText || loading || !conversation) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userText }]);
     setLoading(true);
 
-    const history = messages.slice(-6).map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
-    const propertyCtx = buildPropertyContext(property);
-
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an expert building permit consultant for South Florida (Broward County, Florida). You help homeowners and contractors understand permit requirements, fees, setbacks, and feasibility for specific properties.
-
-${propertyCtx}
-
-Previous conversation:
-${history}
-
-User question: ${userText}
-
-Answer based on the specific property context above. Reference the city (${property.SITUS_CITY}), lot size, year built, and use type where relevant. Be concise, practical, and specific. If you mention fees, note they vary and suggest using the Fee Calculator for exact amounts. Always recommend confirming with the local building department for final decisions.`,
-      model: "claude_sonnet_4_6",
+    await base44.agents.addMessage(conversation, {
+      role: "user",
+      content: userText,
     });
 
-    setMessages(prev => [...prev, { role: "assistant", content: response }]);
     setLoading(false);
   };
+
+  const handleSuggestedQuestion = async (q) => {
+    if (!conversation) return;
+    setLoading(true);
+    setInput("");
+    await base44.agents.addMessage(conversation, { role: "user", content: q });
+    setLoading(false);
+  };
+
+  const visibleMessages = messages.filter(m => m.role === "user" || m.role === "assistant");
+  const isReady = conversation && !initializing;
+  const hasChat = visibleMessages.length > 0;
 
   return (
     <div className="mt-6 bg-white rounded-xl border border-indigo-200 overflow-hidden shadow-sm">
@@ -90,19 +113,45 @@ Answer based on the specific property context above. Reference the city (${prope
           <div className="text-left">
             <p className="font-semibold text-gray-800 flex items-center gap-2">
               AI Permit Consultant
-              <span className="text-xs font-normal bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">Property-Aware</span>
+              <span className="text-xs font-normal bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Globe className="w-3 h-3" /> Web Search
+              </span>
             </p>
-            <p className="text-xs text-gray-500">Ask anything about permits for this property</p>
+            <p className="text-xs text-gray-500">Property-aware · Searches live zoning & permit data</p>
           </div>
         </div>
         {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
       </button>
 
       {expanded && (
-        <div className="flex flex-col" style={{ height: 420 }}>
+        <div className="flex flex-col" style={{ height: 440 }}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-            {messages.map((msg, i) => (
+            {initializing && (
+              <div className="flex justify-start">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+                  <Sparkles className="w-3 h-3 text-white" />
+                </div>
+                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100 text-sm text-gray-400">
+                  Loading property context...
+                </div>
+              </div>
+            )}
+
+            {isReady && !hasChat && (
+              <div className="text-center pt-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <p className="font-semibold text-gray-800 text-sm">AI Permit Consultant</p>
+                <p className="text-xs text-gray-500 mt-1 mb-4">
+                  Ask anything about permits for <strong>{shortAddress}</strong> in <strong>{property.SITUS_CITY}</strong>.<br />
+                  I'll search the web for the latest zoning and permit info.
+                </p>
+              </div>
+            )}
+
+            {visibleMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
@@ -114,12 +163,13 @@ Answer based on the specific property context above. Reference the city (${prope
                     ? "bg-indigo-600 text-white rounded-br-md"
                     : "bg-white text-gray-700 shadow-sm border border-gray-100 rounded-bl-md"
                 }`}>
-                  {msg.content.split("\n").map((line, j) => (
-                    <span key={j}>{line}{j < msg.content.split("\n").length - 1 && <br />}</span>
+                  {(msg.content || "").split("\n").map((line, j, arr) => (
+                    <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
                   ))}
                 </div>
               </div>
             ))}
+
             {loading && (
               <div className="flex justify-start">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
@@ -137,13 +187,13 @@ Answer based on the specific property context above. Reference the city (${prope
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested questions (only on first open) */}
-          {messages.length === 1 && (
+          {/* Suggested questions */}
+          {isReady && !hasChat && (
             <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto">
               {SUGGESTED_QUESTIONS.map((q, i) => (
                 <button
                   key={i}
-                  onClick={() => send(q)}
+                  onClick={() => handleSuggestedQuestion(q)}
                   className="flex-shrink-0 text-xs px-3 py-1.5 bg-white border border-indigo-200 text-indigo-700 rounded-full hover:bg-indigo-50 transition-colors whitespace-nowrap"
                 >
                   {q}
@@ -159,12 +209,13 @@ Answer based on the specific property context above. Reference the city (${prope
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Ask about permits for this property..."
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400"
+              placeholder={isReady ? "Ask about permits, zoning, fees..." : "Initializing..."}
+              disabled={!isReady}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 disabled:opacity-50"
             />
             <button
               onClick={() => send()}
-              disabled={loading || !input.trim()}
+              disabled={loading || !input.trim() || !isReady}
               className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
             >
               <Send className="w-4 h-4" />
