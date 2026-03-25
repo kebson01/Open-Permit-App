@@ -113,6 +113,7 @@ export default function PropertyDetail({ property: p, onBack }) {
       </div>
 
       <PropertyCityPanel property={p} />
+      <PropertyAIChat property={p} />
     </div>
   );
 }
