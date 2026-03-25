@@ -33,29 +33,41 @@ export default function PropertyGuide() {
     const DIRECTIONS = ["N","S","E","W","NW","NE","SW","SE","NORTH","SOUTH","EAST","WEST"];
     const STREET_TYPES = ["RD","DR","AVE","ST","BLVD","LN","CT","PL","WAY","TER","CIR","PKWY","HWY","PATH","WALK","SQ","LOOP","TERR","TRAIL","TR"];
 
+    // Strip ordinal suffixes: 107TH → 107, 1ST → 1, 2ND → 2, etc.
+    const stripOrdinal = (s) => s.replace(/(\d+)(ST|ND|RD|TH)$/, "$1");
+
     const parts = cleaned.split(/\s+/);
     const streetNum = /^\d+/.test(parts[0]) ? parts[0] : null;
 
     // Remove street number, leading direction, trailing street type to isolate street name
     let remaining = streetNum ? parts.slice(1) : parts;
-    if (remaining.length && DIRECTIONS.includes(remaining[0])) remaining = remaining.slice(1);
+    const streetDir = remaining.length && DIRECTIONS.includes(remaining[0]) ? remaining[0] : null;
+    if (streetDir) remaining = remaining.slice(1);
     const lastWord = remaining[remaining.length - 1];
     const hasType = STREET_TYPES.includes(lastWord);
-    const streetName = hasType ? remaining.slice(0, -1).join(" ") : remaining.join(" ");
-    const streetDir = parts.length > 1 && DIRECTIONS.includes(parts[streetNum ? 1 : 0])
-      ? parts[streetNum ? 1 : 0] : null;
+    const streetType = hasType ? lastWord : null;
+    const rawStreetName = hasType ? remaining.slice(0, -1).join(" ") : remaining.join(" ");
+    const streetName = stripOrdinal(rawStreetName);
 
     let props = [];
 
-    // 1. Number + direction + name
-    if (streetNum && streetDir && streetName) {
+    // 1. Number + direction + name + type
+    if (streetNum && streetDir && streetName && streetType) {
+      props = await base44.entities.Property.filter(
+        { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_DIRECTION: streetDir, SITUS_STREET_NAME: streetName, SITUS_STREET_TYPE: streetType },
+        "-updated_date", 20
+      );
+    }
+
+    // 2. Number + direction + name
+    if (!props.length && streetNum && streetDir && streetName) {
       props = await base44.entities.Property.filter(
         { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_DIRECTION: streetDir, SITUS_STREET_NAME: streetName },
         "-updated_date", 20
       );
     }
 
-    // 2. Number + name (no direction)
+    // 3. Number + name (no direction)
     if (!props.length && streetNum && streetName) {
       props = await base44.entities.Property.filter(
         { SITUS_STREET_NUMBER: streetNum, SITUS_STREET_NAME: streetName },
@@ -63,18 +75,10 @@ export default function PropertyGuide() {
       );
     }
 
-    // 3. Just street name
+    // 4. Just street name
     if (!props.length && streetName) {
       props = await base44.entities.Property.filter(
         { SITUS_STREET_NAME: streetName },
-        "-updated_date", 50
-      );
-    }
-
-    // 4. Fallback: full cleaned string as street name
-    if (!props.length) {
-      props = await base44.entities.Property.filter(
-        { SITUS_STREET_NAME: cleaned },
         "-updated_date", 50
       );
     }
