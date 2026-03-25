@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { X, FileText, Calculator, ExternalLink, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 
 const PERMIT_IMAGES = {
   "Roof / Re-Roof":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4058cd09e_Roof.jpg",
