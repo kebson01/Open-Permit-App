@@ -134,7 +134,7 @@ const LEGENDS = {
 const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
 
 // Inner map component — always fills its parent via absolute inset-0
-function MapCanvas({ view, showHighlights, onZoneClick }) {
+function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequest, activeUploadZone }) {
   const containerRef = useRef(null);
   const [imgRect, setImgRect] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
