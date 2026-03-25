@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckCircle } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 
