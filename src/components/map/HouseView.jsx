@@ -198,7 +198,7 @@ function MapCanvas({ view, showHighlights, onZoneClick, zoneImages, onUploadRequ
     e.preventDefault();
     e.stopPropagation();
     setTappedZone(prev => prev === zone.id ? null : zone.id);
-    onZoneClick(zone.label, zone.desc);
+    onZoneClick(zone.label, zone.desc, zone.id);
   };
 
   return (
