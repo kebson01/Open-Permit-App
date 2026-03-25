@@ -23,6 +23,7 @@ export default function PermitGuide() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
+  const [showPhotoAnalyzer, setShowPhotoAnalyzer] = useState(false);
 
   const { data: permits = [] } = useQuery({
     queryKey: ["permits"],
