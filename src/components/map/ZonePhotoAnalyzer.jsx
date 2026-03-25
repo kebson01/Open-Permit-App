@@ -67,12 +67,8 @@ Keep it concise and practical. If the image doesn't clearly show the relevant ar
   };
 
   return (
-    <div className="border border-blue-100 rounded-xl bg-blue-50/50 p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-blue-600" />
-        <span className="text-sm font-semibold text-blue-700">AI Photo Analysis</span>
-        <span className="text-xs text-blue-400 ml-auto">Upload your property photo</span>
-      </div>
+    <div className="space-y-3">
+      <p className="text-xs text-blue-500">Upload a photo of your {permitName} area for personalized guidance</p>
 
       {!photo && (
         <button
