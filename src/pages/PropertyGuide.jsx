@@ -66,17 +66,17 @@ export default function PropertyGuide() {
           <PropertyDetail property={selected} onBack={() => setSelected(null)} />
         ) : (
           <>
-            {liveSearching && (
+            {loading && (
               <div className="flex items-center gap-2 text-sm text-blue-600 mb-4 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100">
                 <Globe className="w-4 h-4 animate-pulse" />
-                Not in local database — searching live BCPA records... (this may take up to 30s)
+                Searching live BCPA records... (this may take up to 30s)
               </div>
             )}
-            {searched && !loading && !liveSearching && (
+            {searched && !loading && (
               <p className="text-sm text-gray-500 mb-4">
                 {results.length === 0
                   ? "No properties found. Try a different address or folio number."
-                  : `${results.length} propert${results.length === 1 ? "y" : "ies"} found${results[0]?._source === 'bcpa_live' ? ' (live BCPA)' : ''}`}
+                  : `${results.length} propert${results.length === 1 ? "y" : "ies"} found · live BCPA data`}
               </p>
             )}
             <div className="grid gap-4">
