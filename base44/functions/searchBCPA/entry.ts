@@ -35,6 +35,7 @@ Return a JSON array of matching properties found. For each property include as m
 
 If no properties are found, return an empty array. Return ONLY valid JSON, no explanation.`,
       add_context_from_internet: true,
+      model: "gemini_3_pro",
       response_json_schema: {
         type: "object",
         properties: {
