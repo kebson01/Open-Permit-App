@@ -43,6 +43,10 @@ const KEEP_FIELDS = new Set([
   "CLASSIFIED_AG_VALUE","ACTUAL_YEAR_BUILT",
 ]);
 
+// ~30MB per chunk — safe to process within timeout
+const CHUNK_BYTES = 30 * 1024 * 1024;
+const BATCH_SIZE = 500;
+
 function detectDelimiter(line) {
   const tabs = (line.match(/\t/g) || []).length;
   const pipes = (line.match(/\|/g) || []).length;
@@ -66,6 +70,33 @@ function parseLine(line, delimiter) {
   return result;
 }
 
+function buildRecord(headers, vals, delimiter) {
+  const rec = {};
+  headers.forEach((h, idx) => {
+    if (!KEEP_FIELDS.has(h)) return;
+    let val = (vals[idx] ?? "").trim();
+    if (val === "") {
+      rec[h] = NUMBER_FIELDS.has(h) ? null : "";
+    } else if (NUMBER_FIELDS.has(h)) {
+      const n = parseFloat(val.replace(/,/g, ""));
+      rec[h] = isNaN(n) ? null : n;
+    } else {
+      rec[h] = val;
+    }
+  });
+  if (!rec.FOLIO_NUMBER) return null;
+  rec.full_address = [
+    rec.SITUS_STREET_NUMBER,
+    rec.SITUS_STREET_DIRECTION,
+    rec.SITUS_STREET_NAME,
+    rec.SITUS_STREET_TYPE,
+    rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
+    rec.SITUS_CITY,
+    rec.SITUS_ZIP_CODE,
+  ].filter(Boolean).join(" ").toUpperCase();
+  return rec;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -74,87 +105,103 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { file_url } = await req.json();
+    const { file_url, byte_offset = 0, headers_line = null } = await req.json();
     if (!file_url) return Response.json({ error: 'file_url required' }, { status: 400 });
 
-    // Fetch the file from storage
-    const fileResp = await fetch(file_url);
-    if (!fileResp.ok) return Response.json({ error: 'Could not fetch file from storage' }, { status: 400 });
+    const rangeEnd = byte_offset + CHUNK_BYTES - 1;
+    const fetchHeaders = { Range: `bytes=${byte_offset}-${rangeEnd}` };
 
-    const BATCH_SIZE = 300;
+    const fileResp = await fetch(file_url, { headers: fetchHeaders });
+    if (!fileResp.ok && fileResp.status !== 206) {
+      return Response.json({ error: `Could not fetch file chunk: ${fileResp.status}` }, { status: 400 });
+    }
+
+    // Check if server returned full content (no range support) or partial
+    const contentRange = fileResp.headers.get('content-range');
+    const totalBytes = contentRange
+      ? parseInt(contentRange.split('/')[1])
+      : parseInt(fileResp.headers.get('content-length') || '0') + byte_offset;
+
+    const chunkText = await fileResp.text();
+
+    // Split into lines — but be careful: first and last lines may be partial
+    const allLines = chunkText.split(/\r\n|\r|\n/);
+
     let headers = null;
     let delimiter = "\t";
-    let batch = [];
-    let totalImported = 0;
-    let leftover = "";
+    let resolvedHeadersLine = headers_line;
 
-    const decoder = new TextDecoder('utf-8');
-    const reader = fileResp.body.getReader();
+    // First chunk: first line is the header
+    if (byte_offset === 0) {
+      delimiter = detectDelimiter(allLines[0]);
+      resolvedHeadersLine = allLines[0];
+      headers = parseLine(resolvedHeadersLine, delimiter);
+    } else {
+      // Subsequent chunks: first line may be a partial line — skip it (it was handled by previous chunk's "leftover")
+      // headers_line is passed in from frontend
+      headers = parseLine(resolvedHeadersLine, detectDelimiter(resolvedHeadersLine));
+      delimiter = detectDelimiter(resolvedHeadersLine);
+    }
 
-    const flushBatch = async () => {
+    const startLine = byte_offset === 0 ? 1 : 1; // skip first partial line for non-first chunks
+    const lines = byte_offset === 0 ? allLines.slice(1) : allLines.slice(1); // always skip first line of chunk (partial or header)
+
+    // The last line of the chunk is likely partial — skip it, it'll be re-read in the next chunk
+    // We do this by ending the range overlap: the next chunk starts 1 line back
+    // Instead, we track the last newline position to know the "safe" byte offset for next call
+    const decoder = new TextEncoder();
+    // Calculate how many bytes the "safe" portion (all complete lines) is
+    const completeLines = lines.slice(0, -1); // drop last line (possibly partial)
+    const lastLine = lines[lines.length - 1];
+
+    const batch = [];
+    let imported = 0;
+
+    const flush = async () => {
       if (batch.length === 0) return;
-      await base44.asServiceRole.entities.Property.bulkCreate(batch);
-      totalImported += batch.length;
-      batch = [];
+      await base44.asServiceRole.entities.Property.bulkCreate([...batch]);
+      imported += batch.length;
+      batch.length = 0;
     };
 
-    const processLine = async (line) => {
-      if (!line.trim()) return;
-      if (!headers) {
-        delimiter = detectDelimiter(line);
-        headers = parseLine(line, delimiter);
-        return;
-      }
+    for (const line of completeLines) {
+      if (!line.trim()) continue;
       const vals = parseLine(line, delimiter);
-      if (vals.length < 5) return;
-
-      const rec = {};
-      headers.forEach((h, idx) => {
-        if (!KEEP_FIELDS.has(h)) return;
-        let val = (vals[idx] ?? "").trim();
-        if (val === "") {
-          rec[h] = NUMBER_FIELDS.has(h) ? null : "";
-        } else if (NUMBER_FIELDS.has(h)) {
-          const n = parseFloat(val.replace(/,/g, ""));
-          rec[h] = isNaN(n) ? null : n;
-        } else {
-          rec[h] = val;
-        }
-      });
-
-      if (!rec.FOLIO_NUMBER) return;
-
-      rec.full_address = [
-        rec.SITUS_STREET_NUMBER,
-        rec.SITUS_STREET_DIRECTION,
-        rec.SITUS_STREET_NAME,
-        rec.SITUS_STREET_TYPE,
-        rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
-        rec.SITUS_CITY,
-        rec.SITUS_ZIP_CODE,
-      ].filter(Boolean).join(" ").toUpperCase();
-
-      batch.push(rec);
-      if (batch.length >= BATCH_SIZE) {
-        await flushBatch();
-      }
-    };
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      const combined = leftover + chunk;
-      const lines = combined.split(/\r\n|\r|\n/);
-      leftover = lines.pop();
-      for (const line of lines) {
-        await processLine(line);
+      if (vals.length < 5) continue;
+      const rec = buildRecord(headers, vals, delimiter);
+      if (rec) {
+        batch.push(rec);
+        if (batch.length >= BATCH_SIZE) await flush();
       }
     }
-    if (leftover.trim()) await processLine(leftover);
-    await flushBatch();
+    await flush();
 
-    return Response.json({ success: true, imported: totalImported });
+    // Calculate next byte offset: current offset + bytes of all complete lines consumed
+    // The safe next offset = byte_offset + bytes up to and including the last complete newline
+    const chunkBytes = new TextEncoder().encode(chunkText);
+    // Find byte position of last newline in chunk
+    let lastNewlineBytePos = -1;
+    for (let i = chunkBytes.length - 1; i >= 0; i--) {
+      if (chunkBytes[i] === 10 || chunkBytes[i] === 13) { // \n or \r
+        lastNewlineBytePos = i;
+        break;
+      }
+    }
+
+    const nextOffset = lastNewlineBytePos >= 0
+      ? byte_offset + lastNewlineBytePos + 1
+      : byte_offset + chunkBytes.length;
+
+    const done = nextOffset >= totalBytes;
+
+    return Response.json({
+      success: true,
+      imported,
+      next_offset: done ? null : nextOffset,
+      total_bytes: totalBytes,
+      headers_line: resolvedHeadersLine,
+      done,
+    });
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
