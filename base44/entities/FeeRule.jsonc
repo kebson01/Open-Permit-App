@@ -1,0 +1,135 @@
+{
+  "name": "FeeRule",
+  "type": "object",
+  "properties": {
+    "city_id": {
+      "type": "string",
+      "description": "Reference to city"
+    },
+    "city_name": {
+      "type": "string",
+      "description": "City name for display"
+    },
+    "permit_id": {
+      "type": "string",
+      "description": "Slug identifier e.g. new_construction"
+    },
+    "permit_name": {
+      "type": "string",
+      "description": "Display name of permit"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "building",
+        "electrical",
+        "plumbing",
+        "fire",
+        "certificate",
+        "planning",
+        "engineering",
+        "additional"
+      ],
+      "description": "Permit category"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this permit covers"
+    },
+    "calc_type": {
+      "type": "string",
+      "enum": [
+        "flat",
+        "flat_per_unit",
+        "flat_plus_units",
+        "flat_plus_linear",
+        "tiered_cost",
+        "per_sqft_tier",
+        "eng_cost_tier",
+        "flat_plus_pct"
+      ],
+      "description": "Calculation method"
+    },
+    "input_field": {
+      "type": "string",
+      "enum": [
+        "constructionCost",
+        "openings",
+        "units",
+        "floors",
+        "linearFeet",
+        "sprinklerHeads",
+        "alarmDevices",
+        "squareFeet"
+      ],
+      "description": "The user input field name for variable calculations"
+    },
+    "flat_fee": {
+      "type": "number",
+      "description": "Single flat fee amount"
+    },
+    "fee_per_unit": {
+      "type": "number",
+      "description": "Fee multiplied by number of units"
+    },
+    "unit_label": {
+      "type": "string",
+      "description": "Label for units e.g. doors, floors"
+    },
+    "unit_threshold": {
+      "type": "number",
+      "description": "Number of units included in base fee"
+    },
+    "base_fee": {
+      "type": "number",
+      "description": "Base fee amount"
+    },
+    "rate_per_unit": {
+      "type": "number",
+      "description": "Rate per additional unit beyond threshold"
+    },
+    "base_includes_ft": {
+      "type": "number",
+      "description": "Linear feet included in base fee"
+    },
+    "rate_per_linear_ft": {
+      "type": "number",
+      "description": "Rate per linear foot beyond base"
+    },
+    "rate_percentage": {
+      "type": "number",
+      "description": "Percentage rate e.g. 3.75 for 3.75%"
+    },
+    "cost_threshold": {
+      "type": "number",
+      "description": "Construction cost threshold for tiered calculation"
+    },
+    "tiers_config": {
+      "type": "string",
+      "description": "JSON array of tier objects"
+    },
+    "technology_admin_fee": {
+      "type": "number",
+      "description": "Per-permit technology & admin fee"
+    },
+    "planning_zoning_fee": {
+      "type": "number",
+      "description": "Additional planning & zoning fee"
+    },
+    "include_city_surcharges": {
+      "type": "boolean",
+      "description": "Apply city-wide surcharges to this permit"
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "Display order within category"
+    }
+  },
+  "required": [
+    "city_id",
+    "city_name",
+    "permit_name",
+    "calc_type",
+    "category"
+  ]
+}

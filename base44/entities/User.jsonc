@@ -1,0 +1,22 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "city_admin"
+      ],
+      "default": "city_admin",
+      "description": "User role - admin can manage all cities, city_admin can only manage their assigned city"
+    },
+    "city_name": {
+      "type": "string",
+      "description": "For city_admin users: the city they are assigned to manage"
+    }
+  },
+  "required": [
+    "city_name"
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "CodeOfOrdinance",
+  "type": "object",
+  "properties": {
+    "city_id": {
+      "type": "string",
+      "description": "Reference to City entity"
+    },
+    "city_name": {
+      "type": "string",
+      "description": "City name for display"
+    },
+    "chapter_number": {
+      "type": "string",
+      "description": "Chapter number e.g. Chapter 1, Chapter 12"
+    },
+    "chapter_title": {
+      "type": "string",
+      "description": "Chapter title e.g. Administration, Zoning"
+    },
+    "section_number": {
+      "type": "string",
+      "description": "Section number e.g. 1-1, 12-5"
+    },
+    "section_title": {
+      "type": "string",
+      "description": "Section title / heading"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "zoning",
+        "building",
+        "fire_safety",
+        "electrical",
+        "plumbing",
+        "environmental",
+        "administrative",
+        "land_use",
+        "subdivision",
+        "signs",
+        "other"
+      ],
+      "description": "Ordinance category"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full text or summary of the ordinance section"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the ordinance became effective"
+    },
+    "last_amended": {
+      "type": "string",
+      "format": "date",
+      "description": "Date last amended"
+    },
+    "ordinance_number": {
+      "type": "string",
+      "description": "Adopting ordinance number e.g. Ord. No. 2024-15"
+    },
+    "reference_url": {
+      "type": "string",
+      "description": "Link to full text on city website or Municode"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated keywords for search"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Whether this ordinance is currently in effect",
+      "default": true
+    }
+  },
+  "required": [
+    "city_id",
+    "city_name",
+    "chapter_title",
+    "section_title",
+    "category"
+  ]
+}
