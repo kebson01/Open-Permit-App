@@ -174,7 +174,8 @@
       "type": "number"
     },
     "HE_PERCENT": {
-      "type": "number"
+      "type": "string",
+      "description": "Homestead exemption percent e.g. 10%"
     },
     "HOMESTEAD_FLAG": {
       "type": "string"
