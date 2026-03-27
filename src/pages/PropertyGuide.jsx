@@ -80,8 +80,8 @@ export default function PropertyGuide() {
               </p>
             )}
             <div className="grid gap-4">
-              {results.map((prop) => (
-                <PropertyCard key={prop.id} property={prop} onClick={() => setSelected(prop)} />
+              {results.map((prop, i) => (
+                <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => setSelected(prop)} />
               ))}
             </div>
           </>
