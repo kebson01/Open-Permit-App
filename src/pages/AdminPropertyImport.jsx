@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, AlertCircle, Loader2, Trash2, Database } from "lucide-react";
 
 function detectDelimiter(firstLine) {
+  if (!firstLine) return "\t";
   const tabs = (firstLine.match(/\t/g) || []).length;
   const commas = (firstLine.match(/,/g) || []).length;
   const pipes = (firstLine.match(/\|/g) || []).length;
@@ -99,7 +100,15 @@ export default function AdminPropertyImport() {
     addLog(`Reading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
 
     const text = await file.text();
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    const rawLines = text.split(/\r?\n/);
+    const lines = rawLines.filter(l => l.trim());
+    addLog(`Total raw lines: ${rawLines.length}, non-empty: ${lines.length}`);
+    if (lines.length === 0) {
+      addLog("ERROR: File appears empty or could not be read.");
+      setStatus("error");
+      return;
+    }
+    addLog(`First 80 chars of header: ${lines[0].substring(0, 80)}`);
     const delimiter = detectDelimiter(lines[0]);
     addLog(`Detected delimiter: ${delimiter === "\t" ? "TAB" : delimiter === "|" ? "PIPE" : "COMMA"}`);
     const headers = parseCSVLine(lines[0], delimiter);
