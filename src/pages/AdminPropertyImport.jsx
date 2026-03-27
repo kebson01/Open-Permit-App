@@ -100,7 +100,7 @@ export default function AdminPropertyImport() {
     addLog(`Reading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
 
     const text = await file.text();
-    const rawLines = text.split(/\r?\n/);
+    const rawLines = text.split(/\r\n|\r|\n/);
     const lines = rawLines.filter(l => l.trim());
     addLog(`Total raw lines: ${rawLines.length}, non-empty: ${lines.length}`);
     if (lines.length === 0) {
