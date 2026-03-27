@@ -126,9 +126,28 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [navVisible, setNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 10) {
+        setNavVisible(true);
+      } else if (currentY > lastScrollY.current) {
+        setNavVisible(false);
+        setMobileOpen(false);
+      } else {
+        setNavVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const adminLinks = currentUser?.role === "admin"
@@ -151,7 +170,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
+      <nav className="sticky top-0 z-40 shadow-lg transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Link to="/" className="flex items-center gap-2">
