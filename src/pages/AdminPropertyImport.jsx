@@ -28,8 +28,8 @@ export default function AdminPropertyImport() {
     formData.append("file", file);
 
     try {
-      const { appId, appBaseUrl, token } = appParams;
-      const baseUrl = appBaseUrl || "https://api.base44.com";
+      const { appId, token } = appParams;
+      const baseUrl = "https://base44.app";
       
       const response = await fetch(`${baseUrl}/api/apps/${appId}/functions/importProperties`, {
         method: "POST",
