@@ -112,7 +112,19 @@ export default function AdminPropertyImport() {
           rec[h] = val;
         }
       });
-      if (rec.FOLIO_NUMBER) records.push(rec);
+      if (rec.FOLIO_NUMBER) {
+        // Build a searchable full_address string for fast filtering
+        rec.full_address = [
+          rec.SITUS_STREET_NUMBER,
+          rec.SITUS_STREET_DIRECTION,
+          rec.SITUS_STREET_NAME,
+          rec.SITUS_STREET_TYPE,
+          rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
+          rec.SITUS_CITY,
+          rec.SITUS_ZIP_CODE,
+        ].filter(Boolean).join(" ").toUpperCase();
+        records.push(rec);
+      }
     }
 
     addLog(`Parsed ${records.length} valid records. Starting import...`);

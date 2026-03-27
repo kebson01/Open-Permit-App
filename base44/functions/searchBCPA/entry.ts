@@ -11,53 +11,60 @@ Deno.serve(async (req) => {
 
     const query = address.trim().toUpperCase();
 
-    // Check if we have local property data
-    const countCheck = await base44.entities.Property.list('FOLIO_NUMBER', 1);
-    if (!countCheck || countCheck.length === 0) {
-      return Response.json({ properties: [], source: 'empty_db' });
-    }
-
-    // Determine if it's a folio number (all digits)
-    const isFolio = /^\d{10,14}$/.test(query.replace(/-/g, ''));
+    // Check if it's a folio number (10-14 digits, possibly with dashes)
+    const isFolio = /^\d[\d-]{8,14}$/.test(query.replace(/\s/g, ''));
 
     let results = [];
 
     if (isFolio) {
-      // Exact folio lookup
-      const folio = query.replace(/-/g, '');
+      const folio = query.replace(/[-\s]/g, '');
       results = await base44.entities.Property.filter({ FOLIO_NUMBER: folio }, 'FOLIO_NUMBER', 10);
     } else {
-      // Parse address components from query
-      // Try to extract street number if present
-      const streetNumberMatch = query.match(/^(\d+)\s+/);
-      const streetNumber = streetNumberMatch ? streetNumberMatch[1] : null;
+      // Use full_address field for fuzzy-ish search
+      // Tokenize query and find records where full_address contains the key tokens
+      const tokens = query.split(/\s+/).filter(t => t.length > 1);
 
-      // Extract street name — remove number prefix, direction suffixes, street types
-      let streetName = query
-        .replace(/^\d+\s+/, '')           // remove leading number
-        .replace(/\b(NW|NE|SW|SE|N|S|E|W)\s+/g, '') // remove directions
-        .replace(/\b(ST|AVE|DR|BLVD|RD|CT|LN|WAY|TER|PL|CIR|PKWY|HWY)\b.*$/i, '') // remove type+rest
-        .trim();
+      if (tokens.length === 0) {
+        return Response.json({ properties: [], source: 'database' });
+      }
 
-      if (streetNumber && streetName) {
-        // Filter by street number + name
-        results = await base44.entities.Property.filter(
-          { SITUS_STREET_NUMBER: streetNumber },
-          'SITUS_STREET_NAME',
+      // Search by the most specific token (usually the street number if present)
+      const streetNumToken = tokens.find(t => /^\d+$/.test(t));
+      const nameTokens = tokens.filter(t => !/^\d+$/.test(t) && !['NW','NE','SW','SE','N','S','E','W','FL','DR','ST','AVE','BLVD','RD','CT','LN','WAY','TER','PL','CIR'].includes(t));
+
+      let candidates = [];
+
+      if (streetNumToken) {
+        candidates = await base44.entities.Property.filter(
+          { SITUS_STREET_NUMBER: streetNumToken },
+          'full_address',
+          500
+        );
+      } else if (nameTokens.length > 0) {
+        candidates = await base44.entities.Property.filter(
+          { SITUS_STREET_NAME: nameTokens[0] },
+          'full_address',
+          500
+        );
+      }
+
+      // Client-side filter: every token must appear in full_address
+      results = candidates.filter(p => {
+        if (!p.full_address) return false;
+        return tokens.every(t => p.full_address.includes(t));
+      }).slice(0, 25);
+
+      // If too few results and no street number, try name-only
+      if (results.length === 0 && nameTokens.length > 0) {
+        const byName = await base44.entities.Property.filter(
+          { SITUS_STREET_NAME: nameTokens[0] },
+          'full_address',
           100
         );
-        // Client-side filter by street name match
-        const namePart = streetName.split(' ')[0]; // first word of street name
-        results = results.filter(p =>
-          p.SITUS_STREET_NAME && p.SITUS_STREET_NAME.toUpperCase().includes(namePart.toUpperCase())
-        ).slice(0, 20);
-      } else if (streetName) {
-        // Street name only search
-        results = await base44.entities.Property.filter(
-          { SITUS_STREET_NAME: streetName.split(' ')[0] },
-          'SITUS_STREET_NUMBER',
-          20
-        );
+        results = byName.filter(p => {
+          if (!p.full_address) return false;
+          return nameTokens.every(t => p.full_address.includes(t));
+        }).slice(0, 25);
       }
     }
 

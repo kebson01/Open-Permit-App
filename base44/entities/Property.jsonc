@@ -6,6 +6,10 @@
       "type": "string",
       "description": "BCPA folio number"
     },
+    "full_address": {
+      "type": "string",
+      "description": "Computed full address string for search: STREET_NUMBER DIRECTION NAME TYPE CITY ZIP"
+    },
     "NAME_LINE_1": {
       "type": "string",
       "description": "Owner name line 1"
@@ -75,36 +79,28 @@
       "description": "Site unit/apt number"
     },
     "LEGAL_LINE_1": {
-      "type": "string",
-      "description": "Legal description line 1"
+      "type": "string"
     },
     "LEGAL_LINE_2": {
-      "type": "string",
-      "description": "Legal description line 2"
+      "type": "string"
     },
     "LEGAL_LINE_3": {
-      "type": "string",
-      "description": "Legal description line 3"
+      "type": "string"
     },
     "LEGAL_LINE_4": {
-      "type": "string",
-      "description": "Legal description line 4"
+      "type": "string"
     },
     "LEGAL_LINE_5": {
-      "type": "string",
-      "description": "Legal description line 5"
+      "type": "string"
     },
     "LEGAL_LINE_6": {
-      "type": "string",
-      "description": "Legal description line 6"
+      "type": "string"
     },
     "LEGAL_LINE_7": {
-      "type": "string",
-      "description": "Legal description line 7"
+      "type": "string"
     },
     "LEGAL_LINE_8": {
-      "type": "string",
-      "description": "Legal description line 8"
+      "type": "string"
     },
     "USE_CODE": {
       "type": "string",
@@ -115,336 +111,253 @@
       "description": "Use type description"
     },
     "MILLAGE_CODE": {
-      "type": "string",
-      "description": "Millage code"
+      "type": "string"
     },
     "MILLAGE_CODE_EXPANDED": {
-      "type": "string",
-      "description": "Expanded millage code"
+      "type": "string"
     },
     "MARKET_AREA": {
-      "type": "string",
-      "description": "Market area code"
+      "type": "string"
     },
     "SUBMARKET_AREA": {
-      "type": "string",
-      "description": "Submarket area code"
+      "type": "string"
     },
     "JUST_LAND_VALUE": {
-      "type": "number",
-      "description": "Just/market land value"
+      "type": "number"
     },
     "JUST_BUILDING_VALUE": {
-      "type": "number",
-      "description": "Just/market building value"
+      "type": "number"
     },
     "JUST_OTHER_VALUE": {
-      "type": "number",
-      "description": "Just/market other value"
+      "type": "number"
     },
     "LY_JUSTVAL": {
-      "type": "number",
-      "description": "Last year just value"
+      "type": "number"
     },
     "PRELIM_JUST_VALUE": {
-      "type": "number",
-      "description": "Preliminary just value"
+      "type": "number"
     },
     "TRUE_MARKET": {
-      "type": "number",
-      "description": "True market value"
+      "type": "number"
     },
     "LAND_VALUE": {
-      "type": "number",
-      "description": "Assessed land value"
+      "type": "number"
     },
     "COUNTY_TAXABLE": {
-      "type": "number",
-      "description": "County taxable value"
+      "type": "number"
     },
     "SCHOOL_TAXABLE": {
-      "type": "number",
-      "description": "School taxable value"
+      "type": "number"
     },
     "CITY_TAXABLE": {
-      "type": "number",
-      "description": "City taxable value"
+      "type": "number"
     },
     "INDEP_TAXABLE": {
-      "type": "number",
-      "description": "Independent district taxable value"
+      "type": "number"
     },
     "EXEMPTION_AMOUNT": {
-      "type": "number",
-      "description": "Total exemption amount"
+      "type": "number"
     },
     "EXEMPTION_TYPE": {
-      "type": "string",
-      "description": "Exemption type code"
+      "type": "string"
     },
     "EXEMPTION_TYPE_EXPANDED": {
-      "type": "string",
-      "description": "Expanded exemption type"
+      "type": "string"
     },
     "HE1_AMOUNT": {
-      "type": "number",
-      "description": "Homestead exemption 1 amount"
+      "type": "number"
     },
     "HE2_AMOUNT": {
-      "type": "number",
-      "description": "Homestead exemption 2 amount"
+      "type": "number"
     },
     "HE3_AMOUNT": {
-      "type": "number",
-      "description": "Homestead exemption 3 amount"
+      "type": "number"
     },
     "HE_PERCENT": {
-      "type": "number",
-      "description": "Homestead exemption percent"
+      "type": "number"
     },
     "HOMESTEAD_FLAG": {
-      "type": "string",
-      "description": "Homestead flag Y/N"
+      "type": "string"
     },
     "WVD_AMOUNT": {
-      "type": "number",
-      "description": "Widow/widower/disabled exemption amount"
+      "type": "number"
     },
     "WVD_TYPE": {
-      "type": "string",
-      "description": "Widow/widower/disabled type"
+      "type": "string"
     },
     "SENIOR": {
-      "type": "string",
-      "description": "Senior exemption flag"
+      "type": "string"
     },
     "SOH_YEAR": {
-      "type": "number",
-      "description": "Save Our Homes year established"
+      "type": "number"
     },
     "PREV_SOH_VALUE": {
-      "type": "number",
-      "description": "Previous SOH capped value"
+      "type": "number"
     },
     "NEW_SOH_VALUE": {
-      "type": "number",
-      "description": "New SOH capped value"
+      "type": "number"
     },
     "PORTABILITY": {
-      "type": "string",
-      "description": "Portability flag"
+      "type": "string"
     },
     "PORTED_VAL": {
-      "type": "number",
-      "description": "Ported SOH value"
+      "type": "number"
     },
     "SALE_DATE_1": {
-      "type": "string",
-      "description": "Most recent sale date"
+      "type": "string"
     },
     "DEED_TYPE_1": {
-      "type": "string",
-      "description": "Most recent deed type"
+      "type": "string"
     },
     "STAMP_AMOUNT_1": {
-      "type": "number",
-      "description": "Most recent sale doc stamp amount"
+      "type": "number"
     },
     "BOOK_1": {
-      "type": "string",
-      "description": "Most recent deed book"
+      "type": "string"
     },
     "PAGE_1": {
-      "type": "string",
-      "description": "Most recent deed page"
+      "type": "string"
     },
     "SALE1_QUAL_CODE": {
-      "type": "string",
-      "description": "Sale 1 qualification code"
+      "type": "string"
     },
     "SALE_DATE_2": {
-      "type": "string",
-      "description": "2nd most recent sale date"
+      "type": "string"
     },
     "DEED_TYPE_2": {
-      "type": "string",
-      "description": "2nd most recent deed type"
+      "type": "string"
     },
     "STAMP_AMOUNT_2": {
-      "type": "number",
-      "description": "2nd most recent sale doc stamp amount"
+      "type": "number"
     },
     "SALE_DATE_3": {
-      "type": "string",
-      "description": "3rd most recent sale date"
+      "type": "string"
     },
     "STAMP_AMOUNT_3": {
-      "type": "number",
-      "description": "3rd most recent sale stamp amount"
+      "type": "number"
     },
     "SALE_DATE_4": {
-      "type": "string",
-      "description": "4th most recent sale date"
+      "type": "string"
     },
     "STAMP_AMOUNT_4": {
-      "type": "number",
-      "description": "4th most recent sale stamp amount"
+      "type": "number"
     },
     "SALE_DATE_5": {
-      "type": "string",
-      "description": "5th most recent sale date"
+      "type": "string"
     },
     "STAMP_AMOUNT_5": {
-      "type": "number",
-      "description": "5th most recent sale stamp amount"
+      "type": "number"
     },
     "BLDG_ADJ_SQ_FOOTAGE": {
-      "type": "number",
-      "description": "Building adjusted/under-air sq footage"
+      "type": "number"
     },
     "BLDG_TOT_SQ_FOOTAGE": {
-      "type": "number",
-      "description": "Building total gross sq footage"
+      "type": "number"
     },
     "BLDG_UNDER_AIR_SQ_FOOTAGE": {
-      "type": "number",
-      "description": "Building under-air sq footage"
+      "type": "number"
     },
     "BLDG_UNITS": {
-      "type": "number",
-      "description": "Number of building units"
+      "type": "number"
     },
     "BLDG_YEAR_BUILT": {
-      "type": "number",
-      "description": "Year built (BCPA)"
+      "type": "number"
     },
     "ACTUAL_YEAR_BUILT": {
-      "type": "number",
-      "description": "Actual year built (GIS)"
+      "type": "number"
     },
     "BLDG_IMPROVE_QUAL": {
-      "type": "string",
-      "description": "Improvement quality grade"
+      "type": "string"
     },
     "BLDG_CCLASS": {
-      "type": "string",
-      "description": "Construction class"
+      "type": "string"
     },
     "BLDG_NUM_OF": {
-      "type": "number",
-      "description": "Number of buildings"
+      "type": "number"
     },
     "BLDG_USE_CODE": {
-      "type": "string",
-      "description": "Building use code"
+      "type": "string"
     },
     "BEDS": {
-      "type": "number",
-      "description": "Number of bedrooms"
+      "type": "number"
     },
     "BATHS": {
-      "type": "number",
-      "description": "Number of bathrooms"
+      "type": "number"
     },
     "GIS_SQUARE_FOOT": {
-      "type": "number",
-      "description": "GIS-derived lot square footage"
+      "type": "number"
     },
     "LAND_CALC_FACT_1": {
-      "type": "number",
-      "description": "Land calc factor 1 (e.g. lot sqft or front ft)"
+      "type": "number"
     },
     "LAND_CALC_TYPE_1": {
-      "type": "string",
-      "description": "Land calc type 1"
+      "type": "string"
     },
     "LAND_CALC_PRC_PER_FACT_UNIT_1": {
-      "type": "number",
-      "description": "Land calc price per unit 1"
+      "type": "number"
     },
     "FIRE_DISTRICT": {
-      "type": "string",
-      "description": "Fire district code"
+      "type": "string"
     },
     "FIRE_CLASS": {
-      "type": "string",
-      "description": "Fire class"
+      "type": "string"
     },
     "FIRE_ASSESSMENT": {
-      "type": "number",
-      "description": "Fire assessment amount"
+      "type": "number"
     },
     "GARBAGE_DISTRICT": {
-      "type": "string",
-      "description": "Garbage district"
+      "type": "string"
     },
     "GARBAGE_ASSESSMENT": {
-      "type": "number",
-      "description": "Garbage assessment amount"
+      "type": "number"
     },
     "DRAINAGE_DISTRICT": {
-      "type": "string",
-      "description": "Drainage district"
+      "type": "string"
     },
     "DRAINAGE_DISTRICT_ASSESSMENT": {
-      "type": "number",
-      "description": "Drainage assessment amount"
+      "type": "number"
     },
     "STORM_DISTRICT": {
-      "type": "string",
-      "description": "Storm district"
+      "type": "string"
     },
     "STORM_ASSESSMENT": {
-      "type": "number",
-      "description": "Storm assessment amount"
+      "type": "number"
     },
     "LIGHT_DISTRICT": {
-      "type": "string",
-      "description": "Street light district"
+      "type": "string"
     },
     "SAFE_NEIGHBORHOOD_DISTRICT": {
-      "type": "string",
-      "description": "Safe neighborhood district"
+      "type": "string"
     },
     "SAFE_NEIGHORHOOD_ASSESSMENT": {
-      "type": "number",
-      "description": "Safe neighborhood assessment"
+      "type": "number"
     },
     "CRA": {
-      "type": "string",
-      "description": "Community Redevelopment Area designation"
+      "type": "string"
     },
     "CENSUS_BLOCK": {
-      "type": "string",
-      "description": "Census block"
+      "type": "string"
     },
     "OWNERS_DOMICILE": {
-      "type": "string",
-      "description": "Owner domicile state"
+      "type": "string"
     },
     "LAST_PHYSICAL_INSPECTION": {
-      "type": "string",
-      "description": "Date of last physical inspection"
+      "type": "string"
     },
     "COMB_SPLIT": {
-      "type": "string",
-      "description": "Combined/split flag"
+      "type": "string"
     },
     "COMB_SPLIT_DATE": {
-      "type": "string",
-      "description": "Date of combination or split"
+      "type": "string"
     },
     "AFFORDABLE_HOUSING": {
-      "type": "string",
-      "description": "Affordable housing flag"
+      "type": "string"
     },
     "AFFORDABLE_HOUSING_PERCENT": {
-      "type": "number",
-      "description": "Affordable housing percent"
+      "type": "number"
     },
     "CLASSIFIED_AG_VALUE": {
-      "type": "number",
-      "description": "Classified agricultural value"
+      "type": "number"
     },
     "source_city_id": {
       "type": "string",
