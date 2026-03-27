@@ -109,7 +109,10 @@ Deno.serve(async (req) => {
     if (!file_url) return Response.json({ error: 'file_url required' }, { status: 400 });
 
     const rangeEnd = byte_offset + CHUNK_BYTES - 1;
-    const fetchHeaders = { Range: `bytes=${byte_offset}-${rangeEnd}` };
+    const fetchHeaders = {
+      Range: `bytes=${byte_offset}-${rangeEnd}`,
+      'Accept-Encoding': 'identity', // Prevent compressed response so Range requests work
+    };
 
     const fileResp = await fetch(file_url, { headers: fetchHeaders });
     if (!fileResp.ok && fileResp.status !== 206) {
