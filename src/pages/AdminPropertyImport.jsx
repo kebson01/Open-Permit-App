@@ -3,7 +3,16 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, AlertCircle, Loader2, Trash2, Database } from "lucide-react";
 
-function parseCSVLine(line) {
+function detectDelimiter(firstLine) {
+  const tabs = (firstLine.match(/\t/g) || []).length;
+  const commas = (firstLine.match(/,/g) || []).length;
+  const pipes = (firstLine.match(/\|/g) || []).length;
+  if (tabs >= commas && tabs >= pipes) return "\t";
+  if (pipes >= commas) return "|";
+  return ",";
+}
+
+function parseCSVLine(line, delimiter = "\t") {
   if (!line) return [];
   const result = [];
   let current = "";
@@ -13,7 +22,7 @@ function parseCSVLine(line) {
     if (!ch) continue;
     if (ch === '"') {
       inQuotes = !inQuotes;
-    } else if (ch === "\t" && !inQuotes) {
+    } else if (ch === delimiter && !inQuotes) {
       result.push(current.trim());
       current = "";
     } else {
@@ -91,13 +100,15 @@ export default function AdminPropertyImport() {
 
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(l => l.trim());
-    const headers = parseCSVLine(lines[0]);
+    const delimiter = detectDelimiter(lines[0]);
+    addLog(`Detected delimiter: ${delimiter === "\t" ? "TAB" : delimiter === "|" ? "PIPE" : "COMMA"}`);
+    const headers = parseCSVLine(lines[0], delimiter);
 
     addLog(`Found ${lines.length - 1} rows, ${headers.length} columns`);
 
     const records = [];
     for (let i = 1; i < lines.length; i++) {
-      const vals = parseCSVLine(lines[i]);
+      const vals = parseCSVLine(lines[i], delimiter);
       if (vals.length < 5) continue;
       const rec = {};
       headers.forEach((h, idx) => {
