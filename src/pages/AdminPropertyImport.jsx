@@ -30,17 +30,14 @@ export default function AdminPropertyImport() {
       addLog(`Upload complete. Step 2/2: Processing in chunks on server...`);
       setStatus("processing");
 
-      let byteOffset = 0;
-      let headersLine = null;
+      let offset = 0;
       let totalImported = 0;
       let chunkNum = 0;
+      let totalLines = null;
 
       while (true) {
         chunkNum++;
-        const payload = { file_url, byte_offset: byteOffset };
-        if (headersLine) payload.headers_line = headersLine;
-
-        const res = await base44.functions.invoke("importProperties", payload);
+        const res = await base44.functions.invoke("importProperties", { file_url, offset });
         const result = res.data;
 
         if (result.error) {
@@ -51,16 +48,16 @@ export default function AdminPropertyImport() {
 
         totalImported += result.imported || 0;
         setImported(totalImported);
-        headersLine = result.headers_line || headersLine;
+        if (result.total_lines) totalLines = result.total_lines;
 
-        if (result.total_bytes > 0) {
-          const pct = Math.min(100, Math.round((result.next_offset || result.total_bytes) / result.total_bytes * 100));
+        if (totalLines) {
+          const pct = Math.min(100, Math.round((result.processed_through || 0) / totalLines * 100));
           setProgress(pct);
-          addLog(`Chunk ${chunkNum}: +${result.imported} rows | total ${totalImported.toLocaleString()} | ${pct}% of file`);
+          addLog(`Chunk ${chunkNum}: +${result.imported} rows | total ${totalImported.toLocaleString()} | ${pct}% (line ${result.processed_through?.toLocaleString()} of ${totalLines?.toLocaleString()})`);
         }
 
         if (result.done || !result.next_offset) break;
-        byteOffset = result.next_offset;
+        offset = result.next_offset;
       }
 
       addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported successfully.`);
