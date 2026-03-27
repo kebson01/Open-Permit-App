@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, AlertCircle, Loader2, Trash2, Database } from "lucide-react";
 
 function parseCSVLine(line) {
+  if (!line) return [];
   const result = [];
   let current = "";
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
+    if (!ch) continue;
     if (ch === '"') {
       inQuotes = !inQuotes;
     } else if (ch === "\t" && !inQuotes) {
@@ -88,7 +90,7 @@ export default function AdminPropertyImport() {
     addLog(`Reading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
 
     const text = await file.text();
-    const lines = text.split("\n").filter(l => l.trim());
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
     const headers = parseCSVLine(lines[0]);
 
     addLog(`Found ${lines.length - 1} rows, ${headers.length} columns`);
