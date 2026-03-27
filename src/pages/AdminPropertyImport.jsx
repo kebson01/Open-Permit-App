@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Upload, CheckCircle2, AlertCircle, Loader2, Trash2, Database } from "lucide-react";
+import { Upload, CheckCircle2, Loader2, Trash2, Database } from "lucide-react";
 
 function detectDelimiter(firstLine) {
   if (!firstLine) return "\t";
@@ -13,14 +13,13 @@ function detectDelimiter(firstLine) {
   return ",";
 }
 
-function parseCSVLine(line, delimiter = "\t") {
+function parseCSVLine(line, delimiter) {
   if (!line) return [];
   const result = [];
   let current = "";
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (!ch) continue;
     if (ch === '"') {
       inQuotes = !inQuotes;
     } else if (ch === delimiter && !inQuotes) {
@@ -32,6 +31,34 @@ function parseCSVLine(line, delimiter = "\t") {
   }
   result.push(current.trim());
   return result;
+}
+
+function buildRecord(headers, vals, delimiter) {
+  if (vals.length < 5) return null;
+  const rec = {};
+  headers.forEach((h, idx) => {
+    if (!KEEP_FIELDS.has(h)) return;
+    let val = (vals[idx] ?? "").trim();
+    if (val === "") {
+      rec[h] = NUMBER_FIELDS.has(h) ? null : "";
+    } else if (NUMBER_FIELDS.has(h)) {
+      const n = parseFloat(val.replace(/,/g, ""));
+      rec[h] = isNaN(n) ? null : n;
+    } else {
+      rec[h] = val;
+    }
+  });
+  if (!rec.FOLIO_NUMBER) return null;
+  rec.full_address = [
+    rec.SITUS_STREET_NUMBER,
+    rec.SITUS_STREET_DIRECTION,
+    rec.SITUS_STREET_NAME,
+    rec.SITUS_STREET_TYPE,
+    rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
+    rec.SITUS_CITY,
+    rec.SITUS_ZIP_CODE,
+  ].filter(Boolean).join(" ").toUpperCase();
+  return rec;
 }
 
 const NUMBER_FIELDS = new Set([
@@ -49,7 +76,6 @@ const NUMBER_FIELDS = new Set([
   "HE_PERCENT","LAND_CALC_FACT_2","LAND_CALC_FACT_3","LAND_CALC_FACT_4",
 ]);
 
-// Only store fields that exist in the Property entity schema
 const KEEP_FIELDS = new Set([
   "FOLIO_NUMBER","NAME_LINE_1","NAME_LINE_2","ADDRESS_LINE_1","ADDRESS_LINE_2",
   "CITY","STATE","ZIP","ZIP4","LEGAL_LINE_1","LEGAL_LINE_2","LEGAL_LINE_3",
@@ -75,19 +101,59 @@ const KEEP_FIELDS = new Set([
   "LIGHT_DISTRICT","SAFE_NEIGHBORHOOD_DISTRICT","SAFE_NEIGHORHOOD_ASSESSMENT",
   "CRA","CENSUS_BLOCK","OWNERS_DOMICILE","LAST_PHYSICAL_INSPECTION","COMB_SPLIT",
   "COMB_SPLIT_DATE","AFFORDABLE_HOUSING","AFFORDABLE_HOUSING_PERCENT",
-  "CLASSIFIED_AG_VALUE","ACTUAL_YEAR_BUILT","ACTUAL_YEAR_BUILT",
+  "CLASSIFIED_AG_VALUE","ACTUAL_YEAR_BUILT",
 ]);
 
+// Read file line-by-line in chunks to avoid memory crash on large files
+function readFileLineByLine(file, onLine, onDone, onError) {
+  const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunks
+  const decoder = new TextDecoder("utf-8");
+  let offset = 0;
+  let leftover = "";
+
+  function readNextChunk() {
+    const slice = file.slice(offset, offset + CHUNK_SIZE);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = decoder.decode(e.target.result, { stream: true });
+      const combined = leftover + text;
+      const lines = combined.split(/\r\n|\r|\n/);
+      leftover = lines.pop(); // last partial line
+      for (const line of lines) {
+        onLine(line);
+      }
+      offset += CHUNK_SIZE;
+      if (offset < file.size) {
+        // Yield to browser between chunks
+        setTimeout(readNextChunk, 0);
+      } else {
+        // Flush leftover
+        if (leftover.trim()) onLine(leftover);
+        onDone();
+      }
+    };
+    reader.onerror = onError;
+    reader.readAsArrayBuffer(slice);
+  }
+
+  readNextChunk();
+}
+
 const BATCH_SIZE = 200;
+const IMPORT_BATCH_SIZE = 200;
 
 export default function AdminPropertyImport() {
-  const [status, setStatus] = useState("idle"); // idle | parsing | importing | done | error
-  const [progress, setProgress] = useState({ current: 0, total: 0, batches: 0 });
+  const [status, setStatus] = useState("idle");
+  const [progress, setProgress] = useState({ current: 0, total: 0, parsed: 0 });
   const [log, setLog] = useState([]);
   const [clearing, setClearing] = useState(false);
   const fileRef = useRef();
+  const logRef = useRef([]);
 
-  const addLog = (msg) => setLog(prev => [...prev.slice(-50), msg]);
+  const addLog = (msg) => {
+    logRef.current = [...logRef.current.slice(-50), msg];
+    setLog([...logRef.current]);
+  };
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
@@ -95,87 +161,86 @@ export default function AdminPropertyImport() {
 
     setStatus("parsing");
     setLog([]);
-    setProgress({ current: 0, total: 0, batches: 0 });
+    logRef.current = [];
+    setProgress({ current: 0, total: 0, parsed: 0 });
 
     addLog(`Reading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+    addLog(`Processing in 4MB chunks to avoid memory issues...`);
 
-    const text = await file.text();
-    const rawLines = text.split(/\r\n|\r|\n/);
-    const lines = rawLines.filter(l => l.trim());
-    addLog(`Total raw lines: ${rawLines.length}, non-empty: ${lines.length}`);
-    if (lines.length === 0) {
-      addLog("ERROR: File appears empty or could not be read.");
-      setStatus("error");
-      return;
-    }
-    addLog(`First 80 chars of header: ${lines[0].substring(0, 80)}`);
-    const delimiter = detectDelimiter(lines[0]);
-    addLog(`Detected delimiter: ${delimiter === "\t" ? "TAB" : delimiter === "|" ? "PIPE" : "COMMA"}`);
-    const headers = parseCSVLine(lines[0], delimiter);
+    let headers = null;
+    let delimiter = "\t";
+    let batch = [];
+    let totalParsed = 0;
+    let totalImported = 0;
+    let lineCount = 0;
+    let importQueue = Promise.resolve();
 
-    addLog(`Found ${lines.length - 1} rows, ${headers.length} columns`);
-
-    const records = [];
-    for (let i = 1; i < lines.length; i++) {
-      const vals = parseCSVLine(lines[i], delimiter);
-      if (vals.length < 5) continue;
-      const rec = {};
-      headers.forEach((h, idx) => {
-        if (!KEEP_FIELDS.has(h)) return;
-        let val = vals[idx] ?? "";
-        val = val.trim();
-        if (val === "" || val === "0" && NUMBER_FIELDS.has(h)) {
-          // keep as null for numbers
-          rec[h] = NUMBER_FIELDS.has(h) ? null : "";
-        } else if (NUMBER_FIELDS.has(h)) {
-          const n = parseFloat(val.replace(/,/g, ""));
-          rec[h] = isNaN(n) ? null : n;
-        } else {
-          rec[h] = val;
-        }
+    const flushBatch = (batchToFlush) => {
+      importQueue = importQueue.then(async () => {
+        await base44.entities.Property.bulkCreate(batchToFlush);
+        totalImported += batchToFlush.length;
+        setProgress(p => ({ ...p, current: totalImported }));
       });
-      if (rec.FOLIO_NUMBER) {
-        // Build a searchable full_address string for fast filtering
-        rec.full_address = [
-          rec.SITUS_STREET_NUMBER,
-          rec.SITUS_STREET_DIRECTION,
-          rec.SITUS_STREET_NAME,
-          rec.SITUS_STREET_TYPE,
-          rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
-          rec.SITUS_CITY,
-          rec.SITUS_ZIP_CODE,
-        ].filter(Boolean).join(" ").toUpperCase();
-        records.push(rec);
+    };
+
+    const onLine = (rawLine) => {
+      const line = rawLine.trim();
+      if (!line) return;
+      lineCount++;
+
+      if (!headers) {
+        delimiter = detectDelimiter(line);
+        addLog(`Header detected. Delimiter: ${delimiter === "\t" ? "TAB" : delimiter === "|" ? "PIPE" : "COMMA"}`);
+        addLog(`First 80 chars: ${line.substring(0, 80)}`);
+        headers = parseCSVLine(line, delimiter);
+        addLog(`${headers.length} columns found`);
+        return;
       }
-    }
 
-    addLog(`Parsed ${records.length} valid records. Starting import...`);
-    setStatus("importing");
+      const vals = parseCSVLine(line, delimiter);
+      const rec = buildRecord(headers, vals, delimiter);
+      if (!rec) return;
 
-    const totalBatches = Math.ceil(records.length / BATCH_SIZE);
-    setProgress({ current: 0, total: records.length, batches: totalBatches });
+      totalParsed++;
+      batch.push(rec);
 
-    let imported = 0;
-    for (let b = 0; b < totalBatches; b++) {
-      const batch = records.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
-      await base44.entities.Property.bulkCreate(batch);
-      imported += batch.length;
-      setProgress(p => ({ ...p, current: imported }));
-      if (b % 10 === 0) addLog(`Batch ${b + 1}/${totalBatches} — ${imported.toLocaleString()} records imported`);
-    }
+      if (batch.length >= IMPORT_BATCH_SIZE) {
+        flushBatch(batch);
+        batch = [];
+        setProgress(p => ({ ...p, parsed: totalParsed }));
+        if (totalParsed % 10000 === 0) {
+          addLog(`Parsed ${totalParsed.toLocaleString()} records so far...`);
+        }
+      }
+    };
 
-    addLog(`✅ Done! ${imported.toLocaleString()} properties imported.`);
-    setStatus("done");
+    const onDone = async () => {
+      if (batch.length > 0) {
+        flushBatch(batch);
+        batch = [];
+      }
+
+      addLog(`Parsing complete: ${totalParsed.toLocaleString()} records. Waiting for imports to finish...`);
+      setStatus("importing");
+      setProgress(p => ({ ...p, total: totalParsed }));
+
+      await importQueue;
+      addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported.`);
+      setStatus("done");
+    };
+
+    const onError = (err) => {
+      addLog(`ERROR reading file: ${err.message || err}`);
+      setStatus("error");
+    };
+
+    readFileLineByLine(file, onLine, onDone, onError);
   };
 
   const handleClearAll = async () => {
     if (!window.confirm("This will DELETE ALL existing property records. Are you sure?")) return;
     setClearing(true);
     addLog("Clearing all existing property records...");
-    await base44.entities.Property.filter({}).then(async (all) => {
-      // We delete in batches using the SDK
-    });
-    // Use delete_entities equivalent via backend
     try {
       const res = await base44.functions.invoke("clearAllProperties", {});
       addLog(`Cleared: ${res.data?.deleted || "all"} records removed.`);
@@ -193,7 +258,7 @@ export default function AdminPropertyImport() {
         <Database className="w-7 h-7 text-blue-600" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Property Data Import</h1>
-          <p className="text-gray-500 text-sm">Upload the BCPA tab-delimited export file to populate the property database</p>
+          <p className="text-gray-500 text-sm">Upload the BCPA export file — streamed in chunks, any size</p>
         </div>
       </div>
 
@@ -212,31 +277,31 @@ export default function AdminPropertyImport() {
       {/* Upload */}
       <div
         className="border-2 border-dashed border-blue-300 rounded-xl p-10 text-center cursor-pointer hover:bg-blue-50 transition-colors mb-6"
-        onClick={() => fileRef.current?.click()}
+        onClick={() => status !== "importing" && fileRef.current?.click()}
       >
         <Upload className="w-10 h-10 text-blue-400 mx-auto mb-3" />
         <p className="font-semibold text-gray-700">Click to select BCPA export file</p>
-        <p className="text-sm text-gray-400 mt-1">Tab-delimited .txt or .csv — any size</p>
+        <p className="text-sm text-gray-400 mt-1">Tab-delimited or CSV — any size (streamed, won't crash)</p>
         <input ref={fileRef} type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={handleFile} />
       </div>
 
       {/* Progress */}
-      {(status === "importing" || status === "done") && (
+      {(status === "parsing" || status === "importing" || status === "done") && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">
-              {status === "done" ? "Import complete" : "Importing..."}
+              {status === "done" ? "Import complete" : status === "parsing" ? "Parsing & importing..." : "Finalizing imports..."}
             </span>
-            <span className="text-sm text-gray-500">{pct}%</span>
+            <span className="text-sm text-gray-500">{pct > 0 ? `${pct}%` : "—"}</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-3">
             <div
               className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${pct}%` }}
+              style={{ width: pct > 0 ? `${pct}%` : "4px" }}
             />
           </div>
           <p className="text-xs text-gray-400 mt-2">
-            {progress.current.toLocaleString()} / {progress.total.toLocaleString()} records
+            {progress.current.toLocaleString()} imported · {progress.parsed.toLocaleString()} parsed
           </p>
         </div>
       )}
