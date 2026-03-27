@@ -9,33 +9,99 @@ Deno.serve(async (req) => {
     const { address } = await req.json();
     if (!address) return Response.json({ error: 'address required' }, { status: 400 });
 
-    // Use LLM with web search to find BCPA property data
+    const trimmed = address.trim();
+
+    // Try BCPA public API - address search endpoint
+    // BCPA exposes a search API at this endpoint
+    const bcpaUrl = `https://web.bcpa.net/BcpaClient/api/search/address?address=${encodeURIComponent(trimmed)}&pageSize=20`;
+    
+    const bcpaRes = await fetch(bcpaUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; PropertySearch/1.0)',
+        'Referer': 'https://web.bcpa.net/',
+        'Origin': 'https://web.bcpa.net',
+      }
+    });
+
+    if (bcpaRes.ok) {
+      const data = await bcpaRes.json();
+      // BCPA returns an array of property objects
+      const raw = Array.isArray(data) ? data : (data?.results || data?.items || []);
+      
+      const properties = raw.map(p => ({
+        FOLIO_NUMBER: p.folioNumber || p.folio || p.FOLIO_NUMBER || '',
+        NAME_LINE_1: p.ownerName || p.owner || p.NAME_LINE_1 || '',
+        full_address: p.siteAddress || p.address || p.situsAddress || '',
+        SITUS_STREET_NUMBER: p.situsStreetNumber || p.streetNumber || '',
+        SITUS_STREET_DIRECTION: p.situsStreetDirection || '',
+        SITUS_STREET_NAME: p.situsStreetName || p.streetName || '',
+        SITUS_STREET_TYPE: p.situsStreetType || '',
+        SITUS_CITY: p.situsCity || p.city || '',
+        SITUS_ZIP_CODE: p.situsZip || p.zip || '',
+        USE_TYPE: p.useType || p.propertyUse || p.useDescription || '',
+        BLDG_YEAR_BUILT: p.yearBuilt || p.buildingYear || null,
+        BEDS: p.bedrooms || p.beds || null,
+        BATHS: p.bathrooms || p.baths || null,
+        BLDG_UNDER_AIR_SQ_FOOTAGE: p.underAirSqFt || p.livingArea || null,
+        GIS_SQUARE_FOOT: p.lotSize || p.gisSqFt || null,
+        JUST_LAND_VALUE: p.justLandValue || p.landValue || null,
+        JUST_BUILDING_VALUE: p.justBuildingValue || p.buildingValue || null,
+        HOMESTEAD_FLAG: p.homestead || p.homesteadFlag || '',
+        _source: 'bcpa_api',
+      })).filter(p => p.FOLIO_NUMBER || p.full_address);
+
+      if (properties.length > 0) {
+        return Response.json({ properties });
+      }
+    }
+
+    // Fallback: try alternate BCPA API endpoint
+    const altUrl = `https://web.bcpa.net/BcpaClient/api/search?query=${encodeURIComponent(trimmed)}&type=address`;
+    const altRes = await fetch(altUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0',
+        'Referer': 'https://web.bcpa.net/',
+      }
+    });
+
+    if (altRes.ok) {
+      const altData = await altRes.json();
+      const raw = Array.isArray(altData) ? altData : (altData?.results || altData?.data || []);
+      if (raw.length > 0) {
+        const properties = raw.map(p => ({
+          FOLIO_NUMBER: p.folioNumber || p.folio || '',
+          NAME_LINE_1: p.ownerName || p.owner || '',
+          full_address: p.siteAddress || p.address || '',
+          SITUS_CITY: p.situsCity || p.city || '',
+          SITUS_ZIP_CODE: p.situsZip || p.zip || '',
+          USE_TYPE: p.useType || p.propertyUse || '',
+          BLDG_YEAR_BUILT: p.yearBuilt || null,
+          BEDS: p.bedrooms || null,
+          BATHS: p.bathrooms || null,
+          BLDG_UNDER_AIR_SQ_FOOTAGE: p.underAirSqFt || null,
+          GIS_SQUARE_FOOT: p.lotSize || null,
+          JUST_LAND_VALUE: p.justLandValue || null,
+          JUST_BUILDING_VALUE: p.justBuildingValue || null,
+          HOMESTEAD_FLAG: p.homestead || '',
+          _source: 'bcpa_api_alt',
+        })).filter(p => p.FOLIO_NUMBER || p.full_address);
+
+        return Response.json({ properties });
+      }
+    }
+
+    // Final fallback: use LLM with a faster model
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Go to https://web.bcpa.net/bcpaclient/#/Record-Search and search for the property: "${address}" in Broward County, Florida. Fetch the LIVE, CURRENT data directly from the BCPA website (bcpa.net or web.bcpa.net) right now in ${new Date().getFullYear()}. Do NOT use cached or old data.
+      prompt: `Search for Broward County Florida property: "${trimmed}" on the BCPA website (bcpa.net).
+      
+Return property data as JSON with these fields:
+FOLIO_NUMBER, NAME_LINE_1, full_address, SITUS_STREET_NUMBER, SITUS_STREET_DIRECTION, SITUS_STREET_NAME, SITUS_STREET_TYPE, SITUS_CITY, SITUS_ZIP_CODE, USE_TYPE, BLDG_YEAR_BUILT, BEDS, BATHS, BLDG_UNDER_AIR_SQ_FOOTAGE, GIS_SQUARE_FOOT, JUST_LAND_VALUE, JUST_BUILDING_VALUE, HOMESTEAD_FLAG.
 
-Return a JSON array of matching properties found. For each property include as many of these fields as you can find from the BCPA website:
-- FOLIO_NUMBER (the BCPA folio/parcel ID, typically 12 digits)
-- NAME_LINE_1 (current owner name)
-- full_address (the site/property address as listed on BCPA)
-- SITUS_STREET_NUMBER
-- SITUS_STREET_DIRECTION (N/S/E/W/NW/NE/SW/SE)
-- SITUS_STREET_NAME (just the name, no ordinal suffix — e.g. "107" not "107TH")
-- SITUS_STREET_TYPE (e.g. AVE, DR, ST)
-- SITUS_CITY
-- SITUS_ZIP_CODE
-- USE_TYPE (property use description)
-- BLDG_YEAR_BUILT
-- BEDS
-- BATHS
-- BLDG_UNDER_AIR_SQ_FOOTAGE
-- GIS_SQUARE_FOOT (lot size)
-- JUST_LAND_VALUE (current assessed value)
-- JUST_BUILDING_VALUE (current assessed value)
-- HOMESTEAD_FLAG (Y or N)
-
-If no properties are found, return an empty array. Return ONLY valid JSON, no explanation.`,
+Return empty array if not found.`,
       add_context_from_internet: true,
-      model: "gemini_3_pro",
+      model: "gemini_3_flash",
       response_json_schema: {
         type: "object",
         properties: {
@@ -69,7 +135,7 @@ If no properties are found, return an empty array. Return ONLY valid JSON, no ex
       }
     });
 
-    const properties = (result?.properties || []).map(p => ({ ...p, _source: 'bcpa_live' }));
+    const properties = (result?.properties || []).map(p => ({ ...p, _source: 'bcpa_llm' }));
     return Response.json({ properties });
 
   } catch (error) {
