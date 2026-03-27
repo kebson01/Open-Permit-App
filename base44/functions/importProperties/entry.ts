@@ -12,7 +12,6 @@ const NUMBER_FIELDS = new Set([
   "GARBAGE_ASSESSMENT","DRAINAGE_DISTRICT_ASSESSMENT","STORM_ASSESSMENT",
   "SAFE_NEIGHORHOOD_ASSESSMENT","CLASSIFIED_AG_VALUE","BLDG_UNDER_AIR_SQ_FOOTAGE",
   "AFFORDABLE_HOUSING_PERCENT","PORTED_VAL","SOH_YEAR","ACTUAL_YEAR_BUILT",
-  "HE_PERCENT",
 ]);
 
 const KEEP_FIELDS = new Set([
@@ -74,9 +73,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file');
-    if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
+    const { file_url } = await req.json();
+    if (!file_url) return Response.json({ error: 'file_url required' }, { status: 400 });
+
+    // Fetch the file from storage
+    const fileResp = await fetch(file_url);
+    if (!fileResp.ok) return Response.json({ error: 'Could not fetch file from storage' }, { status: 400 });
 
     const BATCH_SIZE = 300;
     let headers = null;
@@ -86,7 +88,7 @@ Deno.serve(async (req) => {
     let leftover = "";
 
     const decoder = new TextDecoder('utf-8');
-    const reader = file.stream().getReader();
+    const reader = fileResp.body.getReader();
 
     const flushBatch = async () => {
       if (batch.length === 0) return;
@@ -137,7 +139,6 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Stream-process the file
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -149,7 +150,6 @@ Deno.serve(async (req) => {
         await processLine(line);
       }
     }
-    // flush leftover
     if (leftover.trim()) await processLine(leftover);
     await flushBatch();
 

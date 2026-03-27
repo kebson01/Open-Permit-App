@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { appParams } from "@/lib/app-params";
 import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, Loader2, Trash2, Database, AlertCircle } from "lucide-react";
 
@@ -22,25 +21,19 @@ export default function AdminPropertyImport() {
     setImported(0);
 
     addLog(`Uploading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
-    addLog(`Processing server-side — this may take several minutes for large files...`);
-
-    const formData = new FormData();
-    formData.append("file", file);
+    addLog(`Step 1/2: Uploading to storage...`);
 
     try {
-      const { appId, token } = appParams;
-      const baseUrl = "https://base44.app";
-      
-      const response = await fetch(`${baseUrl}/api/apps/${appId}/functions/importProperties`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      // Step 1: Upload file to Base44 storage
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      addLog(`Upload complete. Step 2/2: Processing on server (this may take several minutes)...`);
 
-      const result = await response.json();
+      // Step 2: Tell backend to fetch + process it from the URL
+      const res = await base44.functions.invoke("importProperties", { file_url });
+      const result = res.data;
 
-      if (!response.ok || result.error) {
-        addLog(`ERROR: ${result.error || "Unknown server error"}`);
+      if (result.error) {
+        addLog(`ERROR: ${result.error}`);
         setStatus("error");
         return;
       }
