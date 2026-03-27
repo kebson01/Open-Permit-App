@@ -42,7 +42,42 @@ const KEEP_FIELDS = new Set([
   "CLASSIFIED_AG_VALUE","ACTUAL_YEAR_BUILT",
 ]);
 
-const BATCH_SIZE = 500;
+// Fetch a byte range from a URL, forcing no compression
+async function fetchRange(url, start, end) {
+  const resp = await fetch(url, {
+    headers: {
+      'Range': `bytes=${start}-${end}`,
+      'Accept-Encoding': 'identity',
+    }
+  });
+  if (!resp.ok && resp.status !== 206) {
+    throw new Error(`Range fetch failed: ${resp.status}`);
+  }
+  return await resp.arrayBuffer();
+}
+
+// Get the total file size via HEAD request
+async function getFileSize(url) {
+  // Try HEAD first
+  let resp = await fetch(url, {
+    method: 'HEAD',
+    headers: { 'Accept-Encoding': 'identity' }
+  });
+  if (resp.ok) {
+    const cl = resp.headers.get('content-length');
+    if (cl) return parseInt(cl, 10);
+  }
+  // Fall back to a Range request for first byte to get Content-Range
+  resp = await fetch(url, {
+    headers: { 'Range': 'bytes=0-0', 'Accept-Encoding': 'identity' }
+  });
+  const cr = resp.headers.get('content-range');
+  if (cr) {
+    const m = cr.match(/\/(\d+)$/);
+    if (m) return parseInt(m[1], 10);
+  }
+  throw new Error('Could not determine file size');
+}
 
 function detectDelimiter(line) {
   const tabs = (line.match(/\t/g) || []).length;
@@ -67,6 +102,36 @@ function parseLine(line, delimiter) {
   return result;
 }
 
+function buildRecord(headers, vals, delimiter) {
+  const rec = {};
+  headers.forEach((h, idx) => {
+    if (!KEEP_FIELDS.has(h)) return;
+    const val = (vals[idx] ?? "").trim();
+    if (val === "") {
+      rec[h] = NUMBER_FIELDS.has(h) ? null : "";
+    } else if (NUMBER_FIELDS.has(h)) {
+      const n = parseFloat(val.replace(/,/g, ""));
+      rec[h] = isNaN(n) ? null : n;
+    } else {
+      rec[h] = val;
+    }
+  });
+  if (!rec.FOLIO_NUMBER) return null;
+  rec.full_address = [
+    rec.SITUS_STREET_NUMBER,
+    rec.SITUS_STREET_DIRECTION,
+    rec.SITUS_STREET_NAME,
+    rec.SITUS_STREET_TYPE,
+    rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
+    rec.SITUS_CITY,
+    rec.SITUS_ZIP_CODE,
+  ].filter(Boolean).join(" ").toUpperCase();
+  return rec;
+}
+
+const CHUNK_BYTES = 8 * 1024 * 1024; // 8MB per call — fast to fetch + parse
+const BATCH_SIZE = 500;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -76,33 +141,44 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { file_url, offset = 0 } = body;
+    const { file_url, byte_offset = 0, headers_csv = null, leftover = "" } = body;
     if (!file_url) return Response.json({ error: 'file_url required' }, { status: 400 });
 
-    // Download the entire file to /tmp on first call (offset=0), reuse on subsequent calls
-    const tmpPath = '/tmp/bcpa_import.csv';
-
-    if (offset === 0) {
-      // Download file to /tmp (streaming, no memory spike)
-      const resp = await fetch(file_url);
-      if (!resp.ok) return Response.json({ error: `Failed to fetch file: ${resp.status}` }, { status: 400 });
-      const fileData = await resp.arrayBuffer();
-      await Deno.writeFile(tmpPath, new Uint8Array(fileData));
+    // On first call, get total file size
+    let total_bytes = body.total_bytes || null;
+    if (!total_bytes) {
+      total_bytes = await getFileSize(file_url);
     }
 
-    // Read the file from /tmp starting at the given line offset
-    const fileText = await Deno.readTextFile(tmpPath);
-    const allLines = fileText.split(/\r\n|\r|\n/);
+    const rangeStart = byte_offset;
+    const rangeEnd = Math.min(byte_offset + CHUNK_BYTES - 1, total_bytes - 1);
 
-    // Parse headers from line 0
-    const headerLine = allLines[0];
-    const delimiter = detectDelimiter(headerLine);
-    const headers = parseLine(headerLine, delimiter);
+    const buffer = await fetchRange(file_url, rangeStart, rangeEnd);
+    const decoder = new TextDecoder('utf-8');
+    const chunkText = leftover + decoder.decode(buffer);
 
-    // Process lines from offset (skip header line 0)
-    const startLine = offset === 0 ? 1 : offset;
-    const MAX_LINES_PER_CALL = 15000; // ~15k rows per call, safe within timeout
-    const endLine = Math.min(startLine + MAX_LINES_PER_CALL, allLines.length);
+    // Split into lines, keep last partial line as next leftover
+    const lines = chunkText.split(/\r\n|\r|\n/);
+    const isLastChunk = rangeEnd >= total_bytes - 1;
+    const nextLeftover = isLastChunk ? "" : lines.pop(); // last line may be incomplete
+
+    // Parse headers from first chunk
+    let headers = null;
+    let startIdx = 0;
+    if (!headers_csv) {
+      // First line is header
+      const headerLine = lines[0];
+      const delimiter = detectDelimiter(headerLine);
+      headers = parseLine(headerLine, delimiter);
+      startIdx = 1;
+    } else {
+      headers = headers_csv.split("|||");
+    }
+
+    const delimiter = detectDelimiter(headers.join("\t") + "\t"); // reconstruct delimiter hint
+    // Re-detect delimiter from a data line instead
+    const sampleLine = lines[startIdx] || lines[0];
+    const detectedDelim = detectDelimiter(sampleLine);
 
     let batch = [];
     let imported = 0;
@@ -114,52 +190,29 @@ Deno.serve(async (req) => {
       batch = [];
     };
 
-    for (let i = startLine; i < endLine; i++) {
-      const line = allLines[i];
+    for (let i = startIdx; i < lines.length; i++) {
+      const line = lines[i];
       if (!line || !line.trim()) continue;
-      const vals = parseLine(line, delimiter);
+      const vals = parseLine(line, detectedDelim);
       if (vals.length < 5) continue;
-
-      const rec = {};
-      headers.forEach((h, idx) => {
-        if (!KEEP_FIELDS.has(h)) return;
-        const val = (vals[idx] ?? "").trim();
-        if (val === "") {
-          rec[h] = NUMBER_FIELDS.has(h) ? null : "";
-        } else if (NUMBER_FIELDS.has(h)) {
-          const n = parseFloat(val.replace(/,/g, ""));
-          rec[h] = isNaN(n) ? null : n;
-        } else {
-          rec[h] = val;
-        }
-      });
-
-      if (!rec.FOLIO_NUMBER) continue;
-
-      rec.full_address = [
-        rec.SITUS_STREET_NUMBER,
-        rec.SITUS_STREET_DIRECTION,
-        rec.SITUS_STREET_NAME,
-        rec.SITUS_STREET_TYPE,
-        rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
-        rec.SITUS_CITY,
-        rec.SITUS_ZIP_CODE,
-      ].filter(Boolean).join(" ").toUpperCase();
-
+      const rec = buildRecord(headers, vals, detectedDelim);
+      if (!rec) continue;
       batch.push(rec);
       if (batch.length >= BATCH_SIZE) await flush();
     }
     await flush();
 
-    const done = endLine >= allLines.length;
-    const totalLines = allLines.length - 1; // exclude header
+    const nextByteOffset = rangeEnd + 1;
+    const done = isLastChunk;
 
     return Response.json({
       success: true,
       imported,
-      next_offset: done ? null : endLine,
-      total_lines: totalLines,
-      processed_through: endLine - 1,
+      next_byte_offset: done ? null : nextByteOffset,
+      total_bytes,
+      processed_bytes: nextByteOffset,
+      headers_csv: headers.join("|||"),
+      next_leftover: nextLeftover,
       done,
     });
 

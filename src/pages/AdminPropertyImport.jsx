@@ -30,14 +30,19 @@ export default function AdminPropertyImport() {
       addLog(`Upload complete. Step 2/2: Processing in chunks on server...`);
       setStatus("processing");
 
-      let offset = 0;
+      let byteOffset = 0;
+      let totalBytes = null;
+      let headersCsv = null;
+      let leftover = "";
       let totalImported = 0;
       let chunkNum = 0;
-      let totalLines = null;
 
       while (true) {
         chunkNum++;
-        const res = await base44.functions.invoke("importProperties", { file_url, offset });
+        const payload = { file_url, byte_offset: byteOffset, leftover, headers_csv: headersCsv };
+        if (totalBytes) payload.total_bytes = totalBytes;
+
+        const res = await base44.functions.invoke("importProperties", payload);
         const result = res.data;
 
         if (result.error) {
@@ -48,16 +53,18 @@ export default function AdminPropertyImport() {
 
         totalImported += result.imported || 0;
         setImported(totalImported);
-        if (result.total_lines) totalLines = result.total_lines;
+        if (result.total_bytes) totalBytes = result.total_bytes;
+        if (result.headers_csv) headersCsv = result.headers_csv;
+        leftover = result.next_leftover || "";
 
-        if (totalLines) {
-          const pct = Math.min(100, Math.round((result.processed_through || 0) / totalLines * 100));
+        if (totalBytes) {
+          const pct = Math.min(100, Math.round((result.processed_bytes || 0) / totalBytes * 100));
           setProgress(pct);
-          addLog(`Chunk ${chunkNum}: +${result.imported} rows | total ${totalImported.toLocaleString()} | ${pct}% (line ${result.processed_through?.toLocaleString()} of ${totalLines?.toLocaleString()})`);
+          addLog(`Chunk ${chunkNum}: +${result.imported} rows | total ${totalImported.toLocaleString()} | ${pct}% (${((result.processed_bytes||0)/1024/1024).toFixed(1)} MB of ${(totalBytes/1024/1024).toFixed(1)} MB)`);
         }
 
-        if (result.done || !result.next_offset) break;
-        offset = result.next_offset;
+        if (result.done || !result.next_byte_offset) break;
+        byteOffset = result.next_byte_offset;
       }
 
       addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported successfully.`);
