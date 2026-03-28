@@ -9,6 +9,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PropertyGuide from './pages/PropertyGuide';
 import AdminPropertyImport from './pages/AdminPropertyImport.jsx';
 import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
+import AdminDataImport from './pages/AdminDataImport.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -63,6 +64,7 @@ const AuthenticatedApp = () => {
       <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
       <Route path="/AdminPropertyImport" element={<LayoutWrapper currentPageName="AdminPropertyImport"><AdminPropertyImport /></LayoutWrapper>} />
       <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><AdminPermitRecords /></LayoutWrapper>} />
+      <Route path="/AdminDataImport" element={<LayoutWrapper currentPageName="AdminDataImport"><AdminDataImport /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
