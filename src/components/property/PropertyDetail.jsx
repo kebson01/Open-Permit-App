@@ -2,6 +2,7 @@ import { ArrowLeft, MapPin, User, DollarSign, Home, Calendar, Building2 } from "
 import { Button } from "@/components/ui/button";
 import PropertyCityPanel from "@/components/property/PropertyCityPanel";
 import PropertyAIChat from "@/components/property/PropertyAIChat";
+import PropertyPermitHistory from "@/components/property/PropertyPermitHistory";
 
 function Row({ label, value }) {
   if (!value && value !== 0) return null;
@@ -112,6 +113,7 @@ export default function PropertyDetail({ property: p, onBack }) {
         </Section>
       </div>
 
+      <PropertyPermitHistory folio_number={p.FOLIO_NUMBER} city_name={p.SITUS_CITY} />
       <PropertyCityPanel property={p} />
       <PropertyAIChat property={p} />
     </div>

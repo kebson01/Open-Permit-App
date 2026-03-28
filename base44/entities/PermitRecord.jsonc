@@ -1,0 +1,109 @@
+{
+  "name": "PermitRecord",
+  "type": "object",
+  "properties": {
+    "folio_number": {
+      "type": "string",
+      "description": "BCPA folio number \u2014 primary key linking to property"
+    },
+    "city_id": {
+      "type": "string",
+      "description": "Reference to City entity"
+    },
+    "city_name": {
+      "type": "string",
+      "description": "City name e.g. Weston, Coral Springs"
+    },
+    "permit_number": {
+      "type": "string",
+      "description": "Municipal permit number"
+    },
+    "permit_type": {
+      "type": "string",
+      "enum": [
+        "building",
+        "electrical",
+        "plumbing",
+        "mechanical",
+        "roofing",
+        "demolition",
+        "fence",
+        "pool",
+        "addition",
+        "remodel",
+        "fire",
+        "certificate_of_occupancy",
+        "other"
+      ],
+      "description": "Type of permit"
+    },
+    "permit_description": {
+      "type": "string",
+      "description": "Description of work performed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "issued",
+        "finaled",
+        "expired",
+        "voided",
+        "in_review",
+        "pending"
+      ],
+      "default": "issued",
+      "description": "Current permit status"
+    },
+    "issued_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date permit was issued"
+    },
+    "finaled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date permit was finaled / closed out"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date permit expires"
+    },
+    "contractor_name": {
+      "type": "string",
+      "description": "Contractor who pulled the permit"
+    },
+    "contractor_license": {
+      "type": "string",
+      "description": "Contractor license number"
+    },
+    "job_value": {
+      "type": "number",
+      "description": "Estimated job / construction value in dollars"
+    },
+    "square_footage": {
+      "type": "number",
+      "description": "Square footage affected"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "city_data",
+        "bcpa",
+        "import"
+      ],
+      "default": "manual",
+      "description": "How this record was added"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    }
+  },
+  "required": [
+    "folio_number",
+    "city_name",
+    "permit_type"
+  ]
+}
