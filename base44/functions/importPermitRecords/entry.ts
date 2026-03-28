@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 50;
 
 // Known permit type keywords for auto-classification
 const TYPE_KEYWORDS = {
@@ -188,8 +188,8 @@ Deno.serve(async (req) => {
     if (!file_url) return Response.json({ error: "file_url required" }, { status: 400 });
     if (!city_name) return Response.json({ error: "city_name required" }, { status: 400 });
 
-    // Fetch up to 4MB chunk
-    const CHUNK = 4 * 1024 * 1024;
+    // Fetch up to 1MB chunk to limit rows per call
+    const CHUNK = 1 * 1024 * 1024;
     let total_bytes = body.total_bytes || null;
 
     // Get file size on first call
@@ -281,14 +281,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Bulk insert with delay to avoid rate limits
+    // Bulk insert with retry on rate limit
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     let imported = 0;
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      await base44.asServiceRole.entities.PermitRecord.bulkCreate(records.slice(i, i + BATCH_SIZE));
-      imported += Math.min(BATCH_SIZE, records.length - i);
-      if (i + BATCH_SIZE < records.length) {
-        await new Promise(r => setTimeout(r, 500));
+      const batch = records.slice(i, i + BATCH_SIZE);
+      let retries = 0;
+      while (retries < 5) {
+        try {
+          await base44.asServiceRole.entities.PermitRecord.bulkCreate(batch);
+          imported += batch.length;
+          break;
+        } catch (e) {
+          if (e.message?.includes("429") || e.message?.includes("Rate limit")) {
+            retries++;
+            await sleep(1000 * retries); // exponential backoff: 1s, 2s, 3s...
+          } else {
+            throw e;
+          }
+        }
       }
+      await sleep(400);
     }
 
     const nextByteOffset = rangeEnd + 1;
