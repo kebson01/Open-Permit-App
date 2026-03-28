@@ -114,21 +114,25 @@ function resolve(obj, ...candidates) {
 function buildRecord(row, cityName, headers) {
   const folio = resolve(row,
     "folio_number","folio","parcel","parcelid","parcel_id","parcel number",
-    "folio number","parcel no","apn","pin"
+    "folio number","parcel no","apn","pin",
+    "parcel_nbr","parcel nbr","parcelnbr","parcel_number"
   );
   if (!folio) return null;
 
-  const rawType = resolve(row, "permit_type","type","permittype","work type","worktype","work_type","category");
+  const rawType = resolve(row, "permit_type","type","permittype","work type","worktype","work_type","category","permit type");
   const description = resolve(row,
     "permit_description","description","desc","work_description","work description",
-    "scope","scope of work","job description","project description"
+    "scope","scope of work","job description","project description",
+    "record_name","record name","recordname","job_name","job name"
   );
-  const rawStatus = resolve(row, "status","permit_status","permit status","current status");
+  const rawStatus = resolve(row, "status","permit_status","permit status","current status","permit_status");
   const permitNumber = resolve(row,
-    "permit_number","permit_no","permit no","permit#","permitnumber","permit number","application number","app_no"
+    "permit_number","permit_no","permit no","permit#","permitnumber","permit number","application number","app_no",
+    "record_id","record id","recordid","permit_id"
   );
   const issuedDate = normalizeDate(resolve(row,
-    "issued_date","issue_date","issued","issue date","date issued","permit date","application date","app_date"
+    "issued_date","issue_date","issued","issue date","date issued","permit date","application date","app_date",
+    "open_date","open date","opendate","start_date","start date"
   ));
   const finaledDate = normalizeDate(resolve(row,
     "finaled_date","final_date","finaled","final date","date finaled","completion date","completed_date"
