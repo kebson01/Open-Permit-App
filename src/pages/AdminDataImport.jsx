@@ -185,6 +185,7 @@ function MunicipalImportPanel() {
     setPreview(res.data.preview || []);
     setHeaders(res.data.headers || []);
     addLog(`Preview: ${res.data.preview?.length} sample rows shown. Total bytes: ${(res.data.total_bytes / 1024 / 1024).toFixed(1)} MB`);
+    addLog(`Detected columns: ${(res.data.headers || []).join(" | ")}`);
     setStatus("preview");
     if (fileRef.current) fileRef.current.value = "";
   };
