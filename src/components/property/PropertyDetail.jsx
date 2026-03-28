@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { ArrowLeft, MapPin, User, DollarSign, Home, Calendar, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
 import PropertyCityPanel from "@/components/property/PropertyCityPanel";
 import PropertyAIChat from "@/components/property/PropertyAIChat";
 import PropertyPermitHistory from "@/components/property/PropertyPermitHistory";
+import PropertyPermitOverlay from "@/components/property/PropertyPermitOverlay";
 
 function Row({ label, value }) {
   if (!value && value !== 0) return null;
@@ -34,6 +37,15 @@ function fmt(n) {
 }
 
 export default function PropertyDetail({ property: p, onBack }) {
+  const [permits, setPermits] = useState([]);
+
+  useEffect(() => {
+    if (!p?.FOLIO_NUMBER) return;
+    base44.entities.PermitRecord.filter({ folio_number: p.FOLIO_NUMBER }, "-issued_date", 200)
+      .then(setPermits)
+      .catch(() => {});
+  }, [p?.FOLIO_NUMBER]);
+
   const address = [
     p.SITUS_STREET_NUMBER,
     p.SITUS_STREET_DIRECTION,
@@ -113,9 +125,10 @@ export default function PropertyDetail({ property: p, onBack }) {
         </Section>
       </div>
 
+      <PropertyPermitOverlay permits={permits} />
       <PropertyPermitHistory folio_number={p.FOLIO_NUMBER} city_name={p.SITUS_CITY} />
       <PropertyCityPanel property={p} />
-      <PropertyAIChat property={p} />
+      <PropertyAIChat property={p} permits={permits} />
     </div>
   );
 }

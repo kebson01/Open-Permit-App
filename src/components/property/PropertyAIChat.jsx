@@ -3,27 +3,43 @@ import { base44 } from "@/api/base44Client";
 import { Sparkles, Send, Globe, ChevronDown, ChevronUp } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
+  "Based on this property's history, what should I plan next?",
+  "Are there any open or expired permits I should address?",
   "What permits do I need for a roof replacement?",
   "Can I add a pool to this property?",
   "What are the setback requirements here?",
-  "Do I need a permit for a new fence?",
-  "What's the permit fee for window replacements?",
 ];
 
-function buildPropertyContext(p) {
+function buildPropertyContext(p, permits = []) {
   const address = [p.SITUS_STREET_NUMBER, p.SITUS_STREET_DIRECTION, p.SITUS_STREET_NAME, p.SITUS_STREET_TYPE]
     .filter(Boolean).join(" ");
   const totalValue = (p.JUST_LAND_VALUE || 0) + (p.JUST_BUILDING_VALUE || 0) + (p.JUST_OTHER_VALUE || 0);
+
+  let permitHistory = "";
+  if (permits.length > 0) {
+    permitHistory = `\n\nPERMIT HISTORY (${permits.length} records):\n` + permits.map(r =>
+      `- [${r.issued_date || "Unknown date"}] ${r.permit_type?.replace(/_/g, " ").toUpperCase()} | ${r.permit_description || "No description"} | Status: ${r.status} | City: ${r.city_name}${r.contractor_name ? ` | Contractor: ${r.contractor_name}` : ""}${r.job_value ? ` | Value: $${Number(r.job_value).toLocaleString()}` : ""}`
+    ).join("\n");
+  } else {
+    permitHistory = "\n\nPERMIT HISTORY: No permit records found in our database for this property yet.";
+  }
+
+  // Flag open/expired permits
+  const openPermits = permits.filter(r => ["issued", "in_review", "pending"].includes(r.status));
+  const expiredPermits = permits.filter(r => r.status === "expired");
+  let flags = "";
+  if (openPermits.length > 0) flags += `\n⚠️ OPEN PERMITS (${openPermits.length}): ${openPermits.map(r => r.permit_description || r.permit_type).join(", ")}`;
+  if (expiredPermits.length > 0) flags += `\n⚠️ EXPIRED PERMITS (${expiredPermits.length}): May need re-permitting before sale or future work.`;
 
   return `PROPERTY: ${address}, ${p.SITUS_CITY}, FL ${p.SITUS_ZIP_CODE || ""}
 Folio: ${p.FOLIO_NUMBER} | City: ${p.SITUS_CITY} | Year Built: ${p.BLDG_YEAR_BUILT || p.ACTUAL_YEAR_BUILT || "Unknown"}
 Use Type: ${p.USE_TYPE || "Unknown"} | ${p.BEDS || "—"}bd/${p.BATHS || "—"}ba
 Under Air: ${p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"} sqft | Lot (GIS): ${p.GIS_SQUARE_FOOT?.toLocaleString() || "Unknown"} sqft
 Construction Class: ${p.BLDG_CCLASS || "Unknown"} | Just Value: $${totalValue.toLocaleString()}
-Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}`;
+Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}${flags}${permitHistory}`;
 }
 
-export default function PropertyAIChat({ property }) {
+export default function PropertyAIChat({ property, permits = [] }) {
   const [expanded, setExpanded] = useState(false);
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -38,7 +54,7 @@ export default function PropertyAIChat({ property }) {
     if (expanded && !conversation && !initializing) {
       initConversation();
     }
-  }, [expanded]);
+  }, [expanded, permits.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,7 +62,7 @@ export default function PropertyAIChat({ property }) {
 
   const initConversation = async () => {
     setInitializing(true);
-    const ctx = buildPropertyContext(property);
+    const ctx = buildPropertyContext(property, permits);
     const conv = await base44.agents.createConversation({
       agent_name: "property_permit_consultant",
       metadata: {
@@ -117,7 +133,7 @@ export default function PropertyAIChat({ property }) {
                 <Globe className="w-3 h-3" /> Web Search
               </span>
             </p>
-            <p className="text-xs text-gray-500">Property-aware · Searches live zoning & permit data</p>
+            <p className="text-xs text-gray-500">Knows this property's permit history · Searches live zoning data</p>
           </div>
         </div>
         {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
