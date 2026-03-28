@@ -195,7 +195,7 @@ function MunicipalImportPanel() {
     setStatus("processing"); setImported(0); setProgress(0);
     addLog("Starting full import...");
 
-    let byteOffset = 0, totalBytes = null, headersRaw = null, leftover = "", totalImported = 0, chunkNum = 0;
+    let byteOffset = 0, totalBytes = null, headersRaw = null, leftover = "", totalImported = 0, chunkNum = 0, rowsSkip = 0;
 
     while (true) {
       chunkNum++;
@@ -206,6 +206,7 @@ function MunicipalImportPanel() {
         byte_offset: byteOffset,
         leftover,
         headers_raw: headersRaw,
+        rows_skip: rowsSkip,
       };
       if (totalBytes) payload.total_bytes = totalBytes;
 
@@ -218,6 +219,7 @@ function MunicipalImportPanel() {
       if (result.total_bytes) totalBytes = result.total_bytes;
       if (result.headers_raw) headersRaw = result.headers_raw;
       leftover = result.next_leftover || "";
+      rowsSkip = result.next_rows_skip || 0;
 
       if (totalBytes) {
         const pct = Math.min(100, Math.round((result.processed_bytes || 0) / totalBytes * 100));
@@ -225,8 +227,8 @@ function MunicipalImportPanel() {
         addLog(`Chunk ${chunkNum}: +${result.imported} records | ${totalImported.toLocaleString()} total | ${pct}%`);
       }
 
-      if (result.done || !result.next_byte_offset) break;
-      byteOffset = result.next_byte_offset;
+      if (result.done || (!result.next_byte_offset && !rowsSkip)) break;
+      byteOffset = result.next_byte_offset || byteOffset;
     }
 
     addLog(`✅ Done! ${totalImported.toLocaleString()} permit records imported for ${cityName}.`);

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 25;
+const MAX_RECORDS_PER_CALL = 200;
 
 // Known permit type keywords for auto-classification
 const TYPE_KEYWORDS = {
@@ -183,7 +184,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { file_url, city_name, preview_only = false, byte_offset = 0, leftover = "", headers_raw = null } = body;
+    const { file_url, city_name, preview_only = false, byte_offset = 0, leftover = "", headers_raw = null, rows_skip = 0 } = body;
 
     if (!file_url) return Response.json({ error: "file_url required" }, { status: 400 });
     if (!city_name) return Response.json({ error: "city_name required" }, { status: 400 });
@@ -261,15 +262,17 @@ Deno.serve(async (req) => {
       return result;
     };
 
-    const records = [];
+    const allRecords = [];
     for (let i = startIdx; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
       const vals = splitLine(lines[i]);
       const row = {};
       headers.forEach((h, idx) => { row[h] = (vals[idx] || "").replace(/^"|"$/g, "").trim(); });
       const rec = buildRecord(row, city_name, headers);
-      if (rec) records.push(rec);
+      if (rec) allRecords.push(rec);
     }
+    // Skip rows already inserted from a previous partial call on this same chunk
+    const records = rows_skip > 0 ? allRecords.slice(rows_skip) : allRecords;
 
     // Preview mode — just return first 10 rows
     if (preview_only) {
@@ -281,40 +284,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Bulk insert with retry on rate limit
+    // Cap records per call to avoid timeout
+    const recordsToInsert = records.slice(0, MAX_RECORDS_PER_CALL);
+    const remaining = records.length - recordsToInsert.length;
+
+    // Bulk insert in small batches with a short delay between them
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     let imported = 0;
-    for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      const batch = records.slice(i, i + BATCH_SIZE);
-      let retries = 0;
-      while (retries < 5) {
-        try {
-          await base44.asServiceRole.entities.PermitRecord.bulkCreate(batch);
-          imported += batch.length;
-          break;
-        } catch (e) {
-          if (e.message?.includes("429") || e.message?.includes("Rate limit")) {
-            retries++;
-            await sleep(1000 * retries); // exponential backoff: 1s, 2s, 3s...
-          } else {
-            throw e;
-          }
-        }
+    for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
+      const batch = recordsToInsert.slice(i, i + BATCH_SIZE);
+      await base44.asServiceRole.entities.PermitRecord.bulkCreate(batch);
+      imported += batch.length;
+      if (i + BATCH_SIZE < recordsToInsert.length) {
+        await sleep(200);
       }
-      await sleep(400);
     }
 
-    const nextByteOffset = rangeEnd + 1;
-    const done = isLastChunk;
+    // If we capped records, don't advance the byte offset — let frontend re-call same offset
+    // but pass back how many rows were already consumed so we can skip them next call
+    const rows_consumed = recordsToInsert.length;
+    const rows_skipped = body.rows_skip || 0;
+
+    // Only advance byte offset if we processed all records in this chunk
+    const allProcessed = remaining === 0;
+    const nextByteOffset = allProcessed ? rangeEnd + 1 : byte_offset;
+    const next_rows_skip = allProcessed ? 0 : rows_skipped + rows_consumed;
+    const done = isLastChunk && allProcessed;
 
     return Response.json({
       success: true,
       imported,
       next_byte_offset: done ? null : nextByteOffset,
+      next_rows_skip,
       total_bytes,
-      processed_bytes: nextByteOffset,
+      processed_bytes: allProcessed ? nextByteOffset : byte_offset,
       headers_raw: headers.join("|||"),
-      next_leftover: nextLeftover,
+      next_leftover: allProcessed ? nextLeftover : leftover,
       done,
     });
 
