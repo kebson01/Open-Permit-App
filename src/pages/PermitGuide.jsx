@@ -39,9 +39,7 @@ export default function PermitGuide() {
     }
   };
 
-  const handleCityApply = () => {
-    if (city) sessionStorage.setItem("selectedCity", city);
-  };
+  // city auto-saves to sessionStorage on change via the Select onValueChange handler
 
   const views = [
     { id: "front",      label: "Front View",   icon: Home },
@@ -55,7 +53,7 @@ export default function PermitGuide() {
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
-        <p className="text-gray-500 mt-0.5 text-xs sm:text-base">Tap any area to explore permit requirements</p>
+        <p className="text-gray-600 mt-0.5 text-xs sm:text-base">Tap or click any highlighted area on the home to see what permit you need, required documents, and estimated fees.</p>
       </div>
 
       {/* Controls Bar */}
@@ -89,22 +87,20 @@ export default function PermitGuide() {
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600"
         >
           <List className="w-3.5 h-3.5" />
-          Browse
+          Browse All Permits
         </button>
 
         {!singleCity && (
           <div className="flex items-center gap-2 ml-auto">
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-32 sm:w-40 rounded-xl h-8 text-xs">
-                <SelectValue placeholder="City..." />
+            <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+            <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
+              <SelectTrigger className="w-36 sm:w-44 rounded-xl h-8 text-xs">
+                <SelectValue placeholder="Filter by city..." />
               </SelectTrigger>
               <SelectContent>
                 {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleCityApply} className="gradient-primary text-white rounded-xl h-8 text-xs px-3">
-              Apply
-            </Button>
           </div>
         )}
       </div>

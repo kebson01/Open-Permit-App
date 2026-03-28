@@ -57,7 +57,7 @@ export default function FeeCalculator() {
         </div>
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-gray-800 leading-tight">Permit Fee Calculator</h1>
-          <p className="text-gray-400 text-xs sm:text-sm">Based on official municipal fee schedules</p>
+          <p className="text-gray-500 text-xs sm:text-sm">Select your city and permit type to get an instant cost estimate based on official fee schedules.</p>
         </div>
       </div>
 

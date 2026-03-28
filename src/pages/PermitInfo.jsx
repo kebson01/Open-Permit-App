@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
 import {
   FileText, CheckCircle, Clock, ClipboardList, AlertTriangle,
-  MapPin, Calculator, Map, ArrowRight
+  MapPin, Calculator, Map, ArrowRight, Link as LinkIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -129,9 +129,9 @@ function PermitDetailView({ permit }) {
         <h2 className="text-2xl font-bold text-white mb-2">Ready to Get Started?</h2>
         <p className="text-blue-200 text-sm mb-6">Choose your next step to begin the permitting process</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to={createPageUrl("Home")}>
+          <Link to={createPageUrl("PermitGuide")}>
             <button className="px-6 py-2.5 bg-white text-[#2c5282] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Select Your City
+              <MapPin className="w-4 h-4" /> Visual Permit Guide
             </button>
           </Link>
           <Link to={createPageUrl("PermitGuide")}>
@@ -180,6 +180,15 @@ function GeneralPermitInfo({ permits, isLoading }) {
 
       {isLoading ? (
         <div className="text-center py-12 text-gray-400">Loading permit types...</div>
+      ) : permits.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+          <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No permit types configured yet</h3>
+          <p className="text-gray-400 text-sm mb-5">Use the Visual Permit Guide to explore permits by clicking on parts of a home.</p>
+          <Link to={createPageUrl("PermitGuide")} className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
+            <Map className="w-4 h-4" /> Open Visual Permit Guide
+          </Link>
+        </div>
       ) : (
         <div className="space-y-8">
           {Object.entries(grouped).map(([cat, items]) => (

@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { name: "Home", page: "Home", icon: Building2 },
-  { name: "Property Guide", page: "PropertyGuide", icon: Map },
-  { name: "Visual Permit Guide", page: "PermitGuide", icon: Map },
+  { name: "Permit Guide", page: "PermitGuide", icon: Map },
   { name: "Fee Calculator", page: "FeeCalculator", icon: Calculator },
+  { name: "Property Search", page: "PropertyGuide", icon: Building2 },
 ];
 
 // Role-based nav links added dynamically below
@@ -235,10 +235,10 @@ export default function Layout({ children, currentPageName }) {
             key={link.page}
             to={createPageUrl(link.page)}
             className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-              currentPageName === link.page ? "text-blue-600" : "text-gray-500"
+              currentPageName === link.page ? "text-blue-600" : "text-gray-600"
             }`}
           >
-            <link.icon className={`w-5 h-5 ${currentPageName === link.page ? "text-blue-600" : "text-gray-400"}`} />
+            <link.icon className={`w-5 h-5 ${currentPageName === link.page ? "text-blue-600" : "text-gray-500"}`} />
             <span className="truncate text-[10px]">{link.name}</span>
           </Link>
         ))}

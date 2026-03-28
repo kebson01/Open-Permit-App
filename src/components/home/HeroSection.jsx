@@ -36,7 +36,7 @@ export default function HeroSection() {
           </Link>
           <Link
             to={createPageUrl("FeeCalculator")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-sm border border-white/15 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white text-blue-900 hover:bg-blue-50 font-semibold text-sm shadow transition-all"
           >
             <Calculator className="w-4 h-4" />
             Calculate Fees

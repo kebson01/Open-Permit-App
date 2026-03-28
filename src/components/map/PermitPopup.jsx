@@ -130,8 +130,9 @@ export default function PermitPopup({ permit, city, onClose }) {
               </Button>
             </Link>
             <Link to={createPageUrl("PermitInfo") + `?permit=${encodeURIComponent(permit.name)}`}>
-              <Button variant="outline" className="rounded-xl">
+              <Button variant="outline" className="rounded-xl gap-1.5">
                 <ExternalLink className="w-4 h-4" />
+                More Info
               </Button>
             </Link>
           </div>

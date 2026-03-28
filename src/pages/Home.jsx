@@ -25,7 +25,7 @@ export default function Home() {
 
         {/* Features */}
         <div className="mb-10">
-          <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">Why Use Our System?</h2>
+          <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">What You Can Do Here</h2>
           <FeaturesGrid />
         </div>
 

@@ -4,10 +4,10 @@ import { createPageUrl } from "@/utils";
 import { Map, DollarSign, BookOpen, Building } from "lucide-react";
 
 const actions = [
-  { label: "Visual Permit Guide", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "Tap any part of a home", color: "bg-blue-50 border-blue-100 text-blue-600" },
+  { label: "Permit Guide", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "Tap a home area to find permits", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Fee Calculator", icon: DollarSign, page: "FeeCalculator", emoji: "💵", desc: "Estimate permit costs", color: "bg-emerald-50 border-emerald-100 text-emerald-600" },
-  { label: "Permit Info", icon: BookOpen, page: "PermitInfo", emoji: "📘", desc: "Browse permit types", color: "bg-amber-50 border-amber-100 text-amber-600" },
-  { label: "Property Guide", icon: Building, page: "PropertyGuide", emoji: "🏗️", desc: "Search any property", color: "bg-purple-50 border-purple-100 text-purple-600" },
+  { label: "Permit Types", icon: BookOpen, page: "PermitInfo", emoji: "📘", desc: "What docs & steps are needed", color: "bg-amber-50 border-amber-100 text-amber-600" },
+  { label: "Property Search", icon: Building, page: "PropertyGuide", emoji: "🏗️", desc: "Look up any Broward parcel", color: "bg-purple-50 border-purple-100 text-purple-600" },
 ];
 
 export default function QuickActions() {
