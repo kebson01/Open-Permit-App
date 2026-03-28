@@ -22,7 +22,7 @@ export default function HeroSection() {
         </h1>
 
         <p className="mt-4 text-sm sm:text-lg text-blue-200/80 max-w-xl mx-auto leading-relaxed px-2">
-          Your complete guide to permitting across South Florida — visual guides, fee calculators, and more.
+          Your complete guide to permitting across South Florida — find out what permits you need, estimate costs, check zoning rules, and get AI-powered help with required documents.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 px-4">

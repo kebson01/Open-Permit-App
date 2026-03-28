@@ -134,9 +134,9 @@ function PermitDetailView({ permit }) {
               <MapPin className="w-4 h-4" /> Select Your City
             </button>
           </Link>
-          <Link to={createPageUrl("InteractiveMap")}>
+          <Link to={createPageUrl("PermitGuide")}>
             <button className="px-6 py-2.5 bg-white text-[#2c5282] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
-              <Map className="w-4 h-4" /> Explore Interactive Map
+              <Map className="w-4 h-4" /> Visual Permit Guide
             </button>
           </Link>
           <Link to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(permit.name)}`}>
