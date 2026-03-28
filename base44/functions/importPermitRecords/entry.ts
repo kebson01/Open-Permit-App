@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const BATCH_SIZE = 300;
+const BATCH_SIZE = 100;
 
 // Known permit type keywords for auto-classification
 const TYPE_KEYWORDS = {
@@ -281,11 +281,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Bulk insert
+    // Bulk insert with delay to avoid rate limits
     let imported = 0;
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       await base44.asServiceRole.entities.PermitRecord.bulkCreate(records.slice(i, i + BATCH_SIZE));
       imported += Math.min(BATCH_SIZE, records.length - i);
+      if (i + BATCH_SIZE < records.length) {
+        await new Promise(r => setTimeout(r, 300));
+      }
     }
 
     const nextByteOffset = rangeEnd + 1;
