@@ -1,7 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const BATCH_SIZE = 10;
-const MAX_RECORDS_PER_CALL = 50;
+const MAX_RECORDS_PER_CALL = 20;
 
 // Known permit type keywords for auto-classification
 const TYPE_KEYWORDS = {
@@ -288,14 +287,13 @@ Deno.serve(async (req) => {
     const recordsToInsert = records.slice(0, MAX_RECORDS_PER_CALL);
     const remaining = records.length - recordsToInsert.length;
 
-    // Bulk insert in small batches with a short delay between them
+    // Insert one record at a time with a delay to avoid rate limiting
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     let imported = 0;
-    for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
-      const batch = recordsToInsert.slice(i, i + BATCH_SIZE);
-      await base44.asServiceRole.entities.PermitRecord.bulkCreate(batch);
-      imported += batch.length;
-      await sleep(600);
+    for (const record of recordsToInsert) {
+      await base44.asServiceRole.entities.PermitRecord.create(record);
+      imported++;
+      await sleep(300);
     }
 
     // If we capped records, don't advance the byte offset — let frontend re-call same offset
