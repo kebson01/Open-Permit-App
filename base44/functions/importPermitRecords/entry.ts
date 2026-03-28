@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.PermitRecord.bulkCreate(records.slice(i, i + BATCH_SIZE));
       imported += Math.min(BATCH_SIZE, records.length - i);
       if (i + BATCH_SIZE < records.length) {
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 500));
       }
     }
 
