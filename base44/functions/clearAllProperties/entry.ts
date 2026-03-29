@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch a small batch of IDs
-    const batch = await base44.asServiceRole.entities.Property.list(null, 10);
+    const batch = await base44.asServiceRole.entities.Property.list(null, 5);
     if (!batch || batch.length === 0) {
       return Response.json({ success: true, deleted: 0, done: true });
     }
@@ -44,13 +44,13 @@ Deno.serve(async (req) => {
         }
       }
       // Pause between each delete to avoid overwhelming the DB
-      await sleep(1000);
+      await sleep(500);
     }
 
     return Response.json({
       success: true,
       deleted,
-      done: batch.length < 10,
+      done: batch.length < 5,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
