@@ -141,25 +141,33 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { file_url, byte_offset = 0, headers_csv = null, leftover = "" } = body;
-    if (!file_url) return Response.json({ error: 'file_url required' }, { status: 400 });
+    const { file_url, inline_content, byte_offset = 0, headers_csv = null, leftover = "" } = body;
 
-    // On first call, get total file size
+    let chunkText;
     let total_bytes = body.total_bytes || null;
-    if (!total_bytes) {
-      total_bytes = await getFileSize(file_url);
+    let isLastChunk = true;
+
+    if (inline_content) {
+      // Direct text content passed in — no URL fetch needed
+      chunkText = leftover + inline_content;
+    } else {
+      if (!file_url) return Response.json({ error: 'file_url or inline_content required' }, { status: 400 });
+
+      if (!total_bytes) {
+        total_bytes = await getFileSize(file_url);
+      }
+
+      const rangeStart = byte_offset;
+      const rangeEnd = Math.min(byte_offset + CHUNK_BYTES - 1, total_bytes - 1);
+      isLastChunk = rangeEnd >= total_bytes - 1;
+
+      const buffer = await fetchRange(file_url, rangeStart, rangeEnd);
+      const decoder = new TextDecoder('utf-8');
+      chunkText = leftover + decoder.decode(buffer);
     }
-
-    const rangeStart = byte_offset;
-    const rangeEnd = Math.min(byte_offset + CHUNK_BYTES - 1, total_bytes - 1);
-
-    const buffer = await fetchRange(file_url, rangeStart, rangeEnd);
-    const decoder = new TextDecoder('utf-8');
-    const chunkText = leftover + decoder.decode(buffer);
 
     // Split into lines, keep last partial line as next leftover
     const lines = chunkText.split(/\r\n|\r|\n/);
-    const isLastChunk = rangeEnd >= total_bytes - 1;
     const nextLeftover = isLastChunk ? "" : lines.pop(); // last line may be incomplete
 
     // Parse headers from first chunk
@@ -202,18 +210,17 @@ Deno.serve(async (req) => {
     }
     await flush();
 
-    const nextByteOffset = rangeEnd + 1;
-    const done = isLastChunk;
+    const nextByteOffset = inline_content ? null : (isLastChunk ? null : (byte_offset + CHUNK_BYTES));
 
     return Response.json({
       success: true,
       imported,
-      next_byte_offset: done ? null : nextByteOffset,
+      next_byte_offset: nextByteOffset,
       total_bytes,
       processed_bytes: nextByteOffset,
       headers_csv: headers.join("|||"),
       next_leftover: nextLeftover,
-      done,
+      done: isLastChunk,
     });
 
   } catch (error) {
