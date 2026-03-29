@@ -152,13 +152,15 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const adminLinks = currentUser?.role === "admin"
-    ? [{ name: "City Manager", page: "AdminCityManager", icon: Settings }, { name: "Data Import", page: "AdminDataImport", icon: FolderSync }, { name: "Permit Records", page: "AdminPermitRecords", icon: ClipboardList }]
+    ? [{ name: "City Manager", page: "AdminCityManager", icon: Settings }, { name: "Permit Records", page: "AdminPermitRecords", icon: ClipboardList }]
     : currentUser?.role === "city_admin"
     ? [
         { name: "City Settings", page: "AdminCityManager", icon: Settings },
         { name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }
       ]
     : [];
+
+
 
   const isCityPortal = currentPageName === "CityPortalPublic";
 
