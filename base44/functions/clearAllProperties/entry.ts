@@ -9,28 +9,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-    let totalDeleted = 0;
-
-    // Fetch and delete in batches of 50 until 20,000 are gone or no more records
-    while (totalDeleted < 20000) {
-      const batch = await base44.asServiceRole.entities.Property.list(null, 50);
-      if (!batch || batch.length === 0) break;
-
-      for (const record of batch) {
-        await base44.asServiceRole.entities.Property.delete(record.id);
-        totalDeleted++;
-        await sleep(150);
-      }
-
-      console.log(`Deleted ${totalDeleted} so far...`);
-      if (batch.length < 50) break;
+    // Fetch a batch of 500 records
+    const batch = await base44.asServiceRole.entities.Property.list(null, 500);
+    if (!batch || batch.length === 0) {
+      return Response.json({ success: true, deleted: 0, done: true });
     }
+
+    // Delete all in parallel (concurrent requests = much faster)
+    await Promise.all(batch.map(record =>
+      base44.asServiceRole.entities.Property.delete(record.id)
+    ));
 
     return Response.json({
       success: true,
-      deleted: totalDeleted,
-      done: totalDeleted < 20000,
+      deleted: batch.length,
+      done: batch.length < 500,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
