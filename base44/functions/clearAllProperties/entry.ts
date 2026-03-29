@@ -17,15 +17,22 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, deleted: 0, done: true });
     }
 
-    // Delete sequentially with a small delay to respect rate limits
+    // Delete sequentially, ignoring 404s (already deleted by another worker)
+    let deleted = 0;
     for (const record of batch) {
-      await base44.asServiceRole.entities.Property.delete(record.id);
+      try {
+        await base44.asServiceRole.entities.Property.delete(record.id);
+        deleted++;
+      } catch (e) {
+        if (!e.message?.includes('not found') && !e.message?.includes('404')) throw e;
+        // Already deleted by another parallel worker — skip
+      }
       await sleep(100);
     }
 
     return Response.json({
       success: true,
-      deleted: batch.length,
+      deleted,
       done: batch.length < 25,
     });
   } catch (error) {
