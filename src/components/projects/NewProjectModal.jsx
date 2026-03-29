@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const PROJECT_TYPES = [
 ];
 
 export default function NewProjectModal({ user, onClose, onCreated }) {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     project_type: "",
@@ -67,6 +69,7 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
     const created = await base44.entities.Project.create(payload);
     setSaving(false);
     onCreated(created);
+    navigate(`/ProjectDetail?id=${created.id}`);
   };
 
   return (

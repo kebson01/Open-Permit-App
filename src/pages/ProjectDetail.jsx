@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X,
-  CheckSquare, Calculator, BookOpen, FileText, Loader2
+  Sparkles, CheckSquare, Calculator, BookOpen, FileText, Loader2
 } from "lucide-react";
+import ProjectExpertBriefing from "@/components/projects/ProjectExpertBriefing";
 import ProjectPermitChecklist from "@/components/projects/ProjectPermitChecklist";
-import ProjectFeeEstimate from "@/components/projects/ProjectFeeEstimate";
 import ProjectOrdinances from "@/components/projects/ProjectOrdinances";
 
 const STATUS_OPTIONS = ["planning", "permitting", "in_progress", "completed", "on_hold"];
@@ -21,8 +21,8 @@ const STATUS_STYLES = {
 };
 
 const TABS = [
-  { id: "checklist", label: "Permit Checklist", icon: CheckSquare },
-  { id: "fees", label: "Fee Estimate", icon: Calculator },
+  { id: "overview", label: "AI Expert", icon: Sparkles },
+  { id: "checklist", label: "Checklist", icon: CheckSquare },
   { id: "ordinances", label: "Ordinances", icon: BookOpen },
   { id: "notes", label: "Notes", icon: FileText },
 ];
@@ -33,7 +33,7 @@ export default function ProjectDetail() {
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("checklist");
+  const [activeTab, setActiveTab] = useState("overview");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -51,7 +51,7 @@ export default function ProjectDetail() {
   }, [projectId]);
 
   const saveStatus = async (newStatus) => {
-    const updated = await base44.entities.Project.update(project.id, { status: newStatus });
+    await base44.entities.Project.update(project.id, { status: newStatus });
     setProject(prev => ({ ...prev, status: newStatus }));
   };
 
@@ -103,7 +103,6 @@ export default function ProjectDetail() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
 
-        {/* Back */}
         <Link to="/ProjectDashboard" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Projects
         </Link>
@@ -178,7 +177,6 @@ export default function ProjectDetail() {
                 )}
               </div>
 
-              {/* Contractor info */}
               {project.is_contractor_project && (project.client_name || project.contractor_license) && (
                 <div className="mt-4 bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 flex flex-wrap gap-4 text-sm">
                   {project.client_name && <span className="text-purple-700"><strong>Client:</strong> {project.client_name}</span>}
@@ -198,7 +196,11 @@ export default function ProjectDetail() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-1 justify-center ${
-                  activeTab === tab.id ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"
+                  activeTab === tab.id
+                    ? tab.id === "overview"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm"
+                      : "bg-blue-600 text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -210,18 +212,9 @@ export default function ProjectDetail() {
 
         {/* Tab content */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          {activeTab === "checklist" && (
-            <ProjectPermitChecklist
-              project={project}
-              onUpdate={setProject}
-            />
-          )}
-          {activeTab === "fees" && (
-            <ProjectFeeEstimate project={project} />
-          )}
-          {activeTab === "ordinances" && (
-            <ProjectOrdinances project={project} />
-          )}
+          {activeTab === "overview" && <ProjectExpertBriefing project={project} />}
+          {activeTab === "checklist" && <ProjectPermitChecklist project={project} onUpdate={setProject} />}
+          {activeTab === "ordinances" && <ProjectOrdinances project={project} />}
           {activeTab === "notes" && (
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Project Notes</label>
