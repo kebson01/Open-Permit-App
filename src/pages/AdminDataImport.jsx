@@ -62,21 +62,36 @@ function CountyImportPanel() {
   const handleClear = async () => {
     if (!window.confirm("Delete ALL property records? This cannot be undone.")) return;
     setClearing(true);
-    addLog("Clearing all property records...");
+    addLog("Clearing all property records — running 5 parallel workers...");
+
     let totalDeleted = 0;
-    while (true) {
-      const res = await base44.functions.invoke("clearAllProperties", {});
-      if (res.data?.error) {
-        addLog(`Error: ${res.data.error}`);
-        break;
+    let allDone = false;
+
+    // Run 5 parallel workers, each looping independently
+    const worker = async () => {
+      while (!allDone) {
+        const res = await base44.functions.invoke("clearAllProperties", {});
+        if (res.data?.error) throw new Error(res.data.error);
+        totalDeleted += res.data?.deleted || 0;
+        if (res.data?.done && res.data?.deleted === 0) {
+          allDone = true;
+          break;
+        }
       }
-      totalDeleted += res.data?.deleted || 0;
-      addLog(`Deleted ${totalDeleted} records so far...`);
-      if (res.data?.done) {
-        addLog(`✅ Done! ${totalDeleted} records removed.`);
-        break;
-      }
+    };
+
+    const interval = setInterval(() => {
+      if (!allDone) addLog(`Deleted ${totalDeleted.toLocaleString()} records so far...`);
+    }, 2000);
+
+    try {
+      await Promise.all([worker(), worker(), worker(), worker(), worker()]);
+      addLog(`✅ Done! ${totalDeleted.toLocaleString()} records removed.`);
+    } catch (err) {
+      addLog(`Error: ${err.message}`);
     }
+
+    clearInterval(interval);
     setClearing(false);
   };
 
