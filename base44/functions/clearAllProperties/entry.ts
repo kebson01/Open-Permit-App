@@ -1,13 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Delete in chunks of CONCURRENCY at a time to avoid rate limits
-async function deleteChunked(base44, records, concurrency = 20) {
-  for (let i = 0; i < records.length; i += concurrency) {
-    const chunk = records.slice(i, i + concurrency);
-    await Promise.all(chunk.map(r => base44.asServiceRole.entities.Property.delete(r.id)));
-  }
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -17,19 +9,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Fetch 200 records per call
-    const batch = await base44.asServiceRole.entities.Property.list(null, 200);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Fetch a small batch
+    const batch = await base44.asServiceRole.entities.Property.list(null, 25);
     if (!batch || batch.length === 0) {
       return Response.json({ success: true, deleted: 0, done: true });
     }
 
-    // Delete in parallel chunks of 20
-    await deleteChunked(base44, batch, 20);
+    // Delete sequentially with a small delay to respect rate limits
+    for (const record of batch) {
+      await base44.asServiceRole.entities.Property.delete(record.id);
+      await sleep(100);
+    }
 
     return Response.json({
       success: true,
       deleted: batch.length,
-      done: batch.length < 200,
+      done: batch.length < 25,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
