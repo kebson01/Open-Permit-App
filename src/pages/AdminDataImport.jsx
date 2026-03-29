@@ -63,10 +63,12 @@ function CountyImportPanel() {
     if (!window.confirm("Delete ALL property records? This cannot be undone.")) return;
     setClearing(true);
     addLog("Clearing all property records...");
-    try {
-      const res = await base44.functions.invoke("clearAllProperties", {});
-      addLog(`Cleared: ${res.data?.deleted || "all"} records removed.`);
-    } catch { addLog("Could not auto-clear. Use Admin → Database to clear manually."); }
+    const res = await base44.functions.invoke("clearAllProperties", {});
+    if (res.data?.error) {
+      addLog(`Error: ${res.data.error}`);
+    } else {
+      addLog(`✅ Cleared: ${res.data?.deleted || "all"} records removed.`);
+    }
     setClearing(false);
   };
 
