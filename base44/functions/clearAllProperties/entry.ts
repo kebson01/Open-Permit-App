@@ -2,26 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-async function deleteWithRetry(base44, id) {
-  for (let attempt = 0; attempt < 6; attempt++) {
-    try {
-      await base44.asServiceRole.entities.Property.delete(id);
-      return true;
-    } catch (e) {
-      if (e.message?.includes('not found') || e.message?.includes('404')) return false; // already gone
-      // Rate limit or timeout — back off and retry
-      if (e.message?.includes('Rate limit') || e.message?.includes('429') ||
-          e.message?.includes('timed out') || e.message?.includes('timeout') ||
-          e.message?.includes('NetworkTimeout')) {
-        await sleep(2000 * (attempt + 1)); // 2s, 4s, 6s, 8s, 10s, 12s
-        continue;
-      }
-      throw e;
-    }
-  }
-  return false;
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -31,6 +11,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Fetch a small batch of IDs
     const batch = await base44.asServiceRole.entities.Property.list(null, 10);
     if (!batch || batch.length === 0) {
       return Response.json({ success: true, deleted: 0, done: true });
@@ -38,9 +19,32 @@ Deno.serve(async (req) => {
 
     let deleted = 0;
     for (const record of batch) {
-      const ok = await deleteWithRetry(base44, record.id);
-      if (ok) deleted++;
-      await sleep(600); // slow steady pace to avoid DB timeouts
+      for (let attempt = 0; attempt < 8; attempt++) {
+        try {
+          await base44.asServiceRole.entities.Property.delete(record.id);
+          deleted++;
+          break;
+        } catch (e) {
+          const msg = e.message || '';
+          // Already gone — count as success
+          if (msg.includes('not found') || msg.includes('404')) {
+            deleted++;
+            break;
+          }
+          // Transient error (timeout, rate limit) — wait longer each attempt
+          if (msg.includes('timeout') || msg.includes('timed out') ||
+              msg.includes('NetworkTimeout') || msg.includes('429') ||
+              msg.includes('Rate limit')) {
+            const wait = 3000 * (attempt + 1); // 3s, 6s, 9s ... up to 24s
+            await sleep(wait);
+            continue;
+          }
+          // Unknown error — stop retrying this record
+          break;
+        }
+      }
+      // Pause between each delete to avoid overwhelming the DB
+      await sleep(1000);
     }
 
     return Response.json({
