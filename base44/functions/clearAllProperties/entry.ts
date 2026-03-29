@@ -10,23 +10,27 @@ Deno.serve(async (req) => {
     }
 
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    let totalDeleted = 0;
 
-    // Fetch one small batch
-    const batch = await base44.asServiceRole.entities.Property.list(null, 20);
-    if (!batch || batch.length === 0) {
-      return Response.json({ success: true, deleted: 0, done: true });
-    }
+    // Fetch and delete in batches of 50 until 20,000 are gone or no more records
+    while (totalDeleted < 20000) {
+      const batch = await base44.asServiceRole.entities.Property.list(null, 50);
+      if (!batch || batch.length === 0) break;
 
-    // Delete one at a time with small delay to avoid rate limits
-    for (const record of batch) {
-      await base44.asServiceRole.entities.Property.delete(record.id);
-      await sleep(200);
+      for (const record of batch) {
+        await base44.asServiceRole.entities.Property.delete(record.id);
+        totalDeleted++;
+        await sleep(150);
+      }
+
+      console.log(`Deleted ${totalDeleted} so far...`);
+      if (batch.length < 50) break;
     }
 
     return Response.json({
       success: true,
-      deleted: batch.length,
-      done: batch.length < 20,
+      deleted: totalDeleted,
+      done: totalDeleted < 20000,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
