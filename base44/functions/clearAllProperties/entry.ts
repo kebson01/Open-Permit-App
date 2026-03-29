@@ -13,7 +13,7 @@ async function deleteWithRetry(base44, id) {
       if (e.message?.includes('Rate limit') || e.message?.includes('429') ||
           e.message?.includes('timed out') || e.message?.includes('timeout') ||
           e.message?.includes('NetworkTimeout')) {
-        await sleep(1000 * (attempt + 1));
+        await sleep(2000 * (attempt + 1)); // 2s, 4s, 6s, 8s, 10s, 12s
         continue;
       }
       throw e;
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const batch = await base44.asServiceRole.entities.Property.list(null, 20);
+    const batch = await base44.asServiceRole.entities.Property.list(null, 10);
     if (!batch || batch.length === 0) {
       return Response.json({ success: true, deleted: 0, done: true });
     }
@@ -40,13 +40,13 @@ Deno.serve(async (req) => {
     for (const record of batch) {
       const ok = await deleteWithRetry(base44, record.id);
       if (ok) deleted++;
-      await sleep(300); // steady pace to avoid rate limits and DB timeouts
+      await sleep(600); // slow steady pace to avoid DB timeouts
     }
 
     return Response.json({
       success: true,
       deleted,
-      done: batch.length < 20,
+      done: batch.length < 10,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
