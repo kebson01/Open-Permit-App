@@ -15,20 +15,20 @@ Deno.serve(async (req) => {
 
     while (true) {
       rounds++;
-      // Fetch a batch of records
-      const batch = await base44.asServiceRole.entities.Property.list(null, 200);
+      const batch = await base44.asServiceRole.entities.Property.list(null, 50);
       if (!batch || batch.length === 0) break;
 
-      // Delete each record individually in small groups
-      for (const record of batch) {
-        await base44.asServiceRole.entities.Property.delete(record.id);
-        totalDeleted++;
+      // Delete in groups of 5 with pauses to avoid rate limits
+      for (let i = 0; i < batch.length; i += 5) {
+        const group = batch.slice(i, i + 5);
+        await Promise.all(group.map(r => base44.asServiceRole.entities.Property.delete(r.id)));
+        totalDeleted += group.length;
+        await sleep(1000);
       }
 
       console.log(`Round ${rounds}: deleted ${batch.length} records, total: ${totalDeleted}`);
-      await sleep(500);
 
-      if (batch.length < 200) break;
+      if (batch.length < 50) break;
     }
 
     return Response.json({ success: true, deleted: totalDeleted });
