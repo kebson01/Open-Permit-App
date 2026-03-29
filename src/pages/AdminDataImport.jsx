@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Database, Upload, Building2, ClipboardList, CheckCircle2,
-  Loader2, AlertCircle, Trash2, Eye, ChevronRight, FileText
+  Loader2, AlertCircle, Trash2, Eye, ChevronRight, FileText, TableProperties
 } from "lucide-react";
+import PropertyCsvImport from "@/components/admin/PropertyCsvImport";
 
 // ─── County Property Import (existing logic, cleaned up) ───────────────────
 function CountyImportPanel() {
@@ -416,6 +417,13 @@ const TABS = [
     description: "Import permit records from individual city/municipal permit portals. Links to properties by folio number.",
     color: "green",
   },
+  {
+    id: "csv_property",
+    label: "Custom Property CSV",
+    icon: TableProperties,
+    description: "Upload any CSV file and map its columns to Property fields. Great for importing smaller custom property lists.",
+    color: "purple",
+  },
 ];
 
 export default function AdminDataImport() {
@@ -482,13 +490,15 @@ export default function AdminDataImport() {
                 active
                   ? t.color === "blue"
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                    : "bg-green-600 text-white border-green-600 shadow-sm"
+                    : t.color === "green"
+                    ? "bg-green-600 text-white border-green-600 shadow-sm"
+                    : "bg-purple-600 text-white border-purple-600 shadow-sm"
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
               }`}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
               <span className="hidden sm:block">{t.label}</span>
-              <span className="sm:hidden">{t.id === "county" ? "County" : "Permits"}</span>
+              <span className="sm:hidden">{t.id === "county" ? "County" : t.id === "municipal" ? "Permits" : "CSV"}</span>
             </button>
           );
         })}
@@ -503,6 +513,7 @@ export default function AdminDataImport() {
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         {activeTab === "county" && <CountyImportPanel />}
         {activeTab === "municipal" && <MunicipalImportPanel />}
+        {activeTab === "csv_property" && <PropertyCsvImport />}
       </div>
     </div>
   );
