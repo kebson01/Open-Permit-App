@@ -8,55 +8,27 @@
     },
     "full_address": {
       "type": "string",
-      "description": "Computed full address string for search: STREET_NUMBER DIRECTION NAME TYPE CITY ZIP"
+      "description": "Computed full address string for search"
     },
     "NAME_LINE_1": {
       "type": "string",
-      "description": "Owner name line 1"
+      "description": "Owner name"
     },
-    "NAME_LINE_2": {
+    "USE_CODE": {
       "type": "string",
-      "description": "Owner name line 2"
+      "description": "DOR use/land use code"
     },
-    "ADDRESS_LINE_1": {
+    "USE_TYPE": {
       "type": "string",
-      "description": "Owner mailing address"
-    },
-    "ADDRESS_LINE_2": {
-      "type": "string",
-      "description": "Owner mailing address line 2"
-    },
-    "CITY": {
-      "type": "string",
-      "description": "Owner mailing city"
-    },
-    "STATE": {
-      "type": "string",
-      "description": "Owner mailing state"
-    },
-    "ZIP": {
-      "type": "string",
-      "description": "Owner mailing ZIP"
-    },
-    "ZIP4": {
-      "type": "string",
-      "description": "ZIP+4 extension"
+      "description": "Use type description"
     },
     "SITUS_STREET_NUMBER": {
       "type": "string",
       "description": "Site address street number"
     },
-    "SITUS_STREET_NUMBER_END": {
-      "type": "string",
-      "description": "Site address street number end (range)"
-    },
     "SITUS_STREET_DIRECTION": {
       "type": "string",
       "description": "Site address street direction prefix"
-    },
-    "SITUS_STREET_POST_DIR": {
-      "type": "string",
-      "description": "Site address street direction suffix"
     },
     "SITUS_STREET_NAME": {
       "type": "string",
@@ -78,178 +50,25 @@
       "type": "string",
       "description": "Site unit/apt number"
     },
-    "LEGAL_LINE_1": {
-      "type": "string"
-    },
-    "LEGAL_LINE_2": {
-      "type": "string"
-    },
-    "LEGAL_LINE_3": {
-      "type": "string"
-    },
-    "LEGAL_LINE_4": {
-      "type": "string"
-    },
-    "LEGAL_LINE_5": {
-      "type": "string"
-    },
-    "LEGAL_LINE_6": {
-      "type": "string"
-    },
-    "LEGAL_LINE_7": {
-      "type": "string"
-    },
-    "LEGAL_LINE_8": {
-      "type": "string"
-    },
-    "USE_CODE": {
-      "type": "string",
-      "description": "DOR use/land use code"
-    },
-    "USE_TYPE": {
-      "type": "string",
-      "description": "Use type description"
-    },
-    "MILLAGE_CODE": {
-      "type": "string"
-    },
-    "MILLAGE_CODE_EXPANDED": {
-      "type": "string"
-    },
-    "MARKET_AREA": {
-      "type": "string"
-    },
-    "SUBMARKET_AREA": {
-      "type": "string"
-    },
     "JUST_LAND_VALUE": {
       "type": "number"
     },
     "JUST_BUILDING_VALUE": {
       "type": "number"
     },
-    "JUST_OTHER_VALUE": {
-      "type": "number"
-    },
-    "LY_JUSTVAL": {
-      "type": "number"
-    },
-    "PRELIM_JUST_VALUE": {
-      "type": "number"
-    },
-    "TRUE_MARKET": {
-      "type": "number"
-    },
-    "LAND_VALUE": {
-      "type": "number"
-    },
     "COUNTY_TAXABLE": {
-      "type": "number"
-    },
-    "SCHOOL_TAXABLE": {
-      "type": "number"
-    },
-    "CITY_TAXABLE": {
-      "type": "number"
-    },
-    "INDEP_TAXABLE": {
-      "type": "number"
-    },
-    "EXEMPTION_AMOUNT": {
       "type": "number"
     },
     "EXEMPTION_TYPE": {
       "type": "string"
     },
-    "EXEMPTION_TYPE_EXPANDED": {
-      "type": "string"
-    },
-    "HE1_AMOUNT": {
-      "type": "number"
-    },
-    "HE2_AMOUNT": {
-      "type": "number"
-    },
-    "HE3_AMOUNT": {
-      "type": "number"
-    },
-    "HE_PERCENT": {
-      "type": "string",
-      "description": "Homestead exemption percent e.g. 10%"
-    },
     "HOMESTEAD_FLAG": {
       "type": "string"
-    },
-    "WVD_AMOUNT": {
-      "type": "number"
-    },
-    "WVD_TYPE": {
-      "type": "string"
-    },
-    "SENIOR": {
-      "type": "string"
-    },
-    "SOH_YEAR": {
-      "type": "number"
-    },
-    "PREV_SOH_VALUE": {
-      "type": "number"
-    },
-    "NEW_SOH_VALUE": {
-      "type": "number"
-    },
-    "PORTABILITY": {
-      "type": "string"
-    },
-    "PORTED_VAL": {
-      "type": "number"
     },
     "SALE_DATE_1": {
       "type": "string"
     },
-    "DEED_TYPE_1": {
-      "type": "string"
-    },
     "STAMP_AMOUNT_1": {
-      "type": "number"
-    },
-    "BOOK_1": {
-      "type": "string"
-    },
-    "PAGE_1": {
-      "type": "string"
-    },
-    "SALE1_QUAL_CODE": {
-      "type": "string"
-    },
-    "SALE_DATE_2": {
-      "type": "string"
-    },
-    "DEED_TYPE_2": {
-      "type": "string"
-    },
-    "STAMP_AMOUNT_2": {
-      "type": "number"
-    },
-    "SALE_DATE_3": {
-      "type": "string"
-    },
-    "STAMP_AMOUNT_3": {
-      "type": "number"
-    },
-    "SALE_DATE_4": {
-      "type": "string"
-    },
-    "STAMP_AMOUNT_4": {
-      "type": "number"
-    },
-    "SALE_DATE_5": {
-      "type": "string"
-    },
-    "STAMP_AMOUNT_5": {
-      "type": "number"
-    },
-    "BLDG_ADJ_SQ_FOOTAGE": {
       "type": "number"
     },
     "BLDG_TOT_SQ_FOOTAGE": {
@@ -258,106 +77,13 @@
     "BLDG_UNDER_AIR_SQ_FOOTAGE": {
       "type": "number"
     },
-    "BLDG_UNITS": {
-      "type": "number"
-    },
     "BLDG_YEAR_BUILT": {
       "type": "number"
-    },
-    "ACTUAL_YEAR_BUILT": {
-      "type": "number"
-    },
-    "BLDG_IMPROVE_QUAL": {
-      "type": "string"
-    },
-    "BLDG_CCLASS": {
-      "type": "string"
-    },
-    "BLDG_NUM_OF": {
-      "type": "number"
-    },
-    "BLDG_USE_CODE": {
-      "type": "string"
     },
     "BEDS": {
       "type": "number"
     },
     "BATHS": {
-      "type": "number"
-    },
-    "GIS_SQUARE_FOOT": {
-      "type": "number"
-    },
-    "LAND_CALC_FACT_1": {
-      "type": "number"
-    },
-    "LAND_CALC_TYPE_1": {
-      "type": "string"
-    },
-    "LAND_CALC_PRC_PER_FACT_UNIT_1": {
-      "type": "number"
-    },
-    "FIRE_DISTRICT": {
-      "type": "string"
-    },
-    "FIRE_CLASS": {
-      "type": "string"
-    },
-    "FIRE_ASSESSMENT": {
-      "type": "number"
-    },
-    "GARBAGE_DISTRICT": {
-      "type": "string"
-    },
-    "GARBAGE_ASSESSMENT": {
-      "type": "number"
-    },
-    "DRAINAGE_DISTRICT": {
-      "type": "string"
-    },
-    "DRAINAGE_DISTRICT_ASSESSMENT": {
-      "type": "number"
-    },
-    "STORM_DISTRICT": {
-      "type": "string"
-    },
-    "STORM_ASSESSMENT": {
-      "type": "number"
-    },
-    "LIGHT_DISTRICT": {
-      "type": "string"
-    },
-    "SAFE_NEIGHBORHOOD_DISTRICT": {
-      "type": "string"
-    },
-    "SAFE_NEIGHORHOOD_ASSESSMENT": {
-      "type": "number"
-    },
-    "CRA": {
-      "type": "string"
-    },
-    "CENSUS_BLOCK": {
-      "type": "string"
-    },
-    "OWNERS_DOMICILE": {
-      "type": "string"
-    },
-    "LAST_PHYSICAL_INSPECTION": {
-      "type": "string"
-    },
-    "COMB_SPLIT": {
-      "type": "string"
-    },
-    "COMB_SPLIT_DATE": {
-      "type": "string"
-    },
-    "AFFORDABLE_HOUSING": {
-      "type": "string"
-    },
-    "AFFORDABLE_HOUSING_PERCENT": {
-      "type": "number"
-    },
-    "CLASSIFIED_AG_VALUE": {
       "type": "number"
     },
     "source_city_id": {
