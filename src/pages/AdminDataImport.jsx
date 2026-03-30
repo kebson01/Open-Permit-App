@@ -11,7 +11,7 @@ import PropertyCsvImport from "@/components/admin/PropertyCsvImport";
 // ─── County Property Import ─────────────────────────────────────────────────
 // Reads file locally in the browser, sends batches of lines directly to the
 // backend function. No URL upload needed — function just parses + inserts.
-const LINES_PER_BATCH = 20; // ~20 records per function call
+const LINES_PER_BATCH = 100; // ~100 records per function call
 
 function CountyImportPanel() {
   const [status, setStatus] = useState("idle");
@@ -87,8 +87,8 @@ function CountyImportPanel() {
         addLog(`Chunk ${chunkNum}: ${totalImported.toLocaleString()} imported | ${pct}%`);
       }
 
-      // Throttle: 2s between each batch call to avoid 503 overload
-      await sleep(2000);
+      // Throttle: 800ms between each batch call
+      await sleep(800);
     }
 
     addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported.`);
