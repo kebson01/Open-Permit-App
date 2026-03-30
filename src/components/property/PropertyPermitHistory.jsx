@@ -100,9 +100,17 @@ function PermitCard({ permit }) {
           {permit.expiration_date && (
             <div><span className="text-gray-500">Expires: </span><span className="font-medium">{permit.expiration_date}</span></div>
           )}
-          {permit.notes && (
-            <div className="sm:col-span-2"><span className="text-gray-500">Notes: </span><span>{permit.notes}</span></div>
-          )}
+          {permit.notes && (() => {
+            const cleaned = permit.notes
+              .split("|")
+              .map(s => s.trim())
+              .filter(s => !/has_open_code_case:\s*(true|false)/i.test(s))
+              .join(" | ")
+              .trim();
+            return cleaned ? (
+              <div className="sm:col-span-2"><span className="text-gray-500">Notes: </span><span>{cleaned}</span></div>
+            ) : null;
+          })()}
         </div>
       )}
     </div>
