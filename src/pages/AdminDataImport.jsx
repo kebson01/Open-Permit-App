@@ -30,13 +30,27 @@ function CountyImportPanel() {
     setStatus("processing");
 
     let byteOffset = 0, totalBytes = null, headersCsv = null, leftover = "", totalImported = 0, chunkNum = 0;
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
     while (true) {
       chunkNum++;
-      const payload = { file_url, byte_offset: byteOffset, leftover, headers_csv: headersCsv };
+      const payload = { file_url, byte_offset: byteOffset, headers_csv: headersCsv, leftover };
       if (totalBytes) payload.total_bytes = totalBytes;
 
-      const res = await base44.functions.invoke("importProperties", payload);
+      let res;
+      try {
+        res = await base44.functions.invoke("importProperties", payload);
+      } catch (e) {
+        // On rate limit, wait and retry once
+        if (e?.response?.status === 429 || (e?.message || "").includes("429")) {
+          addLog(`Rate limited — waiting 10s before retry...`);
+          await sleep(10000);
+          res = await base44.functions.invoke("importProperties", payload);
+        } else {
+          throw e;
+        }
+      }
+
       const result = res.data;
       if (result.error) { addLog(`ERROR: ${result.error}`); setStatus("error"); return; }
 
@@ -53,6 +67,9 @@ function CountyImportPanel() {
       }
       if (result.done || !result.next_byte_offset) break;
       byteOffset = result.next_byte_offset;
+
+      // Throttle between calls to avoid rate limiting — sleep on frontend, not inside function
+      await sleep(1500);
     }
 
     addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported.`);
