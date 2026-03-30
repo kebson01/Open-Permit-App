@@ -8,7 +8,11 @@ import {
 } from "lucide-react";
 import PropertyCsvImport from "@/components/admin/PropertyCsvImport";
 
-// ─── County Property Import (existing logic, cleaned up) ───────────────────
+// ─── County Property Import ─────────────────────────────────────────────────
+// Reads file locally in the browser, sends batches of lines directly to the
+// backend function. No URL upload needed — function just parses + inserts.
+const LINES_PER_BATCH = 30; // ~30 records per function call
+
 function CountyImportPanel() {
   const [status, setStatus] = useState("idle");
   const [log, setLog] = useState([]);
@@ -18,36 +22,50 @@ function CountyImportPanel() {
   const fileRef = useRef();
 
   const addLog = (msg) => setLog(prev => [...prev.slice(-60), msg]);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setStatus("uploading"); setLog([]); setImported(0); setProgress(0);
-    addLog(`Uploading: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+    setStatus("processing"); setLog([]); setImported(0); setProgress(0);
+    addLog(`Reading: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    addLog("Upload complete. Processing chunks...");
-    setStatus("processing");
+    // Read entire file as text in the browser
+    const text = await file.text();
+    const allLines = text.split(/\r\n|\r|\n/);
+    addLog(`Parsed ${allLines.length.toLocaleString()} lines. Starting import...`);
 
-    let byteOffset = 0, totalBytes = null, headersCsv = null, leftover = "", totalImported = 0, chunkNum = 0;
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    if (allLines.length < 2) {
+      addLog("ERROR: File appears empty.");
+      setStatus("error");
+      return;
+    }
 
-    while (true) {
+    // First line is header
+    const headerLine = allLines[0];
+    const headersCsv = headerLine.split(/\t/).length > headerLine.split(/,/).length
+      ? headerLine.split(/\t/).map(h => h.trim()).join("|||")
+      : headerLine.split(/,/).map(h => h.trim()).join("|||");
+
+    const dataLines = allLines.slice(1).filter(l => l.trim());
+    const totalLines = dataLines.length;
+    let totalImported = 0;
+    let chunkNum = 0;
+
+    for (let i = 0; i < dataLines.length; i += LINES_PER_BATCH) {
       chunkNum++;
-      const payload = { file_url, byte_offset: byteOffset, headers_csv: headersCsv, leftover };
-      if (totalBytes) payload.total_bytes = totalBytes;
+      const batch = dataLines.slice(i, i + LINES_PER_BATCH);
 
       let res;
       try {
-        res = await base44.functions.invoke("importProperties", payload);
-      } catch (e) {
-        // On rate limit, wait and retry once
-        if (e?.response?.status === 429 || (e?.message || "").includes("429")) {
-          addLog(`Rate limited — waiting 10s before retry...`);
-          await sleep(10000);
-          res = await base44.functions.invoke("importProperties", payload);
+        res = await base44.functions.invoke("importProperties", { headers_csv: headersCsv, lines: batch });
+      } catch (err) {
+        if (err?.response?.status === 429 || (err?.message || "").includes("429")) {
+          addLog(`Rate limited — waiting 15s...`);
+          await sleep(15000);
+          res = await base44.functions.invoke("importProperties", { headers_csv: headersCsv, lines: batch });
         } else {
-          throw e;
+          throw err;
         }
       }
 
@@ -56,20 +74,15 @@ function CountyImportPanel() {
 
       totalImported += result.imported || 0;
       setImported(totalImported);
-      if (result.total_bytes) totalBytes = result.total_bytes;
-      if (result.headers_csv) headersCsv = result.headers_csv;
-      leftover = result.next_leftover || "";
+      const pct = Math.min(100, Math.round((i + batch.length) / totalLines * 100));
+      setProgress(pct);
 
-      if (totalBytes) {
-        const pct = Math.min(100, Math.round((result.processed_bytes || 0) / totalBytes * 100));
-        setProgress(pct);
-        addLog(`Chunk ${chunkNum}: +${result.imported} rows | ${totalImported.toLocaleString()} total | ${pct}%`);
+      if (chunkNum % 10 === 0) {
+        addLog(`Chunk ${chunkNum}: ${totalImported.toLocaleString()} imported | ${pct}%`);
       }
-      if (result.done || !result.next_byte_offset) break;
-      byteOffset = result.next_byte_offset;
 
-      // Throttle between calls to avoid rate limiting — sleep on frontend, not inside function
-      await sleep(1500);
+      // Throttle: 1.2s between each batch call
+      await sleep(1200);
     }
 
     addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported.`);
@@ -123,7 +136,7 @@ function CountyImportPanel() {
         {isProcessing ? (
           <>
             <Loader2 className="w-10 h-10 text-blue-500 mx-auto mb-3 animate-spin" />
-            <p className="font-semibold text-blue-700">{status === "uploading" ? "Uploading..." : "Processing chunks..."}</p>
+            <p className="font-semibold text-blue-700">Importing records...</p>
             {status === "processing" && progress > 0 && (
               <div className="mt-4 mx-auto max-w-xs">
                 <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
