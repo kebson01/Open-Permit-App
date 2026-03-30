@@ -14,7 +14,7 @@ const KEEP_FIELDS = new Set([
   "BLDG_TOT_SQ_FOOTAGE","BLDG_UNDER_AIR_SQ_FOOTAGE","BLDG_YEAR_BUILT",
   "BEDS","BATHS","SITUS_STREET_NUMBER","SITUS_STREET_DIRECTION",
   "SITUS_STREET_NAME","SITUS_STREET_TYPE","SITUS_CITY",
-  "SITUS_ZIP_CODE","SITUS_UNIT_NUMBER","source_city_id",
+  "SITUS_ZIP_CODE","SITUS_UNIT_NUMBER","SOURCE_CITY_ID",
 ]);
 
 function detectDelimiter(line) {
@@ -27,6 +27,7 @@ function detectDelimiter(line) {
 }
 
 function parseLine(line, delimiter) {
+  if (delimiter === "\t") return line.split("\t").map(v => v.trim());
   const result = [];
   let cur = "";
   let inQ = false;
@@ -40,35 +41,35 @@ function parseLine(line, delimiter) {
   return result;
 }
 
-function buildRecord(headers, vals, delim) {
+function buildRecord(headers, vals) {
   const rec = {};
   headers.forEach((h, idx) => {
-    if (!KEEP_FIELDS.has(h)) return;
+    const key = h.trim().toUpperCase();
+    if (!KEEP_FIELDS.has(key)) return;
     const val = (vals[idx] ?? "").trim();
     if (val === "") {
-      rec[h] = NUMBER_FIELDS.has(h) ? null : null;
-    } else if (NUMBER_FIELDS.has(h)) {
+      rec[key] = null;
+    } else if (NUMBER_FIELDS.has(key)) {
       const n = parseFloat(val.replace(/,/g, ""));
-      rec[h] = isNaN(n) ? null : n;
+      rec[key] = isNaN(n) ? null : n;
     } else {
-      rec[h] = val;
+      rec[key] = val;
     }
   });
+
   if (!rec.FOLIO_NUMBER) return null;
 
-  rec.full_address = [
+  rec.FULL_ADDRESS = [
     rec.SITUS_STREET_NUMBER, rec.SITUS_STREET_DIRECTION, rec.SITUS_STREET_NAME,
     rec.SITUS_STREET_TYPE, rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
     rec.SITUS_CITY, rec.SITUS_ZIP_CODE,
   ].filter(Boolean).join(" ").toUpperCase();
 
-  // Lowercase keys for Supabase (table columns are lowercase)
+  // Convert to lowercase keys for Supabase column names
   const row = {};
   for (const [k, v] of Object.entries(rec)) {
     row[k.toLowerCase()] = v;
   }
-  // folio_number is the primary key
-  row.folio_number = rec.FOLIO_NUMBER;
   return row;
 }
 
@@ -90,7 +91,7 @@ async function upsertBatch(rows) {
   }
 }
 
-// Expects: { headers_csv: string, lines: string[] }
+// Expects: { headers_csv: string (|||‑separated), lines: string[] }
 Deno.serve(async (req) => {
   try {
     const body = await req.json();
@@ -100,7 +101,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'headers_csv and lines[] are required' }, { status: 400 });
     }
 
-    const headers = headers_csv.split("|||");
+    // Headers are always |||‑separated (set by the frontend)
+    const headers = headers_csv.split("|||").map(h => h.trim());
+
+    // Detect delimiter from the first non-empty data line
     const sampleLine = lines.find(l => l && l.trim()) || "";
     const delim = detectDelimiter(sampleLine);
 
@@ -108,8 +112,8 @@ Deno.serve(async (req) => {
     for (const line of lines) {
       if (!line || !line.trim()) continue;
       const vals = parseLine(line, delim);
-      if (vals.length < 5) continue;
-      const rec = buildRecord(headers, vals, delim);
+      if (vals.length < 2) continue;
+      const rec = buildRecord(headers, vals);
       if (rec) batch.push(rec);
     }
 
