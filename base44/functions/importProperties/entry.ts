@@ -182,11 +182,29 @@ Deno.serve(async (req) => {
     let batch = [];
     let imported = 0;
 
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     const flush = async () => {
       if (batch.length === 0) return;
-      await base44.asServiceRole.entities.Property.bulkCreate([...batch]);
-      imported += batch.length;
-      batch = [];
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          await base44.asServiceRole.entities.Property.bulkCreate([...batch]);
+          imported += batch.length;
+          batch = [];
+          await sleep(300); // throttle to avoid rate limiting
+          return;
+        } catch (e) {
+          lastErr = e;
+          const msg = e.message || '';
+          if (msg.includes('429') || msg.includes('Rate limit')) {
+            await sleep(2000 * (attempt + 1)); // back off: 2s, 4s, 6s...
+          } else {
+            throw e;
+          }
+        }
+      }
+      throw lastErr;
     };
 
     for (let i = startIdx; i < lines.length; i++) {
