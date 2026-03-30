@@ -11,7 +11,7 @@ import PropertyCsvImport from "@/components/admin/PropertyCsvImport";
 // ─── County Property Import ─────────────────────────────────────────────────
 // Reads file locally in the browser, sends batches of lines directly to the
 // backend function. No URL upload needed — function just parses + inserts.
-const LINES_PER_BATCH = 30; // ~30 records per function call
+const LINES_PER_BATCH = 20; // ~20 records per function call
 
 function CountyImportPanel() {
   const [status, setStatus] = useState("idle");
@@ -57,15 +57,21 @@ function CountyImportPanel() {
       const batch = dataLines.slice(i, i + LINES_PER_BATCH);
 
       let res;
-      try {
-        res = await base44.functions.invoke("importProperties", { headers_csv: headersCsv, lines: batch });
-      } catch (err) {
-        if (err?.response?.status === 429 || (err?.message || "").includes("429")) {
-          addLog(`Rate limited — waiting 15s...`);
-          await sleep(15000);
+      let attempts = 0;
+      while (true) {
+        attempts++;
+        try {
           res = await base44.functions.invoke("importProperties", { headers_csv: headersCsv, lines: batch });
-        } else {
-          throw err;
+          break;
+        } catch (err) {
+          const status = err?.response?.status;
+          if ((status === 429 || status === 503 || status === 502) && attempts <= 4) {
+            const wait = attempts * 5000; // 5s, 10s, 15s, 20s
+            addLog(`Server busy (${status}) — retrying in ${wait/1000}s... (attempt ${attempts})`);
+            await sleep(wait);
+          } else {
+            throw err;
+          }
         }
       }
 
@@ -81,8 +87,8 @@ function CountyImportPanel() {
         addLog(`Chunk ${chunkNum}: ${totalImported.toLocaleString()} imported | ${pct}%`);
       }
 
-      // Throttle: 1.2s between each batch call
-      await sleep(1200);
+      // Throttle: 2s between each batch call to avoid 503 overload
+      await sleep(2000);
     }
 
     addLog(`✅ Done! ${totalImported.toLocaleString()} properties imported.`);
