@@ -120,8 +120,8 @@ function buildRecord(headers, vals, delimiter) {
   return rec;
 }
 
-const CHUNK_BYTES = 8 * 1024 * 1024; // 8MB per call — fast to fetch + parse
-const BATCH_SIZE = 500;
+const CHUNK_BYTES = 2 * 1024 * 1024; // 2MB per call to avoid timeouts
+const BATCH_SIZE = 50;
 
 Deno.serve(async (req) => {
   try {
