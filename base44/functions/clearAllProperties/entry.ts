@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 Deno.serve(async (req) => {
   try {
@@ -11,47 +12,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Fetch a small batch of IDs
-    const batch = await base44.asServiceRole.entities.Property.list(null, 5);
-    if (!batch || batch.length === 0) {
-      return Response.json({ success: true, deleted: 0, done: true });
-    }
-
-    let deleted = 0;
-    for (const record of batch) {
-      for (let attempt = 0; attempt < 8; attempt++) {
-        try {
-          await base44.asServiceRole.entities.Property.delete(record.id);
-          deleted++;
-          break;
-        } catch (e) {
-          const msg = e.message || '';
-          // Already gone — count as success
-          if (msg.includes('not found') || msg.includes('404')) {
-            deleted++;
-            break;
-          }
-          // Transient error (timeout, rate limit) — wait longer each attempt
-          if (msg.includes('timeout') || msg.includes('timed out') ||
-              msg.includes('NetworkTimeout') || msg.includes('429') ||
-              msg.includes('Rate limit')) {
-            const wait = 3000 * (attempt + 1); // 3s, 6s, 9s ... up to 24s
-            await sleep(wait);
-            continue;
-          }
-          // Unknown error — stop retrying this record
-          break;
-        }
-      }
-      // Pause between each delete to avoid overwhelming the DB
-      await sleep(500);
-    }
-
-    return Response.json({
-      success: true,
-      deleted,
-      done: batch.length < 5,
+    // Delete all rows from the properties table in Supabase
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/properties?folio_number=neq.IMPOSSIBLE_VALUE_THAT_MATCHES_ALL`, {
+      method: "DELETE",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+      },
     });
+
+    // Use TRUNCATE via RPC for a faster wipe
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_properties`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!rpcRes.ok) {
+      // Fallback: delete with a catch-all filter
+      const delRes = await fetch(`${SUPABASE_URL}/rest/v1/properties?folio_number=gte.0`, {
+        method: "DELETE",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!delRes.ok) {
+        const text = await delRes.text();
+        return Response.json({ error: `Delete failed: ${text}` }, { status: 500 });
+      }
+    }
+
+    return Response.json({ success: true, deleted: 0, done: true });
+
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

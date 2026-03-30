@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+async function querySupabase(params) {
+  const url = new URL(`${SUPABASE_URL}/rest/v1/properties`);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, v);
+  }
+  const res = await fetch(url.toString(), {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Accept": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Supabase query failed (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -10,65 +32,58 @@ Deno.serve(async (req) => {
     if (!address) return Response.json({ error: 'address required' }, { status: 400 });
 
     const query = address.trim().toUpperCase();
-
-    // Check if it's a folio number (10-14 digits, possibly with dashes)
     const isFolio = /^\d[\d-]{8,14}$/.test(query.replace(/\s/g, ''));
 
     let results = [];
 
     if (isFolio) {
       const folio = query.replace(/[-\s]/g, '');
-      results = await base44.entities.Property.filter({ FOLIO_NUMBER: folio }, 'FOLIO_NUMBER', 10);
+      results = await querySupabase({
+        select: "*",
+        folio_number: `eq.${folio}`,
+        limit: 10,
+      });
     } else {
-      // Use full_address field for fuzzy-ish search
-      // Tokenize query and find records where full_address contains the key tokens
-      const tokens = query.split(/\s+/).filter(t => t.length > 1);
+      // Full-text search using PostgreSQL's plainto_tsquery via PostgREST
+      const searchTerm = query.replace(/[^A-Z0-9 ]/g, ' ').trim();
+      results = await querySupabase({
+        select: "*",
+        full_address: `wfts(english).${searchTerm}`,
+        limit: 25,
+      });
 
-      if (tokens.length === 0) {
-        return Response.json({ properties: [], source: 'database' });
-      }
-
-      // Search by the most specific token (usually the street number if present)
-      const streetNumToken = tokens.find(t => /^\d+$/.test(t));
-      const nameTokens = tokens.filter(t => !/^\d+$/.test(t) && !['NW','NE','SW','SE','N','S','E','W','FL','DR','ST','AVE','BLVD','RD','CT','LN','WAY','TER','PL','CIR'].includes(t));
-
-      let candidates = [];
-
-      if (streetNumToken) {
-        candidates = await base44.entities.Property.filter(
-          { SITUS_STREET_NUMBER: streetNumToken },
-          'full_address',
-          500
-        );
-      } else if (nameTokens.length > 0) {
-        candidates = await base44.entities.Property.filter(
-          { SITUS_STREET_NAME: nameTokens[0] },
-          'full_address',
-          500
-        );
-      }
-
-      // Client-side filter: every token must appear in full_address
-      results = candidates.filter(p => {
-        if (!p.full_address) return false;
-        return tokens.every(t => p.full_address.includes(t));
-      }).slice(0, 25);
-
-      // If too few results and no street number, try name-only
-      if (results.length === 0 && nameTokens.length > 0) {
-        const byName = await base44.entities.Property.filter(
-          { SITUS_STREET_NAME: nameTokens[0] },
-          'full_address',
-          100
-        );
-        results = byName.filter(p => {
-          if (!p.full_address) return false;
-          return nameTokens.every(t => p.full_address.includes(t));
-        }).slice(0, 25);
+      // Fallback: if no FTS results, try ilike on full_address
+      if (results.length === 0) {
+        const tokens = searchTerm.split(/\s+/).filter(t => t.length > 1);
+        if (tokens.length > 0) {
+          // Use the most specific tokens (street number if present)
+          const streetNum = tokens.find(t => /^\d+$/.test(t));
+          const keyToken = streetNum || tokens[0];
+          results = await querySupabase({
+            select: "*",
+            full_address: `ilike.*${keyToken}*`,
+            limit: 100,
+          });
+          // Client-side filter all tokens
+          results = results.filter(p =>
+            p.full_address && tokens.every(t => p.full_address.includes(t))
+          ).slice(0, 25);
+        }
       }
     }
 
-    return Response.json({ properties: results, source: 'database' });
+    // Normalize field names to uppercase (Supabase stores lowercase)
+    const normalized = results.map(row => {
+      const out = {};
+      for (const [k, v] of Object.entries(row)) {
+        out[k.toUpperCase()] = v;
+      }
+      // Keep lowercase aliases too for permit history lookup
+      out.FOLIO_NUMBER = row.folio_number;
+      return out;
+    });
+
+    return Response.json({ properties: normalized, source: 'supabase' });
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

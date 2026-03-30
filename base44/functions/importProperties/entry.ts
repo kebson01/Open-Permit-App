@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const NUMBER_FIELDS = new Set([
   "JUST_LAND_VALUE","JUST_BUILDING_VALUE","COUNTY_TAXABLE",
@@ -39,13 +40,13 @@ function parseLine(line, delimiter) {
   return result;
 }
 
-function buildRecord(headers, vals, detectedDelim) {
+function buildRecord(headers, vals, delim) {
   const rec = {};
   headers.forEach((h, idx) => {
     if (!KEEP_FIELDS.has(h)) return;
     const val = (vals[idx] ?? "").trim();
     if (val === "") {
-      rec[h] = NUMBER_FIELDS.has(h) ? null : "";
+      rec[h] = NUMBER_FIELDS.has(h) ? null : null;
     } else if (NUMBER_FIELDS.has(h)) {
       const n = parseFloat(val.replace(/,/g, ""));
       rec[h] = isNaN(n) ? null : n;
@@ -54,25 +55,44 @@ function buildRecord(headers, vals, detectedDelim) {
     }
   });
   if (!rec.FOLIO_NUMBER) return null;
+
   rec.full_address = [
     rec.SITUS_STREET_NUMBER, rec.SITUS_STREET_DIRECTION, rec.SITUS_STREET_NAME,
     rec.SITUS_STREET_TYPE, rec.SITUS_UNIT_NUMBER ? `UNIT ${rec.SITUS_UNIT_NUMBER}` : null,
     rec.SITUS_CITY, rec.SITUS_ZIP_CODE,
   ].filter(Boolean).join(" ").toUpperCase();
-  return rec;
+
+  // Lowercase keys for Supabase (table columns are lowercase)
+  const row = {};
+  for (const [k, v] of Object.entries(rec)) {
+    row[k.toLowerCase()] = v;
+  }
+  // folio_number is the primary key
+  row.folio_number = rec.FOLIO_NUMBER;
+  return row;
+}
+
+// Upsert a batch to Supabase via PostgREST
+async function upsertBatch(rows) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/properties`, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Supabase upsert failed (${res.status}): ${text}`);
+  }
 }
 
 // Expects: { headers_csv: string, lines: string[] }
-// Parses the lines and bulk-inserts them. No URL fetching, no sleeping.
-// Frontend is responsible for chunking the file and throttling between calls.
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     const body = await req.json();
     const { headers_csv, lines } = body;
 
@@ -94,7 +114,7 @@ Deno.serve(async (req) => {
     }
 
     if (batch.length > 0) {
-      await base44.asServiceRole.entities.Property.bulkCreate(batch);
+      await upsertBatch(batch);
     }
 
     return Response.json({ success: true, imported: batch.length });
