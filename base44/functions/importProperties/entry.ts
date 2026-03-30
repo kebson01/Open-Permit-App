@@ -120,8 +120,8 @@ function buildRecord(headers, vals, delimiter) {
   return rec;
 }
 
-const CHUNK_BYTES = 2 * 1024 * 1024; // 2MB per call to avoid timeouts
-const BATCH_SIZE = 50;
+const CHUNK_BYTES = 1 * 1024 * 1024; // 1MB per call
+const BATCH_SIZE = 25;
 
 Deno.serve(async (req) => {
   try {
@@ -192,13 +192,13 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.Property.bulkCreate([...batch]);
           imported += batch.length;
           batch = [];
-          await sleep(300); // throttle to avoid rate limiting
+          await sleep(1000); // throttle to avoid rate limiting
           return;
         } catch (e) {
           lastErr = e;
           const msg = e.message || '';
           if (msg.includes('429') || msg.includes('Rate limit')) {
-            await sleep(2000 * (attempt + 1)); // back off: 2s, 4s, 6s...
+            await sleep(5000 * (attempt + 1)); // back off: 5s, 10s, 15s...
           } else {
             throw e;
           }
