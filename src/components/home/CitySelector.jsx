@@ -24,7 +24,7 @@ export default function CitySelector() {
           <MapPin className="w-4 h-4 text-yellow-300" />
           <div>
             <h3 className="text-white font-bold text-base leading-tight">Start Here — Choose Your City</h3>
-            <p className="text-blue-200 text-xs mt-0.5">We'll show you city-specific permit info</p>
+            <p className="text-white/90 text-xs mt-0.5">We'll show you city-specific permit info</p>
           </div>
         </div>
 

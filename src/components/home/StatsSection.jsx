@@ -17,14 +17,14 @@ export default function StatsSection() {
           {stats.map((s) => (
             <div key={s.label} className="text-center">
               <div className="text-2xl sm:text-3xl font-extrabold text-white">{s.value}</div>
-              <div className="text-xs sm:text-sm text-blue-300 mt-1">{s.label}</div>
+              <div className="text-xs sm:text-sm text-white/80 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
           {cities.map(c => (
-            <span key={c} className="px-3 py-1 rounded-full bg-white/10 text-blue-200 text-xs font-medium border border-white/10">
+            <span key={c} className="px-3 py-1 rounded-full bg-white/15 text-white text-xs font-medium border border-white/20">
               {c}
             </span>
           ))}

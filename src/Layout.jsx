@@ -254,8 +254,8 @@ export default function Layout({ children, currentPageName }) {
             <Building2 className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">Saint's Permitting System</span>
           </div>
-          <p className="text-sm">© {new Date().getFullYear()} Saint's Interactive Permitting System. All rights reserved.</p>
-          <p className="text-xs mt-1 text-gray-500">Supporting Broward County municipalities</p>
+          <p className="text-sm text-gray-300">© {new Date().getFullYear()} Saint's Interactive Permitting System. All rights reserved.</p>
+          <p className="text-xs mt-1 text-gray-400">Supporting Broward County municipalities</p>
         </div>
       </footer>
 

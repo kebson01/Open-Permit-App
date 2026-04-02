@@ -124,13 +124,13 @@ export default function PermitGuide() {
             <Camera className="w-5 h-5 text-white" />
           </div>
           <div className="text-left flex-1">
-            <p className="font-bold text-blue-800 text-sm flex items-center gap-1.5">
+            <p className="font-bold text-blue-900 text-sm flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               AI Photo Analysis
             </p>
-            <p className="text-blue-600 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
+            <p className="text-blue-800 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
           </div>
-          <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
+          <span className="text-xs font-semibold text-blue-800 bg-blue-200 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
         </button>
       ) : (
         <div className="mt-4">

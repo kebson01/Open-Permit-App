@@ -70,7 +70,7 @@ export default function PermitSelectorV2({ permits, selectedPermitId, onSelect }
                       {permit.name}
                     </p>
                     {permit.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{permit.description}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{permit.description}</p>
                     )}
                   </button>
                 ))}
