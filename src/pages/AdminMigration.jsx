@@ -164,9 +164,9 @@ export default function AdminMigration() {
         </div>
       ))}
 
-      <p className="text-xs text-gray-400 mt-4 text-center">
-        Uses <code>Prefer: resolution=merge-duplicates</code> — safe to re-run without duplicating data.
-      </p>
+      <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-700">
+        <strong>How it works:</strong> Tables that don't exist in Supabase will be created automatically using the Supabase Management API, then data is upserted. Safe to re-run — won't create duplicates.
+      </div>
     </div>
   );
 }
