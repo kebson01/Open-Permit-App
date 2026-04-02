@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Loader2, Database, Play, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Database, Play, RefreshCw, Code, Copy, Check } from "lucide-react";
 
 const ENTITIES = [
   "City",
@@ -30,6 +30,9 @@ export default function AdminMigration() {
   const [results, setResults] = useState({});
   const [running, setRunning] = useState(false);
   const [runningEntity, setRunningEntity] = useState(null);
+  const [sqlStatements, setSqlStatements] = useState(null);
+  const [loadingSQL, setLoadingSQL] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const runMigration = async (entity = null) => {
     setRunning(true);
@@ -42,6 +45,21 @@ export default function AdminMigration() {
     setResults(prev => ({ ...prev, ...data.results }));
     setRunning(false);
     setRunningEntity(null);
+  };
+
+  const generateSQL = async () => {
+    setLoadingSQL(true);
+    setSqlStatements(null);
+    const response = await base44.functions.invoke("migrateToSupabase", { generateSQL: true });
+    setSqlStatements(response.data.sqlStatements);
+    setLoadingSQL(false);
+  };
+
+  const copySQL = () => {
+    const all = Object.values(sqlStatements).join("\n\n");
+    navigator.clipboard.writeText(all);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const getStatusIcon = (status) => {
@@ -74,30 +92,55 @@ export default function AdminMigration() {
         </p>
       </div>
 
-      {/* Summary */}
-      {Object.keys(results).length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-100">
-            <div className="text-2xl font-bold text-blue-700">{totalMigrated.toLocaleString()}</div>
-            <div className="text-xs text-blue-600 mt-1">Records Migrated</div>
-          </div>
-          <div className="bg-green-50 rounded-xl p-4 text-center border border-green-100">
-            <div className="text-2xl font-bold text-green-700">{successCount}</div>
-            <div className="text-xs text-green-600 mt-1">Entities Success</div>
-          </div>
-          <div className="bg-red-50 rounded-xl p-4 text-center border border-red-100">
-            <div className="text-2xl font-bold text-red-700">{errorCount}</div>
-            <div className="text-xs text-red-600 mt-1">Entities Failed</div>
-          </div>
+      {/* Step 1: Create Tables */}
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-5">
+        <h2 className="font-semibold text-amber-900 mb-1 flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold">1</span>
+          Create Tables in Supabase (first time only)
+        </h2>
+        <p className="text-sm text-amber-800 mb-3">
+          Tables must exist before migrating. Generate the SQL, then run it once in your{" "}
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="underline font-medium">Supabase SQL Editor</a>.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            onClick={generateSQL}
+            disabled={loadingSQL}
+            variant="outline"
+            className="border-amber-400 text-amber-800 hover:bg-amber-100 gap-2"
+          >
+            {loadingSQL ? <Loader2 className="w-4 h-4 animate-spin" /> : <Code className="w-4 h-4" />}
+            Generate CREATE TABLE SQL
+          </Button>
+          {sqlStatements && (
+            <Button onClick={copySQL} variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-100 gap-2">
+              {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied!" : "Copy All SQL"}
+            </Button>
+          )}
         </div>
-      )}
 
-      {/* Main action */}
+        {sqlStatements && (
+          <div className="mt-3 bg-gray-900 rounded-xl p-4 overflow-auto max-h-64 text-xs">
+            {Object.entries(sqlStatements).map(([entity, sql]) => (
+              <div key={entity} className="mb-3">
+                <span className="text-blue-400 font-semibold">-- {entity}</span>
+                <pre className="text-green-300 whitespace-pre-wrap mt-1">{sql}</pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Step 2: Migrate Data */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-gray-800">Migrate All Entities</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{ENTITIES.length} entities → Supabase</p>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+            <div>
+              <h2 className="font-semibold text-gray-800">Migrate All Entities</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{ENTITIES.length} entities → Supabase</p>
+            </div>
           </div>
           <Button
             onClick={() => runMigration()}
@@ -111,6 +154,24 @@ export default function AdminMigration() {
             )}
           </Button>
         </div>
+
+        {/* Summary */}
+        {Object.keys(results).length > 0 && (
+          <div className="grid grid-cols-3 gap-3 p-4 border-b border-gray-100">
+            <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+              <div className="text-xl font-bold text-blue-700">{totalMigrated.toLocaleString()}</div>
+              <div className="text-xs text-blue-600 mt-0.5">Records Migrated</div>
+            </div>
+            <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+              <div className="text-xl font-bold text-green-700">{successCount}</div>
+              <div className="text-xs text-green-600 mt-0.5">Entities Success</div>
+            </div>
+            <div className="bg-red-50 rounded-xl p-3 text-center border border-red-100">
+              <div className="text-xl font-bold text-red-700">{errorCount}</div>
+              <div className="text-xs text-red-600 mt-0.5">Entities Failed</div>
+            </div>
+          </div>
+        )}
 
         {/* Entity rows */}
         <div className="divide-y divide-gray-100">
@@ -163,10 +224,6 @@ export default function AdminMigration() {
           <p className="text-xs text-red-600 mt-1 font-mono">{r.error}</p>
         </div>
       ))}
-
-      <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-700">
-        <strong>How it works:</strong> Tables that don't exist in Supabase will be created automatically using the Supabase Management API, then data is upserted. Safe to re-run — won't create duplicates.
-      </div>
     </div>
   );
 }
