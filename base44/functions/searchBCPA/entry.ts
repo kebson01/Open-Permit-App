@@ -72,11 +72,46 @@ Deno.serve(async (req) => {
       }
     }
 
+    const CITY_NAMES = {
+      "WS": "Weston",
+      "CS": "Coral Springs",
+      "FL": "Fort Lauderdale",
+      "HW": "Hollywood",
+      "CC": "Cooper City",
+      "PB": "Pembroke Pines",
+      "MR": "Miramar",
+      "SU": "Sunrise",
+      "PL": "Plantation",
+      "DV": "Davie",
+      "DP": "Deerfield Beach",
+      "PO": "Pompano Beach",
+      "LH": "Lauderhill",
+      "TM": "Tamarac",
+      "NK": "North Lauderdale",
+      "MC": "Margate",
+      "CO": "Coconut Creek",
+      "LK": "Lauderdale Lakes",
+      "OB": "Oakland Park",
+      "WP": "Wilton Manors",
+      "LB": "Lauderdale-by-the-Sea",
+      "HA": "Hallandale Beach",
+      "SW": "Southwest Ranches",
+      "WR": "West Park",
+      "PV": "Pembroke Park",
+      "HC": "Hillsboro Beach",
+      "LY": "Lazy Lake",
+      "SH": "Sea Ranch Lakes",
+    };
+
     // Normalize field names to uppercase (Supabase stores lowercase)
     const normalized = results.map(row => {
       const out = {};
       for (const [k, v] of Object.entries(row)) {
         out[k.toUpperCase()] = v;
+      }
+      // Expand city abbreviations
+      if (out.SITUS_CITY && CITY_NAMES[out.SITUS_CITY]) {
+        out.SITUS_CITY = CITY_NAMES[out.SITUS_CITY];
       }
       // Keep lowercase aliases too for permit history lookup
       out.FOLIO_NUMBER = row.folio_number;
