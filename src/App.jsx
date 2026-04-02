@@ -11,6 +11,7 @@ import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
 import AdminDataImport from './pages/AdminDataImport.jsx';
 import ProjectDashboard from './pages/ProjectDashboard.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
+import AdminMigration from './pages/AdminMigration.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -67,6 +68,7 @@ const AuthenticatedApp = () => {
       <Route path="/AdminDataImport" element={<LayoutWrapper currentPageName="AdminDataImport"><AdminDataImport /></LayoutWrapper>} />
       <Route path="/ProjectDashboard" element={<LayoutWrapper currentPageName="ProjectDashboard"><ProjectDashboard /></LayoutWrapper>} />
       <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
+      <Route path="/AdminMigration" element={<LayoutWrapper currentPageName="AdminMigration"><AdminMigration /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
