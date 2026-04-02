@@ -35,10 +35,10 @@ export default function PropertyGuide() {
       <div className="gradient-primary py-10 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-7 h-7 text-blue-300" />
-            <h1 className="text-3xl font-bold text-white">Property Guide</h1>
+            <Building2 className="w-7 h-7 text-blue-200" />
+            <h1 className="text-3xl font-bold text-white drop-shadow">Property Guide</h1>
           </div>
-          <p className="text-blue-200 mb-6">Search any Broward County property by address or folio number</p>
+          <p className="text-white/90 mb-6 font-medium">Search any Broward County property by address or folio number</p>
 
           {/* Search Bar */}
           <div className="flex gap-2 bg-white rounded-xl p-2 shadow-lg">
@@ -56,7 +56,7 @@ export default function PropertyGuide() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
             </Button>
           </div>
-          <p className="text-blue-300 text-xs mt-3">Search by folio number, street name, or full address</p>
+          <p className="text-white/80 text-xs mt-3">Search by folio number, street name, or full address</p>
         </div>
       </div>
 

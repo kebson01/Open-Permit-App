@@ -12,7 +12,7 @@ export default function HeroSection() {
       </div>
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-blue-200 text-xs sm:text-sm mb-5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/90 text-xs sm:text-sm mb-5">
           🏛️ Trusted by South Florida Municipalities
         </div>
 
@@ -21,7 +21,7 @@ export default function HeroSection() {
           <span className="block text-blue-400 mt-1">Permitting System</span>
         </h1>
 
-        <p className="mt-4 text-sm sm:text-lg text-blue-200/80 max-w-xl mx-auto leading-relaxed px-2">
+        <p className="mt-4 text-sm sm:text-lg text-white/90 max-w-xl mx-auto leading-relaxed px-2">
           Your complete guide to permitting across South Florida — find out what permits you need, estimate costs, check zoning rules, and get AI-powered help with required documents.
         </p>
 
