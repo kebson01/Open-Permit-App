@@ -25,7 +25,6 @@ async function upsertToSupabase(table, rows) {
 // Map Base44 entity names to Supabase table names (snake_case)
 const ENTITY_TABLE_MAP = {
   City: "cities",
-  Property: "properties",
   Project: "projects",
   PermitType: "permit_types",
   FeeRule: "fee_rules",

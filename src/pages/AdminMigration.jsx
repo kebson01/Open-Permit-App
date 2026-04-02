@@ -6,7 +6,6 @@ import { CheckCircle2, XCircle, Loader2, Database, Play, RefreshCw } from "lucid
 
 const ENTITIES = [
   "City",
-  "Property",
   "Project",
   "PermitType",
   "FeeRule",
@@ -18,7 +17,6 @@ const ENTITIES = [
 
 const TABLE_MAP = {
   City: "cities",
-  Property: "properties",
   Project: "projects",
   PermitType: "permit_types",
   FeeRule: "fee_rules",
