@@ -28,10 +28,12 @@ function getProjectRef() {
 // Run SQL via Supabase Management API
 async function runSQL(sql) {
   const projectRef = getProjectRef();
-  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+  const accessToken = Deno.env.get("SUPABASE_ACCESS_TOKEN");
+  // Try the correct Management API endpoint
+  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/sql`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ query: sql }),
