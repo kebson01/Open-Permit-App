@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Loader2, Database, Play, RefreshCw, Code, Copy, Check } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Database, Play, RefreshCw, Code, Copy, Check, Zap } from "lucide-react";
 
 const ENTITIES = [
   "City",
@@ -33,6 +33,8 @@ export default function AdminMigration() {
   const [sqlStatements, setSqlStatements] = useState(null);
   const [loadingSQL, setLoadingSQL] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const [reloadMsg, setReloadMsg] = useState(null);
 
   const runMigration = async (entity = null) => {
     setRunning(true);
@@ -45,6 +47,15 @@ export default function AdminMigration() {
     setResults(prev => ({ ...prev, ...data.results }));
     setRunning(false);
     setRunningEntity(null);
+  };
+
+  const reloadSchema = async () => {
+    setReloading(true);
+    setReloadMsg(null);
+    const response = await base44.functions.invoke("migrateToSupabase", { reloadCache: true });
+    const r = response.data?.reloadResult;
+    setReloadMsg(r?.ok ? "Schema cache reloaded successfully!" : `Reload returned status ${r?.status} — you may need to do this in Supabase dashboard.`);
+    setReloading(false);
   };
 
   const generateSQL = async () => {
@@ -132,11 +143,37 @@ export default function AdminMigration() {
         )}
       </div>
 
+      {/* Step 1.5: Reload Schema Cache */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-5">
+        <h2 className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">2</span>
+          Reload Supabase Schema Cache
+        </h2>
+        <p className="text-sm text-blue-800 mb-3">
+          After creating tables, Supabase's PostgREST must reload its schema cache before it can see new tables.
+          Click below, or go to <strong>Supabase Dashboard → Settings → API → Reload schema</strong>.
+        </p>
+        <Button
+          onClick={reloadSchema}
+          disabled={reloading}
+          variant="outline"
+          className="border-blue-400 text-blue-800 hover:bg-blue-100 gap-2"
+        >
+          {reloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+          Reload Schema Cache
+        </Button>
+        {reloadMsg && (
+          <p className={`mt-2 text-sm font-medium ${reloadMsg.includes("success") ? "text-green-700" : "text-amber-700"}`}>
+            {reloadMsg}
+          </p>
+        )}
+      </div>
+
       {/* Step 2: Migrate Data */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+            <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
             <div>
               <h2 className="font-semibold text-gray-800">Migrate All Entities</h2>
               <p className="text-xs text-gray-500 mt-0.5">{ENTITIES.length} entities → Supabase</p>

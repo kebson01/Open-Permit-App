@@ -9,6 +9,21 @@ const BASE_HEADERS = {
   "Content-Type": "application/json",
 };
 
+// Reload PostgREST schema cache via NOTIFY
+async function reloadSchemaCache() {
+  // Extract project ref from URL e.g. https://abcdef.supabase.co -> abcdef
+  const projectRef = SUPABASE_URL.replace("https://", "").split(".")[0];
+  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query: "NOTIFY pgrst, 'reload schema';" }),
+  });
+  return { status: res.status, ok: res.ok };
+}
+
 async function upsertBatch(table, rows) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: "POST",
@@ -22,7 +37,6 @@ async function upsertBatch(table, rows) {
   return { error: null };
 }
 
-// Generate the CREATE TABLE SQL for display/copy purposes
 function generateCreateSQL(tableName, sampleRow) {
   const cols = Object.entries(sampleRow).map(([key, val]) => {
     if (key === "id") return `  "id" text PRIMARY KEY`;
@@ -53,13 +67,19 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { entity, generateSQL } = body;
+  const { entity, generateSQL, reloadCache } = body;
+
+  // Just reload schema cache
+  if (reloadCache) {
+    const result = await reloadSchemaCache();
+    return Response.json({ reloadResult: result });
+  }
 
   const entitiesToMigrate = entity
     ? { [entity]: ENTITY_TABLE_MAP[entity] }
     : ENTITY_TABLE_MAP;
 
-  // If user just wants the SQL to create tables
+  // Generate SQL for table creation
   if (generateSQL) {
     const sqlStatements = {};
     for (const [entityName, tableName] of Object.entries(entitiesToMigrate)) {
@@ -85,7 +105,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Normalize all rows to same keyset
       const allKeys = [...new Set(records.flatMap(r => Object.keys(r)))];
       const normalized = records.map(r => {
         const row = {};
@@ -93,7 +112,6 @@ Deno.serve(async (req) => {
         return row;
       });
 
-      // Upsert in batches of 200
       let totalInserted = 0;
       let lastError = null;
       for (let i = 0; i < normalized.length; i += 200) {
