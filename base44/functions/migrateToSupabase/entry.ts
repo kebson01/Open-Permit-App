@@ -1,52 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import postgres from 'npm:postgres@3.4.4';
 
+const SUPABASE_DB_URL = Deno.env.get("SUPABASE_DB_URL");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-const BASE_HEADERS = {
-  "apikey": SUPABASE_KEY,
-  "Authorization": `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json",
-};
-
-// Reload PostgREST schema cache via NOTIFY
-async function reloadSchemaCache() {
-  // Extract project ref from URL e.g. https://abcdef.supabase.co -> abcdef
-  const projectRef = SUPABASE_URL.replace("https://", "").split(".")[0];
-  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: "NOTIFY pgrst, 'reload schema';" }),
-  });
-  return { status: res.status, ok: res.ok };
-}
-
-async function upsertBatch(table, rows) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: "POST",
-    headers: { ...BASE_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify(rows),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    return { error: `${res.status}: ${text}` };
-  }
-  return { error: null };
-}
-
-function generateCreateSQL(tableName, sampleRow) {
-  const cols = Object.entries(sampleRow).map(([key, val]) => {
-    if (key === "id") return `  "id" text PRIMARY KEY`;
-    let type = "text";
-    if (typeof val === "number") type = Number.isInteger(val) ? "bigint" : "double precision";
-    if (typeof val === "boolean") type = "boolean";
-    return `  "${key}" ${type}`;
-  }).join(",\n");
-  return `CREATE TABLE IF NOT EXISTS public."${tableName}" (\n${cols}\n);`;
-}
 
 const ENTITY_TABLE_MAP = {
   City: "cities",
@@ -59,6 +16,69 @@ const ENTITY_TABLE_MAP = {
   PermitRecord: "permit_records",
 };
 
+function getSqlType(val) {
+  if (typeof val === "number") return Number.isInteger(val) ? "bigint" : "double precision";
+  if (typeof val === "boolean") return "boolean";
+  return "text";
+}
+
+function generateCreateSQL(tableName, allKeys, sampleRow) {
+  const cols = allKeys.map(key => {
+    if (key === "id") return `"id" text PRIMARY KEY`;
+    const type = getSqlType(sampleRow[key]);
+    return `"${key}" ${type}`;
+  }).join(",\n  ");
+  return `CREATE TABLE IF NOT EXISTS public."${tableName}" (\n  ${cols}\n);`;
+}
+
+async function createTableIfNeeded(sql, tableName, allKeys, sampleRow) {
+  const cols = allKeys.map(key => {
+    if (key === "id") return sql`"id" text PRIMARY KEY`;
+    const type = getSqlType(sampleRow[key]);
+    // Use unsafe for dynamic DDL
+    return `"${key}" ${type}`;
+  });
+  const colDefs = allKeys.map(key => {
+    if (key === "id") return `"id" text PRIMARY KEY`;
+    const type = getSqlType(sampleRow[key]);
+    return `"${key}" ${type}`;
+  }).join(", ");
+  await sql.unsafe(`CREATE TABLE IF NOT EXISTS public."${tableName}" (${colDefs})`);
+}
+
+async function addMissingColumns(sql, tableName, allKeys, sampleRow) {
+  // Get existing columns
+  const existing = await sql`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = ${tableName}
+  `;
+  const existingSet = new Set(existing.map(r => r.column_name));
+  for (const key of allKeys) {
+    if (!existingSet.has(key)) {
+      const type = getSqlType(sampleRow[key]);
+      await sql.unsafe(`ALTER TABLE public."${tableName}" ADD COLUMN IF NOT EXISTS "${key}" ${type}`);
+    }
+  }
+}
+
+async function upsertRows(sql, tableName, rows, allKeys) {
+  if (rows.length === 0) return;
+  const colList = allKeys.map(k => `"${k}"`).join(", ");
+  const conflictUpdate = allKeys.filter(k => k !== "id").map(k => `"${k}" = EXCLUDED."${k}"`).join(", ");
+
+  // Insert in chunks of 100
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100);
+    const values = chunk.map(row => allKeys.map(k => row[k] ?? null));
+    await sql.unsafe(
+      `INSERT INTO public."${tableName}" (${colList}) VALUES ${values.map((_, idx) =>
+        `(${allKeys.map((__, ci) => `$${idx * allKeys.length + ci + 1}`).join(", ")})`
+      ).join(", ")} ON CONFLICT ("id") DO UPDATE SET ${conflictUpdate}`,
+      values.flat()
+    );
+  }
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -69,30 +89,38 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const { entity, generateSQL, reloadCache } = body;
 
-  // Just reload schema cache
-  if (reloadCache) {
-    const result = await reloadSchemaCache();
-    return Response.json({ reloadResult: result });
-  }
-
-  const entitiesToMigrate = entity
-    ? { [entity]: ENTITY_TABLE_MAP[entity] }
-    : ENTITY_TABLE_MAP;
-
-  // Generate SQL for table creation
+  // Generate SQL preview (no DB needed)
   if (generateSQL) {
     const sqlStatements = {};
-    for (const [entityName, tableName] of Object.entries(entitiesToMigrate)) {
+    const entitiesToCheck = entity ? { [entity]: ENTITY_TABLE_MAP[entity] } : ENTITY_TABLE_MAP;
+    for (const [entityName, tableName] of Object.entries(entitiesToCheck)) {
       const records = await base44.asServiceRole.entities[entityName].list();
       if (records && records.length > 0) {
         const allKeys = [...new Set(records.flatMap(r => Object.keys(r)))];
-        const sampleRow = {};
-        for (const k of allKeys) sampleRow[k] = records[0][k] ?? null;
-        sqlStatements[entityName] = generateCreateSQL(tableName, sampleRow);
+        sqlStatements[entityName] = generateCreateSQL(tableName, allKeys, records[0]);
       }
     }
     return Response.json({ sqlStatements });
   }
+
+  // Reload cache (informational — actual reload happens via pg NOTIFY)
+  if (reloadCache) {
+    const sql = postgres(SUPABASE_DB_URL, { ssl: "require", max: 1 });
+    try {
+      await sql`SELECT pg_notify('pgrst', 'reload schema')`;
+      await sql.end();
+      return Response.json({ reloadResult: { ok: true, status: 200 } });
+    } catch (err) {
+      await sql.end();
+      return Response.json({ reloadResult: { ok: false, error: err.message } });
+    }
+  }
+
+  // Run migration via direct Postgres connection
+  const sql = postgres(SUPABASE_DB_URL, { ssl: "require", max: 1 });
+  const entitiesToMigrate = entity
+    ? { [entity]: ENTITY_TABLE_MAP[entity] }
+    : ENTITY_TABLE_MAP;
 
   const results = {};
 
@@ -112,26 +140,27 @@ Deno.serve(async (req) => {
         return row;
       });
 
-      let totalInserted = 0;
-      let lastError = null;
-      for (let i = 0; i < normalized.length; i += 200) {
-        const batch = normalized.slice(i, i + 200);
-        const { error } = await upsertBatch(tableName, batch);
-        if (error) { lastError = error; break; }
-        totalInserted += batch.length;
-      }
+      // Create table + add any missing columns
+      await createTableIfNeeded(sql, tableName, allKeys, records[0]);
+      await addMissingColumns(sql, tableName, allKeys, records[0]);
+
+      // Upsert all rows
+      await upsertRows(sql, tableName, normalized, allKeys);
+
+      // Notify PostgREST to reload schema
+      await sql`SELECT pg_notify('pgrst', 'reload schema')`;
 
       results[entityName] = {
-        count: totalInserted,
+        count: records.length,
         total: records.length,
         table: tableName,
-        status: lastError ? "error" : "success",
-        error: lastError,
+        status: "success",
       };
     } catch (err) {
       results[entityName] = { count: 0, table: tableName, status: "error", error: err.message };
     }
   }
 
+  await sql.end();
   return Response.json({ results });
 });
