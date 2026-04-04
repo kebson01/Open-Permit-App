@@ -20,33 +20,12 @@ const ENTITY_TABLE_MAP = {
   PermitRecord: "permit_records",
 };
 
-// Extract project ref from Supabase URL
-function getProjectRef() {
-  return SUPABASE_URL.replace("https://", "").split(".")[0];
-}
-
-// Run SQL via Supabase Management API
-async function runSQL(sql) {
-  const projectRef = getProjectRef();
-  const accessToken = Deno.env.get("SUPABASE_ACCESS_TOKEN");
-  // Try the correct Management API endpoint
-  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: sql }),
-  });
-  const text = await res.text();
-  return { ok: res.ok, status: res.status, body: text };
-}
-
 function getSqlType(val) {
-  if (typeof val === "number") return Number.isInteger(val) ? "bigint" : "double precision";
   if (typeof val === "boolean") return "boolean";
+  if (typeof val === "number") return "double precision";
   return "text";
 }
+
 
 function generateCreateSQL(tableName, allKeys, sampleRow) {
   const cols = allKeys.map(key => {
@@ -57,27 +36,24 @@ function generateCreateSQL(tableName, allKeys, sampleRow) {
   return `CREATE TABLE IF NOT EXISTS public."${tableName}" (\n  ${cols}\n);`;
 }
 
-async function ensureTable(tableName, allKeys, sampleRow) {
-  const sql = generateCreateSQL(tableName, allKeys, sampleRow);
-  const result = await runSQL(sql);
-  if (!result.ok) throw new Error(`Create table failed (${result.status}): ${result.body}`);
-
-  // Add any missing columns
-  for (const key of allKeys) {
-    if (key === "id") continue;
-    const type = getSqlType(sampleRow[key]);
-    await runSQL(`ALTER TABLE public."${tableName}" ADD COLUMN IF NOT EXISTS "${key}" ${type};`);
-  }
-
-  // Notify PostgREST to reload schema
-  await runSQL(`SELECT pg_notify('pgrst', 'reload schema');`);
-}
-
 async function upsertBatch(table, rows) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: "POST",
     headers: { ...BASE_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    return { error: `${res.status}: ${text}` };
+  }
+  return { error: null };
+}
+
+async function execSQL(sql) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+    method: "POST",
+    headers: BASE_HEADERS,
+    body: JSON.stringify({ sql }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -96,10 +72,13 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const { entity, generateSQL, reloadCache } = body;
 
-  // Reload schema cache via Management API
+  // Reload PostgREST schema cache
   if (reloadCache) {
-    const result = await runSQL(`SELECT pg_notify('pgrst', 'reload schema');`);
-    return Response.json({ reloadResult: { ok: result.ok, status: result.status, body: result.body } });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+      method: "GET",
+      headers: { ...BASE_HEADERS, "Accept": "application/json" },
+    });
+    return Response.json({ reloadResult: { ok: res.ok, status: res.status } });
   }
 
   const entitiesToMigrate = entity
@@ -137,10 +116,21 @@ Deno.serve(async (req) => {
         return row;
       });
 
-      // Ensure table exists with correct columns
-      await ensureTable(tableName, allKeys, records[0]);
+      // Ensure table exists and has all columns via exec_sql RPC
+      const createSQL = generateCreateSQL(tableName, allKeys, records[0]);
+      await execSQL(createSQL);
 
-      // Upsert in batches of 200
+      // Add any missing columns
+      const addColSQLs = allKeys
+        .filter(k => k !== "id")
+        .map(k => `ALTER TABLE public."${tableName}" ADD COLUMN IF NOT EXISTS "${k}" ${getSqlType(records[0][k])};`)
+        .join("\n");
+      await execSQL(addColSQLs);
+
+      // Reload schema cache so PostgREST sees new columns
+      await fetch(`${SUPABASE_URL}/rest/v1/`, { headers: BASE_HEADERS });
+
+      // Upsert via PostgREST in batches of 200
       let totalInserted = 0;
       let lastError = null;
       for (let i = 0; i < normalized.length; i += 200) {
