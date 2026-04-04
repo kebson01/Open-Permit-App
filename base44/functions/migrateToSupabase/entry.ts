@@ -30,7 +30,7 @@ async function runSQL(sql) {
   const projectRef = getProjectRef();
   const accessToken = Deno.env.get("SUPABASE_ACCESS_TOKEN");
   // Try the correct Management API endpoint
-  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/sql`, {
+  const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${accessToken}`,
