@@ -143,9 +143,13 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
           </div>
 
           {/* Group */}
-          {groups.length > 0 && (
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Property Group <span className="text-gray-400 font-normal">(optional)</span></label>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Property Group <span className="text-gray-400 font-normal">(optional)</span></label>
+            {groups.length === 0 ? (
+              <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                No groups yet — create one from <strong>My Projects → Property Groups</strong> tab first.
+              </p>
+            ) : (
               <select
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
                 value={form.group_id}
@@ -154,8 +158,8 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
                 <option value="">No group</option>
                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Description */}
           <div>

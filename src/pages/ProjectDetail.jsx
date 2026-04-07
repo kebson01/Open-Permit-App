@@ -148,16 +148,20 @@ export default function ProjectDetail() {
                 value={editForm.description}
                 onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
               />
-              {groups.length > 0 && (
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Property Group</label>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Property Group</label>
+                {groups.length === 0 ? (
+                  <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                    No groups yet — create one from My Projects → Property Groups tab.
+                  </p>
+                ) : (
                   <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
                     value={editForm.group_id} onChange={e => setEditForm(p => ({ ...p, group_id: e.target.value }))}>
                     <option value="">No group</option>
                     {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
-                </div>
-              )}
+                )}
+              </div>
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-medium text-gray-600 mb-1 block">Priority</label>
