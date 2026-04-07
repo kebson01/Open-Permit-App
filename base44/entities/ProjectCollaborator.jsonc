@@ -1,0 +1,61 @@
+{
+  "name": "ProjectCollaborator",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Reference to Project entity"
+    },
+    "email": {
+      "type": "string",
+      "description": "Collaborator email address"
+    },
+    "name": {
+      "type": "string",
+      "description": "Collaborator full name"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "contractor",
+        "homeowner",
+        "vendor",
+        "inspector",
+        "architect",
+        "viewer"
+      ],
+      "description": "Role in the project"
+    },
+    "company": {
+      "type": "string",
+      "description": "Company or business name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "license_number": {
+      "type": "string",
+      "description": "License number if contractor"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "invited",
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Collaborator status"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of who added this collaborator"
+    }
+  },
+  "required": [
+    "project_id",
+    "email",
+    "role"
+  ]
+}

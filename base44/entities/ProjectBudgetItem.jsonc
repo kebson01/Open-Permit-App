@@ -1,0 +1,64 @@
+{
+  "name": "ProjectBudgetItem",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Reference to Project entity"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "permit_fee",
+        "materials",
+        "labor",
+        "contractor",
+        "inspection",
+        "design",
+        "other"
+      ],
+      "description": "Budget item category"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this cost is for"
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "Vendor or contractor name"
+    },
+    "estimated_amount": {
+      "type": "number",
+      "description": "Estimated cost in dollars"
+    },
+    "actual_amount": {
+      "type": "number",
+      "description": "Actual amount paid or invoiced"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "paid",
+        "disputed"
+      ],
+      "default": "pending",
+      "description": "Payment status"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment due date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "project_id",
+    "category",
+    "description"
+  ]
+}

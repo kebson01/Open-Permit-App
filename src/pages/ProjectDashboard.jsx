@@ -3,9 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FolderOpen, Search, Filter, Loader2 } from "lucide-react";
+import { Plus, FolderOpen, Search, Loader2, LayoutGrid, List, TrendingUp, DollarSign, Clock, CheckCircle2 } from "lucide-react";
 import ProjectCard from "@/components/projects/ProjectCard";
 import NewProjectModal from "@/components/projects/NewProjectModal";
+import PropertyGroupPanel from "@/components/projects/PropertyGroupPanel";
 
 const STATUS_FILTERS = ["all", "planning", "permitting", "in_progress", "completed", "on_hold"];
 
@@ -15,6 +16,7 @@ export default function ProjectDashboard() {
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeView, setActiveView] = useState("projects"); // "projects" | "groups"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -48,12 +50,14 @@ export default function ProjectDashboard() {
     return matchSearch && matchStatus;
   });
 
+  // Stats
+  const totalBudget = projects.reduce((s, p) => s + (p.estimated_cost || 0), 0);
+  const inProgress  = projects.filter(p => p.status === "in_progress").length;
+  const completed   = projects.filter(p => p.status === "completed").length;
+  const permitting  = projects.filter(p => p.status === "permitting").length;
+
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
   }
 
   if (!currentUser) {
@@ -62,7 +66,7 @@ export default function ProjectDashboard() {
         <div className="text-center max-w-sm">
           <FolderOpen className="w-14 h-14 text-blue-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Sign In to View Projects</h2>
-          <p className="text-gray-500 mb-6 text-sm">Create and manage your permit projects, track requirements, and estimate fees — all in one place.</p>
+          <p className="text-gray-500 mb-6 text-sm">Manage permit projects, budgets, team members, and more.</p>
           <Button onClick={() => base44.auth.redirectToLogin(window.location.href)} className="bg-blue-600 hover:bg-blue-700 w-full">
             Sign In / Register
           </Button>
@@ -71,17 +75,16 @@ export default function ProjectDashboard() {
     );
   }
 
-  const isContractor = currentUser.role === "contractor";
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Projects</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Project Management</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              {isContractor ? "Manage your client permit projects" : "Track your home permit projects"}
+              {currentUser.role === "contractor" ? "Manage your client permit projects" : "Track your home permit projects"}
             </p>
           </div>
           <Button onClick={() => setShowNew(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
@@ -89,63 +92,95 @@ export default function ProjectDashboard() {
           </Button>
         </div>
 
-        {/* Contractor badge */}
-        {isContractor && (
-          <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
-            <span className="text-purple-700 text-sm font-medium">Contractor Account</span>
-            <span className="text-purple-500 text-xs">You have access to client management, license tracking, and multi-project features.</span>
+        {/* Stats row */}
+        {projects.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <p className="text-xs text-gray-400 mb-1">Total Projects</p>
+              <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <p className="text-xs text-gray-400 mb-1 flex items-center justify-center gap-1"><DollarSign className="w-3 h-3" />Total Budget</p>
+              <p className="text-2xl font-bold text-blue-600">${totalBudget.toLocaleString()}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <p className="text-xs text-gray-400 mb-1 flex items-center justify-center gap-1"><Clock className="w-3 h-3" />In Progress</p>
+              <p className="text-2xl font-bold text-indigo-600">{inProgress + permitting}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <p className="text-xs text-gray-400 mb-1 flex items-center justify-center gap-1"><CheckCircle2 className="w-3 h-3" />Completed</p>
+              <p className="text-2xl font-bold text-green-600">{completed}</p>
+            </div>
           </div>
         )}
 
-        {/* Search + filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              className="pl-9"
-              placeholder="Search by name, address, or city..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {STATUS_FILTERS.map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  statusFilter === s ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                {s === "all" ? "All" : s.replace(/_/g, " ")}
-              </button>
-            ))}
-          </div>
+        {/* View toggle */}
+        <div className="flex gap-2 mb-5">
+          <button
+            onClick={() => setActiveView("projects")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+              activeView === "projects" ? "bg-blue-600 text-white border-blue-600" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            <List className="w-4 h-4" /> All Projects
+          </button>
+          <button
+            onClick={() => setActiveView("groups")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+              activeView === "groups" ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4" /> Property Groups
+          </button>
         </div>
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="text-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <FolderOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">
-              {projects.length === 0 ? "No projects yet" : "No projects match your filters"}
-            </p>
-            {projects.length === 0 && (
-              <Button onClick={() => setShowNew(true)} variant="outline" className="mt-4 gap-2">
-                <Plus className="w-4 h-4" /> Create your first project
-              </Button>
-            )}
-          </div>
+        {activeView === "groups" ? (
+          <PropertyGroupPanel currentUser={currentUser} projects={projects} />
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(p => (
-              <ProjectCard key={p.id} project={p} onDelete={handleDelete} />
-            ))}
-          </div>
+          <>
+            {/* Search + filter */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input className="pl-9" placeholder="Search by name, address, or city..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {STATUS_FILTERS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                      statusFilter === s ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {s === "all" ? "All" : s.replace(/_/g, " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="text-center py-16"><Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto" /></div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                <FolderOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 font-medium">
+                  {projects.length === 0 ? "No projects yet" : "No projects match your filters"}
+                </p>
+                {projects.length === 0 && (
+                  <Button onClick={() => setShowNew(true)} variant="outline" className="mt-4 gap-2">
+                    <Plus className="w-4 h-4" /> Create your first project
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(p => (
+                  <ProjectCard key={p.id} project={p} onDelete={handleDelete} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

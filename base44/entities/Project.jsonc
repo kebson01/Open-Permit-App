@@ -55,6 +55,10 @@
       "type": "string",
       "description": "Full property address"
     },
+    "group_id": {
+      "type": "string",
+      "description": "Reference to PropertyGroup entity \u2014 groups projects under one property/portfolio"
+    },
     "estimated_cost": {
       "type": "number",
       "description": "Estimated construction cost in dollars"
@@ -91,6 +95,36 @@
     "client_email": {
       "type": "string",
       "description": "Client email (contractors only)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Project start date"
+    },
+    "target_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date"
+    },
+    "actual_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Actual completion date"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Project priority level"
+    },
+    "progress_pct": {
+      "type": "number",
+      "description": "Overall progress percentage 0-100"
     }
   },
   "required": [

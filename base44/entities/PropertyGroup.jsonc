@@ -1,0 +1,26 @@
+{
+  "name": "PropertyGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Group name e.g. 'My Rental Portfolio' or 'Smith Family Properties'"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the user who created this group"
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex color for visual identification"
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "ProjectMessage",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Reference to Project entity"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email of the message sender"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Display name of the sender"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "contractor",
+        "vendor",
+        "collaborator"
+      ],
+      "description": "Role of the sender in the project"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "message",
+        "update",
+        "alert",
+        "approval_request"
+      ],
+      "default": "message",
+      "description": "Type of message"
+    }
+  },
+  "required": [
+    "project_id",
+    "sender_email",
+    "content"
+  ]
+}
