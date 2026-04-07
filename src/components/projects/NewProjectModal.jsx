@@ -31,6 +31,7 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
     folio_number: "",
     estimated_cost: "",
     description: "",
+    group_id: "",
     is_contractor_project: false,
     contractor_license: "",
     client_name: "",
@@ -41,6 +42,12 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
   const { data: cities = [] } = useQuery({
     queryKey: ["cities"],
     queryFn: () => base44.entities.City.list(),
+  });
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ["groups", user?.email],
+    queryFn: () => base44.entities.PropertyGroup.filter({ owner_email: user.email }),
+    enabled: !!user?.email,
   });
 
   const isContractor = user?.role === "contractor";
@@ -134,6 +141,21 @@ export default function NewProjectModal({ user, onClose, onCreated }) {
             <label className="text-sm font-medium text-gray-700 block mb-1">Estimated Cost <span className="text-gray-400 font-normal">(optional)</span></label>
             <Input type="number" placeholder="e.g. 25000" value={form.estimated_cost} onChange={e => set("estimated_cost", e.target.value)} />
           </div>
+
+          {/* Group */}
+          {groups.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Property Group <span className="text-gray-400 font-normal">(optional)</span></label>
+              <select
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                value={form.group_id}
+                onChange={e => set("group_id", e.target.value)}
+              >
+                <option value="">No group</option>
+                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Description */}
           <div>

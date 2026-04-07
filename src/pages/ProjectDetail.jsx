@@ -15,6 +15,7 @@ import ProjectBudgetTab from "@/components/projects/ProjectBudgetTab";
 import ProjectMessagesTab from "@/components/projects/ProjectMessagesTab";
 import ProjectCollaboratorsTab from "@/components/projects/ProjectCollaboratorsTab";
 import ProjectProgressBar from "@/components/projects/ProjectProgressBar";
+import { useQuery } from "@tanstack/react-query";
 
 const STATUS_OPTIONS = ["planning", "permitting", "in_progress", "completed", "on_hold"];
 const PRIORITY_STYLES = {
@@ -75,6 +76,12 @@ export default function ProjectDetail() {
     setProject(prev => ({ ...prev, status: newStatus }));
   };
 
+  const { data: groups = [] } = useQuery({
+    queryKey: ["groups", currentUser?.email],
+    queryFn: () => base44.entities.PropertyGroup.filter({ owner_email: currentUser.email }),
+    enabled: !!currentUser?.email,
+  });
+
   const startEdit = () => {
     setEditForm({
       name: project.name,
@@ -85,6 +92,7 @@ export default function ProjectDetail() {
       priority: project.priority || "medium",
       start_date: project.start_date || "",
       target_completion_date: project.target_completion_date || "",
+      group_id: project.group_id || "",
     });
     setEditing(true);
   };
@@ -140,6 +148,16 @@ export default function ProjectDetail() {
                 value={editForm.description}
                 onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
               />
+              {groups.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Property Group</label>
+                  <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                    value={editForm.group_id} onChange={e => setEditForm(p => ({ ...p, group_id: e.target.value }))}>
+                    <option value="">No group</option>
+                    {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+              )}
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-medium text-gray-600 mb-1 block">Priority</label>
@@ -198,6 +216,12 @@ export default function ProjectDetail() {
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-gray-400" />{project.city_name}</div>
+                {project.group_id && groups.find(g => g.id === project.group_id) && (
+                  <div className="flex items-center gap-1.5 text-indigo-600">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: groups.find(g => g.id === project.group_id)?.color || "#6366f1" }} />
+                    {groups.find(g => g.id === project.group_id)?.name}
+                  </div>
+                )}
                 {project.property_address && <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" />{project.property_address}</div>}
                 {project.estimated_cost && <div className="flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-gray-400" />Est. ${Number(project.estimated_cost).toLocaleString()}</div>}
                 {project.target_completion_date && <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-gray-400" />Target: {new Date(project.target_completion_date).toLocaleDateString()}</div>}
