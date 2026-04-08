@@ -32,7 +32,7 @@ export default function PropertyGuide() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="gradient-primary py-10 px-4">
+      <div className="py-10 px-4" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <div className="max-w-3xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Building2 className="w-7 h-7 text-blue-200" />

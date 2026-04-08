@@ -44,31 +44,29 @@ Deno.serve(async (req) => {
         limit: 10,
       });
     } else {
-      // Full-text search using PostgreSQL's plainto_tsquery via PostgREST
+      // Use ilike search — split tokens and filter by street number first for speed
       const searchTerm = query.replace(/[^A-Z0-9 ]/g, ' ').trim();
-      results = await querySupabase({
-        select: "*",
-        full_address: `wfts(english).${searchTerm}`,
-        limit: 25,
-      });
+      const tokens = searchTerm.split(/\s+/).filter(t => t.length > 1);
 
-      // Fallback: if no FTS results, try ilike on full_address
-      if (results.length === 0) {
-        const tokens = searchTerm.split(/\s+/).filter(t => t.length > 1);
-        if (tokens.length > 0) {
-          // Use the most specific tokens (street number if present)
-          const streetNum = tokens.find(t => /^\d+$/.test(t));
-          const keyToken = streetNum || tokens[0];
-          results = await querySupabase({
-            select: "*",
-            full_address: `ilike.*${keyToken}*`,
-            limit: 100,
-          });
-          // Client-side filter all tokens
+      if (tokens.length > 0) {
+        // Find the most specific anchor token (street number preferred)
+        const streetNum = tokens.find(t => /^\d+$/.test(t));
+        const keyToken = streetNum || tokens[0];
+
+        results = await querySupabase({
+          select: "*",
+          full_address: `ilike.*${keyToken}*`,
+          limit: 200,
+        });
+
+        // Client-side filter remaining tokens
+        if (tokens.length > 1) {
           results = results.filter(p =>
             p.full_address && tokens.every(t => p.full_address.includes(t))
-          ).slice(0, 25);
+          );
         }
+
+        results = results.slice(0, 25);
       }
     }
 
