@@ -64,7 +64,7 @@ export default function CityPortalPublic() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* City Header */}
-      <div className="gradient-primary text-white px-6 py-6">
+      <div className="text-white px-6 py-6" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

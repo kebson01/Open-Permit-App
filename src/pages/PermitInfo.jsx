@@ -125,7 +125,7 @@ function PermitDetailView({ permit }) {
       </div>
 
       {/* CTA */}
-      <div className="gradient-primary rounded-2xl p-8 text-center">
+      <div className="rounded-2xl p-8 text-center" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
         <h2 className="text-2xl font-bold text-white mb-2">Ready to Get Started?</h2>
         <p className="text-blue-200 text-sm mb-6">Choose your next step to begin the permitting process</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
