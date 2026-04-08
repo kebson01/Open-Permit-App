@@ -13,6 +13,7 @@ async function querySupabase(params) {
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
       "Accept": "application/json",
+      "Prefer": "count=none",
     },
   });
   if (!res.ok) {
@@ -38,18 +39,19 @@ Deno.serve(async (req) => {
 
     if (isFolio) {
       const folio = query.replace(/[-\s]/g, '');
+      // FOLIO_NUMBER is uppercase column name in DB
       results = await querySupabase({
         select: "*",
-        folio_number: `eq.${folio}`,
+        "FOLIO_NUMBER": `eq.${folio}`,
         limit: 10,
       });
     } else {
-      // Use ilike search — split tokens and filter by street number first for speed
+      // full_address is lowercase in DB, use ilike
       const searchTerm = query.replace(/[^A-Z0-9 ]/g, ' ').trim();
       const tokens = searchTerm.split(/\s+/).filter(t => t.length > 1);
 
       if (tokens.length > 0) {
-        // Find the most specific anchor token (street number preferred)
+        // Use most specific token as anchor (street number if present)
         const streetNum = tokens.find(t => /^\d+$/.test(t));
         const keyToken = streetNum || tokens[0];
 
@@ -59,10 +61,10 @@ Deno.serve(async (req) => {
           limit: 200,
         });
 
-        // Client-side filter remaining tokens
+        // Client-side filter all tokens against lowercase full_address
         if (tokens.length > 1) {
           results = results.filter(p =>
-            p.full_address && tokens.every(t => p.full_address.includes(t))
+            p.full_address && tokens.every(t => p.full_address.toUpperCase().includes(t))
           );
         }
 
