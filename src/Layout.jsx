@@ -56,14 +56,15 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full gradient-primary text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
 
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" style={{ height: 480 }}>
-          <div className="gradient-primary px-5 py-4 flex items-center gap-3">
+          <div className="px-5 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
@@ -112,7 +113,8 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
               <button
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="w-10 h-10 rounded-xl gradient-primary text-white flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
+                className="w-10 h-10 rounded-xl text-white flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
+                style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}
               >
                 <Send className="w-4 h-4" />
               </button>
