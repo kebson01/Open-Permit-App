@@ -1,0 +1,41 @@
+{
+  "name": "PermitWizardSession",
+  "type": "object",
+  "properties": {
+    "owner_email": {
+      "type": "string"
+    },
+    "project_description": {
+      "type": "string"
+    },
+    "city_id": {
+      "type": "string"
+    },
+    "city_name": {
+      "type": "string"
+    },
+    "answers": {
+      "type": "string",
+      "description": "JSON blob of all questionnaire answers"
+    },
+    "results": {
+      "type": "string",
+      "description": "JSON blob of AI-generated permit results"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed"
+      ],
+      "default": "in_progress"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Optional link to a Project"
+    }
+  },
+  "required": [
+    "project_description"
+  ]
+}

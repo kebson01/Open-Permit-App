@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FolderOpen, Search, Loader2, LayoutGrid, List, TrendingUp, DollarSign, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, FolderOpen, Search, Loader2, LayoutGrid, List, TrendingUp, DollarSign, Clock, CheckCircle2, ClipboardCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import ProjectCard from "@/components/projects/ProjectCard";
 import NewProjectModal from "@/components/projects/NewProjectModal";
 import PropertyGroupPanel from "@/components/projects/PropertyGroupPanel";
@@ -87,9 +88,16 @@ export default function ProjectDashboard() {
               {currentUser.role === "contractor" ? "Manage your client permit projects" : "Track your home permit projects"}
             </p>
           </div>
+          <div className="flex gap-2">
+            <Link to="/PermitWizard">
+              <Button variant="outline" className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50">
+                <ClipboardCheck className="w-4 h-4" /> Permit Wizard
+              </Button>
+            </Link>
           <Button onClick={() => setShowNew(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
             <Plus className="w-4 h-4" /> New Project
           </Button>
+          </div>
         </div>
 
         {/* Stats row */}
