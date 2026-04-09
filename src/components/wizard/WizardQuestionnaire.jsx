@@ -111,6 +111,25 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
     };
 
     try {
+      // Fetch real permit type records from the database for this city
+      let permitTypeContext = "";
+      try {
+        const permitTypes = cityId
+          ? await base44.entities.PermitType.filter({ city_id: cityId })
+          : await base44.entities.PermitType.list();
+        if (permitTypes.length > 0) {
+          permitTypeContext = `\n\nREAL PERMIT TYPE DATABASE (use these actual requirements):\n` +
+            permitTypes.map(pt => [
+              `PERMIT: ${pt.name} (${pt.category}) — City: ${pt.city_name}`,
+              pt.description ? `  Description: ${pt.description}` : "",
+              pt.documents_needed?.length ? `  Documents Required: ${pt.documents_needed.join("; ")}` : "",
+              pt.typical_requirements?.length ? `  Typical Requirements: ${pt.typical_requirements.join("; ")}` : "",
+              pt.inspections_required?.length ? `  Inspections: ${pt.inspections_required.join("; ")}` : "",
+              pt.typical_timeline ? `  Timeline: ${pt.typical_timeline}` : "",
+            ].filter(Boolean).join("\n")).join("\n\n");
+        }
+      } catch {}
+
       const results = await base44.integrations.Core.InvokeLLM({
         prompt: `You are an expert permit consultant for Florida municipalities. Based on the following project details, determine exactly what permits are needed.
 
@@ -119,6 +138,9 @@ AI-CATEGORIZED AS: ${aiParsed?.category} / ${aiParsed?.work_type}
 CITY/JURISDICTION: ${cityName || "Florida (general)"}
 PROPERTY TYPE: ${propertyType}
 DETAILED ANSWERS: ${JSON.stringify(detailAnswers, null, 2)}
+${permitTypeContext}
+
+IMPORTANT: If the REAL PERMIT TYPE DATABASE above contains matching permit types for this project and city, use the EXACT documents_required, inspections_required, and timeline from those records. Do not invent generic ones when real data is available.
 
 Return a detailed JSON permit assessment with:
 - permits_required: array of permit objects, each with:
@@ -126,10 +148,10 @@ Return a detailed JSON permit assessment with:
   * category: (building/electrical/plumbing/mechanical/fire/other)
   * is_primary: boolean
   * description: why this permit is needed
-  * documents_required: array of required documents
-  * inspections_required: array of inspection stages
+  * documents_required: array of required documents (use real data from database if available)
+  * inspections_required: array of inspection stages (use real data from database if available)
   * estimated_fee_range: e.g. "$150 - $500"
-  * typical_timeline: e.g. "2-4 weeks"
+  * typical_timeline: e.g. "2-4 weeks" (use real data from database if available)
 - zoning_considerations: array of strings (setbacks, height limits, HOA, flood zone notes, etc.)
 - important_notes: array of warning strings
 - next_steps: array of step strings (what to do now)
@@ -137,7 +159,7 @@ Return a detailed JSON permit assessment with:
 - licensed_contractor_required: boolean
 - overall_complexity: one of [simple, moderate, complex]
 
-Be specific, practical, and jurisdiction-aware. If city is known, reference FL building code standards.`,
+Be specific, practical, and jurisdiction-aware. Prioritize real database data over generic answers.`,
         response_json_schema: {
           type: "object",
           properties: {
