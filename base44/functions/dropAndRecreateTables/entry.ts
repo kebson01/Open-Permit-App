@@ -25,9 +25,9 @@ Deno.serve(async (req) => {
   if (!user || user.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const sqls = [
-    `DROP TABLE IF EXISTS public."fee_rules";`,
-    `DROP TABLE IF EXISTS public."zoning_rules";`,
-    `CREATE TABLE public."fee_rules" (
+    `DROP TABLE IF EXISTS public."weston_fee_rules";`,
+    `DROP TABLE IF EXISTS public."weston_zoning_rules";`,
+    `CREATE TABLE public."weston_fee_rules" (
       "id" text PRIMARY KEY,
       "city_id" text, "city_name" text, "permit_id" text, "permit_name" text,
       "category" text, "description" text, "calc_type" text, "input_field" text,
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       "include_city_surcharges" boolean, "sort_order" double precision,
       "created_date" text, "updated_date" text, "created_by" text
     );`,
-    `CREATE TABLE public."zoning_rules" (
+    `CREATE TABLE public."weston_zoning_rules" (
       "id" text PRIMARY KEY,
       "city_id" text, "city_name" text, "zone_code" text, "zone_name" text,
       "use_codes" text, "min_lot_size_sqft" double precision,

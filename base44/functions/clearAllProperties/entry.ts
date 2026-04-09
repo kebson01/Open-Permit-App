@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     }
 
     // Delete all rows from the properties table in Supabase
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/properties?folio_number=neq.IMPOSSIBLE_VALUE_THAT_MATCHES_ALL`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/broward_properties?folio_number=neq.IMPOSSIBLE_VALUE_THAT_MATCHES_ALL`, {
       method: "DELETE",
       headers: {
         "apikey": SUPABASE_KEY,
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     });
 
     // Use TRUNCATE via RPC for a faster wipe
-    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_properties`, {
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_broward_properties`, {
       method: "POST",
       headers: {
         "apikey": SUPABASE_KEY,
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     if (!rpcRes.ok) {
       // Fallback: delete with a catch-all filter
-      const delRes = await fetch(`${SUPABASE_URL}/rest/v1/properties?folio_number=gte.0`, {
+      const delRes = await fetch(`${SUPABASE_URL}/rest/v1/broward_properties?folio_number=gte.0`, {
         method: "DELETE",
         headers: {
           "apikey": SUPABASE_KEY,
