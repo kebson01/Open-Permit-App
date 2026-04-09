@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Admin only' }, { status: 403 });
   }
 
-  const tables = ['cities', 'projects', 'fee_rules', 'permit_types', 'properties', 'code_of_ordinances', 'zoning_rules', 'permit_records', 'project_cost_items'];
+  const tables = ['cities', 'projects', 'weston_fee_rules', 'weston_permit_types', 'broward_properties', 'weston_code_of_ordinances', 'weston_zoning_rules', 'weston_permit_records', 'project_cost_items'];
   const results = {};
 
   for (const table of tables) {

@@ -12,12 +12,12 @@ const BASE_HEADERS = {
 const ENTITY_TABLE_MAP = {
   City: "cities",
   Project: "projects",
-  PermitType: "permit_types",
-  FeeRule: "fee_rules",
-  CitySurcharge: "city_surcharges",
-  ZoningRule: "zoning_rules",
-  CodeOfOrdinance: "code_of_ordinances",
-  PermitRecord: "permit_records",
+  PermitType: "weston_permit_types",
+  FeeRule: "weston_fee_rules",
+  CitySurcharge: "weston_city_surcharges",
+  ZoningRule: "weston_zoning_rules",
+  CodeOfOrdinance: "weston_code_of_ordinances",
+  PermitRecord: "weston_permit_records",
 };
 
 function getSqlType(val) {

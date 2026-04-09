@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     if (isFolio) {
       const folio = query.replace(/[-\s]/g, '');
-      propertyRows = await supabaseGet("properties", {
+      propertyRows = await supabaseGet("broward_properties", {
         select: "*",
         "FOLIO_NUMBER": `eq.${folio}`,
         limit: 10,
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         const streetNum = tokens.find(t => /^\d+$/.test(t));
         const keyToken = streetNum || tokens[0];
 
-        propertyRows = await supabaseGet("properties", {
+        propertyRows = await supabaseGet("broward_properties", {
           select: "*",
           full_address: `ilike.*${keyToken}*`,
           limit: 200,
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     let permitRows = [];
     if (folioNumbers.length > 0) {
       // permit_records uses PARCEL_NBR to link to properties
-      permitRows = await supabaseGet("permit_records", {
+      permitRows = await supabaseGet("weston_permit_records", {
         select: "*",
         "PARCEL_NBR": `in.(${folioNumbers.join(",")})`,
         limit: 500,

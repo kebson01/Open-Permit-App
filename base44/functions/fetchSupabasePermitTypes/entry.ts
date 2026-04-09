@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/permit_types?select=*&limit=50`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/weston_permit_types?select=*&limit=50`, {
       headers: {
         "apikey": SUPABASE_KEY,
         "Authorization": `Bearer ${SUPABASE_KEY}`,

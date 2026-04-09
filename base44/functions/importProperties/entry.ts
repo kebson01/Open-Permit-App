@@ -75,7 +75,7 @@ function buildRecord(headers, vals) {
 
 // Upsert a batch to Supabase via PostgREST
 async function upsertBatch(rows) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/properties`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/broward_properties`, {
     method: "POST",
     headers: {
       "apikey": SUPABASE_KEY,
