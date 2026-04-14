@@ -26,11 +26,11 @@ export default function CitySelector() {
   return (
     <div className="max-w-md mx-auto">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="gradient-primary px-5 py-3.5 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-yellow-300" />
+        <div className="px-5 py-3.5 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+          <MapPin className="w-4 h-4" style={{ color: "#FDE68A" }} />
           <div>
-            <h3 className="text-white font-bold text-base leading-tight">Start Here — Choose Your City</h3>
-            <p className="text-white/90 text-xs mt-0.5">We'll show you city-specific permit info</p>
+            <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", lineHeight: "1.3", margin: 0 }}>Start Here — Choose Your City</h3>
+            <p style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", marginTop: "2px", margin: "2px 0 0 0" }}>We'll show you city-specific permit info</p>
           </div>
         </div>
 
