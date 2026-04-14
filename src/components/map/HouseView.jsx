@@ -200,7 +200,7 @@ function MapCanvas({ view, showHighlights, onZoneClick }) {
     e.preventDefault();
     e.stopPropagation();
     setTappedZone(prev => prev === zone.id ? null : zone.id);
-    onZoneClick(zone.label);
+    onZoneClick(zone.label, zone.desc);
   };
 
   return (
@@ -232,7 +232,7 @@ function MapCanvas({ view, showHighlights, onZoneClick }) {
             const { cx, cy } = getBBoxCenter(scaled);
             return (
               <g key={zone.id} style={{ cursor: "pointer" }}
-                onClick={() => { setTappedZone(p => p === zone.id ? null : zone.id); onZoneClick(zone.label); }}
+                onClick={() => { setTappedZone(p => p === zone.id ? null : zone.id); onZoneClick(zone.label, zone.desc); }}
                 onTouchEnd={(e) => handleZoneTap(e, zone)}
                 onMouseEnter={() => setHoveredZone(zone.id)}
                 onMouseLeave={() => setHoveredZone(null)}
