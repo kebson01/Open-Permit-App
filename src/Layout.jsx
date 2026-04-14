@@ -183,7 +183,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Link to="/" className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-400" />
-              <span className="text-white font-bold text-sm sm:text-base hidden xs:block">Saint's Permits</span>
+              <span className="text-white font-bold text-sm sm:text-base hidden xs:block">OpenPermit</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-1">
@@ -276,10 +276,10 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Building2 className="w-5 h-5 text-blue-400" />
-            <span className="text-white font-semibold">Saint's Permitting System</span>
+            <span className="text-white font-semibold">OpenPermit</span>
           </div>
-          <p className="text-sm text-gray-300">© {new Date().getFullYear()} Saint's Interactive Permitting System. All rights reserved.</p>
-          <p className="text-xs mt-1 text-gray-400">Supporting Broward County municipalities</p>
+          <p className="text-sm text-gray-300">© 2026 OpenPermit. All rights reserved.</p>
+          <p className="text-xs mt-1 text-gray-400">Making permits simple for South Florida homeowners and contractors.</p>
         </div>
       </footer>
 

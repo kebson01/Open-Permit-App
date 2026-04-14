@@ -17,8 +17,8 @@ export default function HeroSection() {
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
-          Saint's Interactive
-          <span className="block text-blue-400 mt-1">Permitting System</span>
+          Welcome to
+          <span className="block text-blue-400 mt-1">OpenPermit</span>
         </h1>
 
         <p className="mt-4 text-sm sm:text-lg text-white/90 max-w-xl mx-auto leading-relaxed px-2">
