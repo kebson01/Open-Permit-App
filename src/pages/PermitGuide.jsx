@@ -155,7 +155,16 @@ export default function PermitGuide() {
                   <SelectValue placeholder="Filter by city..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {CITIES.map(c => (
+                    <SelectItem key={c} value={c} disabled={COMING_SOON_CITIES.includes(c)} className={COMING_SOON_CITIES.includes(c) ? "opacity-50 cursor-not-allowed" : ""}>
+                      <span className="flex items-center gap-2">
+                        {c}
+                        {COMING_SOON_CITIES.includes(c) && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
