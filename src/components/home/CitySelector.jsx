@@ -36,12 +36,12 @@ export default function CitySelector() {
 
         <div className="p-5 space-y-3">
           <div className="flex gap-3">
-            <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-500 border border-gray-100 text-center">🌴 Florida</div>
-            <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-500 border border-gray-100 text-center">🏢 Broward County</div>
+            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border text-center" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E3A6E" }}>🌴 Florida</div>
+            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border text-center" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E3A6E" }}>🏢 Broward County</div>
           </div>
 
           <Select value={city} onValueChange={(val) => { if (CITIES.find(c => c.name === val)?.available) setCity(val); }}>
-            <SelectTrigger className="rounded-xl h-11">
+            <SelectTrigger className="rounded-xl h-11" style={{ color: "#0F172A" }}>
               <SelectValue placeholder="Select your city..." />
             </SelectTrigger>
             <SelectContent>
@@ -76,7 +76,8 @@ export default function CitySelector() {
               onClick={() => goTo("FeeCalculator")}
               disabled={!city}
               variant="outline"
-              className="rounded-xl h-11 font-semibold text-sm gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="rounded-xl h-11 font-semibold text-sm gap-2"
+              style={{ background: "#FFFFFF", border: "1.5px solid #CBD5E1", color: "#0F172A" }}
             >
               <Calculator className="w-4 h-4" />
               Fee Calculator
