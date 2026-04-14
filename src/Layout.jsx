@@ -332,14 +332,16 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Footer */}
-      <footer className="py-8 pb-20 md:pb-8" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-5 h-5 text-blue-400" />
-            <span className="text-white font-semibold">OpenPermit</span>
+      <footer className="py-8 pb-20 md:pb-8" style={{ backgroundColor: "#0D2B5E", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 className="w-4 h-4 text-blue-400" />
+              <span className="text-white font-bold text-sm">OpenPermit</span>
+            </div>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Making permits simple for South Florida homeowners and contractors.</p>
           </div>
-          <p className="text-sm text-gray-300">© 2026 OpenPermit. All rights reserved.</p>
-          <p className="text-xs mt-1 text-gray-400">Making permits simple for South Florida homeowners and contractors.</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>© 2026 OpenPermit. All rights reserved.</p>
         </div>
       </footer>
 

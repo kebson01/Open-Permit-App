@@ -24,63 +24,56 @@ export default function CitySelector() {
   };
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-3.5 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-          <MapPin className="w-4 h-4" style={{ color: "#FDE68A" }} />
-          <div>
-            <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", lineHeight: "1.3", margin: 0 }}>Start Here — Choose Your City</h3>
-            <p style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", marginTop: "2px", margin: "2px 0 0 0" }}>We'll show you city-specific permit info</p>
+    <div style={{ width: "100%", maxWidth: 460 }}>
+      <div className="bg-white shadow-xl" style={{ borderRadius: 14, border: "1px solid #E2E8F0", overflow: "hidden" }}>
+        <div className="px-5 py-4">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-1">
+            <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "#1E4D99" }} />
+            <span className="font-semibold" style={{ color: "#0F172A", fontSize: 14 }}>Start here — choose your city</span>
           </div>
-        </div>
+          <p className="mb-4" style={{ color: "#475569", fontSize: 12 }}>We'll show you city-specific permit requirements and fees</p>
 
-        <div className="p-5 space-y-3">
-          <div className="flex gap-3">
-            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border text-center" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E3A6E" }}>🌴 Florida</div>
-            <div className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border text-center" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E3A6E" }}>🏢 Broward County</div>
+          {/* Badges */}
+          <div className="flex gap-2 mb-3">
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E4D99" }}>🌴 Florida</span>
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border" style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#1E4D99" }}>🏢 Broward County</span>
           </div>
 
+          {/* City dropdown */}
           <Select value={city} onValueChange={(val) => { if (CITIES.find(c => c.name === val)?.available) setCity(val); }}>
-            <SelectTrigger className="rounded-xl h-11" style={{ color: "#0F172A" }}>
+            <SelectTrigger className="rounded-xl h-11 mb-3" style={{ color: "#0F172A" }}>
               <SelectValue placeholder="Select your city..." />
             </SelectTrigger>
             <SelectContent>
               {CITIES.map(c => (
-                <SelectItem
-                  key={c.name}
-                  value={c.name}
-                  disabled={!c.available}
-                  className={!c.available ? "opacity-50 cursor-not-allowed" : ""}
-                >
+                <SelectItem key={c.name} value={c.name} disabled={!c.available} className={!c.available ? "opacity-50 cursor-not-allowed" : ""}>
                   <span className="flex items-center gap-2">
                     {c.name}
-                    {!c.available && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
-                    )}
+                    {!c.available && <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>}
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={() => goTo("PermitGuide")}
               disabled={!city}
-              className="text-white rounded-xl h-11 font-semibold text-sm gap-2"
-              style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
+              className="text-white rounded-xl h-10 font-semibold text-sm"
+              style={{ backgroundColor: "#0D2B5E" }}
             >
-              <Map className="w-4 h-4" />
               Permit Guide
             </Button>
             <Button
               onClick={() => goTo("FeeCalculator")}
               disabled={!city}
               variant="outline"
-              className="rounded-xl h-11 font-semibold text-sm gap-2"
-              style={{ background: "#FFFFFF", border: "1.5px solid #CBD5E1", color: "#0F172A" }}
+              className="rounded-xl h-10 font-semibold text-sm"
+              style={{ backgroundColor: "#FFFFFF", border: "1.5px solid #CBD5E1", color: "#0F172A" }}
             >
-              <Calculator className="w-4 h-4" />
               Fee Calculator
             </Button>
           </div>
