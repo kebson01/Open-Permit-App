@@ -5,7 +5,13 @@ import { MapPin, Map, Calculator } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const CITIES = [
+  { name: "Weston", available: true },
+  { name: "Coral Springs", available: false },
+  { name: "Fort Lauderdale", available: false },
+  { name: "Hollywood", available: false },
+  { name: "Cooper City", available: false },
+];
 
 export default function CitySelector() {
   const [city, setCity] = useState("");
@@ -34,13 +40,25 @@ export default function CitySelector() {
             <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-500 border border-gray-100 text-center">🏢 Broward County</div>
           </div>
 
-          <Select value={city} onValueChange={setCity}>
+          <Select value={city} onValueChange={(val) => { if (CITIES.find(c => c.name === val)?.available) setCity(val); }}>
             <SelectTrigger className="rounded-xl h-11">
               <SelectValue placeholder="Select your city..." />
             </SelectTrigger>
             <SelectContent>
               {CITIES.map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+                <SelectItem
+                  key={c.name}
+                  value={c.name}
+                  disabled={!c.available}
+                  className={!c.available ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  <span className="flex items-center gap-2">
+                    {c.name}
+                    {!c.available && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
+                    )}
+                  </span>
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

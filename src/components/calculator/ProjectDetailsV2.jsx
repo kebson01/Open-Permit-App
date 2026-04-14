@@ -9,19 +9,19 @@ const INPUT_META = {
     label: "Estimated Construction / Project Cost ($)",
     placeholder: "e.g. 50000",
     type: "number",
-    hint: "Enter the total estimated cost of work to be performed",
+    hint: "The total estimated cost of labor and materials for your project. If you're unsure, get a contractor quote first.",
   },
   squareFeet: {
     label: "Square Footage",
     placeholder: "e.g. 2500",
     type: "number",
-    hint: "Total square footage of the project area",
+    hint: "The total area affected by your project in square feet. For a room addition, measure length × width.",
   },
   linearFeet: {
     label: "Linear Feet",
     placeholder: "e.g. 150",
     type: "number",
-    hint: "Total length in linear feet",
+    hint: "The total length of the item being installed, such as a fence or sidewalk.",
   },
   units: {
     label: "Number of Units / Doors",
@@ -81,7 +81,10 @@ export default function ProjectDetailsV2({ permit, details, setDetails, onCalcul
   return (
     <div className="mt-6 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
       <h3 className="text-lg font-bold text-gray-800 mb-1">Step 2: Project Details</h3>
-      <p className="text-sm text-gray-500 mb-5">Provide the details needed to calculate your fee</p>
+      <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
+        <span className="text-amber-600 text-sm">💡</span>
+        <p className="text-xs text-amber-800">Not sure about your numbers? Estimates are fine — you can refine them later.</p>
+      </div>
 
       <div className="space-y-5">
         {inputs.map(key => {

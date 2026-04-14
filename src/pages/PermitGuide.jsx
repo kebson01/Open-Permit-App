@@ -10,6 +10,8 @@ import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 import UserModeToggle from "../components/map/UserModeToggle";
 
 const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const AVAILABLE_CITIES = ["Weston"];
+const COMING_SOON_CITIES = ["Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
 // View options per property type
 const RESIDENTIAL_VIEWS = [

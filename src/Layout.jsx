@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { name: "Home", page: "Home", icon: Building2 },
-  { name: "Permit Guide", page: "PermitGuide", icon: Map },
-  { name: "Fee Calculator", page: "FeeCalculator", icon: Calculator },
-  { name: "Property Search", page: "PropertyGuide", icon: Building2 },
-  { name: "My Projects", page: "ProjectDashboard", icon: FolderOpen },
+  { name: "Plan a Permit", page: "PermitGuide", icon: Map },
+  { name: "Estimate Costs", page: "FeeCalculator", icon: Calculator },
+  { name: "Search Property", page: "PropertyGuide", icon: Building2 },
 ];
 
 // Role-based nav links added dynamically below
@@ -162,6 +161,10 @@ export default function Layout({ children, currentPageName }) {
       ]
     : [];
 
+  const userLinks = currentUser
+    ? [{ name: "My Projects", page: "ProjectDashboard", icon: FolderOpen }]
+    : [];
+
 
 
   const isCityPortal = currentPageName === "CityPortalPublic";
@@ -170,7 +173,7 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
-  const allLinks = [...navLinks, ...adminLinks];
+  const allLinks = [...navLinks, ...userLinks, ...adminLinks];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">

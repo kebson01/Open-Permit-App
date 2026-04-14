@@ -65,12 +65,28 @@ export default function ProjectDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center max-w-sm">
-          <FolderOpen className="w-14 h-14 text-blue-300 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Sign In to View Projects</h2>
-          <p className="text-gray-500 mb-6 text-sm">Manage permit projects, budgets, team members, and more.</p>
-          <Button onClick={() => base44.auth.redirectToLogin(window.location.href)} className="bg-blue-600 hover:bg-blue-700 w-full">
-            Sign In / Register
-          </Button>
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-5">
+            <FolderOpen className="w-8 h-8 text-blue-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Track Your Permit Projects</h2>
+          <p className="text-gray-500 mb-6 text-sm leading-relaxed">
+            Create a free account to start tracking your permit projects, save your document checklist, and manage timelines.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              className="bg-blue-600 hover:bg-blue-700 w-full h-11 text-sm font-semibold"
+            >
+              Create Account
+            </Button>
+            <Button
+              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              variant="outline"
+              className="w-full h-11 text-sm font-semibold border-gray-300 text-gray-700"
+            >
+              Log In
+            </Button>
+          </div>
         </div>
       </div>
     );

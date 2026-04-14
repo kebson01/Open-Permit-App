@@ -38,7 +38,8 @@ export default function PropertyGuide() {
             <Building2 className="w-7 h-7 text-blue-200" />
             <h1 className="text-3xl font-bold text-white drop-shadow">Property Guide</h1>
           </div>
-          <p className="text-white/90 mb-6 font-medium">Search any Broward County property by address or folio number</p>
+          <p className="text-white/90 mb-1 font-medium">Search any Broward County property by address or folio number</p>
+          <p className="text-blue-200 text-sm mb-6">Look up any Broward County property to see its permit history, zoning details, and ownership information.</p>
 
           {/* Search Bar */}
           <div className="flex gap-2 bg-white rounded-xl p-2 shadow-lg">

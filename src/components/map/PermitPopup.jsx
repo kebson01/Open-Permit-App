@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles, Clock, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import DocumentChecklist from "./DocumentChecklist";
@@ -86,6 +86,34 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         )}
 
         <div className="p-5 space-y-5">
+          {/* Timeline & Inspections — prominent at top */}
+          {(permit.typical_timeline || permit.inspections_required?.length > 0) && (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {permit.typical_timeline && (
+                <div className="flex items-start gap-2.5 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
+                  <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-blue-700 mb-0.5">Typical Timeline</p>
+                    <p className="text-xs text-blue-800">{permit.typical_timeline}</p>
+                  </div>
+                </div>
+              )}
+              {permit.inspections_required?.length > 0 && (
+                <div className="flex items-start gap-2.5 px-3 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <ClipboardList className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-700 mb-0.5">Inspections Required</p>
+                    <ul className="space-y-0.5">
+                      {permit.inspections_required.map((ins, i) => (
+                        <li key={i} className="text-xs text-emerald-800">• {ins}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {permit.description && (
             <p className="text-gray-600 text-sm leading-relaxed">{permit.description}</p>
           )}
