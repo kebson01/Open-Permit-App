@@ -8,10 +8,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PropertyGuide from './pages/PropertyGuide';
 import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
-import AdminDataImport from './pages/AdminDataImport.jsx';
 import ProjectDashboard from './pages/ProjectDashboard.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
-import AdminMigration from './pages/AdminMigration.jsx';
 import PermitWizard from './pages/PermitWizard.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -66,10 +64,8 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
       <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><AdminPermitRecords /></LayoutWrapper>} />
-      <Route path="/AdminDataImport" element={<LayoutWrapper currentPageName="AdminDataImport"><AdminDataImport /></LayoutWrapper>} />
       <Route path="/ProjectDashboard" element={<LayoutWrapper currentPageName="ProjectDashboard"><ProjectDashboard /></LayoutWrapper>} />
       <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
-      <Route path="/AdminMigration" element={<LayoutWrapper currentPageName="AdminMigration"><AdminMigration /></LayoutWrapper>} />
       <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

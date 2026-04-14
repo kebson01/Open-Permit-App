@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import WizardIntro from "@/components/wizard/WizardIntro";
@@ -35,22 +34,8 @@ export default function PermitWizard() {
   };
 
   const handleSaveProject = async () => {
-    try {
-      const user = await base44.auth.me();
-      await base44.entities.PermitWizardSession.create({
-        owner_email: user?.email,
-        project_description: introData?.description,
-        city_name: questionnaireData?.answers?.city_name,
-        city_id: questionnaireData?.answers?.city_id,
-        answers: JSON.stringify(questionnaireData?.answers),
-        results: JSON.stringify(resultsData),
-        project_id: projectId || undefined,
-        status: "completed",
-      });
-      alert("Assessment saved!");
-    } catch {
-      alert("Could not save — please try again.");
-    }
+    // Assessment results are displayed on screen; users can save to a project from the results page
+    alert("Review your results above and use 'Save Project' from your project dashboard to track this permit.");
   };
 
   const aiContext = introData ? `
@@ -65,7 +50,7 @@ ${resultsData ? `Permits Required: ${(resultsData.permits_required || []).map(p 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
+      <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             {projectId ? (
