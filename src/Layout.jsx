@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, ClipboardList, FolderOpen, User } from "lucide-react";
+import { Building2, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 
-const navLinks = [
-  { name: "Home", page: "Home", icon: Building2 },
-  { name: "Plan a Permit", page: "PermitGuide", icon: Map },
-  { name: "Estimate Costs", page: "FeeCalculator", icon: Calculator },
-  { name: "Search Property", page: "PropertyGuide", icon: Building2 },
+const centerNavLinks = [
+  { name: "Plan a Permit", page: "PermitGuide" },
+  { name: "Estimate Costs", page: "FeeCalculator" },
+  { name: "Search Property", page: "PropertyGuide" },
 ];
-
-// Role-based nav links added dynamically below
 
 function Chatbot() {
   const [open, setOpen] = useState(false);
@@ -127,9 +123,11 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [navVisible, setNavVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -143,6 +141,7 @@ export default function Layout({ children, currentPageName }) {
       } else if (currentY > lastScrollY.current) {
         setNavVisible(false);
         setMobileOpen(false);
+        setAccountDropdownOpen(false);
       } else {
         setNavVisible(true);
       }
@@ -152,20 +151,37 @@ export default function Layout({ children, currentPageName }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const adminLinks = currentUser?.role === "admin"
-    ? [{ name: "City Manager", page: "AdminCityManager", icon: Settings }, { name: "Permit Records", page: "AdminPermitRecords", icon: ClipboardList }]
-    : currentUser?.role === "city_admin"
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setAccountDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const isAdmin = currentUser?.role === "admin";
+  const isCityAdmin = currentUser?.role === "city_admin";
+
+  const adminDropdownLinks = isAdmin
+    ? [
+        { name: "City Manager", page: "AdminCityManager", icon: Settings },
+        { name: "Permit Records", page: "AdminPermitRecords", icon: ClipboardList },
+      ]
+    : isCityAdmin
     ? [
         { name: "City Settings", page: "AdminCityManager", icon: Settings },
-        { name: "My City Portal", page: "CityPortal", icon: LayoutDashboard }
+        { name: "My City Portal", page: "CityPortal", icon: LayoutDashboard },
       ]
     : [];
 
-  const userLinks = currentUser
-    ? [{ name: "My Projects", page: "ProjectDashboard", icon: FolderOpen }]
-    : [];
-
-
+  const mobileLinks = [
+    ...centerNavLinks,
+    ...(currentUser ? [{ name: "My Projects", page: "ProjectDashboard" }] : []),
+    ...adminDropdownLinks,
+  ];
 
   const isCityPortal = currentPageName === "CityPortalPublic";
 
@@ -173,81 +189,126 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
-  const allLinks = [...navLinks, ...userLinks, ...adminLinks];
-
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 shadow-lg transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}>
+      <nav
+        className="sticky top-0 z-40 shadow-md transition-transform duration-300"
+        style={{ backgroundColor: "#0D2B5E", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <Link to="/" className="flex items-center gap-2">
+          <div className="flex items-center justify-between h-14">
+
+            {/* LEFT — Brand */}
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
               <Building2 className="w-5 h-5 text-blue-400" />
-              <span className="text-white font-bold text-sm sm:text-base hidden xs:block">OpenPermit</span>
+              <span className="text-white font-semibold text-base">OpenPermit</span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-1">
-              {allLinks.map(link => (
-                <Link
-                  key={link.page}
-                  to={createPageUrl(link.page)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                    currentPageName === link.page
-                      ? "bg-white/20 text-white"
-                      : "text-blue-100 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.name}
-                </Link>
-              ))}
+            {/* CENTER — Primary nav (desktop) */}
+            <div className="hidden md:flex items-center gap-8">
+              {centerNavLinks.map(link => {
+                const isActive = currentPageName === link.page;
+                return (
+                  <Link
+                    key={link.page}
+                    to={createPageUrl(link.page)}
+                    className={`text-sm font-medium transition-colors pb-0.5 ${
+                      isActive
+                        ? "text-white border-b-2 border-blue-400"
+                        : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
             </div>
 
-            <div className="flex items-center gap-2">
-              {currentUser ? (
+            {/* RIGHT — User actions (desktop) */}
+            <div className="hidden md:flex items-center gap-4">
+              {currentUser && (
                 <Link
                   to={createPageUrl("ProjectDashboard")}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 hover:text-white transition-all"
+                  className={`text-sm font-medium transition-colors pb-0.5 ${
+                    currentPageName === "ProjectDashboard"
+                      ? "text-white border-b-2 border-blue-400"
+                      : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
+                  }`}
                 >
-                  <User className="w-4 h-4" />
-                  My Account
+                  My Projects
                 </Link>
+              )}
+
+              {currentUser ? (
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setAccountDropdownOpen(prev => !prev)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                  >
+                    My Account
+                    {(isAdmin || isCityAdmin) && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                  </button>
+
+                  {accountDropdownOpen && (isAdmin || isCityAdmin) && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden">
+                      {adminDropdownLinks.map(link => (
+                        <Link
+                          key={link.page}
+                          to={createPageUrl(link.page)}
+                          onClick={() => setAccountDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <link.icon className="w-4 h-4 text-gray-400" />
+                          {link.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={() => base44.auth.redirectToLogin(window.location.href)}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 hover:text-white transition-all"
+                  className="px-3 py-1.5 rounded-md border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-colors"
                 >
-                  <User className="w-4 h-4" />
                   Log In
                 </button>
               )}
-              <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden text-white p-2 rounded-lg hover:bg-white/10"
-              >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
             </div>
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
 
+        {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.98)" }}>
-            {allLinks.map(link => (
+          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: "rgba(13,43,94,0.98)" }}>
+            {mobileLinks.map(link => (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-5 py-4 text-sm font-medium border-b border-white/5 ${
-                  currentPageName === link.page
-                    ? "bg-white/15 text-white"
-                    : "text-blue-100"
+                className={`block px-5 py-3.5 text-sm font-medium border-b border-white/5 transition-colors ${
+                  currentPageName === link.page ? "text-white bg-white/10" : "text-blue-100 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <link.icon className="w-4 h-4" />
                 {link.name}
               </Link>
             ))}
+            {!currentUser && (
+              <button
+                onClick={() => { base44.auth.redirectToLogin(window.location.href); setMobileOpen(false); }}
+                className="block w-full text-left px-5 py-3.5 text-sm font-medium text-blue-100 hover:text-white hover:bg-white/5"
+              >
+                Log In
+              </button>
+            )}
           </div>
         )}
       </nav>
@@ -257,16 +318,15 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Bottom nav for mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex">
-        {navLinks.slice(0, 4).map(link => (
+        {centerNavLinks.map(link => (
           <Link
             key={link.page}
             to={createPageUrl(link.page)}
-            className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-              currentPageName === link.page ? "text-blue-600" : "text-gray-600"
+            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-xs font-medium transition-colors ${
+              currentPageName === link.page ? "text-blue-600" : "text-gray-500"
             }`}
           >
-            <link.icon className={`w-5 h-5 ${currentPageName === link.page ? "text-blue-600" : "text-gray-500"}`} />
-            <span className="truncate text-[10px]">{link.name}</span>
+            <span className="truncate text-[11px]">{link.name}</span>
           </Link>
         ))}
       </nav>
