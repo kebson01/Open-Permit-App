@@ -74,13 +74,13 @@ export default function PermitGuide() {
         <p className="text-gray-600 mt-0.5 text-xs sm:text-base">Tap any highlighted area to see permit requirements, documents, and estimated fees.</p>
       </div>
 
-      {/* ── Toggle Hierarchy ── */}
-      <div className="flex flex-col gap-2 mb-3">
+      {/* ── Controls ── */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 mb-4 space-y-3">
 
-        {/* Row 1: Property Type (top-level) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">Property</span>
-          <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+        {/* Row 1: Property Type */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">Property</span>
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
               onClick={() => setPropertyType("residential")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
@@ -102,16 +102,16 @@ export default function PermitGuide() {
           </div>
         </div>
 
-        {/* Row 2: View (secondary) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">View</span>
-          <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm flex-wrap gap-0.5">
+        {/* Row 2: View */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">View</span>
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-wrap">
             {activeViews.map(v => (
               <button
                 key={v.id}
                 onClick={() => setActiveView(v.id)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  activeView === v.id ? "gradient-primary text-white shadow-sm" : "text-gray-600"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  activeView === v.id ? "gradient-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
                 }`}
               >
                 <v.icon className="w-3.5 h-3.5" />
@@ -121,29 +121,32 @@ export default function PermitGuide() {
           </div>
         </div>
 
-        {/* Row 3: User Mode (tertiary) + utility controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">Mode</span>
+        {/* Row 3: User Mode */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">Mode</span>
           <UserModeToggle mode={userMode} onChange={setUserMode} />
+        </div>
 
+        {/* Row 4: Utility controls */}
+        <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
           <button
             onClick={() => setShowHighlights(!showHighlights)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-600"}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-600"}`}
           >
             {showHighlights ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {showHighlights ? "Hide" : "Show"}
+            {showHighlights ? "Hide Zones" : "Show Zones"}
           </button>
 
           <button
             onClick={() => setPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-medium text-gray-600 hover:border-gray-300"
           >
             <List className="w-3.5 h-3.5" />
-            Browse All
+            Browse All Permits
           </button>
 
           {!singleCity && (
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1.5 ml-auto">
               <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
               <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
                 <SelectTrigger className="w-36 sm:w-44 rounded-xl h-8 text-xs">

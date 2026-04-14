@@ -3,7 +3,7 @@ import { Home, HardHat } from "lucide-react";
 
 export default function UserModeToggle({ mode, onChange }) {
   return (
-    <div className="flex bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+    <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
       <button
         onClick={() => onChange("homeowner")}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
