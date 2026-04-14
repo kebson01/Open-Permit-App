@@ -13,8 +13,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Map house zone labels → Supabase map_zone values (supports multiple zones)
 const LABEL_TO_ZONES = {
   "Window Replacement":     ["windows"],
-  "Door Replacement":       ["windows"],
-  "Garage Door":            ["windows", "garage"],
+  "Door Replacement":       ["doors"],
+  "Garage Door":            ["garage"],
   "Roof / Re-Roof":         ["roof"],
   "Solar Panels":           ["roof", "electrical"],
   "Pool & Spa":             ["pool", "backyard"],
