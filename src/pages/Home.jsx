@@ -1,16 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import CitySelector from "../components/home/CitySelector";
-import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle } from "lucide-react";
+import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight } from "lucide-react";
+
+const HOW_IT_WORKS = [
+  { num: "1", title: "Identify your permit", body: "Click on the part of your home you're improving to see exactly what permits apply", page: "PermitGuide" },
+  { num: "2", title: "Estimate your costs", body: "Get a transparent fee estimate based on official city fee schedules", page: "FeeCalculator" },
+  { num: "3", title: "Gather your documents", body: "Get a checklist of exactly what to bring — no surprises at the counter", page: "PermitGuide" },
+];
 
 const FEATURE_CARDS = [
-  { icon: MousePointerClick, title: "Identify the permit you need", body: "Click on any part of your home in our visual guide" },
-  { icon: DollarSign, title: "Estimate costs in advance", body: "Live fee calculator powered by official city schedules" },
-  { icon: Building2, title: "Search any property", body: "Look up permit history on all 758,232 Broward parcels" },
-  { icon: Sparkles, title: "Let AI do the work", body: "Instant answers on requirements and local rules" },
-  { icon: CheckCircle, title: "Save your checklist", body: "Create a free account to track your document progress" },
-  { icon: BookOpen, title: "5 cities covered", body: "Weston live now — more Broward cities coming soon" },
+  { icon: MousePointerClick, title: "Identify the permit you need", body: "Click on any part of your home in our visual guide", page: "PermitGuide" },
+  { icon: DollarSign, title: "Estimate costs in advance", body: "Live fee calculator powered by official city schedules", page: "FeeCalculator" },
+  { icon: Building2, title: "Search any property", body: "Look up permit history on all 758,232 Broward parcels", page: "PropertyGuide" },
+  { icon: Sparkles, title: "Let AI do the work", body: "Instant answers on requirements and local rules", page: "PermitGuide" },
+  { icon: CheckCircle, title: "Save your checklist", body: "Create a free account to track your document progress", page: "ProjectDashboard" },
+  { icon: BookOpen, title: "5 cities covered", body: "Weston live now — more Broward cities coming soon", page: "PermitGuide" },
 ];
 
 const STATS = [
@@ -22,49 +28,60 @@ const STATS = [
 
 const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Cooper City", "Hollywood"];
 
+function ClickCard({ to, children, className, style }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Link
+      to={to}
+      className={className}
+      style={{
+        ...style,
+        borderColor: hovered ? "#BFDBFE" : "#E2E8F0",
+        cursor: "pointer",
+        transition: "border-color 0.15s ease",
+        textDecoration: "none",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children(hovered)}
+    </Link>
+  );
+}
+
 export default function Home() {
   return (
     <div className="pb-16 md:pb-0" style={{ backgroundColor: "#F8FAFC" }}>
 
       {/* ── HERO ── */}
       <section style={{ backgroundColor: "#0F3575", padding: "52px 32px 96px", textAlign: "center" }}>
-        {/* Trust badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-5"
           style={{ backgroundColor: "#1E4D99", color: "#93B8F4" }}>
           🏛️ Trusted by Broward County municipalities
         </div>
 
-        {/* H1 */}
-        <h1 className="font-bold leading-tight mb-4" style={{ color: "#FFFFFF", fontSize: "clamp(26px, 5vw, 38px)", maxWidth: 560, margin: "0 auto 16px" }}>
+        <h1 className="font-bold leading-tight" style={{ color: "#FFFFFF", fontSize: "clamp(26px, 5vw, 38px)", maxWidth: 560, margin: "0 auto 16px" }}>
           Permits made simple for{" "}
           <span style={{ color: "#60A5FA" }}>South Florida.</span>
         </h1>
 
-        {/* Subtitle */}
         <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, maxWidth: 480, margin: "0 auto 32px", lineHeight: 1.65 }}>
           Know exactly what permits you need, estimate your costs upfront, and search any Broward County property — all in one place.
         </p>
 
-        {/* CTAs */}
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to={createPageUrl("PermitGuide")}
-            className="font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}
-          >
+          <Link to={createPageUrl("PermitGuide")} className="font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
             Start Planning Your Permit
           </Link>
-          <Link
-            to={createPageUrl("FeeCalculator")}
-            className="font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.35)", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}
-          >
+          <Link to={createPageUrl("FeeCalculator")} className="font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.35)", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
             Estimate Costs
           </Link>
         </div>
       </section>
 
-      {/* ── CITY SELECTOR (overlapping hero) ── */}
+      {/* ── CITY SELECTOR ── */}
       <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 48 }}>
         <CitySelector />
       </div>
@@ -76,19 +93,28 @@ export default function Home() {
         <p className="mb-10" style={{ color: "#475569", fontSize: 14 }}>No more guessing. Know exactly what you need before you apply.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mx-auto" style={{ maxWidth: 700 }}>
-          {[
-            { num: "1", title: "Identify your permit", body: "Click on the part of your home you're improving to see exactly what permits apply" },
-            { num: "2", title: "Estimate your costs", body: "Get a transparent fee estimate based on official city fee schedules" },
-            { num: "3", title: "Gather your documents", body: "Get a checklist of exactly what to bring — no surprises at the counter" },
-          ].map(step => (
-            <div key={step.num} className="bg-white rounded-xl border p-5 text-left" style={{ borderColor: "#E2E8F0" }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3"
-                style={{ backgroundColor: "#EFF6FF", color: "#1E4D99" }}>
-                {step.num}
-              </div>
-              <p className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 13 }}>{step.title}</p>
-              <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{step.body}</p>
-            </div>
+          {HOW_IT_WORKS.map(step => (
+            <ClickCard
+              key={step.num}
+              to={createPageUrl(step.page)}
+              className="bg-white rounded-xl border p-5 text-left block relative"
+              style={{ borderColor: "#E2E8F0" }}
+            >
+              {(hovered) => (
+                <>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3"
+                    style={{ backgroundColor: "#EFF6FF", color: "#1E4D99" }}>
+                    {step.num}
+                  </div>
+                  <p className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 13 }}>{step.title}</p>
+                  <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{step.body}</p>
+                  <ArrowRight
+                    className="absolute bottom-4 right-4 w-3.5 h-3.5 transition-opacity duration-150"
+                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
+                  />
+                </>
+              )}
+            </ClickCard>
           ))}
         </div>
       </section>
@@ -101,15 +127,28 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mx-auto" style={{ maxWidth: 700 }}>
           {FEATURE_CARDS.map(card => (
-            <div key={card.title} className="bg-white rounded-xl border p-4 text-left flex items-start gap-3" style={{ borderColor: "#E2E8F0" }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
-                <card.icon className="w-4 h-4" style={{ color: "#1E4D99" }} />
-              </div>
-              <div>
-                <p className="font-bold mb-0.5" style={{ color: "#0F172A", fontSize: 13 }}>{card.title}</p>
-                <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{card.body}</p>
-              </div>
-            </div>
+            <ClickCard
+              key={card.title}
+              to={createPageUrl(card.page)}
+              className="bg-white rounded-xl border p-4 text-left flex items-start gap-3 relative"
+              style={{ borderColor: "#E2E8F0" }}
+            >
+              {(hovered) => (
+                <>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
+                    <card.icon className="w-4 h-4" style={{ color: "#1E4D99" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold mb-0.5" style={{ color: "#0F172A", fontSize: 13 }}>{card.title}</p>
+                    <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{card.body}</p>
+                  </div>
+                  <ArrowRight
+                    className="absolute bottom-3 right-3 w-3.5 h-3.5 transition-opacity duration-150 flex-shrink-0"
+                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
+                  />
+                </>
+              )}
+            </ClickCard>
           ))}
         </div>
       </section>
@@ -124,11 +163,9 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        {/* City pills */}
         <div className="flex flex-wrap justify-center gap-2 mt-5">
           {CITIES.map(city => (
-            <span key={city} className="px-3 py-1 rounded-full text-xs"
+            <span key={city} className="px-3 py-1 rounded-full"
               style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
               {city}
             </span>
