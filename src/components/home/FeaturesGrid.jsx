@@ -1,11 +1,10 @@
 import React from "react";
-import { Globe, MousePointerClick, DollarSign, MessageSquare } from "lucide-react";
+import { MousePointerClick, DollarSign, MessageSquare } from "lucide-react";
 
 const features = [
-  { icon: Globe, title: "Multi-City Coverage", desc: "Unified experience across cities with city-specific requirements.", color: "bg-blue-50 text-blue-600" },
-  { icon: MousePointerClick, title: "Visual Permit Guide", desc: "Click parts of a home to learn which permit you need.", color: "bg-emerald-50 text-emerald-600" },
-  { icon: DollarSign, title: "Transparent Fees", desc: "Built-in fee calculator powered by current city schedules.", color: "bg-amber-50 text-amber-600" },
-  { icon: MessageSquare, title: "AI-Powered Guidance", desc: "Get instant answers on required documents, permit types, and local municipal requirements — powered by live web search.", color: "bg-purple-50 text-purple-600" },
+  { icon: MousePointerClick, title: "Visual Permit Guide", desc: "Identify the permit you need.", color: "bg-emerald-50 text-emerald-600" },
+  { icon: DollarSign, title: "Transparent Fees", desc: "Estimate permit costs in advance.", color: "bg-amber-50 text-amber-600" },
+  { icon: MessageSquare, title: "AI-Powered Guidance", desc: "Let it do the work for you.", color: "bg-purple-50 text-purple-600" },
 ];
 
 export default function FeaturesGrid() {

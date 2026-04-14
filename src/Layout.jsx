@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, Database, ClipboardList, FolderSync, FolderOpen } from "lucide-react";
+import { Building2, Map, Calculator, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, Database, ClipboardList, FolderSync, FolderOpen, User } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 
@@ -200,12 +200,31 @@ export default function Layout({ children, currentPageName }) {
               ))}
             </div>
 
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser ? (
+                <Link
+                  to={createPageUrl("ProjectDashboard")}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <User className="w-4 h-4" />
+                  My Account
+                </Link>
+              ) : (
+                <button
+                  onClick={() => base44.auth.redirectToLogin(window.location.href)}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <User className="w-4 h-4" />
+                  Log In
+                </button>
+              )}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="md:hidden text-white p-2 rounded-lg hover:bg-white/10"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
 

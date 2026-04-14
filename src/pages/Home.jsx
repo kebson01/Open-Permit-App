@@ -29,11 +29,7 @@ export default function Home() {
           <FeaturesGrid />
         </div>
 
-        {/* Common Permit Types */}
-        <div className="mb-10">
-          <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">Common Permit Types</h2>
-          <PermitTypeCards />
-        </div>
+
       </div>
 
       {/* Stats */}

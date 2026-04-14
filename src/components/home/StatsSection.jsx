@@ -3,8 +3,6 @@ import React from "react";
 const stats = [
   { value: "4+", label: "Cities" },
   { value: "30+", label: "Permit Types" },
-  { value: "100+", label: "Resources" },
-  { value: "Live", label: "Data" },
 ];
 
 const cities = ["Weston", "Coral Springs", "Fort Lauderdale", "Cooper City", "Hollywood"];
@@ -13,7 +11,7 @@ export default function StatsSection() {
   return (
     <section className="py-12 pb-24 md:pb-12" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #111827 100%)" }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs mx-auto">
           {stats.map((s) => (
             <div key={s.label} className="text-center">
               <div className="text-2xl sm:text-3xl font-extrabold text-white">{s.value}</div>

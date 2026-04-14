@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowRight, Map, Calculator } from "lucide-react";
+import { ArrowRight, Map, Calculator, FolderOpen } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -25,22 +25,31 @@ export default function HeroSection() {
           Your complete guide to permitting across South Florida — find out what permits you need, estimate costs, check zoning rules, and get AI-powered help with required documents.
         </p>
 
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 px-4">
+        <div className="mt-8 flex flex-col items-center gap-3 px-4">
           <Link
-            to={createPageUrl("PermitGuide")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-lg transition-all"
+            to="/ProjectDashboard"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-xl transition-all"
           >
-            <Map className="w-4 h-4" />
-            Visual Permit Guide
-            <ArrowRight className="w-4 h-4" />
+            <FolderOpen className="w-5 h-5" />
+            Start Planning Your Permit
+            <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link
-            to={createPageUrl("FeeCalculator")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white text-blue-900 hover:bg-blue-50 font-semibold text-sm shadow transition-all"
-          >
-            <Calculator className="w-4 h-4" />
-            Calculate Fees
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <Link
+              to={createPageUrl("PermitGuide")}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
+            >
+              <Map className="w-4 h-4" />
+              Visual Permit Guide
+            </Link>
+            <Link
+              to={createPageUrl("FeeCalculator")}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
+            >
+              <Calculator className="w-4 h-4" />
+              Calculate Fees
+            </Link>
+          </div>
         </div>
       </div>
 
