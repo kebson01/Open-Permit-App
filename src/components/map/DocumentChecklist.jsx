@@ -62,9 +62,14 @@ export default function DocumentChecklist({ documents, permitName }) {
             ) : (
               <Square className="w-4 h-4 text-gray-300 group-hover:text-gray-500 mt-0.5 flex-shrink-0 transition-colors" />
             )}
-            <span className={`text-sm leading-snug transition-colors ${checked[doc] ? "line-through text-gray-400" : "text-gray-700 group-hover:text-gray-900"}`}>
-              {doc}
-            </span>
+            <div>
+              <span className={`text-sm leading-snug transition-colors ${checked[doc] ? "line-through text-gray-400" : "text-gray-700 group-hover:text-gray-900"}`}>
+                {doc}
+              </span>
+              {DOC_EXPLANATIONS[doc] && (
+                <p className="text-xs text-gray-400 mt-0.5 leading-snug">{DOC_EXPLANATIONS[doc]}</p>
+              )}
+            </div>
           </li>
         ))}
       </ul>
