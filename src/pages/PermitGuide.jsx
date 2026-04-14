@@ -84,7 +84,7 @@ export default function PermitGuide() {
             <button
               onClick={() => setPropertyType("residential")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                propertyType === "residential" ? "gradient-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                propertyType === "residential" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <Home className="w-3.5 h-3.5" />
@@ -93,7 +93,7 @@ export default function PermitGuide() {
             <button
               onClick={() => setPropertyType("commercial")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                propertyType === "commercial" ? "gradient-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                propertyType === "commercial" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -111,7 +111,7 @@ export default function PermitGuide() {
                 key={v.id}
                 onClick={() => setActiveView(v.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  activeView === v.id ? "gradient-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                  activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
                 }`}
               >
                 <v.icon className="w-3.5 h-3.5" />
