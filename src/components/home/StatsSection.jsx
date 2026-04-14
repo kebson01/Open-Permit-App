@@ -9,7 +9,7 @@ const cities = ["Weston", "Coral Springs", "Fort Lauderdale", "Cooper City", "Ho
 
 export default function StatsSection() {
   return (
-    <section className="py-12 pb-24 md:pb-12" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #111827 100%)" }}>
+    <section className="py-12 pb-24 md:pb-12" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs mx-auto">
           {stats.map((s) => (

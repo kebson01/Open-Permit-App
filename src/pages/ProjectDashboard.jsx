@@ -75,7 +75,7 @@ export default function ProjectDashboard() {
           <div className="flex flex-col gap-3">
             <Button
               onClick={() => base44.auth.redirectToLogin(window.location.href)}
-              className="bg-blue-600 hover:bg-blue-700 w-full h-11 text-sm font-semibold"
+              className="w-full h-11 text-sm font-semibold text-white" style={{ background: "#3B82F6" }}
             >
               Create Account
             </Button>
@@ -110,7 +110,7 @@ export default function ProjectDashboard() {
                 <ClipboardCheck className="w-4 h-4" /> Permit Wizard
               </Button>
             </Link>
-          <Button onClick={() => setShowNew(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
+          <Button onClick={() => setShowNew(true)} className="gap-2 text-white" style={{ background: "#3B82F6" }}>
             <Plus className="w-4 h-4" /> New Project
           </Button>
           </div>

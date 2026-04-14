@@ -56,14 +56,14 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
 
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" style={{ height: 480 }}>
-          <div className="px-5 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}>
+          <div className="px-5 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
@@ -78,7 +78,7 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   msg.role === "user" 
-                    ? "bg-[#2c5282] text-white rounded-br-md" 
+                    ? "bg-[#0F3575] text-white rounded-br-md" 
                     : "bg-white text-gray-700 shadow-sm border border-gray-100 rounded-bl-md"
                 }`}>
                   {msg.content}
@@ -113,7 +113,7 @@ Provide a helpful, concise answer. If you don't know specific city details, sugg
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
                 className="w-10 h-10 rounded-xl text-white flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
-                style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)" }}
+                style={{ background: "#3B82F6" }}
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -178,7 +178,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 shadow-lg transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}>
+      <nav className="sticky top-0 z-40 shadow-lg transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Link to="/" className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Footer */}
-      <footer className="py-8 pb-20 md:pb-8" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #111827 100%)" }}>
+      <footer className="py-8 pb-20 md:pb-8" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Building2 className="w-5 h-5 text-blue-400" />

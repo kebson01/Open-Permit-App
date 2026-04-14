@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --navy-dark: #0a0a0a;
-  --navy-mid: #1a1a2e;
-  --blue-primary: #1d4ed8;
-  --blue-accent: #3b82f6;
-  --gold: #3b82f6;
-  --gold-dark: #2563eb;
+  --navy-dark: #0D2B5E;
+  --navy-mid: #0F3575;
+  --blue-primary: #3B82F6;
+  --blue-accent: #3B82F6;
+  --gold: #3B82F6;
+  --gold-dark: #2563EB;
 }
 
 @layer base {
@@ -43,11 +43,11 @@ body {
 
 @layer components {
   .gradient-primary {
-    background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
+    background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
   }
 
   .gradient-navy {
-    background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%) !important;
+    background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
   }
 
   .text-gold {

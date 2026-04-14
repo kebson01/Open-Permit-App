@@ -5,14 +5,14 @@ import { ArrowRight, Map, Calculator, Sparkles } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #111827 100%)" }}>
+    <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-48 h-48 rounded-full bg-blue-500 blur-3xl" />
         <div className="absolute bottom-0 right-10 w-64 h-64 rounded-full bg-blue-700 blur-3xl" />
       </div>
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/90 text-xs sm:text-sm mb-5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs sm:text-sm mb-5" style={{ background: "#1E4D99", borderColor: "#1E4D99", color: "#93B8F4" }}>
           🏛️ Trusted by South Florida Municipalities
         </div>
 
@@ -29,7 +29,7 @@ export default function HeroSection() {
           <Link
             to="/#city-selector"
             onClick={e => { e.preventDefault(); document.getElementById('city-selector')?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-xl transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-white font-bold text-base shadow-xl transition-all" style={{ background: "#3B82F6" }} onMouseOver={e => e.currentTarget.style.background="#2563EB"} onMouseOut={e => e.currentTarget.style.background="#3B82F6"}
           >
             <Sparkles className="w-5 h-5" />
             Start Planning Your Permit
