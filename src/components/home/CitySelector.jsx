@@ -67,7 +67,8 @@ export default function CitySelector() {
             <Button
               onClick={() => goTo("PermitGuide")}
               disabled={!city}
-              className="gradient-primary text-white rounded-xl h-11 font-semibold text-sm gap-2"
+              className="text-white rounded-xl h-11 font-semibold text-sm gap-2"
+              style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
             >
               <Map className="w-4 h-4" />
               Permit Guide

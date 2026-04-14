@@ -65,7 +65,7 @@ export default function ProjectDetailsV2({ permit, details, setDetails, onCalcul
         <p className="text-sm text-gray-600 mb-4">
           This is a <strong>flat-rate permit</strong>. No additional project details are needed.
         </p>
-        <Button onClick={onCalculate} className="gradient-primary text-white rounded-xl h-11 font-semibold shadow-md w-full sm:w-auto">
+        <Button onClick={onCalculate} className="text-white rounded-xl h-11 font-semibold shadow-md w-full sm:w-auto" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <Calculator className="w-4 h-4 mr-2" />
           Calculate Fee
         </Button>
@@ -110,7 +110,8 @@ export default function ProjectDetailsV2({ permit, details, setDetails, onCalcul
         <Button
           onClick={onCalculate}
           disabled={!canCalculate}
-          className="w-full gradient-primary text-white rounded-xl h-12 text-base font-semibold shadow-xl shadow-blue-900/20 disabled:opacity-50"
+          className="w-full text-white rounded-xl h-12 text-base font-semibold shadow-xl disabled:opacity-50"
+          style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
         >
           <Calculator className="w-5 h-5 mr-2" />
           Calculate Estimated Fee

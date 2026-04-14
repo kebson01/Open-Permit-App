@@ -16,7 +16,7 @@ export default function FeeResultsV2({ results, permit, city, cityConfig, onRese
     >
       <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
         {/* Total Header */}
-        <div className="gradient-primary px-6 py-7 text-center">
+        <div className="px-6 py-7 text-center" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <p className="text-blue-200 text-sm mb-1">Estimated Total Fee</p>
           <div className="flex items-center justify-center gap-2">
             <DollarSign className="w-8 h-8 text-yellow-300" />
@@ -67,7 +67,7 @@ export default function FeeResultsV2({ results, permit, city, cityConfig, onRese
         {/* Actions */}
         <div className="px-6 pb-6 flex flex-wrap gap-3">
           {portalUrl && (
-            <Button asChild className="flex-1 gradient-primary text-white rounded-xl">
+            <Button asChild className="flex-1 text-white rounded-xl" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
               <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Apply for Permit

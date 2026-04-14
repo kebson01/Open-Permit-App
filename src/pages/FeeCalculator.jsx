@@ -52,7 +52,7 @@ export default function FeeCalculator() {
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8">
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <Calculator className="w-4 h-4 text-white" />
         </div>
         <div>

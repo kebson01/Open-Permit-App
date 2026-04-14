@@ -44,10 +44,12 @@ body {
 @layer components {
   .gradient-primary {
     background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
+    color: #ffffff !important;
   }
 
   .gradient-navy {
     background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
+    color: #ffffff !important;
   }
 
   .text-gold {

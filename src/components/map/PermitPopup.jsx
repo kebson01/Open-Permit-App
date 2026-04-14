@@ -62,7 +62,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         onClick={e => e.stopPropagation()}
       >
         {/* Header with prominent close button */}
-        <div className="gradient-primary px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10">
+        <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <div className="flex-1 pr-3">
             <h3 className="text-white font-bold text-lg leading-snug">{permit.name}</h3>
             <span className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${badge.color}`}>
@@ -169,7 +169,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(permit.name)}&city=${encodeURIComponent(city || "")}`}
               className="flex-1"
             >
-              <Button className="w-full gradient-primary text-white rounded-xl">
+              <Button className="w-full text-white rounded-xl" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
                 <Calculator className="w-4 h-4 mr-2" />
                 Calculate Fee
               </Button>
