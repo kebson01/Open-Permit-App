@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowRight, Map, Calculator, FolderOpen } from "lucide-react";
+import { ArrowRight, Map, Calculator, Sparkles } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -27,10 +27,11 @@ export default function HeroSection() {
 
         <div className="mt-8 flex flex-col items-center gap-3 px-4">
           <Link
-            to="/ProjectDashboard"
+            to="/#city-selector"
+            onClick={e => { e.preventDefault(); document.getElementById('city-selector')?.scrollIntoView({ behavior: 'smooth' }); }}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-xl transition-all"
           >
-            <FolderOpen className="w-5 h-5" />
+            <Sparkles className="w-5 h-5" />
             Start Planning Your Permit
             <ArrowRight className="w-5 h-5" />
           </Link>

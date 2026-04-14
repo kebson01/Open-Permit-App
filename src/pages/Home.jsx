@@ -13,7 +13,7 @@ export default function Home() {
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         {/* City Selector */}
-        <div className="-mt-8 relative z-10 mb-10">
+        <div id="city-selector" className="-mt-8 relative z-10 mb-10">
           <CitySelector />
         </div>
 
