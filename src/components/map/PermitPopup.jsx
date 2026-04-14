@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
+import DocumentChecklist from "./DocumentChecklist";
 
 const PERMIT_IMAGES = {
   "Roof / Re-Roof":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4058cd09e_Roof.jpg",
@@ -28,84 +29,100 @@ const PERMIT_IMAGES = {
   "Plumbing":               "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
   "Irrigation System":      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
   "HVAC / Mechanical":      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/e34f517e0_ACReplacement.jpg",
-  "Sign Permit":                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/989d5c998_SignPermit.jpg",
-  "Parking Lot / Paving":       "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
-  "EV Charging Station":        "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
-  "Light Pole / Utility":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/db4cdd086_LightPoleUtility.jpg",
-  "Sidewalk / Curb":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/42a12b803_SidewalkCurb.jpg",
+  "Sign Permit":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/989d5c998_SignPermit.jpg",
+  "Parking Lot / Paving":   "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
+  "EV Charging Station":    "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
+  "Light Pole / Utility":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/db4cdd086_LightPoleUtility.jpg",
+  "Sidewalk / Curb":        "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/42a12b803_SidewalkCurb.jpg",
   "Asphalt / Milling & Paving": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/823c36c44_AsphaltMillingPaving.jpg",
-  "Seal Coat & Striping":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
-  "Pavement / Earthwork":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/5c06ae79a_PavementEarthwork.jpg",
-  "Utility Boring":             "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ac952087e_UtilityBoring.jpg",
-  "Underground Drainage":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
+  "Seal Coat & Striping":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
+  "Pavement / Earthwork":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/5c06ae79a_PavementEarthwork.jpg",
+  "Utility Boring":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ac952087e_UtilityBoring.jpg",
+  "Underground Drainage":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
 };
 
-export default function PermitPopup({ permit, city, onClose }) {
+// Mode badge config
+const MODE_BADGE = {
+  homeowner: { label: "Homeowner View", color: "bg-emerald-100 text-emerald-700" },
+  contractor: { label: "Contractor View", color: "bg-orange-100 text-orange-700" },
+};
+
+export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   if (!permit) return null;
+
+  const isContractor = userMode === "contractor";
+  const badge = MODE_BADGE[userMode];
+  const hasRequirements = permit.typical_requirements?.length > 0;
+  const hasDocuments = permit.documents_needed?.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="gradient-primary px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h3 className="text-white font-bold text-lg">{permit.name}</h3>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+        {/* Header with prominent close button */}
+        <div className="gradient-primary px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10">
+          <div className="flex-1 pr-3">
+            <h3 className="text-white font-bold text-lg leading-snug">{permit.name}</h3>
+            <span className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${badge.color}`}>
+              {badge.label}
+            </span>
+          </div>
+          {/* Prominent X close button */}
+          <button
+            onClick={onClose}
+            className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors border border-white/20"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
-        
+
         {PERMIT_IMAGES[permit.name] && (
-          <div className="w-full h-44 overflow-hidden rounded-none">
-            <img
-              src={PERMIT_IMAGES[permit.name]}
-              alt={permit.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-full h-40 overflow-hidden">
+            <img src={PERMIT_IMAGES[permit.name]} alt={permit.name} className="w-full h-full object-cover" />
           </div>
         )}
 
-        <div className="p-6 space-y-5">
-          <p className="text-gray-600 text-sm leading-relaxed">{permit.description}</p>
-          
-          {permit.typical_requirements?.length > 0 && (
+        <div className="p-5 space-y-5">
+          {permit.description && (
+            <p className="text-gray-600 text-sm leading-relaxed">{permit.description}</p>
+          )}
+
+          {/* Requirements — Contractor only */}
+          {isContractor && hasRequirements && (
             <div>
               <h4 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#2c5282]" />
+                <FileText className="w-4 h-4 text-orange-500" />
                 Requirements
+                <span className="text-xs font-normal text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Contractor</span>
               </h4>
               <ul className="space-y-1.5">
                 {permit.typical_requirements.map((req, i) => (
                   <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-3.5 h-3.5 text-orange-400 mt-0.5 flex-shrink-0" />
                     {req}
                   </li>
                 ))}
               </ul>
             </div>
           )}
-          
-          {permit.documents_needed?.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-800 text-sm mb-2">Documents Needed</h4>
-              <ul className="space-y-1.5">
-                {permit.documents_needed.map((doc, i) => (
-                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#3182ce] mt-1.5 flex-shrink-0" />
-                    {doc}
-                  </li>
-                ))}
-              </ul>
-            </div>
+
+          {/* Documents — both modes, interactive checklist */}
+          {hasDocuments ? (
+            <DocumentChecklist documents={permit.documents_needed} permitName={permit.name} />
+          ) : (
+            <div className="text-xs text-gray-400 italic">No document list on file for this permit type.</div>
           )}
-          
+
           {city && (
             <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl">
               <span className="text-xs text-blue-600 font-medium">Selected City: {city}</span>
             </div>
           )}
-          
+
+          {/* AI Photo Analysis */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-[2px]">
             <div className="bg-white rounded-[10px] overflow-hidden">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 flex items-center gap-2">

@@ -3,17 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
 
 const IMAGES = {
-  front:      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
-  back:       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/3119749c5_BackView.png",
-  eagle:      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4422873fc_EagleEyeView.png",
-  commercial: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
+  front:               "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
+  back:                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/3119749c5_BackView.png",
+  eagle:               "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4422873fc_EagleEyeView.png",
+  commercial:          "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
+  commercial_building: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
 };
 
 const IMAGE_DIMS = {
-  front:      { w: 1375, h: 750 },
-  back:       { w: 1380, h: 768 },
-  eagle:      { w: 1366, h: 768 },
-  commercial: { w: 1400, h: 760 },
+  front:               { w: 1375, h: 750 },
+  back:                { w: 1380, h: 768 },
+  eagle:               { w: 1366, h: 768 },
+  commercial:          { w: 1400, h: 760 },
+  commercial_building: { w: 1400, h: 760 },
 };
 
 const FRONT_ZONES = [
@@ -131,7 +133,7 @@ const LEGENDS = {
   ],
 };
 
-const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES };
+const VIEW_ZONES = { front: FRONT_ZONES, back: BACK_ZONES, eagle: EAGLE_ZONES, commercial: COMMERCIAL_ZONES, commercial_building: COMMERCIAL_ZONES };
 
 // Inner map component — always fills its parent via absolute inset-0
 function MapCanvas({ view, showHighlights, onZoneClick }) {
@@ -272,7 +274,7 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
   const isPanning = useRef(false);
   const panStart = useRef(null);
 
-  const legend = LEGENDS[view] || LEGENDS.front;
+  const legend = LEGENDS[view] || LEGENDS[view === "commercial_building" ? "commercial" : "front"];
 
   useEffect(() => {
     setScale(1); setOffset({ x: 0, y: 0 });
