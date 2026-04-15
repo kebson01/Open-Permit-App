@@ -1,0 +1,123 @@
+import { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserPlus, Mail, Phone, Building2, CheckCircle, Clock, Trash2, Loader2 } from "lucide-react";
+
+const STATUS_STYLES = {
+  active:   "bg-green-100 text-green-700",
+  invited:  "bg-yellow-100 text-yellow-700",
+  inactive: "bg-gray-100 text-gray-500",
+};
+
+export default function HomeownerTeamTab({ project, currentUser }) {
+  const [showInvite, setShowInvite] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", role: "contractor" });
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: collaborators = [] } = useQuery({
+    queryKey: ["collaborators", project.id],
+    queryFn: () => base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
+  });
+
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await base44.entities.ProjectCollaborator.create({
+      project_id: project.id,
+      name: form.name,
+      email: form.email,
+      phone: form.phone || undefined,
+      company: form.company || undefined,
+      role: form.role,
+      status: "invited",
+      invited_by: currentUser?.email,
+    });
+    queryClient.invalidateQueries({ queryKey: ["collaborators", project.id] });
+    setForm({ name: "", email: "", phone: "", company: "", role: "contractor" });
+    setShowInvite(false);
+    setSaving(false);
+  };
+
+  const removeCollaborator = async (id) => {
+    await base44.entities.ProjectCollaborator.delete(id);
+    queryClient.invalidateQueries({ queryKey: ["collaborators", project.id] });
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-gray-900">My Project Team</h3>
+        <button
+          onClick={() => setShowInvite(!showInvite)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
+          style={{ background: "#3B82F6" }}
+        >
+          <UserPlus className="w-3.5 h-3.5" /> Add Member
+        </button>
+      </div>
+
+      {showInvite && (
+        <form onSubmit={handleInvite} className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <input required placeholder="Full name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+            <input required type="email" placeholder="Email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+            <input placeholder="Phone (optional)" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+            <input placeholder="Company (optional)" value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+            <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
+              className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
+              <option value="contractor">Contractor</option>
+              <option value="architect">Architect</option>
+              <option value="inspector">Inspector</option>
+              <option value="vendor">Vendor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={saving} className="px-4 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-60" style={{ background: "#3B82F6" }}>
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
+            </button>
+            <button type="button" onClick={() => setShowInvite(false)} className="px-4 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {collaborators.length === 0 ? (
+        <div className="text-center py-8 text-gray-400 text-sm">No team members yet. Add your contractor or other team members above.</div>
+      ) : (
+        <div className="space-y-2">
+          {collaborators.map(c => (
+            <div key={c.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-blue-600">{(c.name || c.email || "?")[0].toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-gray-900 truncate">{c.name || c.email}</p>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_STYLES[c.status] || STATUS_STYLES.invited}`}>
+                    {c.status === "active"
+                      ? <span className="flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Active</span>
+                      : <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {c.status}</span>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                  <span className="capitalize">{c.role}</span>
+                  {c.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{c.email}</span>}
+                  {c.company && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{c.company}</span>}
+                  {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</span>}
+                </div>
+              </div>
+              <button onClick={() => removeCollaborator(c.id)} className="text-gray-300 hover:text-red-400 p-1 flex-shrink-0">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
