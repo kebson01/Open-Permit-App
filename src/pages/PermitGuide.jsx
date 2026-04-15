@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +7,65 @@ import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
 import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 import UserModeToggle from "../components/map/UserModeToggle";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+
+// Map zone label from HouseView → map_zone value in Supabase
+const LABEL_TO_MAP_ZONE = {
+  "Roof / Re-Roof":           "roof",
+  "Solar Panels":             "roof",
+  "Garage Door":              "garage",
+  "Window Replacement":       "windows",
+  "Door Replacement":         "windows",
+  "Pool & Spa":               "pool",
+  "Pool Equipment":           "pool",
+  "Pool Deck":                "pool",
+  "Fence / Gate":             "fence",
+  "A/C Replacement":          "hvac",
+  "HVAC / Mechanical":        "hvac",
+  "Electrical Service":       "electrical",
+  "Irrigation System":        "backyard",
+  "Patio / Slab":             "backyard",
+  "Covered Patio":            "backyard",
+  "Pergola":                  "backyard",
+  "Driveway (Paver)":         "driveway",
+  "Driveway / Walkway":       "driveway",
+  "Walkway / Sidewalk":       "driveway",
+  "Sidewalk / Curb":          "driveway",
+  "Residential Remodel":      "interior",
+  "Residential Addition":     "structure",
+  "Plumbing":                 "interior",
+  "Sign Permit":              "structure",
+  "Parking Lot / Paving":     "driveway",
+  "EV Charging Station":      "electrical",
+  "Light Pole / Utility":     "electrical",
+  "Underground Drainage":     "backyard",
+  "Asphalt / Milling & Paving": "driveway",
+  "Seal Coat & Striping":     "driveway",
+  "Pavement / Earthwork":     "driveway",
+  "Utility Boring":           "structure",
+};
+
+async function fetchPermitTypes() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/weston_permit_types?select=*`,
+    {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    }
+  );
+  const data = await res.json();
+  // Parse JSON array fields if they come back as strings
+  return (Array.isArray(data) ? data : []).map(p => ({
+    ...p,
+    typical_requirements: typeof p.typical_requirements === "string" ? JSON.parse(p.typical_requirements) : (p.typical_requirements || []),
+    documents_needed:     typeof p.documents_needed === "string"     ? JSON.parse(p.documents_needed)     : (p.documents_needed || []),
+    inspections_required: typeof p.inspections_required === "string" ? JSON.parse(p.inspections_required) : (p.inspections_required || []),
+  }));
+}
 
 const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 const AVAILABLE_CITIES = ["Weston"];
@@ -49,9 +107,10 @@ export default function PermitGuide() {
   const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
   const [showPhotoAnalyzer, setShowPhotoAnalyzer] = useState(false);
 
-  const { data: permits = [] } = useQuery({
-    queryKey: ["permits"],
-    queryFn: () => base44.entities.PermitType.list(),
+  const { data: allPermits = [] } = useQuery({
+    queryKey: ["supabase-permit-types"],
+    queryFn: fetchPermitTypes,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Derive the actual map view key
@@ -63,10 +122,23 @@ export default function PermitGuide() {
     else setCommercialView(v);
   };
 
-  const handleZoneClick = (permitName, permitDesc) => {
-    const found = permits.find(p => p.name === permitName);
-    setSelectedPermit(found || { name: permitName, description: permitDesc || "", typical_requirements: [], documents_needed: [] });
+  const handleZoneClick = (zoneLabel, zoneDesc) => {
+    const mapZone = LABEL_TO_MAP_ZONE[zoneLabel];
+    const matching = mapZone ? allPermits.filter(p => p.map_zone === mapZone) : [];
+    if (matching.length === 1) {
+      setSelectedPermit(matching[0]);
+    } else if (matching.length > 1) {
+      // Show first exact name match, or first result
+      const exact = matching.find(p => p.name === zoneLabel) || matching[0];
+      setSelectedPermit({ ...exact, _allMatching: matching });
+    } else {
+      // Fallback: no Supabase match, show basic info
+      setSelectedPermit({ name: zoneLabel, description: zoneDesc || "", typical_requirements: [], documents_needed: [], inspections_required: [] });
+    }
   };
+
+  // permits passed to PermitsPanel and StandalonePhotoAnalyzer
+  const permits = allPermits;
 
   return (
     <div className="px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8 max-w-7xl mx-auto">

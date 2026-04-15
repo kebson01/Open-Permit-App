@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles, Clock, ClipboardList } from "lucide-react";
@@ -48,12 +48,17 @@ const MODE_BADGE = {
 };
 
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  useEffect(() => { setActiveIdx(0); }, [permit]);
   if (!permit) return null;
+
+  const allMatching = permit._allMatching || [permit];
+  const current = allMatching[activeIdx] || permit;
 
   const isContractor = userMode === "contractor";
   const badge = MODE_BADGE[userMode];
-  const hasRequirements = permit.typical_requirements?.length > 0;
-  const hasDocuments = permit.documents_needed?.length > 0;
+  const hasRequirements = current.typical_requirements?.length > 0;
+  const hasDocuments = current.documents_needed?.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -64,7 +69,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         {/* Header with prominent close button */}
         <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <div className="flex-1 pr-3">
-            <h3 className="text-white font-bold text-lg leading-snug">{permit.name}</h3>
+            <h3 className="text-white font-bold text-lg leading-snug">{current.name}</h3>
             <span className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${badge.color}`}>
               {badge.label}
             </span>
@@ -79,32 +84,49 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           </button>
         </div>
 
-        {PERMIT_IMAGES[permit.name] && (
+        {PERMIT_IMAGES[current.name] && (
           <div className="w-full h-40 overflow-hidden">
-            <img src={PERMIT_IMAGES[permit.name]} alt={permit.name} className="w-full h-full object-cover" />
+            <img src={PERMIT_IMAGES[current.name]} alt={current.name} className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        {/* Tab switcher when multiple permits match this zone */}
+        {allMatching.length > 1 && (
+          <div className="px-4 pt-3 flex gap-2 flex-wrap border-b border-gray-100 pb-3">
+            {allMatching.map((p, i) => (
+              <button
+                key={p.id || i}
+                onClick={() => setActiveIdx(i)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  i === activeIdx ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
           </div>
         )}
 
         <div className="p-5 space-y-5">
           {/* Timeline & Inspections — prominent at top */}
-          {(permit.typical_timeline || permit.inspections_required?.length > 0) && (
+          {(current.typical_timeline || current.inspections_required?.length > 0) && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {permit.typical_timeline && (
+              {current.typical_timeline && (
                 <div className="flex items-start gap-2.5 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
                   <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-blue-700 mb-0.5">Typical Timeline</p>
-                    <p className="text-xs text-blue-800">{permit.typical_timeline}</p>
+                    <p className="text-xs text-blue-800">{current.typical_timeline}</p>
                   </div>
                 </div>
               )}
-              {permit.inspections_required?.length > 0 && (
+              {current.inspections_required?.length > 0 && (
                 <div className="flex items-start gap-2.5 px-3 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
                   <ClipboardList className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-emerald-700 mb-0.5">Inspections Required</p>
                     <ul className="space-y-0.5">
-                      {permit.inspections_required.map((ins, i) => (
+                      {current.inspections_required.map((ins, i) => (
                         <li key={i} className="text-xs text-emerald-800">• {ins}</li>
                       ))}
                     </ul>
@@ -114,8 +136,8 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             </div>
           )}
 
-          {permit.description && (
-            <p className="text-gray-600 text-sm leading-relaxed">{permit.description}</p>
+          {current.description && (
+            <p className="text-gray-600 text-sm leading-relaxed">{current.description}</p>
           )}
 
           {/* Requirements — Contractor only */}
@@ -127,7 +149,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 <span className="text-xs font-normal text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Contractor</span>
               </h4>
               <ul className="space-y-1.5">
-                {permit.typical_requirements.map((req, i) => (
+                {current.typical_requirements.map((req, i) => (
                   <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-orange-400 mt-0.5 flex-shrink-0" />
                     {req}
@@ -139,7 +161,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
 
           {/* Documents — both modes, interactive checklist */}
           {hasDocuments ? (
-            <DocumentChecklist documents={permit.documents_needed} permitName={permit.name} />
+            <DocumentChecklist documents={current.documents_needed} permitName={current.name} />
           ) : (
             <div className="text-xs text-gray-400 italic">No document list on file for this permit type.</div>
           )}
@@ -159,14 +181,14 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 <span className="ml-auto text-blue-200 text-xs">New</span>
               </div>
               <div className="p-3">
-                <ZonePhotoAnalyzer permitName={permit.name} permitDescription={permit.description} />
+                <ZonePhotoAnalyzer permitName={current.name} permitDescription={current.description} />
               </div>
             </div>
           </div>
 
           <div className="flex gap-3">
             <Link
-              to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(permit.name)}&city=${encodeURIComponent(city || "")}`}
+              to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(current.name)}&city=${encodeURIComponent(city || "")}`}
               className="flex-1"
             >
               <Button className="w-full text-white rounded-xl" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
@@ -174,7 +196,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 Calculate Fee
               </Button>
             </Link>
-            <Link to={createPageUrl("PermitInfo") + `?permit=${encodeURIComponent(permit.name)}`}>
+            <Link to={createPageUrl("PermitInfo") + `?permit=${encodeURIComponent(current.name)}`}>
               <Button variant="outline" className="rounded-xl gap-1.5">
                 <ExternalLink className="w-4 h-4" />
                 More Info
