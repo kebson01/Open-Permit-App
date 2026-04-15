@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat, MessageSquare } from "lucide-react";
 import RoleToggle from "@/components/projects/RoleToggle";
 import ProjectAIAssistant from "@/components/projects/tabs/ProjectAIAssistant";
 import HomeownerDocumentsTab from "@/components/projects/tabs/HomeownerDocumentsTab";
@@ -12,6 +12,7 @@ import ContractorDocumentsTab from "@/components/projects/tabs/ContractorDocumen
 import ContractorTimelineTab from "@/components/projects/tabs/ContractorTimelineTab";
 import ContractorBudgetTab from "@/components/projects/tabs/ContractorBudgetTab";
 import ContractorClientTab from "@/components/projects/tabs/ContractorClientTab";
+import MessagesTab from "@/components/projects/tabs/MessagesTab";
 
 const STATUS_OPTIONS = ["planning", "permitting", "in_progress", "completed", "on_hold"];
 const STATUS_STYLES = {
@@ -28,6 +29,7 @@ const HOMEOWNER_TABS = [
   { id: "timeline",  label: "Timeline",     icon: Calendar },
   { id: "budget",    label: "Budget",       icon: DollarSign },
   { id: "team",      label: "Team",         icon: Users },
+  { id: "messages",  label: "Messages",     icon: MessageSquare },
 ];
 
 const CONTRACTOR_TABS = [
@@ -36,6 +38,7 @@ const CONTRACTOR_TABS = [
   { id: "timeline",  label: "Timeline",      icon: Calendar },
   { id: "budget",    label: "Budget",        icon: BarChart2 },
   { id: "client",    label: "Client & Team", icon: HardHat },
+  { id: "messages",  label: "Messages",      icon: MessageSquare },
 ];
 
 export default function ProjectDetail() {
@@ -246,6 +249,9 @@ export default function ProjectDetail() {
           )}
           {activeTab === "client" && (
             <ContractorClientTab project={project} currentUser={currentUser} onUpdate={setProject} />
+          )}
+          {activeTab === "messages" && (
+            <MessagesTab project={project} currentUser={currentUser} mode={viewRole} />
           )}
         </div>
       </div>

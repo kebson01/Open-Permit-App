@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Building2, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
+import NotificationBell from "@/components/projects/NotificationBell";
 import { base44 } from "@/api/base44Client";
 
 const centerNavLinks = [
@@ -238,6 +239,10 @@ export default function Layout({ children, currentPageName }) {
                 >
                   My Projects
                 </Link>
+              )}
+
+              {currentUser && (
+                <NotificationBell currentUser={currentUser} />
               )}
 
               {currentUser ? (
