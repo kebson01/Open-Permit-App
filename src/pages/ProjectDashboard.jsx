@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, FolderOpen, Search, Loader2, UserPlus } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, FolderOpen, Search, Loader2, Home, Briefcase } from "lucide-react";
 import NewProjectModal from "@/components/projects/NewProjectModal.jsx";
-import RoleToggle from "@/components/projects/RoleToggle";
 import HomeownerProjectCard from "@/components/projects/HomeownerProjectCard";
 import ContractorProjectCard from "@/components/projects/ContractorProjectCard";
 import AttentionBanner from "@/components/projects/AttentionBanner";
@@ -16,10 +15,48 @@ const SORT_OPTIONS = [
   { value: "deadline", label: "Deadline" },
 ];
 
+function RoleOnboarding({ onSelect, saving }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-lg w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">How are you using OpenPermit?</h1>
+          <p className="text-gray-500 text-sm">We'll tailor your experience based on your answer. You can change this later in account settings.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            onClick={() => onSelect("user")}
+            disabled={saving}
+            className="group p-6 bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-md transition-all text-left disabled:opacity-60"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+              <Home className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-base mb-1">I'm a Homeowner</h3>
+            <p className="text-sm text-gray-500 leading-snug">I'm managing permits for my own property</p>
+          </button>
+          <button
+            onClick={() => onSelect("contractor")}
+            disabled={saving}
+            className="group p-6 bg-white rounded-2xl border-2 border-gray-200 hover:border-orange-400 hover:shadow-md transition-all text-left disabled:opacity-60"
+          >
+            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-4 group-hover:bg-orange-100 transition-colors">
+              <Briefcase className="w-6 h-6 text-orange-600" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-base mb-1">I'm a Contractor</h3>
+            <p className="text-sm text-gray-500 leading-snug">I manage permits for multiple clients</p>
+          </button>
+        </div>
+        {saving && <div className="flex justify-center mt-6"><Loader2 className="w-5 h-5 animate-spin text-blue-400" /></div>}
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [viewRole, setViewRole] = useState("homeowner");
+  const [roleSelecting, setRoleSelecting] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -28,30 +65,25 @@ export default function ProjectDashboard() {
 
   useEffect(() => {
     base44.auth.me()
-      .then(u => {
-        setCurrentUser(u);
-        if (u?.role === "contractor") setViewRole("contractor");
-      })
+      .then(u => setCurrentUser(u))
       .catch(() => setCurrentUser(null))
       .finally(() => setAuthLoading(false));
   }, []);
 
-  const handleRoleChange = async (role) => {
-    setViewRole(role);
-    if (currentUser) {
-      try { await base44.auth.updateMe({ preferred_view: role }); } catch {}
-    }
+  const handleRoleSelect = async (role) => {
+    setRoleSelecting(true);
+    await base44.auth.updateMe({ role });
+    setCurrentUser(prev => ({ ...prev, role }));
+    setRoleSelecting(false);
   };
+
+  const viewRole = currentUser?.role === "contractor" ? "contractor" : "homeowner";
+  const hasSetRole = currentUser?.role === "contractor" || currentUser?.role === "user" || currentUser?.role === "admin";
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects", currentUser?.email],
     queryFn: () => base44.entities.Project.filter({ owner_email: currentUser.email }),
     enabled: !!currentUser,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Project.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
   });
 
   const filtered = projects
@@ -100,46 +132,42 @@ export default function ProjectDashboard() {
     );
   }
 
+  // Show onboarding if role not yet determined (new users default to "user" role only after going through this)
+  // Admin users skip onboarding
+  if (!hasSetRole) {
+    return <RoleOnboarding onSelect={handleRoleSelect} saving={roleSelecting} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
 
-        {/* Role Toggle */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <RoleToggle role={viewRole} onChange={handleRoleChange} />
-          <div className="flex gap-2">
-            {viewRole === "contractor" && (
-              <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-gray-300">
-                <UserPlus className="w-4 h-4" /> Import Client
-              </button>
+          <div>
+            {viewRole === "homeowner" ? (
+              <>
+                <h1 className="text-2xl font-bold text-gray-900">My Permit Projects</h1>
+                <p className="text-gray-500 text-sm mt-0.5">Track your permits, documents, and next steps</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-gray-900">Project Portfolio</h1>
+                <p className="text-gray-500 text-sm mt-0.5">
+                  Managing {activeProjects} active project{activeProjects !== 1 ? "s" : ""}
+                  {activeClients > 0 ? ` across ${activeClients} client${activeClients !== 1 ? "s" : ""}` : ""}
+                </p>
+              </>
             )}
-            <button
-              onClick={() => setShowNew(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-              style={{ background: "#3B82F6" }}
-            >
-              <Plus className="w-4 h-4" />
-              {viewRole === "contractor" ? "New Project" : "Start New Project"}
-            </button>
           </div>
-        </div>
-
-        {/* Page Header */}
-        <div className="mb-6">
-          {viewRole === "homeowner" ? (
-            <>
-              <h1 className="text-2xl font-bold text-gray-900">My Permit Projects</h1>
-              <p className="text-gray-500 text-sm mt-0.5">Track your permits, documents, and next steps</p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold text-gray-900">Project Portfolio</h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                Managing {activeProjects} active project{activeProjects !== 1 ? "s" : ""}
-                {activeClients > 0 ? ` across ${activeClients} client${activeClients !== 1 ? "s" : ""}` : ""}
-              </p>
-            </>
-          )}
+          <button
+            onClick={() => setShowNew(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "#3B82F6" }}
+          >
+            <Plus className="w-4 h-4" />
+            {viewRole === "contractor" ? "New Project" : "Start New Project"}
+          </button>
         </div>
 
         {/* Contractor: Attention Banner */}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckCircle, Sparkles, Clock, ClipboardList } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
-import DocumentChecklist from "./DocumentChecklist";
+import { base44 } from "@/api/base44Client";
 
 const PERMIT_IMAGES = {
   "Roof / Re-Roof":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4058cd09e_Roof.jpg",
@@ -41,11 +41,89 @@ const PERMIT_IMAGES = {
   "Underground Drainage":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
 };
 
-// Mode badge config
-const MODE_BADGE = {
-  homeowner: { label: "Homeowner View", color: "bg-emerald-100 text-emerald-700" },
-  contractor: { label: "Contractor View", color: "bg-orange-100 text-orange-700" },
+const DOC_EXPLANATIONS = {
+  "BCUBPA": "Broward County's standard permit application form. Download from the Broward County website.",
+  "Broward County Uniform Building Permit Application": "Broward County's standard permit application form. Download from the Broward County website.",
+  "Notice of Commencement": "A legal notice filed before work begins on projects over $2,500. Your contractor typically handles this.",
+  "Product Approval": "Manufacturer documentation showing the product meets Florida Building Code wind resistance requirements.",
+  "Signed and Sealed Plans": "Architectural or engineering drawings stamped by a licensed professional.",
+  "Energy Calculations": "A report showing your project meets Florida's energy efficiency requirements.",
+  "Contractor License": "A copy of your contractor's current state-issued license.",
+  "Property Survey": "A legal drawing of your property showing boundaries and existing structures.",
+  "Site Plan": "A drawing showing the layout of the project on your lot, including setbacks from property lines.",
+  "Structural Plans": "Engineering drawings detailing load-bearing elements of the structure.",
+  "Electrical Plans": "Diagrams of the electrical wiring and panel layout for the project.",
+  "Manufacturer's Specifications": "Technical documents from the product manufacturer showing installation requirements.",
+  "Homeowner Affidavit": "A signed statement confirming you are the owner and will occupy the home.",
+  "NOC": "Notice of Commencement — a legal notice filed before work begins on projects over $2,500.",
 };
+
+function DocumentsSection({ documents }) {
+  const [checked, setChecked] = useState({});
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+
+  const toggle = (doc) => {
+    const next = { ...checked, [doc]: !checked[doc] };
+    setChecked(next);
+    if (next[doc] && !showSavePrompt) {
+      base44.auth.isAuthenticated().then(authed => {
+        if (!authed) setShowSavePrompt(true);
+      });
+    }
+  };
+
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+          <FileText className="w-4 h-4 text-blue-600" />
+          Documents Needed
+        </h4>
+        {checkedCount > 0 && (
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+            {checkedCount}/{documents.length} ready
+          </span>
+        )}
+      </div>
+      <ul className="space-y-2.5">
+        {documents.map((doc, i) => (
+          <li key={i} onClick={() => toggle(doc)} className="flex items-start gap-2.5 cursor-pointer group">
+            {checked[doc]
+              ? <CheckSquare className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+              : <Square className="w-4 h-4 text-gray-300 group-hover:text-gray-500 mt-0.5 flex-shrink-0 transition-colors" />
+            }
+            <div>
+              <span className={`text-sm leading-snug transition-colors ${checked[doc] ? "line-through text-gray-400" : "text-gray-800 group-hover:text-gray-900"}`}>
+                {doc}
+              </span>
+              {DOC_EXPLANATIONS[doc] && (
+                <p className="text-xs text-gray-400 mt-0.5 leading-snug">{DOC_EXPLANATIONS[doc]}</p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {showSavePrompt && (
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
+          <LogIn className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-blue-800 mb-0.5">Save your checklist</p>
+            <p className="text-xs text-blue-600 mb-2">Create a free account to save your progress and come back anytime.</p>
+            <button
+              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Sign up / Log in →
+            </button>
+          </div>
+          <button onClick={() => setShowSavePrompt(false)} className="text-blue-400 hover:text-blue-600 text-xs">✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   const [activeIdx, setActiveIdx] = useState(0);
@@ -55,10 +133,9 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
   const allMatching = permit._allMatching || [permit];
   const current = allMatching[activeIdx] || permit;
 
-  const isContractor = userMode === "contractor";
-  const badge = MODE_BADGE[userMode];
   const hasRequirements = current.typical_requirements?.length > 0;
   const hasDocuments = current.documents_needed?.length > 0;
+  const hasInspections = current.inspections_required?.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -66,15 +143,17 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header with prominent close button */}
+        {/* Header */}
         <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <div className="flex-1 pr-3">
             <h3 className="text-white font-bold text-lg leading-snug">{current.name}</h3>
-            <span className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${badge.color}`}>
-              {badge.label}
-            </span>
+            {current.typical_timeline && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Clock className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
+                <span className="text-blue-200 text-xs">{current.typical_timeline}</span>
+              </div>
+            )}
           </div>
-          {/* Prominent X close button */}
           <button
             onClick={onClose}
             className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors border border-white/20"
@@ -84,6 +163,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           </button>
         </div>
 
+        {/* Permit image */}
         {PERMIT_IMAGES[current.name] && (
           <div className="w-full h-40 overflow-hidden">
             <img src={PERMIT_IMAGES[current.name]} alt={current.name} className="w-full h-full object-cover" />
@@ -108,67 +188,72 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         )}
 
         <div className="p-5 space-y-5">
-          {/* Timeline & Inspections — prominent at top */}
-          {(current.typical_timeline || current.inspections_required?.length > 0) && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {current.typical_timeline && (
-                <div className="flex items-start gap-2.5 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
-                  <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-blue-700 mb-0.5">Typical Timeline</p>
-                    <p className="text-xs text-blue-800">{current.typical_timeline}</p>
-                  </div>
-                </div>
-              )}
-              {current.inspections_required?.length > 0 && (
-                <div className="flex items-start gap-2.5 px-3 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
-                  <ClipboardList className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-emerald-700 mb-0.5">Inspections Required</p>
-                    <ul className="space-y-0.5">
-                      {current.inspections_required.map((ins, i) => (
-                        <li key={i} className="text-xs text-emerald-800">• {ins}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* Description */}
           {current.description && (
             <p className="text-gray-600 text-sm leading-relaxed">{current.description}</p>
           )}
 
-          {/* Requirements — Contractor only */}
-          {isContractor && hasRequirements && (
-            <div>
-              <h4 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-orange-500" />
-                Requirements
-                <span className="text-xs font-normal text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Contractor</span>
-              </h4>
-              <ul className="space-y-1.5">
-                {current.typical_requirements.map((req, i) => (
-                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <CheckCircle className="w-3.5 h-3.5 text-orange-400 mt-0.5 flex-shrink-0" />
-                    {req}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Requirements */}
+          {hasRequirements && (
+            <>
+              <hr className="border-gray-100" />
+              <div>
+                <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
+                  <Info className="w-4 h-4 text-indigo-500" />
+                  Requirements
+                </h4>
+                <ul className="space-y-2">
+                  {current.typical_requirements.map((req, i) => (
+                    <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
           )}
 
-          {/* Documents — both modes, interactive checklist */}
-          {hasDocuments ? (
-            <DocumentChecklist documents={current.documents_needed} permitName={current.name} />
-          ) : (
-            <div className="text-xs text-gray-400 italic">No document list on file for this permit type.</div>
+          {/* Documents */}
+          {hasDocuments && (
+            <>
+              <hr className="border-gray-100" />
+              <DocumentsSection documents={current.documents_needed} />
+            </>
           )}
 
-          {city && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl">
-              <span className="text-xs text-blue-600 font-medium">Selected City: {city}</span>
+          {/* Inspections */}
+          {hasInspections && (
+            <>
+              <hr className="border-gray-100" />
+              <div>
+                <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
+                  <ClipboardList className="w-4 h-4 text-emerald-500" />
+                  Inspections Required
+                </h4>
+                <ul className="space-y-2">
+                  {current.inspections_required.map((ins, i) => (
+                    <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
+                      {ins}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* Save checklist CTA for logged-in users */}
+          {(hasDocuments || hasRequirements) && (
+            <div
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white text-center cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
+              onClick={() => base44.auth.isAuthenticated().then(a => {
+                if (!a) base44.auth.redirectToLogin(window.location.href);
+                else window.location.href = "/ProjectDashboard";
+              })}
+            >
+              Save this checklist →
             </div>
           )}
 
