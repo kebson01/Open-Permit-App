@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, MapPin, User, DollarSign, Home, Calendar, Building2 } from "lucide-react";
+import { ArrowLeft, MapPin, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import PropertyCityPanel from "@/components/property/PropertyCityPanel";
@@ -31,11 +31,6 @@ function Section({ title, icon: Icon, children }) {
   );
 }
 
-function fmt(n) {
-  if (!n && n !== 0) return null;
-  return `$${Number(n).toLocaleString()}`;
-}
-
 export default function PropertyDetail({ property: p, onBack }) {
   const [permits, setPermits] = useState([]);
 
@@ -56,8 +51,6 @@ export default function PropertyDetail({ property: p, onBack }) {
 
   const legalDesc = [p.LEGAL_LINE_1, p.LEGAL_LINE_2, p.LEGAL_LINE_3, p.LEGAL_LINE_4]
     .filter(Boolean).join(" ");
-
-  const totalJust = (p.JUST_LAND_VALUE || 0) + (p.JUST_BUILDING_VALUE || 0) + (p.JUST_OTHER_VALUE || 0);
 
   return (
     <div>
@@ -100,29 +93,6 @@ export default function PropertyDetail({ property: p, onBack }) {
           {legalDesc && <Row label="Legal Description" value={legalDesc} />}
         </Section>
 
-        {/* Valuation */}
-        <Section title="Valuation & Taxes" icon={DollarSign}>
-          <Row label="Just Land Value" value={fmt(p.JUST_LAND_VALUE)} />
-          <Row label="Just Building Value" value={fmt(p.JUST_BUILDING_VALUE)} />
-          <Row label="Just Other Value" value={fmt(p.JUST_OTHER_VALUE)} />
-          <Row label="Total Just Value" value={fmt(totalJust)} />
-          <Row label="County Taxable" value={fmt(p.COUNTY_TAXABLE)} />
-          <Row label="School Taxable" value={fmt(p.SCHOOL_TAXABLE)} />
-          <Row label="City Taxable" value={fmt(p.CITY_TAXABLE)} />
-          <Row label="Exemption Amount" value={fmt(p.EXEMPTION_AMOUNT)} />
-          <Row label="Exemption Type" value={p.EXEMPTION_TYPE_EXPANDED || p.EXEMPTION_TYPE} />
-          <Row label="Homestead Exemption" value={fmt(p.HE1_AMOUNT)} />
-        </Section>
-
-        {/* Sales History */}
-        <Section title="Sales History" icon={Calendar}>
-          {p.SALE_DATE_1 && <Row label={p.SALE_DATE_1} value={`${p.DEED_TYPE_1 || ""} · ${fmt(p.STAMP_AMOUNT_1) || ""}`} />}
-          {p.SALE_DATE_2 && <Row label={p.SALE_DATE_2} value={`${p.DEED_TYPE_2 || ""} · ${fmt(p.STAMP_AMOUNT_2) || ""}`} />}
-          {p.SALE_DATE_3 && <Row label={p.SALE_DATE_3} value={`${p.DEED_TYPE_3 || ""} · ${fmt(p.STAMP_AMOUNT_3) || ""}`} />}
-          {p.SALE_DATE_4 && <Row label={p.SALE_DATE_4} value={`${p.DEED_TYPE_4 || ""} · ${fmt(p.STAMP_AMOUNT_4) || ""}`} />}
-          {p.SALE_DATE_5 && <Row label={p.SALE_DATE_5} value={`${p.DEED_TYPE_5 || ""} · ${fmt(p.STAMP_AMOUNT_5) || ""}`} />}
-          {!p.SALE_DATE_1 && <p className="text-sm text-gray-400">No sales history available</p>}
-        </Section>
       </div>
 
       <PropertyPermitOverlay permits={permits} />

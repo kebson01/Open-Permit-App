@@ -1,5 +1,6 @@
 import { MapPin, Home, User, ChevronRight } from "lucide-react";
 
+
 function formatAddress(p) {
   if (p.full_address) return p.full_address;
   return [
@@ -14,8 +15,6 @@ function formatAddress(p) {
 export default function PropertyCard({ property: p, onClick }) {
   const address = formatAddress(p);
   const city = p.SITUS_CITY || "";
-  const totalValue = (p.JUST_LAND_VALUE || 0) + (p.JUST_BUILDING_VALUE || 0) + (p.JUST_OTHER_VALUE || 0);
-
   return (
     <button
       onClick={onClick}
@@ -35,11 +34,6 @@ export default function PropertyCard({ property: p, onClick }) {
             {p.NAME_LINE_1 && (
               <span className="flex items-center gap-1">
                 <User className="w-3 h-3" /> {p.NAME_LINE_1}
-              </span>
-            )}
-            {totalValue > 0 && (
-              <span className="font-medium text-green-700">
-                ${totalValue.toLocaleString()} just value
               </span>
             )}
             {p.USE_TYPE && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}

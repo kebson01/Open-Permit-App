@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Building2, Loader2, ArrowLeft, User, MapPin, Calendar, Home, DollarSign, AlertTriangle, ClipboardList, Hash } from "lucide-react";
+import { Search, Building2, Loader2, ArrowLeft, User, MapPin, Home, AlertTriangle, ClipboardList } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -18,9 +18,9 @@ async function searchProperties(query) {
   const isFolio = /^\d+$/.test(q);
   let url;
   if (isFolio) {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties?FOLIO_NUMBER=eq.${encodeURIComponent(q)}&limit=10`;
+    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(q)}&limit=10`;
   } else {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties?full_address=ilike.*${encodeURIComponent(q)}*&limit=10`;
+    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.*${encodeURIComponent(q)}*&limit=10`;
   }
   const res = await fetch(url, { headers: HEADERS });
   return res.json();
@@ -30,11 +30,6 @@ async function fetchPermits(folioNumber) {
   const url = `${SUPABASE_URL}/rest/v1/weston_permit_records?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=200`;
   const res = await fetch(url, { headers: HEADERS });
   return res.json();
-}
-
-function fmt(n) {
-  if (!n) return "—";
-  return "$" + Number(n).toLocaleString();
 }
 
 const MODULE_COLORS = {
@@ -139,24 +134,6 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
           </dl>
         </div>
 
-        {/* Valuation */}
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Assessed Values</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Land Value</dt><dd className="font-medium text-green-700">{fmt(property.JUST_LAND_VALUE)}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Building Value</dt><dd className="font-medium text-green-700">{fmt(property.JUST_BUILDING_VALUE)}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">County Taxable</dt><dd className="font-medium text-blue-700">{fmt(property.COUNTY_TAXABLE)}</dd></div>
-          </dl>
-        </div>
-
-        {/* Last Sale */}
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Last Sale</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Sale Date</dt><dd className="text-gray-700">{property.SALE_DATE_1 || "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Sale Amount</dt><dd className="font-medium text-gray-800">{fmt(property.STAMP_AMOUNT_1)}</dd></div>
-          </dl>
-        </div>
       </div>
 
       {/* Permit History */}
