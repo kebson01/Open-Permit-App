@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Building2, Loader2, ArrowLeft, User, MapPin, Home, AlertTriangle, ClipboardList } from "lucide-react";
+import { Search, Building2, Loader2, ArrowLeft, MapPin, Home, AlertTriangle, ClipboardList } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -57,11 +57,6 @@ function PropertyCard({ property, onClick }) {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 truncate">{addr || "Unknown Address"}</p>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-            {property.NAME_LINE_1 && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
-                <User className="w-3 h-3" /> {property.NAME_LINE_1}
-              </span>
-            )}
             {property.SITUS_CITY && (
               <span className="text-xs text-gray-500 flex items-center gap-1">
                 <MapPin className="w-3 h-3" /> {property.SITUS_CITY}{property.SITUS_ZIP_CODE ? `, FL ${property.SITUS_ZIP_CODE}` : ""}
@@ -111,15 +106,12 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
 
       {/* Details grid */}
       <div className="grid sm:grid-cols-2 gap-4 mb-5">
-        {/* Ownership & Use */}
+        {/* Property Use */}
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Ownership & Use</h3>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Owner</dt><dd className="font-medium text-gray-800 text-right max-w-[60%] truncate">{property.NAME_LINE_1 || "—"}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Use Type</dt><dd className="text-gray-700">{property.USE_TYPE || "—"}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Use Code</dt><dd className="text-gray-700">{property.USE_CODE || "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Homestead</dt><dd className="text-gray-700">{property.HOMESTEAD_FLAG === "T" ? "Yes" : "No"}</dd></div>
-            {property.EXEMPTION_TYPE && <div className="flex justify-between"><dt className="text-gray-500">Exemption</dt><dd className="text-gray-700">{property.EXEMPTION_TYPE}</dd></div>}
           </dl>
         </div>
 
@@ -231,7 +223,7 @@ export default function PropertyGuide() {
             <h1 className="text-3xl font-bold text-white">Property Search</h1>
           </div>
           <p className="text-blue-200 text-sm mb-6">
-            Look up any Broward County property to see its permit history, zoning details, and ownership information.
+            Look up any Broward County property to see its permit history and building details.
           </p>
           <div className="flex gap-2 bg-white rounded-xl p-2 shadow-lg">
             <div className="flex-1 flex items-center gap-2 px-3">

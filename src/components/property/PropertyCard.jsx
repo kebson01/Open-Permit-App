@@ -1,4 +1,4 @@
-import { MapPin, Home, User, ChevronRight } from "lucide-react";
+import { MapPin, Home, ChevronRight } from "lucide-react";
 
 
 function formatAddress(p) {
@@ -31,11 +31,6 @@ export default function PropertyCard({ property: p, onClick }) {
             {city}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : ", FL"}
           </p>
           <div className="flex gap-4 mt-2 text-xs text-gray-500">
-            {p.NAME_LINE_1 && (
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" /> {p.NAME_LINE_1}
-              </span>
-            )}
             {p.USE_TYPE && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}
           </div>
           <p className="text-xs text-gray-400 mt-1">Folio: {p.FOLIO_NUMBER}</p>

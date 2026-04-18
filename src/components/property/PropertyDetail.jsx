@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, MapPin, User, Home } from "lucide-react";
+import { ArrowLeft, MapPin, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import PropertyCityPanel from "@/components/property/PropertyCityPanel";
@@ -49,9 +49,6 @@ export default function PropertyDetail({ property: p, onBack }) {
     p.SITUS_UNIT_NUMBER ? `Unit ${p.SITUS_UNIT_NUMBER}` : null,
   ].filter(Boolean).join(" ");
 
-  const legalDesc = [p.LEGAL_LINE_1, p.LEGAL_LINE_2, p.LEGAL_LINE_3, p.LEGAL_LINE_4]
-    .filter(Boolean).join(" ");
-
   return (
     <div>
       <Button variant="ghost" onClick={onBack} className="mb-4 -ml-2 text-gray-600">
@@ -65,34 +62,18 @@ export default function PropertyDetail({ property: p, onBack }) {
           <MapPin className="w-4 h-4" />
           {p.SITUS_CITY}, FL {p.SITUS_ZIP_CODE}
         </p>
-        <p className="text-xs text-gray-400 mt-1">Folio: {p.FOLIO_NUMBER} · Millage: {p.MILLAGE_CODE}</p>
+        <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {/* Owner */}
-        <Section title="Ownership" icon={User}>
-          <Row label="Owner" value={[p.NAME_LINE_1, p.NAME_LINE_2].filter(Boolean).join(", ")} />
-          <Row label="Mailing Address" value={p.ADDRESS_LINE_1} />
-          <Row label="City / State / ZIP" value={[p.CITY, p.STATE, p.ZIP].filter(Boolean).join(", ")} />
-          <Row label="Homestead" value={p.HOMESTEAD_FLAG === "Y" ? "Yes" : p.HOMESTEAD_FLAG === "N" ? "No" : null} />
-          <Row label="SOH Year" value={p.SOH_YEAR} />
-          <Row label="Domicile" value={p.OWNERS_DOMICILE} />
-        </Section>
-
         {/* Property Info */}
-        <Section title="Property Info" icon={Home}>
+        <Section title="Property Details" icon={Home}>
           <Row label="Use Type" value={p.USE_TYPE} />
-          <Row label="Use Code" value={p.USE_CODE} />
           <Row label="Year Built" value={p.BLDG_YEAR_BUILT || p.ACTUAL_YEAR_BUILT} />
-          <Row label="Construction Class" value={p.BLDG_CCLASS} />
-          <Row label="Improve Quality" value={p.BLDG_IMPROVE_QUAL} />
           <Row label="Bedrooms / Baths" value={p.BEDS || p.BATHS ? `${p.BEDS || "—"} bd / ${p.BATHS || "—"} ba` : null} />
           <Row label="Under Air Sq Ft" value={p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString()} />
           <Row label="Total Sq Ft" value={p.BLDG_TOT_SQ_FOOTAGE?.toLocaleString()} />
-          <Row label="Lot Sq Ft (GIS)" value={p.GIS_SQUARE_FOOT?.toLocaleString()} />
-          {legalDesc && <Row label="Legal Description" value={legalDesc} />}
         </Section>
-
       </div>
 
       <PropertyPermitOverlay permits={permits} />
