@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat, MessageSquare } from "lucide-react";
-import RoleToggle from "@/components/projects/RoleToggle";
 import ProjectAIAssistant from "@/components/projects/tabs/ProjectAIAssistant";
 import HomeownerDocumentsTab from "@/components/projects/tabs/HomeownerDocumentsTab";
 import HomeownerTimelineTab from "@/components/projects/tabs/HomeownerTimelineTab";
@@ -48,7 +47,6 @@ export default function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [viewRole, setViewRole] = useState("homeowner");
   const [activeTab, setActiveTab] = useState("ai");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -58,7 +56,6 @@ export default function ProjectDetail() {
     base44.auth.me()
       .then(u => {
         setCurrentUser(u);
-        if (u?.role === "contractor") setViewRole("contractor");
       })
       .catch(() => {});
   }, []);
@@ -69,11 +66,6 @@ export default function ProjectDetail() {
       .then(list => { if (list[0]) setProject(list[0]); })
       .finally(() => setLoading(false));
   }, [projectId]);
-
-  const handleRoleChange = (role) => {
-    setViewRole(role);
-    setActiveTab("ai");
-  };
 
   const saveStatus = async (newStatus) => {
     await base44.entities.Project.update(project.id, { status: newStatus });
@@ -118,17 +110,17 @@ export default function ProjectDetail() {
     </div>
   );
 
+  const viewRole = currentUser?.role === "contractor" ? "contractor" : "homeowner";
   const tabs = viewRole === "contractor" ? CONTRACTOR_TABS : HOMEOWNER_TABS;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8">
 
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="mb-4">
           <Link to="/ProjectDashboard" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Projects
           </Link>
-          <RoleToggle role={viewRole} onChange={handleRoleChange} />
         </div>
 
         {/* Project header card */}
