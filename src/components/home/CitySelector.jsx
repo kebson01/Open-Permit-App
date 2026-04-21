@@ -6,11 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 
 const CITIES = [
-  { name: "Weston", available: true },
-  { name: "Coral Springs", available: true },
-  { name: "Fort Lauderdale", available: true },
-  { name: "Hollywood", available: true },
-  { name: "Cooper City", available: true },
+  "Weston",
+  "Coral Springs",
+  "Fort Lauderdale",
+  "Hollywood",
+  "Cooper City",
 ];
 
 export default function CitySelector() {
@@ -47,7 +47,7 @@ export default function CitySelector() {
             </SelectTrigger>
             <SelectContent>
               {CITIES.map(c => (
-                <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
