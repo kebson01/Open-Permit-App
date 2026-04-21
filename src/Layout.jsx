@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Menu, X, MessageCircle, Send, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
+import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
+import FloatingAIButton from "@/components/ai/FloatingAIButton";
 import { base44 } from "@/api/base44Client";
 
 const centerNavLinks = [
@@ -11,116 +12,6 @@ const centerNavLinks = [
   { name: "Search Property", page: "PropertyGuide" },
 ];
 
-function Chatbot() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm your permitting assistant. Ask me anything about building permits, fees, or requirements across South Florida cities." }
-  ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = { role: "user", content: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput("");
-    setLoading(true);
-
-    const conversationContext = messages.slice(-6).map(m => `${m.role}: ${m.content}`).join("\n");
-    
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an expert building permit assistant for South Florida cities (Weston, Coral Springs, Fort Lauderdale, Hollywood, Cooper City) in Broward County, Florida. You help people understand permit requirements, fees, and processes.
-
-Previous conversation:
-${conversationContext}
-
-User question: ${input}
-
-Provide a helpful, concise answer. If you don't know specific city details, suggest they check the fee calculator or contact the local building department.`,
-    });
-    
-    setMessages(prev => [...prev, { role: "assistant", content: response }]);
-    setLoading(false);
-  };
-
-  return (
-    <>
-      <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full text-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-        style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
-      >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
-
-      {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" style={{ height: 480 }}>
-          <div className="px-5 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm">Permit Assistant</p>
-              <p className="text-blue-200 text-xs">Ask about permits, fees & more</p>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === "user" 
-                    ? "bg-[#0F3575] text-white rounded-br-md" 
-                    : "bg-white text-gray-700 shadow-sm border border-gray-100 rounded-bl-md"
-                }`}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-          
-          <div className="p-3 border-t bg-white">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask about permits..."
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={loading || !input.trim()}
-                className="w-10 h-10 rounded-xl text-white flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
-                style={{ background: "#3B82F6" }}
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -350,8 +241,8 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </footer>
 
-      {/* Chatbot */}
-      <Chatbot />
+      {/* Floating AI Button */}
+      <FloatingAIButton currentPageName={currentPageName} />
     </div>
   );
 }

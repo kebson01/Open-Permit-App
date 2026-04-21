@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import CitySelector from "../components/home/CitySelector";
+import HomeAISection from "../components/home/HomeAISection";
+import AIDrawer from "../components/ai/AIDrawer";
 import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight, Lock } from "lucide-react";
 
 const HOW_IT_WORKS = [
@@ -56,6 +58,14 @@ function ClickCard({ to, children, className, style }) {
 }
 
 export default function Home() {
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInitialMessage, setAiInitialMessage] = useState("");
+
+  const handleAsk = (msg) => {
+    setAiInitialMessage(msg);
+    setAiOpen(true);
+  };
+
   return (
     <div className="pb-16 md:pb-0" style={{ backgroundColor: "#F8FAFC" }}>
 
@@ -91,6 +101,17 @@ export default function Home() {
       <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 48 }}>
         <CitySelector />
       </div>
+
+      {/* ── AI SECTION ── */}
+      <HomeAISection onAsk={handleAsk} />
+
+      {/* AI Drawer */}
+      <AIDrawer
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        currentPageName="Home"
+        initialMessage={aiInitialMessage}
+      />
 
       {/* ── HOW IT WORKS ── */}
       <section style={{ padding: "48px 32px", textAlign: "center" }}>
