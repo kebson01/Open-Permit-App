@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 const CITIES = [
   { name: "Weston", available: true },
-  { name: "Coral Springs", available: false },
+  { name: "Coral Springs", available: true },
   { name: "Fort Lauderdale", available: false },
   { name: "Hollywood", available: false },
   { name: "Cooper City", available: false },

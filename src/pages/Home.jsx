@@ -18,7 +18,7 @@ const FEATURE_CARDS = [
   { icon: Building2, title: "Search any property", body: "Look up permit history on all 758,232 Broward parcels", page: "PropertyGuide" },
   { icon: Sparkles, title: "Let AI do the work", body: "Instant answers on requirements and local rules", page: "PermitGuide" },
   { icon: CheckCircle, title: "Save your checklist", body: "Create a free account to track your document progress", page: "ProjectDashboard" },
-  { icon: BookOpen, title: "5 cities covered", body: "Weston live now — more Broward cities coming soon", page: "PermitGuide" },
+  { icon: BookOpen, title: "5 cities covered", body: "Weston & Coral Springs live now — more Broward cities coming soon", page: "PermitGuide" },
 ];
 
 const STATS = [
@@ -30,7 +30,7 @@ const STATS = [
 
 const CITIES = [
   { name: "Weston", available: true },
-  { name: "Coral Springs", available: false },
+  { name: "Coral Springs", available: true },
   { name: "Fort Lauderdale", available: false },
   { name: "Cooper City", available: false },
   { name: "Hollywood", available: false },

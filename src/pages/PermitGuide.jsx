@@ -47,9 +47,15 @@ const LABEL_TO_MAP_ZONE = {
   "Utility Boring":           "structure",
 };
 
-async function fetchPermitTypes() {
+const CITY_PERMIT_TABLES = {
+  "Weston": "weston_permit_types",
+  "Coral Springs": "coral_springs_permit_types",
+};
+
+async function fetchPermitTypes(city = "Weston") {
+  const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/weston_permit_types?select=*`,
+    `${SUPABASE_URL}/rest/v1/${table}?select=*`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -67,8 +73,8 @@ async function fetchPermitTypes() {
 }
 
 const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
-const AVAILABLE_CITIES = ["Weston"];
-const COMING_SOON_CITIES = ["Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const AVAILABLE_CITIES = ["Weston", "Coral Springs"];
+const COMING_SOON_CITIES = ["Fort Lauderdale", "Hollywood", "Cooper City"];
 
 const RESIDENTIAL_VIEWS = [
   { id: "front",  label: "Front View",   icon: Home },
@@ -236,8 +242,8 @@ export default function PermitGuide() {
   const [aiInitialMessage, setAiInitialMessage] = useState("");
 
   const { data: allPermits = [] } = useQuery({
-    queryKey: ["supabase-permit-types"],
-    queryFn: fetchPermitTypes,
+    queryKey: ["supabase-permit-types", city],
+    queryFn: () => fetchPermitTypes(city),
     staleTime: 5 * 60 * 1000,
   });
 

@@ -21,47 +21,66 @@ async function fetchPlainEnglishDocs() {
   }
 }
 
+const CITY_APPLY_INFO = {
+  "Weston": {
+    portalUrl: "https://www.westonfl.org/Permits",
+    address: "17200 Royal Palm Blvd, Weston, FL 33326",
+    mapsUrl: "https://maps.google.com/?q=17200+Royal+Palm+Blvd,+Weston,+FL+33326",
+    phone: "(954) 385-2600",
+    phoneRaw: "9543852600",
+    hours: "Mon–Fri, 8:00 AM – 4:30 PM",
+  },
+  "Coral Springs": {
+    portalUrl: "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
+    address: "9500 West Sample Road, Coral Springs, FL 33065",
+    mapsUrl: "https://maps.google.com/?q=9500+West+Sample+Road,+Coral+Springs,+FL+33065",
+    phone: "(954) 344-1025",
+    phoneRaw: "9543441025",
+    hours: "Mon–Thu 7:30AM–5:00PM, Fri 7:30AM–2:30PM",
+  },
+};
+
 function ReadyToApply({ city }) {
-  const isWeston = !city || city === "Weston";
+  const info = CITY_APPLY_INFO[city] || CITY_APPLY_INFO["Weston"];
+  const isSupported = !!CITY_APPLY_INFO[city];
+
   return (
     <div className="rounded-xl p-4 space-y-3" style={{ background: "#0F3575" }}>
       <div>
         <p className="text-white font-bold text-base">Ready to apply?</p>
         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-          {isWeston ? "Once you have all your documents, here's how to submit:" : "Contact your local building department to submit your application."}
+          {isSupported ? "Once you have all your documents, here's how to submit:" : "Contact your local building department to submit your application."}
         </p>
       </div>
-      {isWeston ? (
+      {isSupported && (
         <div className="space-y-2">
           <a
-            href="https://www.westonfl.org/Permits"
+            href={info.portalUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "#3B82F6" }}
           >
-            <Globe className="w-4 h-4" /> Apply Online
+            <Globe className="w-4 h-4" /> Apply Online →
           </a>
           <a
-            href="https://maps.google.com/?q=17200+Royal+Palm+Blvd,+Weston,+FL+33326"
+            href={info.mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
           >
             <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span>Visit in Person — 17200 Royal Palm Blvd, Weston, FL 33326</span>
+            <span>Visit in Person — {info.address}</span>
           </a>
           <a
-            href="tel:9543852600"
+            href={`tel:${info.phoneRaw}`}
             className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
           >
             <Phone className="w-4 h-4 flex-shrink-0" />
-            <span>Call Building Dept — (954) 385-2600</span>
+            <span>Call Building Dept — {info.phone}</span>
           </a>
+          <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: {info.hours}</p>
         </div>
-      ) : null}
-      {isWeston && (
-        <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: Mon–Fri, 8:00 AM – 4:30 PM</p>
       )}
     </div>
   );
@@ -102,24 +121,32 @@ const PERMIT_IMAGES = {
   "Underground Drainage":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
 };
 
-const DOC_EXPLANATIONS = {
-  "BCUBPA": "Broward County's standard permit application form. Download from the Broward County website.",
-  "Broward County Uniform Building Permit Application": "Broward County's standard permit application form. Download from the Broward County website.",
-  "Notice of Commencement": "A legal notice filed before work begins on projects over $2,500. Your contractor typically handles this.",
-  "Product Approval": "Manufacturer documentation showing the product meets Florida Building Code wind resistance requirements.",
-  "Signed and Sealed Plans": "Architectural or engineering drawings stamped by a licensed professional.",
-  "Energy Calculations": "A report showing your project meets Florida's energy efficiency requirements.",
-  "Contractor License": "A copy of your contractor's current state-issued license.",
-  "Property Survey": "A legal drawing of your property showing boundaries and existing structures.",
-  "Site Plan": "A drawing showing the layout of the project on your lot, including setbacks from property lines.",
-  "Structural Plans": "Engineering drawings detailing load-bearing elements of the structure.",
-  "Electrical Plans": "Diagrams of the electrical wiring and panel layout for the project.",
-  "Manufacturer's Specifications": "Technical documents from the product manufacturer showing installation requirements.",
-  "Homeowner Affidavit": "A signed statement confirming you are the owner and will occupy the home.",
-  "NOC": "Notice of Commencement — a legal notice filed before work begins on projects over $2,500.",
+const CITY_NOC_THRESHOLD = {
+  "Coral Springs": "$5,000",
 };
 
-function DocumentsSection({ documents, plainEnglishMap }) {
+function getDocExplanations(city) {
+  const nocThreshold = CITY_NOC_THRESHOLD[city] || "$2,500";
+  return {
+    "BCUBPA": "Broward County's standard permit application form. Download from the Broward County website.",
+    "Broward County Uniform Building Permit Application": "Broward County's standard permit application form. Download from the Broward County website.",
+    "Notice of Commencement": `A legal notice filed before work begins on projects over ${nocThreshold}. Your contractor typically handles this.`,
+    "Product Approval": "Manufacturer documentation showing the product meets Florida Building Code wind resistance requirements.",
+    "Signed and Sealed Plans": "Architectural or engineering drawings stamped by a licensed professional.",
+    "Energy Calculations": "A report showing your project meets Florida's energy efficiency requirements.",
+    "Contractor License": "A copy of your contractor's current state-issued license.",
+    "Property Survey": "A legal drawing of your property showing boundaries and existing structures.",
+    "Site Plan": "A drawing showing the layout of the project on your lot, including setbacks from property lines.",
+    "Structural Plans": "Engineering drawings detailing load-bearing elements of the structure.",
+    "Electrical Plans": "Diagrams of the electrical wiring and panel layout for the project.",
+    "Manufacturer's Specifications": "Technical documents from the product manufacturer showing installation requirements.",
+    "Homeowner Affidavit": "A signed statement confirming you are the owner and will occupy the home.",
+    "NOC": `Notice of Commencement — a legal notice filed before work begins on projects over ${nocThreshold}.`,
+  };
+}
+
+function DocumentsSection({ documents, plainEnglishMap, city }) {
+  const DOC_EXPLANATIONS = getDocExplanations(city);
   const [checked, setChecked] = useState({});
   const [showSavePrompt, setShowSavePrompt] = useState(false);
 
@@ -305,7 +332,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           {hasDocuments && (
             <>
               <hr className="border-gray-100" />
-              <DocumentsSection documents={current.documents_needed} plainEnglishMap={plainEnglishMap} />
+              <DocumentsSection documents={current.documents_needed} plainEnglishMap={plainEnglishMap} city={city} />
             </>
           )}
 
@@ -327,7 +354,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               </ul>
             ) : (
               <p className="text-sm text-gray-500 italic">
-                Contact Weston Building Department at (954) 385-2600 to confirm required inspections.
+                Contact {city || "Weston"} Building Department to confirm required inspections.
               </p>
             )}
           </div>

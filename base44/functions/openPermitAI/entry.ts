@@ -13,10 +13,15 @@ const ORDINANCE_URLS = {
 
 const CITY_PORTAL_URLS = {
   "Weston": "https://www.westonfl.org/Permits",
+  "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
   "Hollywood": "https://www.hollywoodfl.org/permits",
-  "Coral Springs": "https://www.coralsprings.org/departments/development-services/building",
   "Fort Lauderdale": "https://www.fortlauderdale.gov/departments/sustainable-development/building-services",
   "Cooper City": "https://www.coopercityfl.org/building",
+};
+
+const CITY_DEPT_INFO = {
+  "Weston": { phone: "(954) 385-2600", hours: "Mon–Fri 8:00AM–4:30PM", noc_threshold: "$2,500" },
+  "Coral Springs": { phone: "(954) 344-1025", hours: "Mon–Thu 7:30AM–5:00PM, Fri 7:30AM–2:30PM", noc_threshold: "$5,000" },
 };
 
 // Only use web search for specific zoning/ordinance data NOT in the permit DB
@@ -27,10 +32,16 @@ function needsWebSearch(message) {
   return ZONING_ONLY_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
 }
 
-async function fetchLocalPermitData() {
+const CITY_PERMIT_TABLES = {
+  "Weston": "weston_permit_types",
+  "Coral Springs": "coral_springs_permit_types",
+};
+
+async function fetchLocalPermitData(city = "Weston") {
   try {
+    const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/weston_permit_types?select=name,category,description,typical_requirements,documents_needed,inspections_required,typical_timeline`,
+      `${SUPABASE_URL}/rest/v1/${table}?select=name,category,description,typical_requirements,documents_needed,inspections_required,typical_timeline`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     const data = await res.json();
@@ -71,7 +82,7 @@ Deno.serve(async (req) => {
     const portalUrl = CITY_PORTAL_URLS[currentCity] || CITY_PORTAL_URLS["Weston"];
 
     // Always fetch local permit data first
-    const permitData = await fetchLocalPermitData();
+    const permitData = await fetchLocalPermitData(currentCity);
     const localDataSection = permitData.length
       ? `\n\nCOMPLETE PERMIT DATABASE FOR ${currentCity.toUpperCase()} (${permitData.length} permit types):\n${formatPermitDataForPrompt(permitData)}`
       : "";
@@ -131,6 +142,8 @@ Deno.serve(async (req) => {
       required: ["direct_answer", "is_plain_text"]
     };
 
+    const cityDeptInfo = CITY_DEPT_INFO[currentCity] || CITY_DEPT_INFO["Weston"];
+
     const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. Current city: ${currentCity}.${localDataSection}
 
 INSTRUCTIONS:
@@ -140,10 +153,11 @@ INSTRUCTIONS:
 - Never fetch ordinance URLs directly — reference them as links only.
 - Ordinance URLs for reference: Weston: ${ORDINANCE_URLS["Weston"]} | Coral Springs: ${ORDINANCE_URLS["Coral Springs"]} | Fort Lauderdale: ${ORDINANCE_URLS["Fort Lauderdale"]} | Hollywood: ${ORDINANCE_URLS["Hollywood"]} | Cooper City: ${ORDINANCE_URLS["Cooper City"]}
 - Always respond with structured JSON matching the schema.
-- portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="(954) 385-2600" (Weston), dept_hours="Mon–Fri 8AM–4:30PM".
-- quick_facts.how_to_apply: "Online or in person" for Weston.
+- portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="${cityDeptInfo.phone}", dept_hours="${cityDeptInfo.hours}".
+- quick_facts.how_to_apply: "Online or in person" for both Weston and Coral Springs.
+- Notice of Commencement threshold for ${currentCity}: ${cityDeptInfo.noc_threshold}. Use the correct threshold when mentioning NOC requirements.
 - requirements_note: always add "These are ${currentCity}'s requirements. Your HOA may have additional rules." for residential projects.
-- caveats: always include HOA note for residential Weston projects.
+- caveats: always include HOA note for residential projects.
 - For conversational/meta questions: set is_plain_text=true and populate plain_text_reply only.
 - Max 6 documents and 6 requirements. direct_answer is one sentence.`;
 
