@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Send, Sparkles, Building2 } from "lucide-react";
+import { X, Send, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import AIResponseCard from "./AIResponseCard";
 
 const PAGE_PROMPTS = {
   Home: [
@@ -82,7 +83,7 @@ function TypingIndicator() {
 
 export default function AIDrawer({ open, onClose, currentPageName, initialMessage }) {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm OpenPermit AI. Ask me anything about permits, fees, and requirements in South Florida — I specialize in Broward County." }
+    { role: "assistant", content: "Hi! I'm OpenPermit AI. Ask me anything about permits, fees, and requirements in South Florida — I specialize in Broward County.", structured: null }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -130,8 +131,11 @@ export default function AIDrawer({ open, onClose, currentPageName, initialMessag
       pageName: pageDisplay,
     });
 
-    const reply = response.data?.reply || "I'm sorry, I had trouble answering that. Please try again.";
-    setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    const data = response.data;
+    // Support both structured (new) and plain text (fallback)
+    const structured = data?.structured || null;
+    const reply = data?.reply || null;
+    setMessages(prev => [...prev, { role: "assistant", content: reply || "", structured }]);
     setLoading(false);
   };
 
@@ -184,19 +188,29 @@ export default function AIDrawer({ open, onClose, currentPageName, initialMessag
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-1" style={{ background: "#0F3575" }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-1 flex-shrink-0" style={{ background: "#0F3575" }}>
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
               )}
-              <div
-                className="max-w-[82%] px-4 py-2.5 text-sm leading-relaxed"
-                style={msg.role === "user"
-                  ? { background: "#3B82F6", color: "#fff", borderRadius: "12px 12px 2px 12px" }
-                  : { background: "#F8FAFC", color: "#0F172A", borderRadius: "12px 12px 12px 2px", border: "1px solid #E2E8F0" }
-                }
-              >
-                {msg.content}
-              </div>
+              {msg.role === "user" ? (
+                <div
+                  className="max-w-[82%] px-4 py-2.5 text-sm leading-relaxed"
+                  style={{ background: "#3B82F6", color: "#fff", borderRadius: "12px 12px 2px 12px" }}
+                >
+                  {msg.content}
+                </div>
+              ) : msg.structured ? (
+                <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                  <AIResponseCard structured={msg.structured} />
+                </div>
+              ) : (
+                <div
+                  className="max-w-[82%] px-4 py-2.5 text-sm leading-relaxed"
+                  style={{ background: "#F8FAFC", color: "#0F172A", borderRadius: "12px 12px 12px 2px", border: "1px solid #E2E8F0" }}
+                >
+                  {msg.content}
+                </div>
+              )}
             </div>
           ))}
           {loading && <TypingIndicator />}
