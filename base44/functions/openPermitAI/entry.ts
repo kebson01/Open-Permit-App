@@ -19,11 +19,12 @@ const CITY_PORTAL_URLS = {
   "Cooper City": "https://www.coopercityfl.org/building",
 };
 
-const ORDINANCE_KEYWORDS = ["setback", "zoning", "height limit", "allowed use", "ordinance", "section", "code of", "land use", "impervious", "floor area ratio", "FAR", "easement", "right of way"];
+// Only use web search for specific zoning/ordinance data NOT in the permit DB
+const ZONING_ONLY_KEYWORDS = ["setback", "height limit", "floor area ratio", "FAR", "impervious", "easement", "right of way", "ordinance section", "code section", "land use code"];
 
 function needsWebSearch(message) {
   const lower = message.toLowerCase();
-  return ORDINANCE_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+  return ZONING_ONLY_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
 }
 
 async function fetchLocalPermitData() {
@@ -52,7 +53,8 @@ function formatPermitDataForPrompt(permits) {
   return permits.map(p => {
     const reqs = parseArray(p.typical_requirements);
     const docs = parseArray(p.documents_needed);
-    return `- ${p.name} (${p.category}): ${p.description || ""}. Timeline: ${p.typical_timeline || "varies"}. Requirements: ${reqs.slice(0,3).join("; ") || "see dept"}. Docs: ${docs.slice(0,4).join("; ") || "see dept"}.`;
+    const inspections = parseArray(p.inspections_required);
+    return `- ${p.name} (${p.category}): ${p.description || ""}. Timeline: ${p.typical_timeline || "varies"}. Requirements: ${reqs.join("; ") || "see dept"}. Docs: ${docs.join("; ") || "see dept"}. Inspections: ${inspections.join("; ") || "varies"}.`;
   }).join("\n");
 }
 
@@ -66,20 +68,22 @@ Deno.serve(async (req) => {
     }
 
     const currentCity = city || "Weston";
-    const useWebSearch = needsWebSearch(message);
-    const ordinanceUrl = ORDINANCE_URLS[currentCity] || ORDINANCE_URLS["Weston"];
     const portalUrl = CITY_PORTAL_URLS[currentCity] || CITY_PORTAL_URLS["Weston"];
 
+    // Always fetch local permit data first
     const permitData = await fetchLocalPermitData();
     const localDataSection = permitData.length
-      ? `\nAVAILABLE PERMIT TYPES (use this data first):\n${formatPermitDataForPrompt(permitData)}`
+      ? `\n\nCOMPLETE PERMIT DATABASE FOR ${currentCity.toUpperCase()} (${permitData.length} permit types):\n${formatPermitDataForPrompt(permitData)}`
       : "";
+
+    // Only use web search for zoning/ordinance specifics not in the DB
+    const useWebSearch = needsWebSearch(message);
 
     const responseSchema = {
       type: "object",
       properties: {
-        direct_answer: { type: "string", description: "One sentence direct answer. Example: 'Yes — you need a Shed / Pergola / Gazebo permit in Weston.'" },
-        description: { type: "string", description: "One sentence plain-English context beneath the direct answer. Example: 'A permit ensures your shed meets Florida wind and safety requirements.'" },
+        direct_answer: { type: "string", description: "One sentence direct answer. Example: 'Yes — you need a Fence permit in Weston.'" },
+        description: { type: "string", description: "One sentence plain-English context beneath the direct answer." },
         quick_facts: {
           type: "object",
           properties: {
@@ -97,31 +101,31 @@ Deno.serve(async (req) => {
             properties: {
               plain_name: { type: "string" },
               official_name: { type: "string" },
-              description: { type: "string", description: "One sentence: what this document is and why it's needed." },
-              where_to_get: { type: "string", description: "Where to obtain this document, e.g. 'Download from Broward County website' or 'Your licensed contractor provides this'" },
-              download_url: { type: "string", description: "Direct download URL if available, otherwise null" }
+              description: { type: "string" },
+              where_to_get: { type: "string" },
+              download_url: { type: "string" }
             }
           }
         },
         requirements: {
           type: "array",
-          description: "Up to 6 plain-English requirements. Include specific thresholds and numbers where relevant (e.g. '$2,500 threshold for Notice of Commencement').",
+          description: "Up to 6 plain-English requirements from the database. Include specific thresholds and numbers where relevant.",
           items: { type: "string" }
         },
-        requirements_note: { type: "string", description: "A short note at the bottom of requirements, e.g. 'These are Weston requirements. Your HOA may have additional rules.' or null" },
+        requirements_note: { type: "string", description: "Short note e.g. 'These are Weston requirements. Your HOA may have additional rules.' or null" },
         zoning_info: { type: "string", description: "2-3 sentences about relevant zoning rules including key numbers (setbacks, height limits, lot coverage %). Null if not relevant." },
         zoning_url: { type: "string", description: "Link to ordinance source, or null" },
         caveats: {
           type: "array",
-          description: "Up to 3 important caveats. Always include HOA note if applicable. Example: 'Most Weston properties have an HOA — get written HOA approval BEFORE applying for the city permit.'",
+          description: "Up to 3 important caveats. Always include HOA note for residential Weston projects.",
           items: { type: "string" }
         },
         portal_url: { type: "string", description: "City permit portal URL" },
-        portal_label: { type: "string", description: "Button label e.g. 'Apply Online →' or 'Visit Weston Portal →'" },
-        city_name: { type: "string", description: "City name for contact strip, e.g. 'Weston'" },
-        dept_phone: { type: "string", description: "Building department phone, e.g. '(954) 385-2600'" },
-        dept_hours: { type: "string", description: "Hours, e.g. 'Mon–Fri 8AM–4:30PM'" },
-        is_plain_text: { type: "boolean", description: "Set to true ONLY for greetings or meta questions that don't fit the card format." },
+        portal_label: { type: "string", description: "Button label e.g. 'Apply Online →'" },
+        city_name: { type: "string", description: "City name e.g. 'Weston'" },
+        dept_phone: { type: "string", description: "Building department phone e.g. '(954) 385-2600'" },
+        dept_hours: { type: "string", description: "Hours e.g. 'Mon–Fri 8AM–4:30PM'" },
+        is_plain_text: { type: "boolean", description: "Set to true ONLY for greetings or meta questions." },
         plain_text_reply: { type: "string", description: "Only populated when is_plain_text is true" }
       },
       required: ["direct_answer", "is_plain_text"]
@@ -129,20 +133,19 @@ Deno.serve(async (req) => {
 
     const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. Current city: ${currentCity}.${localDataSection}
 
-Ordinance URLs (reference only, never fetch): Weston: ${ORDINANCE_URLS["Weston"]} | Coral Springs: ${ORDINANCE_URLS["Coral Springs"]} | Fort Lauderdale: ${ORDINANCE_URLS["Fort Lauderdale"]} | Hollywood: ${ORDINANCE_URLS["Hollywood"]} | Cooper City: ${ORDINANCE_URLS["Cooper City"]}
-
-Rules:
-- Answer from local permit data above first. Only use web search for specific ordinance sections not covered.
+INSTRUCTIONS:
+- You have been provided with the complete permit database for ${currentCity} above. Use this data to answer the question FIRST.
+- For questions about permit types, documents, requirements, timelines, and fees: answer ONLY from the provided database. Do NOT use web search.
+- Only use web search when the question requires information NOT in the provided data (e.g. specific ordinance section numbers, exact setback measurements in feet, HOA rules, zoning lot coverage percentages).
 - Never fetch ordinance URLs directly — reference them as links only.
-- Always respond with structured JSON matching the provided schema.
-- For permit questions: populate all fields. portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="(954) 385-2600" (for Weston), dept_hours="Mon–Fri 8AM–4:30PM".
-- description: one plain-English sentence explaining WHY the permit is needed (safety, code compliance, etc.).
+- Ordinance URLs for reference: Weston: ${ORDINANCE_URLS["Weston"]} | Coral Springs: ${ORDINANCE_URLS["Coral Springs"]} | Fort Lauderdale: ${ORDINANCE_URLS["Fort Lauderdale"]} | Hollywood: ${ORDINANCE_URLS["Hollywood"]} | Cooper City: ${ORDINANCE_URLS["Cooper City"]}
+- Always respond with structured JSON matching the schema.
+- portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="(954) 385-2600" (Weston), dept_hours="Mon–Fri 8AM–4:30PM".
 - quick_facts.how_to_apply: "Online or in person" for Weston.
-- documents: for each, include description (what it is + why needed), where_to_get (where to obtain), and download_url if you know a real one.
 - requirements_note: always add "These are ${currentCity}'s requirements. Your HOA may have additional rules." for residential projects.
 - caveats: always include HOA note for residential Weston projects.
 - For conversational/meta questions: set is_plain_text=true and populate plain_text_reply only.
-- Max 6 documents and 6 requirements. direct_answer is one sentence answering the question directly.`;
+- Max 6 documents and 6 requirements. direct_answer is one sentence.`;
 
     const conversationContext = history ? `\nConversation:\n${history}` : "";
 
@@ -153,7 +156,6 @@ Rules:
       response_json_schema: responseSchema,
     });
 
-    // reply is already a parsed object when response_json_schema is set
     const structured = typeof reply === "object" ? reply : null;
 
     if (!structured) {

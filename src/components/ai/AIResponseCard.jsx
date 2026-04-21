@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Phone } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 
-function CollapsibleSection({ emoji, title, count, children }) {
+function CollapsibleSection({ title, count, children }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border border-gray-100 rounded-xl overflow-hidden">
@@ -10,7 +10,6 @@ function CollapsibleSection({ emoji, title, count, children }) {
         className="w-full flex items-center justify-between px-3 py-2.5 bg-white hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm">{emoji}</span>
           <span className="text-xs font-semibold text-gray-800">{title}</span>
           {count != null && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#1D4ED8" }}>
@@ -111,10 +110,10 @@ export default function AIResponseCard({ structured }) {
   const hasCaveats = caveats && caveats.length > 0;
 
   const facts = [];
-  if (quick_facts?.review_time) facts.push({ label: "⏱ Review", value: quick_facts.review_time, navy: false });
-  if (quick_facts?.cost_estimate) facts.push({ label: "💰 Cost", value: quick_facts.cost_estimate, navy: false });
-  if (quick_facts?.contractor_required) facts.push({ label: "🔧 Contractor", value: quick_facts.contractor_required, navy: false });
-  if (quick_facts?.how_to_apply) facts.push({ label: "📬 Apply", value: quick_facts.how_to_apply, navy: true });
+  if (quick_facts?.review_time) facts.push({ label: "Review", value: quick_facts.review_time });
+  if (quick_facts?.cost_estimate) facts.push({ label: "Cost", value: quick_facts.cost_estimate });
+  if (quick_facts?.contractor_required) facts.push({ label: "Contractor", value: quick_facts.contractor_required });
+  if (quick_facts?.how_to_apply) facts.push({ label: "Apply", value: quick_facts.how_to_apply });
 
   return (
     <div className="space-y-3 w-full">
@@ -137,10 +136,7 @@ export default function AIResponseCard({ structured }) {
             <span
               key={i}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-              style={f.navy
-                ? { background: "#EFF6FF", color: "#1E3A8A" }
-                : { background: "#EFF6FF", color: "#1D4ED8" }
-              }
+              style={{ background: "#EFF6FF", color: "#1D4ED8" }}
             >
               <span className="opacity-60 text-[10px]">{f.label}:</span> {f.value}
             </span>
@@ -151,7 +147,7 @@ export default function AIResponseCard({ structured }) {
       {/* 3. Collapsible sections */}
       <div className="space-y-1.5">
         {hasDocuments && (
-          <CollapsibleSection emoji="📋" title="Documents needed" count={`${documents.length} items`}>
+          <CollapsibleSection title="Documents needed" count={`${documents.length} items`}>
             <ul className="space-y-0">
               {documents.map((doc, i) => (
                 <DocumentItem key={i} doc={doc} />
@@ -164,7 +160,7 @@ export default function AIResponseCard({ structured }) {
         )}
 
         {hasRequirements && (
-          <CollapsibleSection emoji="✅" title="Requirements" count={requirements.length}>
+          <CollapsibleSection title="Requirements" count={requirements.length}>
             <ul className="space-y-2 pt-1">
               {requirements.map((req, i) => (
                 <li key={i} className="flex items-start gap-2">
@@ -185,7 +181,7 @@ export default function AIResponseCard({ structured }) {
         )}
 
         {hasZoning && (
-          <CollapsibleSection emoji="🔍" title="Zoning & ordinances">
+          <CollapsibleSection title="Zoning & ordinances">
             <p className="text-xs text-gray-700 leading-relaxed pt-1">
               <HighlightedText text={zoning_info} />
             </p>
@@ -198,7 +194,7 @@ export default function AIResponseCard({ structured }) {
         )}
 
         {hasCaveats && (
-          <CollapsibleSection emoji="⚠️" title="Things to know first">
+          <CollapsibleSection title="Things to know first">
             <ul className="space-y-2 pt-1">
               {caveats.map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
@@ -236,7 +232,6 @@ export default function AIResponseCard({ structured }) {
       {/* 5. Building dept contact strip */}
       {dept_phone && (
         <div className="rounded-xl px-3 py-2.5 flex items-center justify-center gap-1.5 flex-wrap" style={{ background: "#F8FAFC" }}>
-          <Phone className="w-3 h-3 flex-shrink-0" style={{ color: "#475569" }} />
           <span style={{ fontSize: 12, color: "#475569" }}>
             Questions? Call {city_name || "Weston"} Building Dept:&nbsp;
             <a href={`tel:${dept_phone.replace(/\D/g, "")}`} className="font-semibold hover:underline" style={{ color: "#475569" }}>{dept_phone}</a>
