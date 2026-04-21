@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Calculator, MapPin, Info, AlertTriangle, RotateCcw, FileText, DollarSign, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 const ALL_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
@@ -38,50 +41,30 @@ const CATEGORY_META = {
 };
 
 function calculateFee(rule, constructionCost, surcharge) {
+  const cost = parseFloat(constructionCost) || 0;
   const breakdown = [];
-  let permitFee = 0;
 
-  if (rule.calc_type === "flat") {
-    permitFee = rule.flat_fee || 0;
-    breakdown.push({ label: "Permit Fee", amount: permitFee });
-  } else if (rule.calc_type === "flat_plus_pct") {
-    const cost = constructionCost || 0;
-    const pctFee = cost * (rule.rate_percentage / 100);
+  // Base permit fee
+  let permitFee = 0;
+  if (rule.calc_type === "flat_plus_pct") {
+    const pctFee = cost * ((rule.rate_percentage || 0) / 100);
     permitFee = Math.max(rule.base_fee || 0, pctFee);
-    breakdown.push({ label: "Base Permit Fee", amount: permitFee });
-  } else if (rule.calc_type === "flat_per_unit") {
-    permitFee = rule.flat_fee || rule.fee_per_unit || 0;
-    breakdown.push({ label: "Permit Fee", amount: permitFee });
-  } else if (rule.calc_type === "flat_plus_units") {
-    permitFee = rule.base_fee || 0;
-    breakdown.push({ label: "Base Permit Fee", amount: permitFee });
-  } else if (rule.calc_type === "tiered_cost") {
-    const cost = constructionCost || 0;
-    const tiers = rule.tiers_config ? JSON.parse(rule.tiers_config) : [];
-    let tierFee = rule.base_fee || 0;
-    for (const tier of tiers) {
-      if (cost > tier.min) {
-        const taxable = Math.min(cost, tier.max !== undefined ? tier.max : Infinity) - tier.min;
-        tierFee = (rule.base_fee || 0) + (tier.base || 0) + taxable * (tier.rate || 0);
-      }
-    }
-    permitFee = tierFee;
-    breakdown.push({ label: "Base Permit Fee", amount: permitFee });
+  } else if (rule.calc_type === "flat") {
+    permitFee = rule.flat_fee || rule.base_fee || 0;
   } else {
     permitFee = rule.flat_fee || rule.base_fee || 0;
-    breakdown.push({ label: "Permit Fee", amount: permitFee });
   }
+  breakdown.push({ label: "Base Permit Fee", amount: permitFee });
 
-  // Technology & Admin Fee
-  const techFee = rule.technology_admin_fee || (surcharge?.technology_admin || 0);
+  // Technology & Admin Fee (from rule row)
+  const techFee = rule.technology_admin_fee || 0;
   if (techFee > 0) {
     breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
   }
 
-  // State surcharges
+  // State surcharges (from city_surcharges table)
   let dcaFee = 0, dbprFee = 0, eduFee = 0;
   if (surcharge) {
-    const cost = constructionCost || 0;
     if (surcharge.dca_rate) {
       dcaFee = permitFee * surcharge.dca_rate;
       breakdown.push({ label: `State DCA Surcharge (${(surcharge.dca_rate * 100).toFixed(1)}%)`, amount: dcaFee });
@@ -97,7 +80,7 @@ function calculateFee(rule, constructionCost, surcharge) {
   }
 
   const total = permitFee + techFee + dcaFee + dbprFee + eduFee;
-  return { total, breakdown, permitFee };
+  return { total, breakdown };
 }
 
 export default function FeeCalculator() {
@@ -127,21 +110,19 @@ export default function FeeCalculator() {
 
   const loadCityData = async (cityName) => {
     setLoadingRules(true);
-    const [rules, surcharges] = await Promise.all([
-      base44.entities.FeeRule.filter({ city_name: cityName }),
-      base44.entities.CitySurcharge.filter({ city_name: cityName }),
+    const encoded = encodeURIComponent(cityName);
+    const [rulesRes, surchargeRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encoded}&order=sort_order.asc`, { headers: SB_HEADERS }),
+      fetch(`${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encoded}&limit=1`, { headers: SB_HEADERS }),
     ]);
-    setFeeRules(rules.sort((a, b) => {
-      const catA = CATEGORY_ORDER.indexOf(a.category);
-      const catB = CATEGORY_ORDER.indexOf(b.category);
-      if (catA !== catB) return catA - catB;
-      return (a.sort_order || 0) - (b.sort_order || 0);
-    }));
-    setSurcharge(surcharges[0] || null);
+    const rules = await rulesRes.json();
+    const surcharges = await surchargeRes.json();
+    setFeeRules(Array.isArray(rules) ? rules : []);
+    setSurcharge(Array.isArray(surcharges) && surcharges.length > 0 ? surcharges[0] : null);
     setLoadingRules(false);
   };
 
-  const needsCost = selectedRule && ["flat_plus_pct", "tiered_cost", "eng_cost_tier"].includes(selectedRule.calc_type);
+  const needsCost = selectedRule && selectedRule.calc_type === "flat_plus_pct" && (selectedRule.rate_percentage > 0);
   const canCalculate = selectedRule && (!needsCost || (constructionCost && parseFloat(constructionCost) > 0));
 
   const handleCalculate = () => {
