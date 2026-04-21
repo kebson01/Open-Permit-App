@@ -87,7 +87,12 @@ export default function HomeownerTeamTab({ project, currentUser }) {
       )}
 
       {collaborators.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">No team members yet. Add your contractor or other team members above.</div>
+        <div className="text-center py-8 space-y-2">
+          <p className="text-gray-500 text-sm font-medium">No team members added yet.</p>
+          <button onClick={() => setShowInvite(true)} className="text-xs text-white px-4 py-2 rounded-xl font-semibold" style={{ background: "#3B82F6" }}>
+            Add a contractor
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {collaborators.map(c => (

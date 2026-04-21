@@ -67,7 +67,7 @@ Write 2-3 sentences. No greeting needed, just the update text.`,
       <div className="flex-1 overflow-y-auto space-y-3 pb-2 pr-1">
         {visibleMessages.length === 0 ? (
           <div className="text-center py-10 text-gray-400 text-sm">
-            No messages yet. Start the conversation!
+            No messages yet. Start the conversation with your {isContractor ? "client" : "contractor or client"}.
           </div>
         ) : visibleMessages.map(msg => {
           const mine = isMyMessage(msg);

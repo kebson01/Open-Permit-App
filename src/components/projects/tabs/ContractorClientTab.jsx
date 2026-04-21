@@ -103,7 +103,12 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
       )}
 
       {collaborators.length === 0 && !project.client_name ? (
-        <div className="text-center py-8 text-gray-400 text-sm">No team members yet. Add your client or subcontractors above.</div>
+        <div className="text-center py-8 space-y-2">
+          <p className="text-gray-500 text-sm font-medium">No team members added yet.</p>
+          <button onClick={() => setShowInvite(true)} className="text-xs text-white px-4 py-2 rounded-xl font-semibold" style={{ background: "#f97316" }}>
+            Invite your client
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {collaborators.map(c => (

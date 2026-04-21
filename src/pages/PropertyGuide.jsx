@@ -153,7 +153,10 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
             <Loader2 className="w-4 h-4 animate-spin" /> Loading permits...
           </div>
         ) : permits.length === 0 ? (
-          <div className="text-center py-10 text-gray-400 text-sm">No permit records found for this parcel.</div>
+          <div className="text-center py-10">
+            <p className="text-gray-600 font-medium">No permit records found</p>
+            <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">This property has no permit history on file. This may mean no permitted work has been done, or records may predate our database.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -282,12 +285,15 @@ export default function PropertyGuide() {
                 <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
               </div>
             )}
-            {searched && !loading && (
-              <p className="text-sm text-gray-500 mb-4">
-                {results.length === 0
-                  ? "No properties found. Try a different address or folio number."
-                  : `${results.length} propert${results.length === 1 ? "y" : "ies"} found`}
-              </p>
+            {searched && !loading && results.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+                <p className="font-semibold text-gray-700">No properties found</p>
+                <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">Try searching by folio number, or check the spelling of the address. Only Broward County properties are available.</p>
+              </div>
+            )}
+            {searched && !loading && results.length > 0 && (
+              <p className="text-sm text-gray-500 mb-4">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
             )}
             <div className="grid gap-3">
               {results.map((prop, i) => (
@@ -296,9 +302,9 @@ export default function PropertyGuide() {
             </div>
             {!searched && !loading && (
               <div className="text-center py-16 text-gray-400">
-                <Building2 className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-                <p className="font-medium text-gray-500">Search for a Broward County property</p>
-                <p className="text-sm mt-1">Enter an address or folio number above to get started</p>
+                <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                <p className="font-medium text-gray-700 text-lg">Search for a property</p>
+                <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">Enter an address or folio number to look up any Broward County property and its permit history.</p>
               </div>
             )}
           </>

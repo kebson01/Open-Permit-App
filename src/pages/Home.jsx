@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import CitySelector from "../components/home/CitySelector";
-import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight } from "lucide-react";
+import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight, Lock } from "lucide-react";
 
 const HOW_IT_WORKS = [
   { num: "1", title: "Identify your permit", body: "Click on the part of your home you're improving to see exactly what permits apply", page: "PermitGuide" },
@@ -26,7 +26,13 @@ const STATS = [
   { value: "5", label: "Cities" },
 ];
 
-const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Cooper City", "Hollywood"];
+const CITIES = [
+  { name: "Weston", available: true },
+  { name: "Coral Springs", available: false },
+  { name: "Fort Lauderdale", available: false },
+  { name: "Cooper City", available: false },
+  { name: "Hollywood", available: false },
+];
 
 function ClickCard({ to, children, className, style }) {
   const [hovered, setHovered] = useState(false);
@@ -164,10 +170,11 @@ export default function Home() {
           ))}
         </div>
         <div className="flex flex-wrap justify-center gap-2 mt-5">
-          {CITIES.map(city => (
-            <span key={city} className="px-3 py-1 rounded-full"
-              style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
-              {city}
+          {CITIES.map(c => (
+            <span key={c.name} className="flex items-center gap-1 px-3 py-1 rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.1)", color: c.available ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)", fontSize: 11 }}>
+              {!c.available && <Lock className="w-2.5 h-2.5 flex-shrink-0" />}
+              {c.name}
             </span>
           ))}
         </div>

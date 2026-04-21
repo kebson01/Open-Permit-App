@@ -82,8 +82,10 @@ export default function NotificationBell({ currentUser }) {
 
   return (
     <div className="relative" ref={ref}>
+      <div className="relative group">
       <button
         onClick={() => { setOpen(!open); if (!open) fetchNotifications(); }}
+        aria-label="Notifications"
         className="relative p-1.5 rounded-lg hover:bg-white/10 text-blue-100 transition-colors"
       >
         <Bell className="w-5 h-5" />
@@ -93,6 +95,10 @@ export default function NotificationBell({ currentUser }) {
           </span>
         )}
       </button>
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 rounded-md text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50" style={{ background: "#0F172A", fontSize: 12, borderRadius: 6 }}>
+        Notifications
+      </div>
+      </div>
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">

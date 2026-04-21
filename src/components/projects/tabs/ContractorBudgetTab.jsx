@@ -116,7 +116,12 @@ export default function ContractorBudgetTab({ project }) {
       )}
 
       {items.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">No budget items yet. Add your first line item above.</div>
+        <div className="text-center py-8 space-y-2">
+          <p className="text-gray-500 text-sm font-medium">No budget items added yet.</p>
+          <button onClick={() => setShowAdd(true)} className="text-xs text-white px-4 py-2 rounded-xl font-semibold" style={{ background: "#3B82F6" }}>
+            Add a cost item
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {items.map(item => (
