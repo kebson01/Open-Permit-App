@@ -27,25 +27,32 @@ const CITY_DEPT_INFO = {
   "Cooper City": { phone: "(954) 434-4300", hours: "Mon–Fri 8AM–5PM", noc_threshold: "$2,500" },
 };
 
-// Only use web search for specific zoning/ordinance data NOT in the permit DB
-const ZONING_ONLY_KEYWORDS = ["setback", "height limit", "floor area ratio", "FAR", "impervious", "easement", "right of way", "ordinance section", "code section", "land use code"];
+// Only use web search for very specific questions not answerable from local data
+const WEB_SEARCH_KEYWORDS = ["hoa rule", "hoa restriction", "deed restriction", "historical district"];
 
-function needsWebSearch(message) {
+function needsWebSearch(message, hasZoningData) {
+  if (hasZoningData) return false; // local data covers it
   const lower = message.toLowerCase();
-  return ZONING_ONLY_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+  return WEB_SEARCH_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
 }
 
-const CITY_PERMIT_TABLES = {
-  "Weston": "weston_permit_types",
-  "Coral Springs": "coral_springs_permit_types",
-  "Fort Lauderdale": "fort_lauderdale_permit_types",
-  "Hollywood": "hollywood_permit_types",
-  "Cooper City": "cooper_city_permit_types",
-};
+// Fetch permit table name from cities
+async function getPermitTableName(city) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/cities?name=eq.${encodeURIComponent(city)}&select=permit_table_name&limit=1`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    const data = await res.json();
+    return (Array.isArray(data) && data[0]?.permit_table_name) || `${city.toLowerCase().replace(/ /g, "_")}_permit_types`;
+  } catch {
+    return `${city.toLowerCase().replace(/ /g, "_")}_permit_types`;
+  }
+}
 
 async function fetchLocalPermitData(city = "Weston") {
   try {
-    const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
+    const table = await getPermitTableName(city);
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/${table}?select=name,category,description,typical_requirements,documents_needed,inspections_required,typical_timeline&limit=500`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, Prefer: "count=none" } }
@@ -55,6 +62,56 @@ async function fetchLocalPermitData(city = "Weston") {
   } catch {
     return [];
   }
+}
+
+async function fetchZoningData(city) {
+  try {
+    const [zoningRes, ordinanceRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/zoning_rules?city_name=eq.${encodeURIComponent(city)}&limit=50`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }),
+      fetch(`${SUPABASE_URL}/rest/v1/city_ordinance_sections?city_name=eq.${encodeURIComponent(city)}&limit=100`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }),
+    ]);
+    const zoning = await zoningRes.json();
+    const ordinances = await ordinanceRes.json();
+    return {
+      zoning: Array.isArray(zoning) ? zoning : [],
+      ordinances: Array.isArray(ordinances) ? ordinances : [],
+    };
+  } catch {
+    return { zoning: [], ordinances: [] };
+  }
+}
+
+function formatZoningForPrompt(zoning, ordinances) {
+  const parts = [];
+  if (zoning.length > 0) {
+    parts.push("ZONING RULES:");
+    zoning.forEach(z => {
+      const details = [
+        z.zone_code && `Zone: ${z.zone_code} (${z.zone_name || ""})`,
+        z.min_lot_size_sqft && `Min lot: ${z.min_lot_size_sqft.toLocaleString()} sq ft`,
+        z.front_setback_ft && `Front setback: ${z.front_setback_ft} ft`,
+        z.rear_setback_ft && `Rear setback: ${z.rear_setback_ft} ft`,
+        z.side_setback_ft && `Side setback: ${z.side_setback_ft} ft`,
+        z.max_height_ft && `Max height: ${z.max_height_ft} ft`,
+        z.max_lot_coverage_pct && `Max lot coverage: ${z.max_lot_coverage_pct}%`,
+        z.max_impervious_pct && `Max impervious: ${z.max_impervious_pct}%`,
+        z.notes && `Notes: ${z.notes}`,
+      ].filter(Boolean).join(" | ");
+      parts.push(`- ${details}`);
+    });
+  }
+  if (ordinances.length > 0) {
+    parts.push("\nORDINANCE SECTIONS:");
+    ordinances.forEach(o => {
+      const keyNums = (() => {
+        try { return Array.isArray(o.key_numbers) ? o.key_numbers.join(", ") : ""; } catch { return ""; }
+      })();
+      parts.push(`- §${o.section_number} ${o.section_title} (${o.category}): ${o.plain_english_summary || ""}${keyNums ? ` Key numbers: ${keyNums}` : ""}`);
+    });
+  }
+  return parts.join("\n");
 }
 
 function parseArray(val) {
@@ -87,14 +144,22 @@ Deno.serve(async (req) => {
     const currentCity = city || "Weston";
     const portalUrl = CITY_PORTAL_URLS[currentCity] || CITY_PORTAL_URLS["Weston"];
 
-    // Always fetch local permit data first
-    const permitData = await fetchLocalPermitData(currentCity);
+    // Fetch permit data and zoning data in parallel
+    const [permitData, zoningData] = await Promise.all([
+      fetchLocalPermitData(currentCity),
+      fetchZoningData(currentCity),
+    ]);
+
     const localDataSection = permitData.length
       ? `\n\nCOMPLETE PERMIT DATABASE FOR ${currentCity.toUpperCase()} (${permitData.length} permit types):\n${formatPermitDataForPrompt(permitData)}`
       : "";
 
-    // Only use web search for zoning/ordinance specifics not in the DB
-    const useWebSearch = needsWebSearch(message);
+    const hasZoningData = zoningData.zoning.length > 0 || zoningData.ordinances.length > 0;
+    const zoningSection = hasZoningData
+      ? `\n\nLOCAL ZONING & ORDINANCE DATA FOR ${currentCity.toUpperCase()}:\n${formatZoningForPrompt(zoningData.zoning, zoningData.ordinances)}`
+      : "";
+
+    const useWebSearch = needsWebSearch(message, hasZoningData);
 
     const responseSchema = {
       type: "object",
@@ -174,12 +239,12 @@ City reference data:
 - Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | Portal: coopercity.gov | All applications must be notarized | Ordinance: library.municode.com/fl/cooper_city
 
 Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City → Municode (library.municode.com).
-${localDataSection}
+${localDataSection}${zoningSection}
 
 INSTRUCTIONS:
-- You have been provided with the complete permit database for ${currentCity} above. Use this data to answer questions FIRST.
-- For permit types, documents, requirements, timelines, and fees: answer ONLY from the provided database. Do NOT use web search.
-- Only use web search for specific ordinance section numbers, exact setback measurements, HOA rules, or zoning lot coverage percentages not in the database.
+- You have been provided with the complete permit database AND local zoning/ordinance data for ${currentCity} above. Use this data to answer questions FIRST.
+- For permit types, documents, requirements, timelines, fees, setbacks, heights, lot coverage, and ordinance sections: answer ONLY from the provided local data. Do NOT use web search for these.
+- Only use web search for HOA-specific rules, deed restrictions, or historical district requirements not in the local data.
 - Never fetch ordinance URLs directly — reference them as links only.
 - Always respond with structured JSON matching the schema.
 - portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="${cityDeptInfo.phone}", dept_hours="${cityDeptInfo.hours}".

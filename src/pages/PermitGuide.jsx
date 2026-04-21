@@ -47,26 +47,32 @@ const LABEL_TO_MAP_ZONE = {
   "Utility Boring":           "structure",
 };
 
-const CITY_PERMIT_TABLES = {
-  "Weston": "weston_permit_types",
-  "Coral Springs": "coral_springs_permit_types",
-  "Fort Lauderdale": "fort_lauderdale_permit_types",
-  "Hollywood": "hollywood_permit_types",
-  "Cooper City": "cooper_city_permit_types",
+const SB_HEADERS = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  Prefer: "count=none",
+  Range: "0-999",
 };
 
+// Fetch permit_table_name dynamically from cities table
+const _cityTableCache = {};
+async function getPermitTable(cityName) {
+  if (_cityTableCache[cityName]) return _cityTableCache[cityName];
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/cities?name=eq.${encodeURIComponent(cityName)}&select=permit_table_name&limit=1`,
+    { headers: SB_HEADERS }
+  );
+  const data = await res.json();
+  const table = (Array.isArray(data) && data[0]?.permit_table_name) || `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
+  _cityTableCache[cityName] = table;
+  return table;
+}
+
 async function fetchPermitTypes(city = "Weston") {
-  const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
+  const table = await getPermitTable(city);
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/${table}?select=*&order=category,name`,
-    {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Prefer: "count=none",
-        Range: "0-999",
-      },
-    }
+    { headers: SB_HEADERS }
   );
   const data = await res.json();
   return (Array.isArray(data) ? data : []).map(p => ({

@@ -11,6 +11,7 @@ import CityPermitTypesPanel from "@/components/admin/CityPermitTypesPanel.jsx";
 import CodeOfOrdinancesPanel from "@/components/admin/CodeOfOrdinancesPanel.jsx";
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 import PermitImportTool from "@/components/admin/PermitImportTool.jsx";
+import CitySupabaseStats from "@/components/admin/CitySupabaseStats.jsx";
 
 export default function AdminCityManager() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -168,23 +169,25 @@ export default function AdminCityManager() {
                 {expandedCity === city.id && (
                   <div className="border-t border-gray-100 bg-gray-50">
                     {/* Tabs */}
-                    <div className="flex gap-0 border-b border-gray-200">
-                      {["permit_types", "fee_rules", "ordinances"].map(tab => (
+                    <div className="flex gap-0 border-b border-gray-200 overflow-x-auto">
+                      {["data_overview", "permit_types", "fee_rules", "ordinances"].map(tab => (
                         <button
                           key={tab}
                           onClick={() => setActiveTab(prev => ({ ...prev, [city.id]: tab }))}
-                          className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                            (activeTab[city.id] || "permit_types") === tab
+                          className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                            (activeTab[city.id] || "data_overview") === tab
                               ? "border-blue-600 text-blue-700 bg-white"
                               : "border-transparent text-gray-500 hover:text-gray-700"
                           }`}
                         >
-                          {tab === "permit_types" ? "Permit Types" : tab === "fee_rules" ? "Fee Rules" : "Code of Ordinances"}
+                          {tab === "data_overview" ? "📊 Data Overview" : tab === "permit_types" ? "Permit Types" : tab === "fee_rules" ? "Fee Rules" : "Code of Ordinances"}
                         </button>
                       ))}
                     </div>
                     <div className="px-5 py-4">
-                      {(activeTab[city.id] || "permit_types") === "permit_types" ? (
+                      {(activeTab[city.id] || "data_overview") === "data_overview" ? (
+                        <CitySupabaseStats city={city} />
+                      ) : (activeTab[city.id]) === "permit_types" ? (
                         <CityPermitTypesPanel city={city} />
                       ) : (activeTab[city.id]) === "ordinances" ? (
                         <CodeOfOrdinancesPanel city={city} />

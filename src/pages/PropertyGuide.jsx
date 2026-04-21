@@ -26,10 +26,40 @@ async function searchProperties(query) {
   return res.json();
 }
 
-async function fetchPermits(folioNumber) {
-  const url = `${SUPABASE_URL}/rest/v1/weston_permit_records?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=200`;
+const CITY_PORTAL_URLS = {
+  "WESTON":           "https://www.westonfl.org/Permits",
+  "CORAL SPRINGS":    "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
+  "FORT LAUDERDALE":  "https://lauderbuild.fortlauderdale.gov/",
+  "HOLLYWOOD":        "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
+  "COOPER CITY":      "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
+};
+
+// Fetch permit_records_table_name dynamically from cities table
+const _recordsTableCache = {};
+async function getPermitRecordsTable(cityName) {
+  if (!cityName) return null;
+  const key = cityName.toUpperCase();
+  if (_recordsTableCache[key]) return _recordsTableCache[key];
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/cities?name=ilike.${encodeURIComponent(cityName)}&select=permit_records_table_name&limit=1`,
+    { headers: HEADERS }
+  );
+  const data = await res.json();
+  const table = Array.isArray(data) && data[0]?.permit_records_table_name || null;
+  _recordsTableCache[key] = table;
+  return table;
+}
+
+async function fetchPermits(folioNumber, situsCity) {
+  const table = await getPermitRecordsTable(situsCity || "Weston");
+  if (!table) return { records: [], noData: true };
+  const url = `${SUPABASE_URL}/rest/v1/${table}?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=200`;
   const res = await fetch(url, { headers: HEADERS });
-  return res.json();
+  const data = await res.json();
+  if (!Array.isArray(data) || data.length === 0) {
+    return { records: [], noData: false };
+  }
+  return { records: data, noData: false };
 }
 
 const MODULE_COLORS = {
@@ -81,7 +111,7 @@ function PropertyCard({ property, onClick }) {
   );
 }
 
-function PropertyDetail({ property, permits, permitsLoading, onBack }) {
+function PropertyDetail({ property, permits, permitsLoading, noData, onBack }) {
   const addr = property.full_address ||
     [property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION, property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE, property.SITUS_UNIT_NUMBER]
       .filter(Boolean).join(" ");
@@ -151,6 +181,21 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
         {permitsLoading ? (
           <div className="flex items-center justify-center gap-2 text-gray-400 py-8">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading permits...
+          </div>
+        ) : permits.length === 0 && noData ? (
+          <div className="text-center py-10 px-4">
+            <p className="text-gray-700 font-medium">Permit history not yet available for this city</p>
+            <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">Search directly at the city's permit portal for the most current records.</p>
+            {property.SITUS_CITY && CITY_PORTAL_URLS[property.SITUS_CITY?.toUpperCase()] && (
+              <a
+                href={CITY_PORTAL_URLS[property.SITUS_CITY.toUpperCase()]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 text-sm text-blue-600 hover:underline font-medium"
+              >
+                Search at {property.SITUS_CITY} Permit Portal →
+              </a>
+            )}
           </div>
         ) : permits.length === 0 ? (
           <div className="text-center py-10">
@@ -229,12 +274,16 @@ export default function PropertyGuide() {
     setLoading(false);
   };
 
+  const [permitsUnavailable, setPermitsUnavailable] = useState(false);
+
   const selectProperty = async (prop) => {
     setSelected(prop);
     setPermits([]);
+    setPermitsUnavailable(false);
     setPermitsLoading(true);
-    const data = await fetchPermits(prop.FOLIO_NUMBER);
-    setPermits(Array.isArray(data) ? data : []);
+    const { records, noData } = await fetchPermits(prop.FOLIO_NUMBER, prop.SITUS_CITY);
+    setPermits(records);
+    setPermitsUnavailable(noData);
     setPermitsLoading(false);
   };
 
@@ -276,7 +325,8 @@ export default function PropertyGuide() {
             property={selected}
             permits={permits}
             permitsLoading={permitsLoading}
-            onBack={() => { setSelected(null); setPermits([]); }}
+            noData={permitsUnavailable}
+            onBack={() => { setSelected(null); setPermits([]); setPermitsUnavailable(false); }}
           />
         ) : (
           <>
