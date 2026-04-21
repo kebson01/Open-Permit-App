@@ -45,17 +45,35 @@ const PAGE_DISPLAY_NAMES = {
   ProjectDetail: "Project Details",
 };
 
+const LOADING_STEPS = [
+  "Checking permit requirements...",
+  "Finding documents needed...",
+  "Almost ready...",
+];
+
 function TypingIndicator() {
+  const [stepIdx, setStepIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStepIdx(prev => (prev < LOADING_STEPS.length - 1 ? prev + 1 : prev));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex justify-start">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#0F3575" }}>
+      <div className="flex items-start gap-2">
+        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1" style={{ background: "#0F3575" }}>
           <Sparkles className="w-3 h-3 text-white" />
         </div>
-        <div className="px-4 py-3 rounded-xl bg-gray-100 flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-          <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+        <div className="px-4 py-3 rounded-xl bg-gray-100 border border-gray-200 space-y-2">
+          <div className="flex gap-1">
+            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <p className="text-xs text-gray-500 transition-all">{LOADING_STEPS[stepIdx]}</p>
         </div>
       </div>
     </div>
