@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen } from "lucide-react";
+import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen, ExternalLink } from "lucide-react";
 
 const FIELDS = [
   { key: "name", label: "City Name", required: true },
@@ -15,6 +15,14 @@ const FIELDS = [
   { key: "building_department_address", label: "Building Dept. Address" },
 ];
 
+const CITY_ORDINANCE_DEFAULTS = {
+  "Weston":          { ordinance_url: "https://codelibrary.amlegal.com/codes/weston/",          ordinance_platform: "American Legal Publishing" },
+  "Hollywood":       { ordinance_url: "https://codelibrary.amlegal.com/codes/hollywood/",       ordinance_platform: "American Legal Publishing" },
+  "Coral Springs":   { ordinance_url: "https://library.municode.com/fl/coral_springs/codes/code_of_ordinances",   ordinance_platform: "Municode" },
+  "Fort Lauderdale": { ordinance_url: "https://library.municode.com/fl/fort_lauderdale/codes/code_of_ordinances", ordinance_platform: "Municode" },
+  "Cooper City":     { ordinance_url: "https://library.municode.com/fl/cooper_city/codes/code_of_ordinances",     ordinance_platform: "Municode" },
+};
+
 const SERVICES = [
   { key: "permit_guide",        label: "Visual Permit Guide",   icon: Map },
   { key: "fee_calculator",      label: "Fee Calculator",        icon: Calculator },
@@ -26,7 +34,11 @@ const SERVICES = [
 ];
 
 export default function CityFormModal({ city, onClose, onSaved }) {
-  const [form, setForm] = useState(city || {});
+  const defaults = city?.name ? (CITY_ORDINANCE_DEFAULTS[city.name] || {}) : {};
+  const [form, setForm] = useState({
+    ...defaults,
+    ...city,
+  });
   const [saving, setSaving] = useState(false);
 
   const toggleService = (key) => {
@@ -74,6 +86,37 @@ export default function CityFormModal({ city, onClose, onSaved }) {
               {f.hint && <p className="text-xs text-gray-400 mt-0.5">{f.hint}</p>}
             </div>
           ))}
+
+          {/* Ordinance URL */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Code of Ordinances URL</label>
+            <div className="flex gap-2 items-center">
+              <Input
+                value={form.ordinance_url || ""}
+                onChange={e => setForm({ ...form, ordinance_url: e.target.value })}
+                placeholder="https://..."
+                className="flex-1"
+              />
+              {form.ordinance_url && (
+                <a
+                  href={form.ordinance_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap flex items-center gap-1 px-2 py-1 border border-blue-200 rounded-lg bg-blue-50"
+                >
+                  <ExternalLink className="w-3 h-3" /> View Code →
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Ordinance Platform (read-only) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Ordinance Platform</label>
+            <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-600">
+              {form.ordinance_platform || (form.ordinance_url?.includes("municode") ? "Municode" : form.ordinance_url?.includes("amlegal") ? "American Legal Publishing" : "—")}
+            </div>
+          </div>
 
           {/* Services */}
           <div>

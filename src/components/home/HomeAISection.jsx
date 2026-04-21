@@ -8,6 +8,8 @@ const CHIPS = [
   "Do I need a permit to replace my AC?",
   "How long does permit approval take in Weston?",
   "Can I pull my own permit as a homeowner?",
+  "What are the fence rules in Weston?",
+  "Can I build a shed in my backyard?",
 ];
 
 export default function HomeAISection({ onAsk }) {

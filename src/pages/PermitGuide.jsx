@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, AlertTriangle, HardHat, Layers, Phone, Bell } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, AlertTriangle, HardHat, Layers, Phone, Bell, BookOpen } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
 import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
+import OrdinancesPanel from "../components/map/OrdinancesPanel";
+import AIDrawer from "../components/ai/AIDrawer";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -229,6 +231,9 @@ export default function PermitGuide() {
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
   const [showPhotoAnalyzer, setShowPhotoAnalyzer] = useState(false);
+  const [ordinancesPanelOpen, setOrdinancesPanelOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInitialMessage, setAiInitialMessage] = useState("");
 
   const { data: allPermits = [] } = useQuery({
     queryKey: ["supabase-permit-types"],
@@ -354,6 +359,14 @@ export default function PermitGuide() {
             Browse All Permits
           </button>
 
+          <button
+            onClick={() => setOrdinancesPanelOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Code of Ordinances
+          </button>
+
           {/* City selector (FIX 3) */}
           {!singleCity && (
             <div className="ml-auto flex flex-col gap-0.5">
@@ -458,6 +471,20 @@ export default function PermitGuide() {
       {panelOpen && (
         <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setPanelOpen(false)} />
       )}
+
+      <OrdinancesPanel
+        open={ordinancesPanelOpen}
+        onClose={() => setOrdinancesPanelOpen(false)}
+        city={city}
+        onAskAI={(msg) => { setAiInitialMessage(msg); setAiOpen(true); }}
+      />
+
+      <AIDrawer
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        currentPageName="PermitGuide"
+        initialMessage={aiInitialMessage}
+      />
     </div>
   );
 }
