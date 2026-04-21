@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { CheckSquare, Square, MessageCircle, ExternalLink } from "lucide-react";
+import { CheckSquare, Square, MessageCircle, ExternalLink, Map } from "lucide-react";
+
+function getPermitGuideUrl(project) {
+  const commercialTypes = ["commercial"];
+  const propertyType = commercialTypes.includes(project.project_type) ? "commercial" : "residential";
+  const zoneMap = { roofing: "roof", pool: "pool", electrical: "electrical", plumbing: "plumbing", fence: "fence" };
+  const zone = zoneMap[project.project_type] || "";
+  let url = `/PermitGuide?propertyType=${propertyType}`;
+  if (project.city_name) url += `&city=${encodeURIComponent(project.city_name)}`;
+  if (zone) url += `&zone=${encodeURIComponent(zone)}`;
+  return url;
+}
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -87,9 +98,18 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
 
   return (
     <div>
-      <div className="mb-5">
-        <h3 className="font-bold text-gray-900 mb-0.5">Your document checklist</h3>
-        <p className="text-sm text-gray-500">Check off each item as you gather it. We'll tell you where to get each one.</p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-gray-900 mb-0.5">Your document checklist</h3>
+          <p className="text-sm text-gray-500">Check off each item as you gather it. We'll tell you where to get each one.</p>
+        </div>
+        <a
+          href={getPermitGuideUrl(project)}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-xs font-semibold text-blue-700"
+        >
+          <Map className="w-3.5 h-3.5" />
+          Visual Guide
+        </a>
       </div>
 
       {/* Progress bar */}

@@ -1,6 +1,25 @@
 import { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Sparkles, Send, Loader2, RotateCcw } from "lucide-react";
+import { Sparkles, Send, Loader2, RotateCcw, Map } from "lucide-react";
+
+// Map project types to property type and optional zone hint
+function getPermitGuideUrl(project) {
+  const commercialTypes = ["commercial"];
+  const propertyType = commercialTypes.includes(project.project_type) ? "commercial" : "residential";
+  const zoneMap = {
+    roofing: "roof",
+    pool: "pool",
+    electrical: "electrical",
+    plumbing: "plumbing",
+    fence: "fence",
+  };
+  const zone = zoneMap[project.project_type] || "";
+  const city = project.city_name || "";
+  let url = `/PermitGuide?propertyType=${propertyType}`;
+  if (city) url += `&city=${encodeURIComponent(city)}`;
+  if (zone) url += `&zone=${encodeURIComponent(zone)}`;
+  return url;
+}
 
 const HOMEOWNER_PROMPTS = (project) => [
   `What permits do I need for ${project.project_type?.replace(/_/g, ' ') || 'my project'} in ${project.city_name || 'my city'}?`,
@@ -65,6 +84,19 @@ export default function ProjectAIAssistant({ project, mode = "homeowner" }) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Find permits button */}
+      <a
+        href={getPermitGuideUrl(project)}
+        className="mb-4 flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors group"
+      >
+        <Map className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-blue-800 leading-tight">Find permits for this project</p>
+          <p className="text-xs text-blue-600">Open the Visual Permit Guide pre-filtered for {project.city_name || "your city"}</p>
+        </div>
+        <span className="text-xs text-blue-500 group-hover:text-blue-700 font-medium flex-shrink-0">→</span>
+      </a>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

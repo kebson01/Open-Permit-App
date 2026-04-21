@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
+import AddToProjectModal from "./AddToProjectModal";
 import { base44 } from "@/api/base44Client";
 
 const PERMIT_IMAGES = {
@@ -127,7 +128,8 @@ function DocumentsSection({ documents }) {
 
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   const [activeIdx, setActiveIdx] = useState(0);
-  useEffect(() => { setActiveIdx(0); }, [permit]);
+  const [showAddToProject, setShowAddToProject] = useState(false);
+  useEffect(() => { setActiveIdx(0); setShowAddToProject(false); }, [permit]);
   if (!permit) return null;
 
   const allMatching = permit._allMatching || [permit];
@@ -138,6 +140,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
   const hasInspections = current.inspections_required?.length > 0;
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
@@ -290,8 +293,25 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               </Button>
             </Link>
           </div>
+
+          {/* Add to my project */}
+          <button
+            onClick={() => setShowAddToProject(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-sm font-semibold text-green-800 transition-colors"
+          >
+            <FolderPlus className="w-4 h-4" />
+            Add to my project
+          </button>
         </div>
       </div>
     </div>
+
+    {showAddToProject && (
+      <AddToProjectModal
+        permitName={current.name}
+        onClose={() => setShowAddToProject(false)}
+      />
+    )}
+    </>
   );
 }

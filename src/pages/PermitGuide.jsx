@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, AlertTriangle, HardHat, Layers } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
@@ -10,7 +10,6 @@ import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 
-// Map zone label from HouseView → map_zone value in Supabase
 const LABEL_TO_MAP_ZONE = {
   "Roof / Re-Roof":           "roof",
   "Solar Panels":             "roof",
@@ -57,7 +56,6 @@ async function fetchPermitTypes() {
     }
   );
   const data = await res.json();
-  // Parse JSON array fields if they come back as strings
   return (Array.isArray(data) ? data : []).map(p => ({
     ...p,
     typical_requirements: typeof p.typical_requirements === "string" ? JSON.parse(p.typical_requirements) : (p.typical_requirements || []),
@@ -70,7 +68,6 @@ const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood
 const AVAILABLE_CITIES = ["Weston"];
 const COMING_SOON_CITIES = ["Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
-// View options per property type
 const RESIDENTIAL_VIEWS = [
   { id: "front",  label: "Front View",   icon: Home },
   { id: "back",   label: "Back View",    icon: ArrowLeft },
@@ -82,25 +79,100 @@ const COMMERCIAL_VIEWS = [
   { id: "commercial",          label: "Site / Engineering",  icon: LayoutGrid },
 ];
 
+// Commercial sub-type options (FIX 2)
+const COMMERCIAL_SUBTYPES = [
+  {
+    id: "building",
+    label: "Commercial Building",
+    desc: "Offices, retail, restaurants, warehouses",
+    icon: Building2,
+    view: "commercial_building",
+  },
+  {
+    id: "site",
+    label: "Site & Engineering",
+    desc: "Parking lots, driveways, EV chargers, ADA ramps, sidewalks, roadwork",
+    icon: HardHat,
+    view: "commercial",
+  },
+  {
+    id: "mixed",
+    label: "Mixed Use / Other",
+    desc: "Projects that span both categories or don't fit neatly",
+    icon: Layers,
+    view: "commercial_building",
+  },
+];
+
+// City banner (FIX 3)
+function CityBanner({ city }) {
+  const isComingSoon = COMING_SOON_CITIES.includes(city);
+  if (!city) return null;
+
+  if (isComingSoon) {
+    return (
+      <div className="mb-3 flex items-start gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800 leading-relaxed">
+          <span className="font-bold">{city}</span> permit data is not yet available. Showing Weston requirements as a general reference —
+          contact your local building department to confirm.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-100" style={{ background: "#EFF6FF" }}>
+      <MapPin className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+      <span className="text-xs font-semibold text-blue-800">Showing permit requirements for {city}</span>
+    </div>
+  );
+}
+
+// Commercial sub-type selector (FIX 2)
+function CommercialSubtypeSelector({ onSelect }) {
+  return (
+    <div className="mb-4 bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
+      <p className="text-sm font-bold text-gray-800 mb-3">What type of commercial project?</p>
+      <div className="grid sm:grid-cols-3 gap-3">
+        {COMMERCIAL_SUBTYPES.map(sub => {
+          const Icon = sub.icon;
+          return (
+            <button
+              key={sub.id}
+              onClick={() => onSelect(sub)}
+              className="text-left p-3.5 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center mb-2 transition-colors">
+                <Icon className="w-4 h-4 text-gray-600 group-hover:text-blue-700" />
+              </div>
+              <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-900 leading-tight mb-1">{sub.label}</p>
+              <p className="text-xs text-gray-500 leading-snug">{sub.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function PermitGuide() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlCity = urlParams.get("city") || "";
   const urlCities = urlParams.get("cities");
+  const urlPropertyType = urlParams.get("propertyType") || "residential";
+  const urlZone = urlParams.get("zone") || "";
   const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : DEFAULT_CITIES);
   const singleCity = CITIES.length === 1;
 
-  // Top level: property type
-  const [propertyType, setPropertyType] = useState("residential"); // "residential" | "commercial"
-
-  // Secondary: view (defaults by property type)
+  const [propertyType, setPropertyType] = useState(urlPropertyType);
+  const [commercialSubtype, setCommercialSubtype] = useState(null); // null = show selector
   const [residentialView, setResidentialView] = useState("front");
   const [commercialView, setCommercialView] = useState("commercial");
-
-  // Other UI state
   const [showHighlights, setShowHighlights] = useState(true);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(!!urlZone);
   const [selectedPermit, setSelectedPermit] = useState(null);
-  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "");
+  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
   const [showPhotoAnalyzer, setShowPhotoAnalyzer] = useState(false);
 
   const { data: allPermits = [] } = useQuery({
@@ -109,7 +181,6 @@ export default function PermitGuide() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Derive the actual map view key
   const activeView = propertyType === "residential" ? residentialView : commercialView;
   const activeViews = propertyType === "residential" ? RESIDENTIAL_VIEWS : COMMERCIAL_VIEWS;
 
@@ -118,23 +189,39 @@ export default function PermitGuide() {
     else setCommercialView(v);
   };
 
+  const handlePropertyTypeChange = (type) => {
+    setPropertyType(type);
+    if (type === "commercial") setCommercialSubtype(null); // reset to show selector
+  };
+
+  const handleCommercialSubtypeSelect = (sub) => {
+    setCommercialSubtype(sub);
+    setCommercialView(sub.view);
+  };
+
   const handleZoneClick = (zoneLabel, zoneDesc) => {
     const mapZone = LABEL_TO_MAP_ZONE[zoneLabel];
     const matching = mapZone ? allPermits.filter(p => p.map_zone === mapZone) : [];
     if (matching.length === 1) {
       setSelectedPermit(matching[0]);
     } else if (matching.length > 1) {
-      // Show first exact name match, or first result
       const exact = matching.find(p => p.name === zoneLabel) || matching[0];
       setSelectedPermit({ ...exact, _allMatching: matching });
     } else {
-      // Fallback: no Supabase match, show basic info
       setSelectedPermit({ name: zoneLabel, description: zoneDesc || "", typical_requirements: [], documents_needed: [], inspections_required: [] });
     }
   };
 
-  // permits passed to PermitsPanel and StandalonePhotoAnalyzer
-  const permits = allPermits;
+  // Filter permits for panel based on commercial subtype (FIX 2)
+  const COMMERCIAL_BUILDING_CATS = ["building", "electrical", "plumbing", "fire", "certificate"];
+  const COMMERCIAL_SITE_CATS = ["engineering", "planning", "additional"];
+
+  const panelPermits = (() => {
+    if (propertyType !== "commercial" || !commercialSubtype) return allPermits;
+    if (commercialSubtype.id === "building") return allPermits.filter(p => COMMERCIAL_BUILDING_CATS.includes(p.category));
+    if (commercialSubtype.id === "site") return allPermits.filter(p => COMMERCIAL_SITE_CATS.includes(p.category));
+    return allPermits; // mixed
+  })();
 
   return (
     <div className="px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8 max-w-7xl mx-auto">
@@ -147,12 +234,12 @@ export default function PermitGuide() {
       {/* ── Controls ── */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 mb-4 space-y-3">
 
-        {/* Row 1: Property Type */}
-        <div className="flex items-center gap-3">
+        {/* Row 1: Property Type + City together */}
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">Property</span>
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
-              onClick={() => setPropertyType("residential")}
+              onClick={() => handlePropertyTypeChange("residential")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                 propertyType === "residential" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
               }`}
@@ -161,38 +248,40 @@ export default function PermitGuide() {
               Residential
             </button>
             <button
-              onClick={() => setPropertyType("commercial")}
+              onClick={() => handlePropertyTypeChange("commercial")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                 propertyType === "commercial" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              Commercial
+              Commercial / Business
             </button>
           </div>
         </div>
 
         {/* Row 2: View */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">View</span>
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-wrap">
-            {activeViews.map(v => (
-              <button
-                key={v.id}
-                onClick={() => setActiveView(v.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                <v.icon className="w-3.5 h-3.5" />
-                {v.label}
-              </button>
-            ))}
+        {(propertyType === "residential" || commercialSubtype) && (
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">View</span>
+            <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-wrap">
+              {activeViews.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveView(v.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  <v.icon className="w-3.5 h-3.5" />
+                  {v.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Row 3: Utility controls */}
-        <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
           <button
             onClick={() => setShowHighlights(!showHighlights)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-600"}`}
@@ -203,80 +292,94 @@ export default function PermitGuide() {
 
           <button
             onClick={() => setPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-medium text-gray-600 hover:border-gray-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
           >
             <List className="w-3.5 h-3.5" />
             Browse All Permits
           </button>
 
+          {/* City selector (FIX 3) */}
           {!singleCity && (
-            <div className="flex items-center gap-1.5 ml-auto">
-              <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-              <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
-                <SelectTrigger className="w-36 sm:w-44 rounded-xl h-8 text-xs">
-                  <SelectValue placeholder="Filter by city..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CITIES.map(c => (
-                    <SelectItem key={c} value={c} disabled={COMING_SOON_CITIES.includes(c)} className={COMING_SOON_CITIES.includes(c) ? "opacity-50 cursor-not-allowed" : ""}>
-                      <span className="flex items-center gap-2">
-                        {c}
-                        {COMING_SOON_CITIES.includes(c) && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="ml-auto flex flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-0.5">Select your city:</span>
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
+                  <SelectTrigger className="w-44 sm:w-52 rounded-xl h-9 text-sm font-medium border-blue-200">
+                    <SelectValue placeholder="Choose city..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CITIES.map(c => (
+                      <SelectItem key={c} value={c} disabled={COMING_SOON_CITIES.includes(c)} className={COMING_SOON_CITIES.includes(c) ? "opacity-50 cursor-not-allowed" : ""}>
+                        <span className="flex items-center gap-2">
+                          {c}
+                          {COMING_SOON_CITIES.includes(c) && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Commercial sub-type hint */}
-      {propertyType === "commercial" && (
-        <div className="mb-3 flex flex-wrap gap-2">
+      {/* FIX 3: Persistent city context banner */}
+      <CityBanner city={city} />
+
+      {/* FIX 2: Commercial sub-type selector */}
+      {propertyType === "commercial" && !commercialSubtype && (
+        <CommercialSubtypeSelector onSelect={handleCommercialSubtypeSelect} />
+      )}
+
+      {/* Commercial sub-type indicator (when selected) */}
+      {propertyType === "commercial" && commercialSubtype && (
+        <div className="mb-3 flex items-center gap-2 flex-wrap">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl border border-indigo-100">
-            <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="text-xs font-medium text-indigo-700">
-              {activeView === "commercial" ? "Site/Engineering: parking, EV chargers, driveways, utilities" : "Commercial Building: offices, retail, multi-family"}
-            </span>
+            <commercialSubtype.icon className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-xs font-medium text-indigo-700">{commercialSubtype.label}: {commercialSubtype.desc}</span>
           </div>
+          <button
+            onClick={() => setCommercialSubtype(null)}
+            className="text-xs text-gray-400 hover:text-gray-600 underline"
+          >
+            Change type
+          </button>
         </div>
       )}
 
-      {city && (
-        <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-xl border border-blue-100">
-          <MapPin className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-xs font-medium text-blue-700">{city}</span>
-        </div>
-      )}
+      {/* House diagram — only show when residential OR commercial subtype is selected */}
+      {(propertyType === "residential" || commercialSubtype) && (
+        <>
+          <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
 
-      <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
-
-      {/* AI Photo Analysis Banner */}
-      {!showPhotoAnalyzer ? (
-        <button
-          onClick={() => setShowPhotoAnalyzer(true)}
-          className="mt-4 w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <Camera className="w-5 h-5 text-white" />
-          </div>
-          <div className="text-left flex-1">
-            <p className="font-bold text-blue-900 text-sm flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI Photo Analysis
-            </p>
-            <p className="text-blue-800 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
-          </div>
-          <span className="text-xs font-semibold text-blue-800 bg-blue-200 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
-        </button>
-      ) : (
-        <div className="mt-4">
-          <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={permits} />
-        </div>
+          {/* AI Photo Analysis Banner */}
+          {!showPhotoAnalyzer ? (
+            <button
+              onClick={() => setShowPhotoAnalyzer(true)}
+              className="mt-4 w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left flex-1">
+                <p className="font-bold text-blue-900 text-sm flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  AI Photo Analysis
+                </p>
+                <p className="text-blue-800 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
+              </div>
+              <span className="text-xs font-semibold text-blue-800 bg-blue-200 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
+            </button>
+          ) : (
+            <div className="mt-4">
+              <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} />
+            </div>
+          )}
+        </>
       )}
 
       {selectedPermit && (
@@ -289,10 +392,11 @@ export default function PermitGuide() {
       )}
 
       <PermitsPanel
-        permits={permits}
+        permits={panelPermits}
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         onSelectPermit={(p) => { setSelectedPermit(p); setPanelOpen(false); }}
+        initialSearch={urlZone}
       />
 
       {panelOpen && (
