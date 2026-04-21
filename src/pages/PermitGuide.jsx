@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
 import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
-import UserModeToggle from "../components/map/UserModeToggle";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -96,9 +95,6 @@ export default function PermitGuide() {
   // Secondary: view (defaults by property type)
   const [residentialView, setResidentialView] = useState("front");
   const [commercialView, setCommercialView] = useState("commercial");
-
-  // Tertiary: user mode
-  const [userMode, setUserMode] = useState("homeowner"); // "homeowner" | "contractor"
 
   // Other UI state
   const [showHighlights, setShowHighlights] = useState(true);
@@ -195,13 +191,7 @@ export default function PermitGuide() {
           </div>
         </div>
 
-        {/* Row 3: User Mode */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">Mode</span>
-          <UserModeToggle mode={userMode} onChange={setUserMode} />
-        </div>
-
-        {/* Row 4: Utility controls */}
+        {/* Row 3: Utility controls */}
         <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
           <button
             onClick={() => setShowHighlights(!showHighlights)}
@@ -293,7 +283,7 @@ export default function PermitGuide() {
         <PermitPopup
           permit={selectedPermit}
           city={city}
-          userMode={userMode}
+          userMode="homeowner"
           onClose={() => setSelectedPermit(null)}
         />
       )}
