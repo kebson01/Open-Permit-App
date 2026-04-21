@@ -284,6 +284,7 @@ export default function PermitGuide() {
       <div className="mb-4">
         <h1 className="text-xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
         <p className="text-gray-600 mt-0.5 text-xs sm:text-base">Tap any highlighted area to see permit requirements, documents, and estimated fees.</p>
+        <p className="mt-1 text-xs sm:text-sm" style={{ color: "#64748B" }}>A permit is the city's official OK to start your project.</p>
       </div>
 
       {/* ── Controls ── */}

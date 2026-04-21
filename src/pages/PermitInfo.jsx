@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
 import {
@@ -9,13 +8,30 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+
+async function fetchPermitTypesFromSupabase() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/weston_permit_types?select=*`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+  });
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(p => ({
+    ...p,
+    typical_requirements: typeof p.typical_requirements === "string" ? JSON.parse(p.typical_requirements) : (p.typical_requirements || []),
+    documents_needed: typeof p.documents_needed === "string" ? JSON.parse(p.documents_needed) : (p.documents_needed || []),
+    inspections_required: typeof p.inspections_required === "string" ? JSON.parse(p.inspections_required) : (p.inspections_required || []),
+  }));
+}
+
 export default function PermitInfo() {
   const urlParams = new URLSearchParams(window.location.search);
   const permitName = urlParams.get("permit");
 
   const { data: permits = [], isLoading } = useQuery({
-    queryKey: ["permits"],
-    queryFn: () => base44.entities.PermitType.list(),
+    queryKey: ["supabase-permit-types"],
+    queryFn: fetchPermitTypesFromSupabase,
+    staleTime: 5 * 60 * 1000,
   });
 
   const permit = permitName ? permits.find(p => p.name === permitName) : null;

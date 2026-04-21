@@ -1,11 +1,71 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus, Phone, MapPin, Globe, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import AddToProjectModal from "./AddToProjectModal";
 import { base44 } from "@/api/base44Client";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SUPABASE_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+
+async function fetchPlainEnglishDocs() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/document_plain_english?select=*`, { headers: SUPABASE_HEADERS });
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function ReadyToApply({ city }) {
+  const isWeston = !city || city === "Weston";
+  return (
+    <div className="rounded-xl p-4 space-y-3" style={{ background: "#0F3575" }}>
+      <div>
+        <p className="text-white font-bold text-base">Ready to apply?</p>
+        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+          {isWeston ? "Once you have all your documents, here's how to submit:" : "Contact your local building department to submit your application."}
+        </p>
+      </div>
+      {isWeston ? (
+        <div className="space-y-2">
+          <a
+            href="https://www.westonfl.org/Permits"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "#3B82F6" }}
+          >
+            <Globe className="w-4 h-4" /> Apply Online
+          </a>
+          <a
+            href="https://maps.google.com/?q=17200+Royal+Palm+Blvd,+Weston,+FL+33326"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span>Visit in Person — 17200 Royal Palm Blvd, Weston, FL 33326</span>
+          </a>
+          <a
+            href="tel:9543852600"
+            className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <Phone className="w-4 h-4 flex-shrink-0" />
+            <span>Call Building Dept — (954) 385-2600</span>
+          </a>
+        </div>
+      ) : null}
+      {isWeston && (
+        <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: Mon–Fri, 8:00 AM – 4:30 PM</p>
+      )}
+    </div>
+  );
+}
 
 const PERMIT_IMAGES = {
   "Roof / Re-Roof":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4058cd09e_Roof.jpg",
@@ -59,7 +119,7 @@ const DOC_EXPLANATIONS = {
   "NOC": "Notice of Commencement — a legal notice filed before work begins on projects over $2,500.",
 };
 
-function DocumentsSection({ documents }) {
+function DocumentsSection({ documents, plainEnglishMap }) {
   const [checked, setChecked] = useState({});
   const [showSavePrompt, setShowSavePrompt] = useState(false);
 
@@ -88,23 +148,36 @@ function DocumentsSection({ documents }) {
           </span>
         )}
       </div>
-      <ul className="space-y-2.5">
-        {documents.map((doc, i) => (
-          <li key={i} onClick={() => toggle(doc)} className="flex items-start gap-2.5 cursor-pointer group">
-            {checked[doc]
-              ? <CheckSquare className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-              : <Square className="w-4 h-4 text-gray-300 group-hover:text-gray-500 mt-0.5 flex-shrink-0 transition-colors" />
-            }
-            <div>
-              <span className={`text-sm leading-snug transition-colors ${checked[doc] ? "line-through text-gray-400" : "text-gray-800 group-hover:text-gray-900"}`}>
-                {doc}
-              </span>
-              {DOC_EXPLANATIONS[doc] && (
-                <p className="text-xs text-gray-400 mt-0.5 leading-snug">{DOC_EXPLANATIONS[doc]}</p>
-              )}
-            </div>
-          </li>
-        ))}
+      <ul className="space-y-3">
+        {documents.map((doc, i) => {
+          const pe = plainEnglishMap?.[doc];
+          return (
+            <li key={i} onClick={() => toggle(doc)} className="flex items-start gap-2.5 cursor-pointer group">
+              {checked[doc]
+                ? <CheckSquare className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                : <Square className="w-4 h-4 text-gray-300 group-hover:text-gray-500 mt-0.5 flex-shrink-0 transition-colors" />
+              }
+              <div className={`flex-1 transition-opacity ${checked[doc] ? "opacity-50" : ""}`}>
+                {pe ? (
+                  <>
+                    <p className={`text-sm font-semibold leading-snug ${checked[doc] ? "line-through" : ""}`} style={{ color: "#0F172A" }}>{pe.plain_name}</p>
+                    <p className="text-xs italic mt-0.5" style={{ color: "#64748B" }}>{doc}</p>
+                    {pe.plain_description && <p className="text-xs mt-0.5" style={{ color: "#475569" }}>{pe.plain_description}</p>}
+                    {pe.where_to_get && <p className="text-xs mt-0.5 font-medium" style={{ color: "#3B82F6", fontSize: 11 }}>Where to get it: {pe.where_to_get}</p>}
+                    {pe.download_url && (
+                      <a href={pe.download_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-xs font-semibold" style={{ color: "#3B82F6", fontSize: 11 }}>Download form →</a>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className={`text-sm leading-snug ${checked[doc] ? "line-through text-gray-400" : "text-gray-800 group-hover:text-gray-900"}`}>{doc}</span>
+                    {DOC_EXPLANATIONS[doc] && <p className="text-xs text-gray-400 mt-0.5 leading-snug">{DOC_EXPLANATIONS[doc]}</p>}
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {showSavePrompt && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
@@ -129,7 +202,18 @@ function DocumentsSection({ documents }) {
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [showAddToProject, setShowAddToProject] = useState(false);
+  const [plainEnglishMap, setPlainEnglishMap] = useState({});
+
   useEffect(() => { setActiveIdx(0); setShowAddToProject(false); }, [permit]);
+
+  useEffect(() => {
+    fetchPlainEnglishDocs().then(rows => {
+      const map = {};
+      rows.forEach(r => { if (r.official_name) map[r.official_name] = r; });
+      setPlainEnglishMap(map);
+    });
+  }, []);
+
   if (!permit) return null;
 
   const allMatching = permit._allMatching || [permit];
@@ -221,7 +305,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           {hasDocuments && (
             <>
               <hr className="border-gray-100" />
-              <DocumentsSection documents={current.documents_needed} />
+              <DocumentsSection documents={current.documents_needed} plainEnglishMap={plainEnglishMap} />
             </>
           )}
 
@@ -302,6 +386,9 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             <FolderPlus className="w-4 h-4" />
             Add to my project
           </button>
+
+          {/* Ready to Apply */}
+          <ReadyToApply city={city} />
         </div>
       </div>
     </div>

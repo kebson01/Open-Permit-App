@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import CitySelector from "../components/home/CitySelector";
 import HomeAISection from "../components/home/HomeAISection";
 import AIDrawer from "../components/ai/AIDrawer";
-import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight, Lock } from "lucide-react";
+import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight, Lock, Info, X } from "lucide-react";
 
 const HOW_IT_WORKS = [
   { num: "1", title: "Identify your permit", body: "Click on the part of your home you're improving to see exactly what permits apply", page: "PermitGuide" },
@@ -60,6 +60,7 @@ function ClickCard({ to, children, className, style }) {
 export default function Home() {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const handleAsk = (msg) => {
     setAiInitialMessage(msg);
@@ -98,9 +99,22 @@ export default function Home() {
       </section>
 
       {/* ── CITY SELECTOR ── */}
-      <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 48 }}>
+      <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 16 }}>
         <CitySelector />
       </div>
+
+      {/* ── PERMIT EXPLAINER BANNER ── */}
+      {!bannerDismissed && (
+        <div className="flex justify-center px-4 mb-6">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+            <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1E3A8A" }} />
+            <span style={{ color: "#1E3A8A", fontSize: 13, fontWeight: 500 }}>A permit is official approval from the city before you start home improvements.</span>
+            <button onClick={() => setBannerDismissed(true)} className="ml-1 hover:opacity-70 transition-opacity flex-shrink-0" style={{ color: "#1E3A8A" }}>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── AI SECTION ── */}
       <HomeAISection onAsk={handleAsk} />
