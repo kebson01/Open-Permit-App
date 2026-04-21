@@ -23,9 +23,9 @@ const FEATURE_CARDS = [
 
 const STATS = [
   { value: "758K+", label: "Broward properties" },
-  { value: "115K+", label: "Permit records" },
   { value: "122+", label: "Permit types" },
-  { value: "5", label: "Cities" },
+  { value: "5", label: "Cities covered" },
+  { value: "100%", label: "Official sources" },
 ];
 
 const CITIES = [

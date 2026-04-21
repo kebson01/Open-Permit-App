@@ -16,8 +16,16 @@ function getPermitGuideUrl(project) {
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 
+const CITY_PERMIT_TABLES = {
+  "Weston": "weston_permit_types",
+  "Coral Springs": "coral_springs_permit_types",
+  "Fort Lauderdale": "fort_lauderdale_permit_types",
+  "Hollywood": "hollywood_permit_types",
+  "Cooper City": "cooper_city_permit_types",
+};
+
 const DOCUMENT_INFO = {
-  "Permit Application Form": { explanation: "Broward County's standard permit application form.", where: "Download at westonfl.org/permits" },
+  "Permit Application Form": { explanation: "Broward County's standard permit application form.", where: "Download at your city's building department website." },
   "Site Plan / Survey": { explanation: "A to-scale drawing showing your property boundaries and where the work will be done.", where: "Your licensed surveyor or contractor can provide this." },
   "Construction Plans": { explanation: "Detailed drawings showing exactly what will be built — required for most building permits.", where: "Your architect or contractor prepares these." },
   "Contractor License": { explanation: "Proof that your contractor is licensed to do this type of work in Florida.", where: "Ask your contractor for a copy of their license." },
@@ -27,13 +35,13 @@ const DOCUMENT_INFO = {
   "Scope of Work": { explanation: "A written description of exactly what work will be done.", where: "Your contractor prepares this." },
 };
 
-function getDocInfo(docName) {
+function getDocInfo(docName, cityName) {
   for (const key of Object.keys(DOCUMENT_INFO)) {
     if (docName.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(docName.toLowerCase())) {
       return DOCUMENT_INFO[key];
     }
   }
-  return { explanation: "Required document for this permit type.", where: "Ask your contractor or contact the Weston Building Department." };
+  return { explanation: "Required document for this permit type.", where: `Ask your contractor or contact the ${cityName || "local"} Building Department.` };
 }
 
 export default function HomeownerDocumentsTab({ project, onUpdate }) {
@@ -52,7 +60,7 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
       } catch {}
     }
 
-    // Fetch docs from Supabase based on project type
+    // Fetch docs from Supabase based on project type and city
     const mapProjectTypeToZone = {
       roofing: "roof", pool: "pool", fence: "fence",
       electrical: "electrical", plumbing: "interior",
@@ -60,10 +68,11 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
       new_construction: "structure",
     };
     const zone = mapProjectTypeToZone[project.project_type] || null;
+    const table = CITY_PERMIT_TABLES[project.city_name] || "weston_permit_types";
 
     const query = zone
-      ? `${SUPABASE_URL}/rest/v1/weston_permit_types?map_zone=eq.${zone}&select=name,documents_needed`
-      : `${SUPABASE_URL}/rest/v1/weston_permit_types?select=name,documents_needed&limit=3`;
+      ? `${SUPABASE_URL}/rest/v1/${table}?map_zone=eq.${zone}&select=name,documents_needed`
+      : `${SUPABASE_URL}/rest/v1/${table}?select=name,documents_needed&limit=3`;
 
     fetch(query, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
@@ -133,7 +142,7 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
       ) : (
         <div className="space-y-3 mb-5">
           {docs.map((doc, i) => {
-            const info = getDocInfo(doc);
+            const info = getDocInfo(doc, project.city_name);
             const isDone = !!checked[doc];
             return (
               <div

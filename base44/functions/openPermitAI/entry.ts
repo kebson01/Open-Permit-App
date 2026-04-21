@@ -14,9 +14,9 @@ const ORDINANCE_URLS = {
 const CITY_PORTAL_URLS = {
   "Weston": "https://www.westonfl.org/Permits",
   "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
-  "Hollywood": "https://www.hollywoodfl.org/permits",
-  "Fort Lauderdale": "https://www.fortlauderdale.gov/departments/sustainable-development/building-services",
-  "Cooper City": "https://www.coopercityfl.org/building",
+  "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
+  "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
+  "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
 };
 
 const CITY_DEPT_INFO = {
@@ -150,20 +150,43 @@ Deno.serve(async (req) => {
 
     const cityDeptInfo = CITY_DEPT_INFO[currentCity] || CITY_DEPT_INFO["Weston"];
 
-    const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. Current city: ${currentCity}.${localDataSection}
+    const HOW_TO_APPLY = {
+      "Weston": "Online or in person",
+      "Coral Springs": "Online or in person",
+      "Fort Lauderdale": "Digital only (LauderBuild — no paper accepted)",
+      "Hollywood": "Online (Accela) or in person",
+      "Cooper City": "In person (applications must be notarized)",
+    };
+
+    const CITY_NOTES = {
+      "Fort Lauderdale": "All permit submissions must be made digitally through LauderBuild — no paper applications accepted.",
+      "Hollywood": "Express same-day permits available for AC, roof, electrical, and water heater — submit Tuesday 6PM to Wednesday 9AM.",
+      "Cooper City": "All applications must be notarized. Hold Harmless Agreement required for drainage easements.",
+    };
+
+    const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. You have access to a comprehensive permit database covering 5 cities with 122 total permit types, all sourced from official municipal documents. Current city: ${currentCity}.
+
+City reference data:
+- Weston: 39 permit types | Phone: (954) 385-2600 | Hours: Mon–Fri 8AM–4:30PM | NOC threshold: $2,500 | Portal: westonfl.org/Permits | Ordinance: codelibrary.amlegal.com/codes/weston/
+- Coral Springs: 22 permit types | Phone: (954) 344-1025 | Hours: Mon–Thu 7:30AM–5PM, Fri 7:30AM–2:30PM | NOC threshold: $5,000 | Portal: eTrakit (coralsprings.gov) | Ordinance: library.municode.com/fl/coral_springs
+- Fort Lauderdale: 17 permit types | Phone: (954) 828-6520 | Hours: Mon–Fri 7:30AM–4:30PM | NOC threshold: $2,500 | Portal: LauderBuild (digital only — no paper) | Ordinance: library.municode.com/fl/fort_lauderdale
+- Hollywood: 23 permit types | Phone: (954) 921-3335 | Hours: Mon–Thu 7AM–6PM | NOC threshold: $5,000 (AC: $15,000) | Portal: Accela | Express Wed permits for AC/roof/electrical/water heater | Ordinance: codelibrary.amlegal.com/codes/hollywood/
+- Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | Portal: coopercity.gov | All applications must be notarized | Ordinance: library.municode.com/fl/cooper_city
+
+Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City → Municode (library.municode.com).
+${localDataSection}
 
 INSTRUCTIONS:
-- You have been provided with the complete permit database for ${currentCity} above. Use this data to answer the question FIRST.
-- For questions about permit types, documents, requirements, timelines, and fees: answer ONLY from the provided database. Do NOT use web search.
-- Only use web search when the question requires information NOT in the provided data (e.g. specific ordinance section numbers, exact setback measurements in feet, HOA rules, zoning lot coverage percentages).
+- You have been provided with the complete permit database for ${currentCity} above. Use this data to answer questions FIRST.
+- For permit types, documents, requirements, timelines, and fees: answer ONLY from the provided database. Do NOT use web search.
+- Only use web search for specific ordinance section numbers, exact setback measurements, HOA rules, or zoning lot coverage percentages not in the database.
 - Never fetch ordinance URLs directly — reference them as links only.
-- Ordinance URLs for reference: Weston: ${ORDINANCE_URLS["Weston"]} | Coral Springs: ${ORDINANCE_URLS["Coral Springs"]} | Fort Lauderdale: ${ORDINANCE_URLS["Fort Lauderdale"]} | Hollywood: ${ORDINANCE_URLS["Hollywood"]} | Cooper City: ${ORDINANCE_URLS["Cooper City"]}
 - Always respond with structured JSON matching the schema.
 - portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="${cityDeptInfo.phone}", dept_hours="${cityDeptInfo.hours}".
-- quick_facts.how_to_apply: "Online or in person" for both Weston and Coral Springs.
+- quick_facts.how_to_apply: "${HOW_TO_APPLY[currentCity] || "Online or in person"}".
 - Notice of Commencement threshold for ${currentCity}: ${cityDeptInfo.noc_threshold}. Use the correct threshold when mentioning NOC requirements.
 - requirements_note: always add "These are ${currentCity}'s requirements. Your HOA may have additional rules." for residential projects.
-- caveats: always include HOA note for residential projects.
+- caveats: always include HOA note for residential projects.${CITY_NOTES[currentCity] ? `\n- Important note for ${currentCity}: ${CITY_NOTES[currentCity]}` : ""}
 - For conversational/meta questions: set is_plain_text=true and populate plain_text_reply only.
 - Max 6 documents and 6 requirements. direct_answer is one sentence.`;
 

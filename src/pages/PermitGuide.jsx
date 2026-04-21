@@ -58,12 +58,13 @@ const CITY_PERMIT_TABLES = {
 async function fetchPermitTypes(city = "Weston") {
   const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/${table}?select=*&limit=500`,
+    `${SUPABASE_URL}/rest/v1/${table}?select=*&order=category,name`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         Prefer: "count=none",
+        Range: "0-999",
       },
     }
   );

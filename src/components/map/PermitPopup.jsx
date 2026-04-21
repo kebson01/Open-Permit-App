@@ -63,7 +63,7 @@ const CITY_APPLY_INFO = {
     phone: "(954) 434-4300",
     phoneRaw: "9544344300",
     hours: "Mon–Fri, 8AM–5PM",
-    note: "All permit applications must be notarized. Bring a valid ID.",
+    note: "All applications must be notarized. Hold Harmless Agreement required for drainage easements.",
   },
 };
 
