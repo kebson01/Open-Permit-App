@@ -147,12 +147,12 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
           <div className="flex-1 pr-3">
             <h3 className="text-white font-bold text-lg leading-snug">{current.name}</h3>
-            {current.typical_timeline && (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <Clock className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
-                <span className="text-blue-200 text-xs">{current.typical_timeline}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
+              <span className="text-blue-200 text-xs">
+                {current.typical_timeline || "Typically 2–5 business days for review"}
+              </span>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -223,25 +223,27 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           )}
 
           {/* Inspections */}
-          {hasInspections && (
-            <>
-              <hr className="border-gray-100" />
-              <div>
-                <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
-                  <ClipboardList className="w-4 h-4 text-emerald-500" />
-                  Inspections Required
-                </h4>
-                <ul className="space-y-2">
-                  {current.inspections_required.map((ins, i) => (
-                    <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
-                      {ins}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </>
-          )}
+          <hr className="border-gray-100" />
+          <div>
+            <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
+              <ClipboardList className="w-4 h-4 text-emerald-500" />
+              Inspections Required
+            </h4>
+            {hasInspections ? (
+              <ul className="space-y-2">
+                {current.inspections_required.map((ins, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
+                    {ins}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 italic">
+                Contact Weston Building Department at (954) 385-2600 to confirm required inspections.
+              </p>
+            )}
+          </div>
 
           {/* Save checklist CTA for logged-in users */}
           {(hasDocuments || hasRequirements) && (

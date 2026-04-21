@@ -9,6 +9,15 @@ const PAGE_SIZE = 50;
 const TOTAL_COUNT = 116873;
 
 const MODULES = ["Building", "Planning", "Engineering", "Enforcement", "Landscaping"];
+const NORMALIZED_STATUSES = ["Completed", "Active", "In Review", "Expired", "Cancelled"];
+
+const STATUS_NORMALIZED_STYLES = {
+  "Completed":  { bg: "#DCFCE7", color: "#166534" },
+  "Active":     { bg: "#EFF6FF", color: "#1D4ED8" },
+  "In Review":  { bg: "#FFFBEB", color: "#92400E" },
+  "Expired":    { bg: "#F1F5F9", color: "#475569" },
+  "Cancelled":  { bg: "#FEF2F2", color: "#991B1B" },
+};
 
 const MODULE_COLORS = {
   Building:     "bg-blue-100 text-blue-700",
@@ -32,7 +41,7 @@ async function fetchRecords({ page, search, filterModule, filterStatus }) {
     url += `&RECORD_MODULE=eq.${encodeURIComponent(filterModule)}`;
   }
   if (filterStatus && filterStatus !== "all") {
-    url += `&PERMIT_STATUS=eq.${encodeURIComponent(filterStatus)}`;
+    url += `&STATUS_NORMALIZED=eq.${encodeURIComponent(filterStatus)}`;
   }
 
   const res = await fetch(url, {
@@ -82,11 +91,7 @@ export default function AdminPermitRecords() {
     });
     setRecords(data);
     setTotalCount(count || TOTAL_COUNT);
-    // Collect unique statuses from loaded data for filter
-    if (statuses.length === 0 && data.length > 0) {
-      const unique = [...new Set(data.map(r => r.PERMIT_STATUS).filter(Boolean))].sort();
-      setStatuses(unique);
-    }
+    // statuses are fixed normalized values — no need to collect dynamically
     setLoading(false);
   }, [page, debouncedSearch, filterModule, filterStatus]);
 
@@ -135,7 +140,7 @@ export default function AdminPermitRecords() {
           onChange={e => { setFilterStatus(e.target.value); setPage(0); }}
         >
           <option value="all">All Statuses</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          {NORMALIZED_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
@@ -212,19 +217,19 @@ export default function AdminPermitRecords() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">{r.PERMIT_TYPE || "—"}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
-                        r.PERMIT_STATUS === "Final" || r.PERMIT_STATUS === "Finaled"
-                          ? "bg-green-100 text-green-700"
-                          : r.PERMIT_STATUS === "Issued"
-                          ? "bg-blue-100 text-blue-700"
-                          : r.PERMIT_STATUS === "Expired"
-                          ? "bg-gray-100 text-gray-600"
-                          : r.PERMIT_STATUS === "Void" || r.PERMIT_STATUS === "Voided"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}>
-                        {r.PERMIT_STATUS || "—"}
-                      </span>
+                      {r.STATUS_NORMALIZED ? (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                          style={{
+                            backgroundColor: STATUS_NORMALIZED_STYLES[r.STATUS_NORMALIZED]?.bg || "#F1F5F9",
+                            color: STATUS_NORMALIZED_STYLES[r.STATUS_NORMALIZED]?.color || "#475569",
+                          }}
+                        >
+                          {r.STATUS_NORMALIZED}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{r.OPEN_DATE || "—"}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{r.PARCEL_NBR || "—"}</td>

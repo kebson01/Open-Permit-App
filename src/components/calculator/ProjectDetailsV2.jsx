@@ -57,6 +57,19 @@ const INPUT_META = {
 
 export default function ProjectDetailsV2({ permit, details, setDetails, onCalculate }) {
   if (!permit) return null;
+
+  // Gracefully handle permits missing fee configuration
+  if (!permit.calcType && !permit.feeConfig) {
+    return (
+      <div className="mt-6 bg-amber-50 rounded-2xl border border-amber-200 p-5 flex items-start gap-3">
+        <span className="text-amber-500 text-lg mt-0.5">ℹ️</span>
+        <p className="text-sm text-amber-800">
+          Fee information coming soon for this permit type. Please contact the Weston Building Department for current fee details.
+        </p>
+      </div>
+    );
+  }
+
   const inputs = permit.inputs || [];
 
   if (inputs.length === 0) {

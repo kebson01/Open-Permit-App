@@ -40,6 +40,14 @@ const MODULE_COLORS = {
   Landscaping: "bg-green-100 text-green-700",
 };
 
+const STATUS_NORMALIZED_STYLES = {
+  "Completed":  { bg: "#DCFCE7", color: "#166534" },
+  "Active":     { bg: "#EFF6FF", color: "#1D4ED8" },
+  "In Review":  { bg: "#FFFBEB", color: "#92400E" },
+  "Expired":    { bg: "#F1F5F9", color: "#475569" },
+  "Cancelled":  { bg: "#FEF2F2", color: "#991B1B" },
+};
+
 function PropertyCard({ property, onClick }) {
   const addr = property.full_address ||
     [property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION, property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE, property.SITUS_UNIT_NUMBER]
@@ -151,7 +159,7 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {["Record ID", "Description", "Module", "Status", "Opened"].map(h => (
+                  {["Record ID", "Description", "Module", "Status", "Opened"].map((h) => (
                     <th key={h} className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -171,7 +179,21 @@ function PropertyDetail({ property, permits, permitsLoading, onBack }) {
                         {p.RECORD_MODULE || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-600 whitespace-nowrap">{p.PERMIT_STATUS || "—"}</td>
+                    <td className="px-4 py-2.5">
+                      {p.STATUS_NORMALIZED ? (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                          style={{
+                            backgroundColor: STATUS_NORMALIZED_STYLES[p.STATUS_NORMALIZED]?.bg || "#F1F5F9",
+                            color: STATUS_NORMALIZED_STYLES[p.STATUS_NORMALIZED]?.color || "#475569",
+                          }}
+                        >
+                          {p.STATUS_NORMALIZED}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">{p.PERMIT_STATUS || "—"}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{p.OPEN_DATE || "—"}</td>
                   </tr>
                 ))}
