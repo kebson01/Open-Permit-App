@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import React, { useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink, Phone } from "lucide-react";
 
 function CollapsibleSection({ emoji, title, count, children }) {
