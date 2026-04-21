@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, AlertTriangle, HardHat, Layers, Phone, Bell, BookOpen } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat, Layers, BookOpen } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
@@ -50,6 +50,9 @@ const LABEL_TO_MAP_ZONE = {
 const CITY_PERMIT_TABLES = {
   "Weston": "weston_permit_types",
   "Coral Springs": "coral_springs_permit_types",
+  "Fort Lauderdale": "fort_lauderdale_permit_types",
+  "Hollywood": "hollywood_permit_types",
+  "Cooper City": "cooper_city_permit_types",
 };
 
 async function fetchPermitTypes(city = "Weston") {
@@ -73,8 +76,8 @@ async function fetchPermitTypes(city = "Weston") {
 }
 
 const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
-const AVAILABLE_CITIES = ["Weston", "Coral Springs"];
-const COMING_SOON_CITIES = ["Fort Lauderdale", "Hollywood", "Cooper City"];
+const AVAILABLE_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const COMING_SOON_CITIES = [];
 
 const RESIDENTIAL_VIEWS = [
   { id: "front",  label: "Front View",   icon: Home },
@@ -119,71 +122,9 @@ const CITY_PHONES = {
   "Cooper City":      "(954) 434-4300",
 };
 
-// City banner / coming-soon panel
-function CityBanner({ city, onSwitchToWeston }) {
-  const isComingSoon = COMING_SOON_CITIES.includes(city);
-  const [notifyEmail, setNotifyEmail] = useState("");
-  const [notifySent, setNotifySent] = useState(false);
-
+// City banner
+function CityBanner({ city }) {
   if (!city) return null;
-
-  if (isComingSoon) {
-    const phone = CITY_PHONES[city];
-    const handleNotify = (e) => {
-      e.preventDefault();
-      // Just show confirmation — no backend needed for MVP
-      setNotifySent(true);
-    };
-    return (
-      <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-5">
-        <div className="flex items-start gap-3 mb-4">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold text-amber-900 text-sm">We're working on {city}</p>
-            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">Permit data for {city} isn't available yet. In the meantime, you can:</p>
-          </div>
-        </div>
-        <div className="space-y-2.5 ml-8">
-          <button
-            onClick={onSwitchToWeston}
-            className="flex items-center gap-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl border border-blue-200 transition-colors w-full text-left"
-          >
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-            Browse Weston permits as a general reference
-          </button>
-          {phone && (
-            <a
-              href={`tel:${phone.replace(/\D/g, "")}`}
-              className="flex items-center gap-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 transition-colors w-full"
-            >
-              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-              Contact {city} Building Department — {phone}
-            </a>
-          )}
-          {!notifySent ? (
-            <form onSubmit={handleNotify} className="flex gap-2">
-              <input
-                type="email"
-                required
-                value={notifyEmail}
-                onChange={e => setNotifyEmail(e.target.value)}
-                placeholder={`Get notified when ${city} is added`}
-                className="flex-1 text-xs px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-amber-400"
-              />
-              <button type="submit" className="flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-2 rounded-xl whitespace-nowrap" style={{ background: "#D97706" }}>
-                <Bell className="w-3 h-3" /> Notify me
-              </button>
-            </form>
-          ) : (
-            <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-xl border border-green-200">
-              ✓ We'll email you when {city} is added.
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-100" style={{ background: "#EFF6FF" }}>
       <MapPin className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
@@ -385,13 +326,8 @@ export default function PermitGuide() {
                   </SelectTrigger>
                   <SelectContent>
                     {CITIES.map(c => (
-                      <SelectItem key={c} value={c} disabled={COMING_SOON_CITIES.includes(c)} className={COMING_SOON_CITIES.includes(c) ? "opacity-50 cursor-not-allowed" : ""}>
-                        <span className="flex items-center gap-2">
-                          {c}
-                          {COMING_SOON_CITIES.includes(c) && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
-                          )}
-                        </span>
+                      <SelectItem key={c} value={c}>
+                        {c}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -403,7 +339,7 @@ export default function PermitGuide() {
       </div>
 
       {/* Persistent city context banner */}
-      <CityBanner city={city} onSwitchToWeston={() => { setCity("Weston"); sessionStorage.setItem("selectedCity", "Weston"); }} />
+      <CityBanner city={city} />
 
       {/* FIX 2: Commercial sub-type selector */}
       {propertyType === "commercial" && !commercialSubtype && (
@@ -426,8 +362,8 @@ export default function PermitGuide() {
         </div>
       )}
 
-      {/* House diagram — only show when residential OR commercial subtype is selected AND city is available */}
-      {!COMING_SOON_CITIES.includes(city) && (propertyType === "residential" || commercialSubtype) && (
+      {/* House diagram — only show when residential OR commercial subtype is selected */}
+      {(propertyType === "residential" || commercialSubtype) && (
         <>
           <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
 

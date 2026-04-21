@@ -38,49 +38,74 @@ const CITY_APPLY_INFO = {
     phoneRaw: "9543441025",
     hours: "Mon–Thu 7:30AM–5:00PM, Fri 7:30AM–2:30PM",
   },
+  "Fort Lauderdale": {
+    portalUrl: "https://lauderbuild.fortlauderdale.gov/",
+    address: "700 NW 19th Avenue, Fort Lauderdale, FL 33311",
+    mapsUrl: "https://maps.google.com/?q=700+NW+19th+Avenue,+Fort+Lauderdale,+FL+33311",
+    phone: "(954) 828-6520",
+    phoneRaw: "9548286520",
+    hours: "Mon–Fri, 7:30AM–4:30PM",
+    note: "All submissions must be made digitally through LauderBuild — no paper applications accepted.",
+  },
+  "Hollywood": {
+    portalUrl: "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
+    address: "2600 Hollywood Blvd., Hollywood, FL 33020",
+    mapsUrl: "https://maps.google.com/?q=2600+Hollywood+Blvd,+Hollywood,+FL+33020",
+    phone: "(954) 921-3335",
+    phoneRaw: "9549213335",
+    hours: "Mon–Thu 7AM–6PM",
+    note: "Express same-day permits available for select residential permits — submit Tuesday 6PM to Wednesday 9AM.",
+  },
+  "Cooper City": {
+    portalUrl: "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
+    address: "9090 SW 50th Place, Cooper City, FL 33328",
+    mapsUrl: "https://maps.google.com/?q=9090+SW+50th+Place,+Cooper+City,+FL+33328",
+    phone: "(954) 434-4300",
+    phoneRaw: "9544344300",
+    hours: "Mon–Fri, 8AM–5PM",
+    note: "All permit applications must be notarized. Bring a valid ID.",
+  },
 };
 
 function ReadyToApply({ city }) {
   const info = CITY_APPLY_INFO[city] || CITY_APPLY_INFO["Weston"];
-  const isSupported = !!CITY_APPLY_INFO[city];
 
   return (
-    <div className="rounded-xl p-4 space-y-3" style={{ background: "#0F3575" }}>
+    <div className="rounded-xl p-4 space-y-2" style={{ background: "#0F3575" }}>
       <div>
         <p className="text-white font-bold text-base">Ready to apply?</p>
         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-          {isSupported ? "Once you have all your documents, here's how to submit:" : "Contact your local building department to submit your application."}
+          Once you have all your documents, here's how to submit:
         </p>
       </div>
-      {isSupported && (
-        <div className="space-y-2">
-          <a
-            href={info.portalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "#3B82F6" }}
-          >
-            <Globe className="w-4 h-4" /> Apply Online →
-          </a>
-          <a
-            href={info.mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span>Visit in Person — {info.address}</span>
-          </a>
-          <a
-            href={`tel:${info.phoneRaw}`}
-            className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <Phone className="w-4 h-4 flex-shrink-0" />
-            <span>Call Building Dept — {info.phone}</span>
-          </a>
-          <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: {info.hours}</p>
-        </div>
+      <a
+        href={info.portalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ background: "#3B82F6" }}
+      >
+        <Globe className="w-4 h-4" /> Apply Online →
+      </a>
+      <a
+        href={info.mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
+      >
+        <MapPin className="w-4 h-4 flex-shrink-0" />
+        <span>Visit in Person — {info.address}</span>
+      </a>
+      <a
+        href={`tel:${info.phoneRaw}`}
+        className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
+      >
+        <Phone className="w-4 h-4 flex-shrink-0" />
+        <span>Call Building Dept — {info.phone}</span>
+      </a>
+      <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: {info.hours}</p>
+      {info.note && (
+        <p className="text-xs text-center italic px-1" style={{ color: "rgba(255,255,255,0.65)" }}>{info.note}</p>
       )}
     </div>
   );
@@ -122,7 +147,11 @@ const PERMIT_IMAGES = {
 };
 
 const CITY_NOC_THRESHOLD = {
+  "Weston": "$2,500",
   "Coral Springs": "$5,000",
+  "Fort Lauderdale": "$2,500",
+  "Hollywood": "$5,000",
+  "Cooper City": "$2,500",
 };
 
 function getDocExplanations(city) {

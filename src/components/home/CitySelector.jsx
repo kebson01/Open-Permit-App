@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 const CITIES = [
   { name: "Weston", available: true },
   { name: "Coral Springs", available: true },
-  { name: "Fort Lauderdale", available: false },
-  { name: "Hollywood", available: false },
-  { name: "Cooper City", available: false },
+  { name: "Fort Lauderdale", available: true },
+  { name: "Hollywood", available: true },
+  { name: "Cooper City", available: true },
 ];
 
 export default function CitySelector() {
@@ -41,18 +41,13 @@ export default function CitySelector() {
           </div>
 
           {/* City dropdown */}
-          <Select value={city} onValueChange={(val) => { if (CITIES.find(c => c.name === val)?.available) setCity(val); }}>
+          <Select value={city} onValueChange={setCity}>
             <SelectTrigger className="rounded-xl h-11 mb-3" style={{ color: "#0F172A" }}>
               <SelectValue placeholder="Select your city..." />
             </SelectTrigger>
             <SelectContent>
               {CITIES.map(c => (
-                <SelectItem key={c.name} value={c.name} disabled={!c.available} className={!c.available ? "opacity-50 cursor-not-allowed" : ""}>
-                  <span className="flex items-center gap-2">
-                    {c.name}
-                    {!c.available && <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>}
-                  </span>
-                </SelectItem>
+                <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
