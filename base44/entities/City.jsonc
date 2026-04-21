@@ -24,7 +24,12 @@
         "type": "string",
         "enum": [
           "permit_guide",
-          "fee_calculator"
+          "fee_calculator",
+          "property_search",
+          "ai_assistant",
+          "permit_records",
+          "zoning_rules",
+          "code_of_ordinances"
         ]
       },
       "description": "Which services are enabled for this city's public portal"

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Map, Calculator } from "lucide-react";
+import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen } from "lucide-react";
 
 const FIELDS = [
   { key: "name", label: "City Name", required: true },
@@ -16,8 +16,13 @@ const FIELDS = [
 ];
 
 const SERVICES = [
-  { key: "permit_guide", label: "Visual Permit Guide", icon: Map },
-  { key: "fee_calculator", label: "Fee Calculator", icon: Calculator },
+  { key: "permit_guide",        label: "Visual Permit Guide",   icon: Map },
+  { key: "fee_calculator",      label: "Fee Calculator",        icon: Calculator },
+  { key: "property_search",     label: "Property Search",       icon: Search },
+  { key: "ai_assistant",        label: "AI Assistant",          icon: Sparkles },
+  { key: "permit_records",      label: "Permit Records",        icon: ClipboardList },
+  { key: "zoning_rules",        label: "Zoning Rules",          icon: Layers },
+  { key: "code_of_ordinances",  label: "Code of Ordinances",    icon: BookOpen },
 ];
 
 export default function CityFormModal({ city, onClose, onSaved }) {
