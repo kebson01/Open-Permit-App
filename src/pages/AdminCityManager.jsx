@@ -10,11 +10,13 @@ import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
 import CityPermitTypesPanel from "@/components/admin/CityPermitTypesPanel.jsx";
 import CodeOfOrdinancesPanel from "@/components/admin/CodeOfOrdinancesPanel.jsx";
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
+import PermitImportTool from "@/components/admin/PermitImportTool.jsx";
 
 export default function AdminCityManager() {
   const [currentUser, setCurrentUser] = useState(null);
   const [expandedCity, setExpandedCity] = useState(null);
   const [activeTab, setActiveTab] = useState({});
+  const [mainTab, setMainTab] = useState("cities");
   const [showCityForm, setShowCityForm] = useState(false);
   const [editingCity, setEditingCity] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -75,20 +77,49 @@ export default function AdminCityManager() {
           )}
         </div>
 
-        {/* Search */}
+        {/* Top-level tabs (admin only) */}
+        {isSuperAdmin && (
+          <div className="flex gap-1 border-b border-gray-200 mb-6">
+            {[
+              { id: "cities", label: "Cities" },
+              { id: "import", label: "⬇ Import Permits" },
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setMainTab(t.id)}
+                className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  mainTab === t.id
+                    ? "border-blue-600 text-blue-700"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Import tab */}
+        {mainTab === "import" && isSuperAdmin && (
+          <PermitImportTool />
+        )}
+
+        {/* Search (only in cities tab) */}
+        {mainTab === "cities" && (
         <Input
           placeholder="Search cities..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="mb-5 max-w-sm"
         />
+        )}
 
         {/* City List */}
-        {isLoading ? (
+        {mainTab === "cities" && isLoading ? (
           <div className="text-center py-12 text-gray-400">Loading cities...</div>
-        ) : filtered.length === 0 ? (
+        ) : mainTab === "cities" && filtered.length === 0 ? (
           <div className="text-center py-12 text-gray-400">No cities found. Add one to get started.</div>
-        ) : (
+        ) : mainTab === "cities" ? (
           <div className="space-y-3">
             {filtered.map(city => (
               <div key={city.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -166,7 +197,7 @@ export default function AdminCityManager() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
 
       {showCityForm && (
