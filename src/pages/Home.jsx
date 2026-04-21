@@ -18,13 +18,13 @@ const FEATURE_CARDS = [
   { icon: Building2, title: "Search any property", body: "Look up permit history on all 758,232 Broward parcels", page: "PropertyGuide" },
   { icon: Sparkles, title: "Let AI do the work", body: "Instant answers on requirements and local rules", page: "PermitGuide" },
   { icon: CheckCircle, title: "Save your checklist", body: "Create a free account to track your document progress", page: "ProjectDashboard" },
-  { icon: BookOpen, title: "5 cities covered", body: "Weston & Coral Springs live now — more Broward cities coming soon", page: "PermitGuide" },
+  { icon: BookOpen, title: "5 cities covered", body: "Weston, Coral Springs, Fort Lauderdale, Hollywood & Cooper City — all fully active", page: "PermitGuide" },
 ];
 
 const STATS = [
   { value: "758K+", label: "Broward properties" },
   { value: "115K+", label: "Permit records" },
-  { value: "37", label: "Permit types" },
+  { value: "122+", label: "Permit types" },
   { value: "5", label: "Cities" },
 ];
 

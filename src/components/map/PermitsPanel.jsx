@@ -3,6 +3,7 @@ import { X, Search, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const CATEGORY_ORDER = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
+const FILTER_TABS = ["all", "building", "electrical", "plumbing", "engineering"];
 
 const CATEGORY_META = {
   building:    { label: "Building Permits",     color: "bg-blue-500",   dot: "bg-blue-500" },
@@ -15,20 +16,24 @@ const CATEGORY_META = {
   additional:  { label: "Additional Services",   color: "bg-gray-500",   dot: "bg-gray-500" },
 };
 
-export default function PermitsPanel({ permits, open, onClose, onSelectPermit, initialSearch = "" }) {
+export default function PermitsPanel({ permits, open, onClose, onSelectPermit, initialSearch = "", city = "Weston" }) {
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
 
   // Apply initialSearch when panel opens
   useEffect(() => {
     if (open && initialSearch) setSearch(initialSearch);
-    if (!open) setSearch("");
+    if (!open) { setSearch(""); setActiveFilter("all"); }
   }, [open, initialSearch]);
 
-  const filtered = permits.filter(p =>
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.category?.toLowerCase().includes(search.toLowerCase()) ||
-    p.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = permits.filter(p => {
+    const matchSearch = !search ||
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.category?.toLowerCase().includes(search.toLowerCase()) ||
+      p.description?.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = activeFilter === "all" || p.category === activeFilter;
+    return matchSearch && matchFilter;
+  });
 
   const grouped = {};
   filtered.forEach(p => {
@@ -52,7 +57,7 @@ export default function PermitsPanel({ permits, open, onClose, onSelectPermit, i
       <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
         <div>
           <h3 className="text-white font-bold text-base">All Permit Types</h3>
-          <p className="text-blue-200 text-xs mt-0.5">{totalCount} permits · Weston, FL</p>
+          <p className="text-blue-200 text-xs mt-0.5">{totalCount} permits · {city}, FL</p>
         </div>
         <button
           onClick={onClose}
@@ -61,6 +66,32 @@ export default function PermitsPanel({ permits, open, onClose, onSelectPermit, i
         >
           <X className="w-4 h-4 text-white" />
         </button>
+      </div>
+
+      {/* Category filter tabs */}
+      <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex-shrink-0 overflow-x-auto">
+        <div className="flex gap-1.5 min-w-max">
+          {FILTER_TABS.map(tab => {
+            const count = tab === "all" ? permits.length : permits.filter(p => p.category === tab).length;
+            const meta = CATEGORY_META[tab];
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap ${
+                  activeFilter === tab
+                    ? "bg-blue-700 text-white border-blue-700"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-700"
+                }`}
+              >
+                {tab === "all" ? "All" : (meta?.label?.replace(" Permits", "").replace(" & Safety", "") || tab)}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeFilter === tab ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Search */}

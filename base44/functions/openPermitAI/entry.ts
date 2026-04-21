@@ -22,6 +22,9 @@ const CITY_PORTAL_URLS = {
 const CITY_DEPT_INFO = {
   "Weston": { phone: "(954) 385-2600", hours: "Mon–Fri 8:00AM–4:30PM", noc_threshold: "$2,500" },
   "Coral Springs": { phone: "(954) 344-1025", hours: "Mon–Thu 7:30AM–5:00PM, Fri 7:30AM–2:30PM", noc_threshold: "$5,000" },
+  "Fort Lauderdale": { phone: "(954) 828-6520", hours: "Mon–Fri 7:30AM–4:30PM", noc_threshold: "$2,500" },
+  "Hollywood": { phone: "(954) 921-3335", hours: "Mon–Thu 7AM–6PM", noc_threshold: "$5,000" },
+  "Cooper City": { phone: "(954) 434-4300", hours: "Mon–Fri 8AM–5PM", noc_threshold: "$2,500" },
 };
 
 // Only use web search for specific zoning/ordinance data NOT in the permit DB
@@ -35,14 +38,17 @@ function needsWebSearch(message) {
 const CITY_PERMIT_TABLES = {
   "Weston": "weston_permit_types",
   "Coral Springs": "coral_springs_permit_types",
+  "Fort Lauderdale": "fort_lauderdale_permit_types",
+  "Hollywood": "hollywood_permit_types",
+  "Cooper City": "cooper_city_permit_types",
 };
 
 async function fetchLocalPermitData(city = "Weston") {
   try {
     const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${table}?select=name,category,description,typical_requirements,documents_needed,inspections_required,typical_timeline`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      `${SUPABASE_URL}/rest/v1/${table}?select=name,category,description,typical_requirements,documents_needed,inspections_required,typical_timeline&limit=500`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, Prefer: "count=none" } }
     );
     const data = await res.json();
     return Array.isArray(data) ? data : [];

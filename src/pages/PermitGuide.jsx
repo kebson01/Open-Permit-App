@@ -58,11 +58,12 @@ const CITY_PERMIT_TABLES = {
 async function fetchPermitTypes(city = "Weston") {
   const table = CITY_PERMIT_TABLES[city] || "weston_permit_types";
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/${table}?select=*`,
+    `${SUPABASE_URL}/rest/v1/${table}?select=*&limit=500`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        Prefer: "count=none",
       },
     }
   );
@@ -408,6 +409,7 @@ export default function PermitGuide() {
         onClose={() => setPanelOpen(false)}
         onSelectPermit={(p) => { setSelectedPermit(p); setPanelOpen(false); }}
         initialSearch={urlZone}
+        city={city}
       />
 
       {panelOpen && (
