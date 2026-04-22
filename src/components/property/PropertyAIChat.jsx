@@ -11,7 +11,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 function buildPropertyContext(p, permits = []) {
-  const address = [p.SITUS_STREET_NUMBER, p.SITUS_STREET_DIRECTION, p.SITUS_STREET_NAME, p.SITUS_STREET_TYPE]
+  const address = p.full_address || [p.SITUS_STREET_NUMBER, p.SITUS_STREET_DIRECTION, p.SITUS_STREET_NAME, p.SITUS_STREET_TYPE]
     .filter(Boolean).join(" ");
   const totalValue = (p.JUST_LAND_VALUE || 0) + (p.JUST_BUILDING_VALUE || 0) + (p.JUST_OTHER_VALUE || 0);
 
@@ -31,11 +31,12 @@ function buildPropertyContext(p, permits = []) {
   if (openPermits.length > 0) flags += `\n⚠️ OPEN PERMITS (${openPermits.length}): ${openPermits.map(r => r.permit_description || r.permit_type).join(", ")}`;
   if (expiredPermits.length > 0) flags += `\n⚠️ EXPIRED PERMITS (${expiredPermits.length}): May need re-permitting before sale or future work.`;
 
-  return `PROPERTY: ${address}, ${p.SITUS_CITY}, FL ${p.SITUS_ZIP_CODE || ""}
-Folio: ${p.FOLIO_NUMBER} | City: ${p.SITUS_CITY} | Year Built: ${p.BLDG_YEAR_BUILT || p.ACTUAL_YEAR_BUILT || "Unknown"}
-Use Type: ${p.USE_TYPE || "Unknown"} | ${p.BEDS || "—"}bd/${p.BATHS || "—"}ba
-Under Air: ${p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"} sqft | Lot (GIS): ${p.GIS_SQUARE_FOOT?.toLocaleString() || "Unknown"} sqft
-Construction Class: ${p.BLDG_CCLASS || "Unknown"} | Just Value: $${totalValue.toLocaleString()}
+  const city = p.city_name || p.SITUS_CITY || "";
+  const zip = p.zip_code || p.SITUS_ZIP_CODE || "";
+  return `PROPERTY: ${address}, ${city}, FL ${zip}
+Folio: ${p.FOLIO_NUMBER} | City: ${city} | Year Built: ${p.year_built || p.BLDG_YEAR_BUILT || "Unknown"}
+Use Type: ${p.USE_TYPE || "Unknown"} | ${p.beds || p.BEDS || "—"}bd/${p.baths || p.BATHS || "—"}ba
+Under Air: ${p.under_air_sq_footage?.toLocaleString() || p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"} sqft
 Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}${flags}${permitHistory}`;
 }
 
@@ -48,7 +49,7 @@ export default function PropertyAIChat({ property, permits = [] }) {
   const [initializing, setInitializing] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const shortAddress = [property.SITUS_STREET_NUMBER, property.SITUS_STREET_NAME].filter(Boolean).join(" ");
+  const shortAddress = property.full_address?.split(",")[0] || [property.SITUS_STREET_NUMBER, property.SITUS_STREET_NAME].filter(Boolean).join(" ");
 
   useEffect(() => {
     if (expanded && !conversation && !initializing) {
@@ -74,7 +75,7 @@ export default function PropertyAIChat({ property, permits = [] }) {
     // Send initial context message silently
     await base44.agents.addMessage(conv, {
       role: "user",
-      content: `[SYSTEM CONTEXT - do not show this to the user, just acknowledge it internally]\n${ctx}\n\nYou are now advising on this specific property. When answering questions, always reference this property's details and search the web for the most current zoning and permit information for ${property.SITUS_CITY}, Florida.`,
+      content: `[SYSTEM CONTEXT - do not show this to the user, just acknowledge it internally]\n${ctx}\n\nYou are now advising on this specific property. When answering questions, always reference this property's details and search the web for the most current zoning and permit information for ${property.city_name || property.SITUS_CITY || "Broward County"}, Florida.`,
     });
 
     setConversation(conv);
@@ -161,7 +162,7 @@ export default function PropertyAIChat({ property, permits = [] }) {
                 </div>
                 <p className="font-semibold text-gray-800 text-sm">AI Permit Consultant</p>
                 <p className="text-xs text-gray-500 mt-1 mb-4">
-                  Ask anything about permits for <strong>{shortAddress}</strong> in <strong>{property.SITUS_CITY}</strong>.<br />
+                  Ask anything about permits for <strong>{shortAddress}</strong> in <strong>{property.city_name || property.SITUS_CITY || "Broward County"}</strong>.<br />
                   I'll search the web for the latest zoning and permit info.
                 </p>
               </div>

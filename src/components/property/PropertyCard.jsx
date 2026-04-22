@@ -1,20 +1,10 @@
 import { MapPin, Home, ChevronRight } from "lucide-react";
 
-
-function formatAddress(p) {
-  if (p.full_address) return p.full_address;
-  return [
-    p.SITUS_STREET_NUMBER,
-    p.SITUS_STREET_DIRECTION,
-    p.SITUS_STREET_NAME,
-    p.SITUS_STREET_TYPE,
-    p.SITUS_UNIT_NUMBER ? `Unit ${p.SITUS_UNIT_NUMBER}` : null,
-  ].filter(Boolean).join(" ");
-}
-
 export default function PropertyCard({ property: p, onClick }) {
-  const address = formatAddress(p);
-  const city = p.SITUS_CITY || "";
+  const address = p.full_address || p.FOLIO_NUMBER;
+  const city = p.city_name || "";
+  const zip = p.zip_code || "";
+
   return (
     <button
       onClick={onClick}
@@ -28,12 +18,15 @@ export default function PropertyCard({ property: p, onClick }) {
           <p className="font-semibold text-gray-900 text-base">{address}</p>
           <p className="text-gray-500 text-sm flex items-center gap-1 mt-0.5">
             <MapPin className="w-3.5 h-3.5" />
-            {city}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : ", FL"}
+            {city}{zip ? `, FL ${zip}` : city ? ", FL" : ""}
           </p>
-          <div className="flex gap-4 mt-2 text-xs text-gray-500">
+          <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
             {p.USE_TYPE && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}
+            {p.year_built && <span className="bg-gray-100 px-2 py-0.5 rounded-full">Built {p.year_built}</span>}
+            {p.beds && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.beds} bd / {p.baths || "?"} ba</span>}
+            {p.under_air_sq_footage && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{Number(p.under_air_sq_footage).toLocaleString()} sqft</span>}
           </div>
-          <p className="text-xs text-gray-400 mt-1">Folio: {p.FOLIO_NUMBER}</p>
+          <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
         </div>
       </div>
       <ChevronRight className="w-5 h-5 text-gray-400 shrink-0 mt-1" />

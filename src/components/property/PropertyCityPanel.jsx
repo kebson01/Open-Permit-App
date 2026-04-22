@@ -17,7 +17,7 @@ export default function PropertyCityPanel({ property }) {
   const [activeTab, setActiveTab] = useState("fees");
   const [expanded, setExpanded] = useState(false);
 
-  const cityName = property.SITUS_CITY;
+  const cityName = property.city_name || property.SITUS_CITY;
 
   const { data: cities = [] } = useQuery({
     queryKey: ["cities"],
