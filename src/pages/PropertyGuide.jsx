@@ -1,61 +1,237 @@
 import { useState } from "react";
-import { Search, Building2, Loader2, MapPin } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import PropertyCard from "@/components/property/PropertyCard";
-import PropertyDetail from "@/components/property/PropertyDetail";
+import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink } from "lucide-react";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 
-const HEADERS = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  "Content-Type": "application/json",
+const SUPABASE_HEADERS = {
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+  "Content-Type": "application/json"
+};
+
+const CITY_PORTALS = {
+  "Weston": "https://www.westonfl.org/Permits",
+  "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit",
+  "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
+  "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
+  "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937"
 };
 
 const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
-const CITY_PORTAL_URLS = {
-  "Weston":          "https://www.westonfl.org/Permits",
-  "Coral Springs":   "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
-  "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
-  "Hollywood":       "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
-  "Cooper City":     "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
+const STATUS_STYLES = {
+  "Completed": { bg: "#DCFCE7", color: "#166534" },
+  "Active":    { bg: "#EFF6FF", color: "#1D4ED8" },
+  "In Review": { bg: "#FFFBEB", color: "#92400E" },
+  "Expired":   { bg: "#F1F5F9", color: "#475569" },
+  "Cancelled": { bg: "#FEF2F2", color: "#991B1B" },
 };
 
-// Detect folio: 8-15 chars, mostly digits/letters, no spaces
-function isFolioNumber(q) {
-  return /^[0-9A-Z]{8,15}$/i.test(q.trim());
-}
+async function searchProperties(searchTerm, selectedCity) {
+  const term = searchTerm.trim();
+  if (!term) return [];
 
-async function searchProperties(query, cityFilter) {
-  const term = query.trim();
   let url;
-  if (isFolioNumber(term)) {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(term)}&limit=1`;
+  const isFolio = /^[0-9A-Za-z]{8,15}$/.test(term) && !/\s/.test(term);
+
+  if (isFolio) {
+    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(term)}&limit=5`;
   } else {
-    const encoded = encodeURIComponent(`%${term.toUpperCase()}%`);
-    if (cityFilter && cityFilter !== "All Cities") {
-      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&city_name=eq.${encodeURIComponent(cityFilter)}&limit=20&order=full_address.asc`;
+    const upperTerm = term.toUpperCase();
+    const encoded = encodeURIComponent(`%${upperTerm}%`);
+    if (selectedCity && selectedCity !== "All Cities") {
+      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&city_name=eq.${encodeURIComponent(selectedCity)}&limit=20&order=full_address.asc`;
     } else {
       url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&limit=20&order=full_address.asc`;
     }
   }
-  const res = await fetch(url, { headers: HEADERS });
-  return res.json();
+
+  const response = await fetch(url, { headers: SUPABASE_HEADERS });
+  if (!response.ok) throw new Error(`Search failed: ${response.status}`);
+  return await response.json();
 }
 
-export async function fetchPermitHistory(folioNumber, cityName) {
-  // Only Weston has permit records; all other cities show portal link
-  if (cityName !== "Weston") {
-    return { records: [], noData: true, cityName, portalUrl: CITY_PORTAL_URLS[cityName] };
-  }
+async function getPermitHistory(folioNumber) {
   const url = `${SUPABASE_URL}/rest/v1/weston_permit_records?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=50`;
-  const res = await fetch(url, { headers: HEADERS });
-  const data = await res.json();
-  return { records: Array.isArray(data) ? data : [], noData: false, cityName, portalUrl: CITY_PORTAL_URLS[cityName] };
+  const response = await fetch(url, { headers: SUPABASE_HEADERS });
+  if (!response.ok) return [];
+  return await response.json();
+}
+
+function PropertyCard({ property: p, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all flex items-start justify-between gap-3"
+    >
+      <div className="flex gap-3 items-start min-w-0">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <Home className="w-4 h-4 text-blue-600" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-900 text-sm leading-snug truncate">{p.full_address || p.FOLIO_NUMBER}</p>
+          <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+            <MapPin className="w-3 h-3 shrink-0" />
+            {p.city_name}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : p.city_name ? ", FL" : ""}
+          </p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {p.USE_TYPE && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}
+            {p.BLDG_YEAR_BUILT && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">Built {p.BLDG_YEAR_BUILT}</span>}
+            {p.BEDS && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{p.BEDS} bd / {p.BATHS || "?"} ba</span>}
+            {p.BLDG_TOT_SQ_FOOTAGE && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{Number(p.BLDG_TOT_SQ_FOOTAGE).toLocaleString()} sqft</span>}
+          </div>
+          <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
+        </div>
+      </div>
+      <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 mt-1" />
+    </button>
+  );
+}
+
+function PropertyDetail({ property: p, onBack }) {
+  const [permits, setPermits] = useState(null);
+  const [loadingPermits, setLoadingPermits] = useState(false);
+  const [permitsLoaded, setPermitsLoaded] = useState(false);
+
+  const isWeston = p.city_name === "Weston";
+
+  const loadPermits = async () => {
+    setLoadingPermits(true);
+    const data = await getPermitHistory(p.FOLIO_NUMBER);
+    setPermits(data);
+    setLoadingPermits(false);
+    setPermitsLoaded(true);
+  };
+
+  // Auto-load permits for Weston on mount
+  useState(() => {
+    if (isWeston) loadPermits();
+  });
+
+  const portalUrl = CITY_PORTALS[p.city_name];
+
+  return (
+    <div>
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 -ml-1 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to results
+      </button>
+
+      {/* Header */}
+      <div className="rounded-2xl p-5 mb-5 text-white" style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}>
+        <div className="flex items-start gap-3">
+          <Building2 className="w-6 h-6 text-blue-300 shrink-0 mt-0.5" />
+          <div>
+            <h2 className="text-xl font-bold leading-tight">{p.full_address || p.FOLIO_NUMBER}</h2>
+            <p className="text-blue-200 text-sm mt-0.5 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              {p.city_name}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : p.city_name ? ", FL" : ""}
+            </p>
+            <p className="text-blue-300 text-xs mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Details */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
+          {p.USE_TYPE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Use Type</span><span className="text-sm font-medium text-gray-900">{p.USE_TYPE}</span></div>}
+          {p.USE_CODE && <div className="flex justify-between py-1.5"><span className="text-sm text-gray-500">Use Code</span><span className="text-sm font-medium text-gray-900">{p.USE_CODE}</span></div>}
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Building Details</h3>
+          {p.BLDG_YEAR_BUILT && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Year Built</span><span className="text-sm font-medium text-gray-900">{p.BLDG_YEAR_BUILT}</span></div>}
+          {p.BLDG_TOT_SQ_FOOTAGE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Total Sq Ft</span><span className="text-sm font-medium text-gray-900">{Number(p.BLDG_TOT_SQ_FOOTAGE).toLocaleString()}</span></div>}
+          {p.BLDG_UNDER_AIR_SQ_FOOTAGE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Under Air</span><span className="text-sm font-medium text-gray-900">{Number(p.BLDG_UNDER_AIR_SQ_FOOTAGE).toLocaleString()}</span></div>}
+          {(p.BEDS || p.BATHS) && <div className="flex justify-between py-1.5"><span className="text-sm text-gray-500">Beds / Baths</span><span className="text-sm font-medium text-gray-900">{p.BEDS || "—"} / {p.BATHS || "—"}</span></div>}
+        </div>
+      </div>
+
+      {/* Permit History */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-5">
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-blue-600" />
+          <h3 className="font-semibold text-gray-800 text-sm">Permit History</h3>
+          {permits && permits.length > 0 && (
+            <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              {permits.length} record{permits.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {!isWeston ? (
+          <div className="text-center py-10 px-4">
+            <p className="text-gray-700 font-medium">Permit history coming soon</p>
+            <p className="text-gray-400 text-sm mt-1">Search directly at the city's permit portal for current records.</p>
+            {portalUrl && (
+              <a href={portalUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-3 text-sm text-blue-600 hover:underline font-medium">
+                <ExternalLink className="w-3.5 h-3.5" /> {p.city_name} Permit Portal →
+              </a>
+            )}
+          </div>
+        ) : loadingPermits ? (
+          <div className="flex items-center justify-center gap-2 text-gray-400 py-8">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading permits...
+          </div>
+        ) : permits && permits.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-600 font-medium">No permit records found</p>
+            <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">No permitted work on file, or records may predate our database.</p>
+          </div>
+        ) : permits && permits.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  {["Record ID", "Type", "Status", "Opened"].map(h => (
+                    <th key={h} className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {permits.map((r, i) => (
+                  <tr key={r.RECORD_ID || i} className="hover:bg-blue-50/30">
+                    <td className="px-4 py-2.5 font-mono text-xs text-blue-700 whitespace-nowrap">{r.RECORD_ID || "—"}</td>
+                    <td className="px-4 py-2.5 text-gray-700 max-w-xs"><span className="line-clamp-1">{r.PERMIT_TYPE || "—"}</span></td>
+                    <td className="px-4 py-2.5">
+                      {r.STATUS_NORMALIZED ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                          style={{
+                            backgroundColor: STATUS_STYLES[r.STATUS_NORMALIZED]?.bg || "#F1F5F9",
+                            color: STATUS_STYLES[r.STATUS_NORMALIZED]?.color || "#475569",
+                          }}>
+                          {r.STATUS_NORMALIZED}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">{r.PERMIT_STATUS || "—"}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{r.OPEN_DATE || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Portal link */}
+      {portalUrl && (
+        <div className="flex justify-center">
+          <a href={portalUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}>
+            <ExternalLink className="w-4 h-4" /> Apply / Search Permits at {p.city_name}
+          </a>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PropertyGuide() {
@@ -63,32 +239,23 @@ export default function PropertyGuide() {
   const urlCity = urlParams.get("city") || "";
 
   const [query, setQuery] = useState("");
-  const [cityFilter, setCityFilter] = useState(urlCity || "All Cities");
+  const [selectedCity, setSelectedCity] = useState(urlCity || "All Cities");
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [permitData, setPermitData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [permitsLoading, setPermitsLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState(null);
 
   const doSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
     setSearched(true);
     setSelected(null);
+    setError(null);
     setResults([]);
-    const data = await searchProperties(query, cityFilter);
+    const data = await searchProperties(query, selectedCity);
     setResults(Array.isArray(data) ? data : []);
     setLoading(false);
-  };
-
-  const selectProperty = async (prop) => {
-    setSelected(prop);
-    setPermitData(null);
-    setPermitsLoading(true);
-    const result = await fetchPermitHistory(prop.FOLIO_NUMBER, prop.city_name);
-    setPermitData(result);
-    setPermitsLoading(false);
   };
 
   return (
@@ -108,30 +275,34 @@ export default function PropertyGuide() {
           <div className="flex gap-2 bg-white rounded-xl p-2 shadow-lg mb-3">
             <div className="flex-1 flex items-center gap-2 px-3">
               <Search className="w-5 h-5 text-gray-400 shrink-0" />
-              <Input
-                className="border-0 shadow-none focus-visible:ring-0 text-base p-0"
+              <input
+                className="flex-1 border-0 outline-none text-base text-gray-800 placeholder-gray-400 bg-transparent"
                 placeholder="Enter address or folio number..."
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && doSearch()}
               />
             </div>
-            <Button onClick={doSearch} disabled={loading} className="px-6 text-white shrink-0" style={{ background: "#3B82F6" }}>
+            <button
+              onClick={doSearch}
+              disabled={loading}
+              className="px-6 py-2 rounded-lg text-white font-semibold text-sm shrink-0 disabled:opacity-60 transition-opacity hover:opacity-90"
+              style={{ background: "#3B82F6" }}
+            >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
-            </Button>
+            </button>
           </div>
 
           {/* City filter */}
           <div className="flex items-center justify-center gap-2">
             <MapPin className="w-4 h-4 text-blue-300" />
-            <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white text-sm rounded-xl h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select
+              value={selectedCity}
+              onChange={e => setSelectedCity(e.target.value)}
+              className="bg-white/10 border border-white/20 text-white text-sm rounded-xl h-9 px-3 focus:outline-none focus:ring-1 focus:ring-white/40"
+            >
+              {CITIES.map(c => <option key={c} value={c} className="text-gray-800">{c}</option>)}
+            </select>
           </div>
 
           <p className="text-white/50 text-xs mt-3">Search by address or folio number · Up to 20 results</p>
@@ -143,9 +314,7 @@ export default function PropertyGuide() {
         {selected ? (
           <PropertyDetail
             property={selected}
-            permitData={permitData}
-            permitsLoading={permitsLoading}
-            onBack={() => { setSelected(null); setPermitData(null); }}
+            onBack={() => setSelected(null)}
           />
         ) : (
           <>
@@ -154,26 +323,38 @@ export default function PropertyGuide() {
                 <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
               </div>
             )}
+
             {searched && !loading && results.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
                 <p className="font-semibold text-gray-700">No properties found</p>
-                <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">Try a shorter address or folio number. Only Broward County properties are available.</p>
+                <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                  Try a shorter address or folio number. Only Broward County properties are available.
+                </p>
               </div>
             )}
+
             {searched && !loading && results.length > 0 && (
               <p className="text-sm text-gray-500 mb-4">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
             )}
+
             <div className="grid gap-3">
               {results.map((prop, i) => (
-                <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => selectProperty(prop)} />
+                <PropertyCard
+                  key={prop.FOLIO_NUMBER || i}
+                  property={prop}
+                  onClick={() => setSelected(prop)}
+                />
               ))}
             </div>
+
             {!searched && !loading && (
               <div className="text-center py-16 text-gray-400">
                 <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
                 <p className="font-medium text-gray-700 text-lg">Search for a property</p>
-                <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">Enter an address or folio number to look up any Broward County property and its permit history.</p>
+                <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">
+                  Enter an address or folio number to look up any Broward County property and its permit history.
+                </p>
               </div>
             )}
           </>
