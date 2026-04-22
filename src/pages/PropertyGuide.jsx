@@ -17,42 +17,6 @@ const HEADERS = {
 
 const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
-// Auto-detect folio: all digits and/or dashes
-function isFolioNumber(q) {
-  return /^[\d-]+$/.test(q.trim());
-}
-
-async function searchProperties(query, cityFilter) {
-  const q = query.trim().replace(/'/g, "''");
-  let url;
-  if (isFolioNumber(q)) {
-    const folio = q.replace(/-/g, "");
-    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(folio)}&limit=1`;
-  } else if (cityFilter && cityFilter !== "All Cities") {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.*${encodeURIComponent(q)}*&city_name=eq.${encodeURIComponent(cityFilter)}&limit=20`;
-  } else {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.*${encodeURIComponent(q)}*&limit=20`;
-  }
-  const res = await fetch(url, { headers: HEADERS });
-  return res.json();
-}
-
-// Fetch permit_records_table_name dynamically from cities table
-const _recordsTableCache = {};
-async function getPermitRecordsTable(cityName) {
-  if (!cityName) return null;
-  const key = cityName.toLowerCase();
-  if (_recordsTableCache[key]) return _recordsTableCache[key];
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/cities?name=eq.${encodeURIComponent(cityName)}&select=permit_records_table_name&limit=1`,
-    { headers: HEADERS }
-  );
-  const data = await res.json();
-  const table = (Array.isArray(data) && data[0]?.permit_records_table_name) || null;
-  _recordsTableCache[key] = table;
-  return table;
-}
-
 const CITY_PORTAL_URLS = {
   "Weston":          "https://www.westonfl.org/Permits",
   "Coral Springs":   "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
@@ -61,10 +25,34 @@ const CITY_PORTAL_URLS = {
   "Cooper City":     "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
 };
 
+// Detect folio: 8-15 chars, mostly digits/letters, no spaces
+function isFolioNumber(q) {
+  return /^[0-9A-Z]{8,15}$/i.test(q.trim());
+}
+
+async function searchProperties(query, cityFilter) {
+  const term = query.trim();
+  let url;
+  if (isFolioNumber(term)) {
+    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(term)}&limit=1`;
+  } else {
+    const encoded = encodeURIComponent(`%${term.toUpperCase()}%`);
+    if (cityFilter && cityFilter !== "All Cities") {
+      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&city_name=eq.${encodeURIComponent(cityFilter)}&limit=20&order=full_address.asc`;
+    } else {
+      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&limit=20&order=full_address.asc`;
+    }
+  }
+  const res = await fetch(url, { headers: HEADERS });
+  return res.json();
+}
+
 export async function fetchPermitHistory(folioNumber, cityName) {
-  const table = await getPermitRecordsTable(cityName);
-  if (!table) return { records: [], noData: true };
-  const url = `${SUPABASE_URL}/rest/v1/${table}?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=50`;
+  // Only Weston has permit records; all other cities show portal link
+  if (cityName !== "Weston") {
+    return { records: [], noData: true, cityName, portalUrl: CITY_PORTAL_URLS[cityName] };
+  }
+  const url = `${SUPABASE_URL}/rest/v1/weston_permit_records?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=50`;
   const res = await fetch(url, { headers: HEADERS });
   const data = await res.json();
   return { records: Array.isArray(data) ? data : [], noData: false, cityName, portalUrl: CITY_PORTAL_URLS[cityName] };

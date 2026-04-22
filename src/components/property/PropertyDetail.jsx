@@ -101,7 +101,7 @@ function PermitHistoryTable({ permitData, loading }) {
 export default function PropertyDetail({ property: p, permitData, permitsLoading, onBack }) {
   const address = p.full_address || p.FOLIO_NUMBER;
   const city = p.city_name || "";
-  const zip = p.zip_code || "";
+  const zip = p.SITUS_ZIP_CODE || p.zip_code || "";
 
   return (
     <div>
@@ -133,10 +133,10 @@ export default function PropertyDetail({ property: p, permitData, permitsLoading
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Building Details</h3>
-          <Row label="Year Built" value={p.year_built} />
-          <Row label="Total Sq Ft" value={p.total_sq_footage ? Number(p.total_sq_footage).toLocaleString() : null} />
-          <Row label="Under Air" value={p.under_air_sq_footage ? Number(p.under_air_sq_footage).toLocaleString() : null} />
-          <Row label="Beds / Baths" value={(p.beds || p.baths) ? `${p.beds || "—"} / ${p.baths || "—"}` : null} />
+          <Row label="Year Built" value={p.BLDG_YEAR_BUILT || p.year_built} />
+          <Row label="Total Sq Ft" value={(p.BLDG_TOT_SQ_FOOTAGE || p.total_sq_footage) ? Number(p.BLDG_TOT_SQ_FOOTAGE || p.total_sq_footage).toLocaleString() : null} />
+          <Row label="Under Air" value={(p.BLDG_UNDER_AIR_SQ_FOOTAGE || p.under_air_sq_footage) ? Number(p.BLDG_UNDER_AIR_SQ_FOOTAGE || p.under_air_sq_footage).toLocaleString() : null} />
+          <Row label="Beds / Baths" value={((p.BEDS || p.beds) || (p.BATHS || p.baths)) ? `${p.BEDS || p.beds || "—"} / ${p.BATHS || p.baths || "—"}` : null} />
         </div>
       </div>
 

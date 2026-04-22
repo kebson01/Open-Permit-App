@@ -18,25 +18,29 @@ function buildPropertyContext(p, permits = []) {
   let permitHistory = "";
   if (permits.length > 0) {
     permitHistory = `\n\nPERMIT HISTORY (${permits.length} records):\n` + permits.map(r =>
-      `- [${r.issued_date || "Unknown date"}] ${r.permit_type?.replace(/_/g, " ").toUpperCase()} | ${r.permit_description || "No description"} | Status: ${r.status} | City: ${r.city_name}${r.contractor_name ? ` | Contractor: ${r.contractor_name}` : ""}${r.job_value ? ` | Value: $${Number(r.job_value).toLocaleString()}` : ""}`
+      `- [${r.OPEN_DATE || "Unknown date"}] ${r.PERMIT_TYPE || "Unknown type"} | Status: ${r.STATUS_NORMALIZED || r.PERMIT_STATUS || "Unknown"}`
     ).join("\n");
   } else {
     permitHistory = "\n\nPERMIT HISTORY: No permit records found in our database for this property yet.";
   }
 
-  // Flag open/expired permits
-  const openPermits = permits.filter(r => ["issued", "in_review", "pending"].includes(r.status));
-  const expiredPermits = permits.filter(r => r.status === "expired");
+  // Flag active/expired permits using Weston columns
+  const openPermits = permits.filter(r => r.STATUS_NORMALIZED === "Active" || r.STATUS_NORMALIZED === "In Review");
+  const expiredPermits = permits.filter(r => r.STATUS_NORMALIZED === "Expired");
   let flags = "";
-  if (openPermits.length > 0) flags += `\n⚠️ OPEN PERMITS (${openPermits.length}): ${openPermits.map(r => r.permit_description || r.permit_type).join(", ")}`;
+  if (openPermits.length > 0) flags += `\n⚠️ OPEN PERMITS (${openPermits.length}): ${openPermits.map(r => r.PERMIT_TYPE).join(", ")}`;
   if (expiredPermits.length > 0) flags += `\n⚠️ EXPIRED PERMITS (${expiredPermits.length}): May need re-permitting before sale or future work.`;
 
-  const city = p.city_name || p.SITUS_CITY || "";
-  const zip = p.zip_code || p.SITUS_ZIP_CODE || "";
+  const city = p.city_name || "";
+  const zip = p.SITUS_ZIP_CODE || p.zip_code || "";
+  const yearBuilt = p.BLDG_YEAR_BUILT || p.year_built || "Unknown";
+  const beds = p.BEDS || p.beds || "—";
+  const baths = p.BATHS || p.baths || "—";
+  const underAir = p.BLDG_UNDER_AIR_SQ_FOOTAGE || p.under_air_sq_footage;
   return `PROPERTY: ${address}, ${city}, FL ${zip}
-Folio: ${p.FOLIO_NUMBER} | City: ${city} | Year Built: ${p.year_built || p.BLDG_YEAR_BUILT || "Unknown"}
-Use Type: ${p.USE_TYPE || "Unknown"} | ${p.beds || p.BEDS || "—"}bd/${p.baths || p.BATHS || "—"}ba
-Under Air: ${p.under_air_sq_footage?.toLocaleString() || p.BLDG_UNDER_AIR_SQ_FOOTAGE?.toLocaleString() || "Unknown"} sqft
+Folio: ${p.FOLIO_NUMBER} | City: ${city} | Year Built: ${yearBuilt}
+Use Type: ${p.USE_TYPE || "Unknown"} | ${beds}bd/${baths}ba
+Under Air: ${underAir ? Number(underAir).toLocaleString() : "Unknown"} sqft
 Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}${flags}${permitHistory}`;
 }
 

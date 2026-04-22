@@ -3,7 +3,11 @@ import { MapPin, Home, ChevronRight } from "lucide-react";
 export default function PropertyCard({ property: p, onClick }) {
   const address = p.full_address || p.FOLIO_NUMBER;
   const city = p.city_name || "";
-  const zip = p.zip_code || "";
+  const zip = p.SITUS_ZIP_CODE || p.zip_code || "";
+  const yearBuilt = p.BLDG_YEAR_BUILT || p.year_built;
+  const beds = p.BEDS || p.beds;
+  const baths = p.BATHS || p.baths;
+  const underAir = p.BLDG_UNDER_AIR_SQ_FOOTAGE || p.under_air_sq_footage;
 
   return (
     <button
@@ -22,9 +26,9 @@ export default function PropertyCard({ property: p, onClick }) {
           </p>
           <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
             {p.USE_TYPE && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}
-            {p.year_built && <span className="bg-gray-100 px-2 py-0.5 rounded-full">Built {p.year_built}</span>}
-            {p.beds && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{p.beds} bd / {p.baths || "?"} ba</span>}
-            {p.under_air_sq_footage && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{Number(p.under_air_sq_footage).toLocaleString()} sqft</span>}
+            {yearBuilt && <span className="bg-gray-100 px-2 py-0.5 rounded-full">Built {yearBuilt}</span>}
+            {beds && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{beds} bd / {baths || "?"} ba</span>}
+            {underAir && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{Number(underAir).toLocaleString()} sqft</span>}
           </div>
           <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
         </div>
