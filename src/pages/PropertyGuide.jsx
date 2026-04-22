@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink } from "lucide-react";
-
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
-
-const SUPABASE_HEADERS = {
-  "apikey": SUPABASE_ANON_KEY,
-  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-  "Content-Type": "application/json"
-};
+import { supabase } from "@/lib/supabaseClient";
 
 const CITY_PORTALS = {
   "Weston": "https://www.westonfl.org/Permits",
@@ -19,6 +11,8 @@ const CITY_PORTALS = {
 };
 
 const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+
+const PROPERTY_COLS = "FOLIO_NUMBER, full_address, city_name, SITUS_CITY, SITUS_ZIP_CODE, BLDG_YEAR_BUILT, BEDS, BATHS, BLDG_TOT_SQ_FOOTAGE, BLDG_UNDER_AIR_SQ_FOOTAGE, USE_TYPE";
 
 const STATUS_STYLES = {
   "Completed": { bg: "#DCFCE7", color: "#166534" },
@@ -32,31 +26,34 @@ async function searchProperties(searchTerm, selectedCity) {
   const term = searchTerm.trim();
   if (!term) return [];
 
-  let url;
   const isFolio = /^[0-9A-Za-z]{8,15}$/.test(term) && !/\s/.test(term);
 
+  let query = supabase.from("broward_properties_public").select(PROPERTY_COLS);
+
   if (isFolio) {
-    url = `${SUPABASE_URL}/rest/v1/broward_properties_public?FOLIO_NUMBER=eq.${encodeURIComponent(term)}&limit=5`;
+    query = query.eq("FOLIO_NUMBER", term).limit(5);
   } else {
-    const upperTerm = term.toUpperCase();
-    const encoded = encodeURIComponent(`%${upperTerm}%`);
+    query = query.ilike("full_address", `%${term.toUpperCase()}%`).order("full_address").limit(20);
     if (selectedCity && selectedCity !== "All Cities") {
-      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&city_name=eq.${encodeURIComponent(selectedCity)}&limit=20&order=full_address.asc`;
-    } else {
-      url = `${SUPABASE_URL}/rest/v1/broward_properties_public?full_address=ilike.${encoded}&limit=20&order=full_address.asc`;
+      query = query.eq("city_name", selectedCity);
     }
   }
 
-  const response = await fetch(url, { headers: SUPABASE_HEADERS });
-  if (!response.ok) throw new Error(`Search failed: ${response.status}`);
-  return await response.json();
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
 }
 
 async function getPermitHistory(folioNumber) {
-  const url = `${SUPABASE_URL}/rest/v1/weston_permit_records?PARCEL_NBR=eq.${encodeURIComponent(folioNumber)}&order=OPEN_DATE.desc&limit=50`;
-  const response = await fetch(url, { headers: SUPABASE_HEADERS });
-  if (!response.ok) return [];
-  return await response.json();
+  const { data, error } = await supabase
+    .from("weston_permit_records")
+    .select("RECORD_ID, PERMIT_TYPE, PERMIT_STATUS, STATUS_NORMALIZED, OPEN_DATE, PARCEL_NBR")
+    .eq("PARCEL_NBR", folioNumber)
+    .order("OPEN_DATE", { ascending: false })
+    .limit(50);
+
+  if (error) return [];
+  return data || [];
 }
 
 function PropertyCard({ property: p, onClick }) {
@@ -92,24 +89,20 @@ function PropertyCard({ property: p, onClick }) {
 function PropertyDetail({ property: p, onBack }) {
   const [permits, setPermits] = useState(null);
   const [loadingPermits, setLoadingPermits] = useState(false);
-  const [permitsLoaded, setPermitsLoaded] = useState(false);
 
   const isWeston = p.city_name === "Weston";
-
-  const loadPermits = async () => {
-    setLoadingPermits(true);
-    const data = await getPermitHistory(p.FOLIO_NUMBER);
-    setPermits(data);
-    setLoadingPermits(false);
-    setPermitsLoaded(true);
-  };
-
-  // Auto-load permits for Weston on mount
-  useState(() => {
-    if (isWeston) loadPermits();
-  });
-
   const portalUrl = CITY_PORTALS[p.city_name];
+
+  // Auto-load permits for Weston
+  useState(() => {
+    if (isWeston) {
+      setLoadingPermits(true);
+      getPermitHistory(p.FOLIO_NUMBER).then(data => {
+        setPermits(data);
+        setLoadingPermits(false);
+      });
+    }
+  });
 
   return (
     <div>
@@ -135,12 +128,11 @@ function PropertyDetail({ property: p, onBack }) {
         </div>
       </div>
 
-      {/* Details */}
+      {/* Details grid */}
       <div className="grid sm:grid-cols-2 gap-4 mb-5">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
           {p.USE_TYPE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Use Type</span><span className="text-sm font-medium text-gray-900">{p.USE_TYPE}</span></div>}
-          {p.USE_CODE && <div className="flex justify-between py-1.5"><span className="text-sm text-gray-500">Use Code</span><span className="text-sm font-medium text-gray-900">{p.USE_CODE}</span></div>}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Building Details</h3>
@@ -220,7 +212,6 @@ function PropertyDetail({ property: p, onBack }) {
         ) : null}
       </div>
 
-      {/* Portal link */}
       {portalUrl && (
         <div className="flex justify-center">
           <a href={portalUrl} target="_blank" rel="noopener noreferrer"
@@ -299,7 +290,7 @@ export default function PropertyGuide() {
             <select
               value={selectedCity}
               onChange={e => setSelectedCity(e.target.value)}
-              className="bg-white/10 border border-white/20 text-white text-sm rounded-xl h-9 px-3 focus:outline-none focus:ring-1 focus:ring-white/40"
+              className="bg-white/10 border border-white/20 text-white text-sm rounded-xl h-9 px-3 focus:outline-none"
             >
               {CITIES.map(c => <option key={c} value={c} className="text-gray-800">{c}</option>)}
             </select>
@@ -312,10 +303,7 @@ export default function PropertyGuide() {
       {/* Results */}
       <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
         {selected ? (
-          <PropertyDetail
-            property={selected}
-            onBack={() => setSelected(null)}
-          />
+          <PropertyDetail property={selected} onBack={() => setSelected(null)} />
         ) : (
           <>
             {loading && (
@@ -323,7 +311,6 @@ export default function PropertyGuide() {
                 <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
               </div>
             )}
-
             {searched && !loading && results.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
@@ -333,21 +320,14 @@ export default function PropertyGuide() {
                 </p>
               </div>
             )}
-
             {searched && !loading && results.length > 0 && (
               <p className="text-sm text-gray-500 mb-4">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
             )}
-
             <div className="grid gap-3">
               {results.map((prop, i) => (
-                <PropertyCard
-                  key={prop.FOLIO_NUMBER || i}
-                  property={prop}
-                  onClick={() => setSelected(prop)}
-                />
+                <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => setSelected(prop)} />
               ))}
             </div>
-
             {!searched && !loading && (
               <div className="text-center py-16 text-gray-400">
                 <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
