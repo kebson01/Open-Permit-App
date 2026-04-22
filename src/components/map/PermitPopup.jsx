@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus, Phone, MapPin, Globe, CheckCheck } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus, Phone, MapPin, Globe, CheckCheck, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import AddToProjectModal from "./AddToProjectModal";
+import FBCSection from "./FBCSection";
 import { base44 } from "@/api/base44Client";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
@@ -331,6 +332,14 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         )}
 
         <div className="p-5 space-y-5">
+          {/* HVHZ Callout — always shown for all Broward permits */}
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-blue-50">
+            <Wind className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-blue-800 leading-relaxed">
+              <span className="font-bold">📍 HVHZ — High Velocity Hurricane Zone:</span> All Broward County properties require products rated for 170+ mph winds. All exterior work must have current <strong>Florida Product Approval</strong>.
+            </p>
+          </div>
+
           {/* Description */}
           {current.description && (
             <p className="text-gray-600 text-sm leading-relaxed">{current.description}</p>
@@ -442,6 +451,10 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             <FolderPlus className="w-4 h-4" />
             Add to my project
           </button>
+
+          {/* Florida Building Code Requirements */}
+          <hr className="border-gray-100" />
+          <FBCSection permitName={current.name} />
 
           {/* Ready to Apply */}
           <ReadyToApply city={city} />

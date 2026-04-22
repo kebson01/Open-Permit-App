@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, BookOpen } from "lucide-react";
 
 function CollapsibleSection({ title, count, children }) {
   const [open, setOpen] = useState(false);
@@ -102,6 +102,7 @@ export default function AIResponseCard({ structured }) {
     caveats,
     portal_url, portal_label,
     city_name, dept_phone, dept_hours,
+    fbc_code_ref,
   } = structured;
 
   const hasDocuments = documents && documents.length > 0;
@@ -206,6 +207,14 @@ export default function AIResponseCard({ structured }) {
           </CollapsibleSection>
         )}
       </div>
+
+      {/* FBC code reference badge */}
+      {fbc_code_ref && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-indigo-100 bg-indigo-50">
+          <BookOpen className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+          <span className="text-xs text-indigo-700 font-medium">{fbc_code_ref}</span>
+        </div>
+      )}
 
       {/* 4. Two action buttons */}
       {portal_url && (

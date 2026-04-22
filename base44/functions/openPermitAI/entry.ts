@@ -30,6 +30,74 @@ const CITY_DEPT_INFO = {
 // Only use web search for very specific questions not answerable from local data
 const WEB_SEARCH_KEYWORDS = ["hoa rule", "hoa restriction", "deed restriction", "historical district"];
 
+// Map message keywords to FBC categories
+function getFBCCategories(message) {
+  const lower = message.toLowerCase();
+  const cats = new Set();
+  if (/roof|re.roof|shingle|tile roof|flat roof/.test(lower)) { cats.add("roofing"); cats.add("hvhz"); }
+  if (/window|door|sliding|impact|glass/.test(lower)) { cats.add("windows_doors"); cats.add("hvhz"); }
+  if (/pool|spa|swimming/.test(lower)) cats.add("pool");
+  if (/a\/c|hvac|air condition|heat pump|mechanical/.test(lower)) cats.add("permit_required");
+  if (/solar|photovoltaic|pv panel/.test(lower)) { cats.add("permit_required"); cats.add("energy"); }
+  if (/energy|insulation|r.value|blower door/.test(lower)) cats.add("energy");
+  if (/hvhz|hurricane|wind|impact|product approval/.test(lower)) cats.add("hvhz");
+  if (/permit required|do i need a permit|need a permit/.test(lower)) cats.add("permit_required");
+  if (/fee|cost|how much/.test(lower)) cats.add("fees");
+  return [...cats];
+}
+
+async function fetchFBCData(message) {
+  const categories = getFBCCategories(message);
+  if (categories.length === 0) return { sections: [], commonQA: null };
+
+  try {
+    // Fetch relevant FBC sections + all common_questions for matching categories
+    const fetches = categories.slice(0, 3).map(cat =>
+      fetch(`${SUPABASE_URL}/rest/v1/florida_building_code?category=eq.${cat}&limit=5`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
+        .then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => [])
+    );
+    const results = await Promise.all(fetches);
+    const seen = new Set();
+    const sections = [];
+    results.flat().forEach(s => {
+      if (!seen.has(s.id)) { seen.add(s.id); sections.push(s); }
+    });
+
+    // Check common_questions for instant match
+    const lower = message.toLowerCase().trim();
+    let commonQA = null;
+    for (const section of sections) {
+      const qs = Array.isArray(section.common_questions) ? section.common_questions
+        : (typeof section.common_questions === "string" ? (() => { try { return JSON.parse(section.common_questions); } catch { return []; } })() : []);
+      for (const qa of qs) {
+        if (qa?.q && lower.includes(qa.q.toLowerCase().slice(0, 20))) {
+          commonQA = { q: qa.q, a: qa.a, section_number: section.section_number, section_title: section.section_title };
+          break;
+        }
+      }
+      if (commonQA) break;
+    }
+
+    return { sections, commonQA };
+  } catch {
+    return { sections: [], commonQA: null };
+  }
+}
+
+function formatFBCForPrompt(sections) {
+  if (!sections.length) return "";
+  const lines = ["FLORIDA BUILDING CODE (FBC) SECTIONS:"];
+  sections.forEach(s => {
+    const keyReqs = Array.isArray(s.key_requirements) ? s.key_requirements
+      : (typeof s.key_requirements === "string" ? (() => { try { return JSON.parse(s.key_requirements); } catch { return []; } })() : []);
+    const keyNums = Array.isArray(s.key_numbers) ? s.key_numbers
+      : (typeof s.key_numbers === "string" ? (() => { try { return JSON.parse(s.key_numbers); } catch { return []; } })() : []);
+    lines.push(`- FBC §${s.section_number} "${s.section_title}" [${s.category}]${s.broward_specific ? " ⚠️ BROWARD/HVHZ AMENDMENT" : ""}: ${s.plain_english || ""}${keyNums.length ? ` Key numbers: ${keyNums.join(", ")}` : ""}${keyReqs.length ? ` Requirements: ${keyReqs.join("; ")}` : ""}`);
+  });
+  return lines.join("\n");
+}
+
 function needsWebSearch(message, hasZoningData) {
   if (hasZoningData) return false; // local data covers it
   const lower = message.toLowerCase();
@@ -144,10 +212,11 @@ Deno.serve(async (req) => {
     const currentCity = city || "Weston";
     const portalUrl = CITY_PORTAL_URLS[currentCity] || CITY_PORTAL_URLS["Weston"];
 
-    // Fetch permit data and zoning data in parallel
-    const [permitData, zoningData] = await Promise.all([
+    // Fetch permit data, zoning data, and FBC data in parallel
+    const [permitData, zoningData, fbcData] = await Promise.all([
       fetchLocalPermitData(currentCity),
       fetchZoningData(currentCity),
+      fetchFBCData(message),
     ]);
 
     const localDataSection = permitData.length
@@ -157,6 +226,28 @@ Deno.serve(async (req) => {
     const hasZoningData = zoningData.zoning.length > 0 || zoningData.ordinances.length > 0;
     const zoningSection = hasZoningData
       ? `\n\nLOCAL ZONING & ORDINANCE DATA FOR ${currentCity.toUpperCase()}:\n${formatZoningForPrompt(zoningData.zoning, zoningData.ordinances)}`
+      : "";
+
+    // Instant answer from common_questions
+    if (fbcData.commonQA) {
+      const qa = fbcData.commonQA;
+      return Response.json({
+        structured: {
+          direct_answer: qa.a,
+          description: `Based on Florida Building Code §${qa.section_number} — ${qa.section_title}.`,
+          is_plain_text: false,
+          portal_url: CITY_PORTAL_URLS[currentCity],
+          city_name: currentCity,
+          dept_phone: (CITY_DEPT_INFO[currentCity] || CITY_DEPT_INFO["Weston"]).phone,
+          dept_hours: (CITY_DEPT_INFO[currentCity] || CITY_DEPT_INFO["Weston"]).hours,
+          fbc_instant: true,
+        },
+        usedWebSearch: false,
+      });
+    }
+
+    const fbcSection = fbcData.sections.length > 0
+      ? `\n\n${formatFBCForPrompt(fbcData.sections)}`
       : "";
 
     const useWebSearch = needsWebSearch(message, hasZoningData);
@@ -208,7 +299,8 @@ Deno.serve(async (req) => {
         dept_phone: { type: "string", description: "Building department phone e.g. '(954) 385-2600'" },
         dept_hours: { type: "string", description: "Hours e.g. 'Mon–Fri 8AM–4:30PM'" },
         is_plain_text: { type: "boolean", description: "Set to true ONLY for greetings or meta questions." },
-        plain_text_reply: { type: "string", description: "Only populated when is_plain_text is true" }
+        plain_text_reply: { type: "string", description: "Only populated when is_plain_text is true" },
+        fbc_code_ref: { type: "string", description: "FBC section reference if applicable e.g. 'FBC-R §R905.2, FBC-R §R301.2.1.2 (HVHZ)'. Null if not applicable." }
       },
       required: ["direct_answer", "is_plain_text"]
     };
@@ -239,11 +331,13 @@ City reference data:
 - Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | Portal: coopercity.gov | All applications must be notarized | Ordinance: library.municode.com/fl/cooper_city
 
 Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City → Municode (library.municode.com).
-${localDataSection}${zoningSection}
+${localDataSection}${zoningSection}${fbcSection}
 
 INSTRUCTIONS:
-- You have been provided with the complete permit database AND local zoning/ordinance data for ${currentCity} above. Use this data to answer questions FIRST.
-- For permit types, documents, requirements, timelines, fees, setbacks, heights, lot coverage, and ordinance sections: answer ONLY from the provided local data. Do NOT use web search for these.
+- You have been provided with the complete permit database, local zoning/ordinance data, AND Florida Building Code (FBC) sections above. Use all of these to answer questions.
+- For permit types, documents, requirements, timelines, fees, setbacks, heights, lot coverage, FBC code sections, and HVHZ requirements: answer ONLY from the provided local data. Do NOT use web search for these.
+- When FBC sections are provided, cite the section number (e.g. "per FBC §R905.2") and include relevant key_numbers.
+- All Broward County properties are in the HVHZ (High Velocity Hurricane Zone) — always mention 170+ mph wind requirements and Florida Product Approval for any exterior work.
 - Only use web search for HOA-specific rules, deed restrictions, or historical district requirements not in the local data.
 - Never fetch ordinance URLs directly — reference them as links only.
 - Always respond with structured JSON matching the schema.
