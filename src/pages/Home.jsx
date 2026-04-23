@@ -1,344 +1,219 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import CitySelector from "../components/home/CitySelector";
+import HomeAISection from "../components/home/HomeAISection";
+import AIDrawer from "../components/ai/AIDrawer";
+import { MousePointerClick, DollarSign, Building2, Sparkles, BookOpen, CheckCircle, ArrowRight, Info, X } from "lucide-react";
 
-const STATS = [
-  { value: "758K+", label: "PROPERTIES" },
-  { value: "122+", label: "PERMIT TYPES" },
-  { value: "5", label: "CITIES COVERED" },
-  { value: "100%", label: "OFFICIAL SOURCES" },
+const HOW_IT_WORKS = [
+  { num: "1", title: "Identify your permit", body: "Click on the part of your home you're improving to see exactly what permits apply", page: "PermitGuide" },
+  { num: "2", title: "Estimate your costs", body: "Get a transparent fee estimate based on official city fee schedules", page: "FeeCalculator" },
+  { num: "3", title: "Gather your documents", body: "Get a checklist of exactly what to bring — no surprises at the counter", page: "PermitGuide" },
 ];
 
-const WHY_CARDS = [
-  {
-    icon: "visibility",
-    title: "Transparency",
-    body: "See exactly where your application stands and what requirements remain at every step.",
-  },
-  {
-    icon: "bolt",
-    title: "Speed",
-    body: "Our automated workflows identify missing documents before you even hit the submit button.",
-  },
-  {
-    icon: "check_circle",
-    title: "Accuracy",
-    body: "Data synced directly from municipal databases ensures you're always using official guidelines.",
-  },
+const FEATURE_CARDS = [
+  { icon: MousePointerClick, title: "Identify the permit you need", body: "Click on any part of your home in our visual guide", page: "PermitGuide" },
+  { icon: DollarSign, title: "Estimate costs in advance", body: "Live fee calculator powered by official city schedules", page: "FeeCalculator" },
+  { icon: Building2, title: "Search any property", body: "Look up permit history on all 758,232 Broward parcels", page: "PropertyGuide" },
+  { icon: Sparkles, title: "Let AI do the work", body: "Instant answers on requirements and local rules", page: "PermitGuide" },
+  { icon: CheckCircle, title: "Save your checklist", body: "Create a free account to track your document progress", page: "ProjectDashboard" },
+  { icon: BookOpen, title: "5 cities covered", body: "Weston, Coral Springs, Fort Lauderdale, Hollywood & Cooper City — all fully active", page: "PermitGuide" },
+];
+
+const STATS = [
+  { value: "758K+", label: "Broward properties" },
+  { value: "122+", label: "Permit types" },
+  { value: "5", label: "Cities covered" },
+  { value: "100%", label: "Official sources" },
 ];
 
 const CITIES = [
-  {
-    name: "Weston",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBBf7fNb5WGo7-nW-VMJeQRSRitPaTWHowgSvyB52vk3cjXwujRRzXezfrE0y48lLGV7sSz9Ctr5ckV0-hKWq8fUxOUWzg2Mr_6JxV91aaqgHf4SP18Oegwrzqr9p4t5_YLuvAl-exGb-_Jh2IUzIO-HnWdX5aodJInNG30YlqTePNWiIbI5hypA2_nRQAwt2je35UclI7eLLOBBHkiGL_LKnH0Xkhpok1oVdY6PMGIFd9csPR8SjyQUfMVivG4-eopSIweAU1hswkF",
-  },
-  {
-    name: "Coral Springs",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBtKKIL_sRmD2yBoHbs3zAMSinVvsuQY0ZkUf8ftd07UtGAlUx5VyGYdmVp89JFaXHeZkaoB6brlWQbf4tTub2lHyonbowbV74CR_1AGlQuwKMkd5tZJH36JWIgiiZrG6VvJ_HTwfoLOqy7jpy2HggpovRD87hV8GiD30RIqljOndEEOpaVp7as0aVPAXb4Np60-FkkTlE9lw2aPxAZ6avoyYhN4FkbvnPzC3eFDkvdwUissLKub7VkHYpcrBeS89214fRuUerH3To6",
-  },
-  {
-    name: "Fort Lauderdale",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjdG5dbfcA2y0kEtd0D6raSi0_lRE5WeO2UIv3mSdAOWBrtQ5F45JZa82Tyghdr_z5O7xpNRytMrx6sEf78kKUpVx0gGZNYYMrSWT1mHC4E9_smBypA2HRHfkeOrLP-qBJyD8bIi47Ig9GC6Z07X0mrbAXA2FUVqqCWxI7CVJ22N3x8ISHRaJgSzpou_O4HUkTSTI6S83uBpvqrxO0pvMpTplpP_6YXyXHIbTLf7BMpiW6r1CvAWiO1zhfg2C_cimKm5ZMNS25A-PT",
-  },
-  {
-    name: "Hollywood",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCmYnml5Ddm29zUxB0LasySmnFZTWkfcXDipPuDFVulQmLxgX5NtE8911tTv0PJjsr6loyYKSjatv62ik9cmK88DpbaqQgIgieRQPtp2YafxrY2QXIfh0yUSTWwwlTa9knjw_RPeRKPqqSDbZ7wmpp5t3WD4sk5GG8apNZEQwyx_tkm_wJcggiNmBOJwmi0VFRClhCMeIRAgurLZFhMuBt90WFtOiazolkfJNp_gA-vTA1mvo7hZqWCVd8BlmC9atZdIsmjJsF0phkS",
-  },
-  {
-    name: "Cooper City",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTyv0eWSE-9mixhvz4wcTYx3CS5-D8CpUgGRq8jpeipPqyFFf4vdkhb6HYfcp1hJabd_do1d0xNBib_C2hMKV6HocyaiEp8C559Oj1ariztP00vmwOiGDSUiWx0P6kQU481souqWzIc76kKRZe21fep73KGVRYZmju72uMIuNb0zM6LZgpSQ4KZycSR3J0rSFGwQwWGOAVt1ZcwXRy8h9zC75nfc0Ctx09mOCSIWvuoQRuKoyETB3k6Lg8uUKT6iD3oWe4tai2R6kZ",
-  },
+  { name: "Weston", available: true },
+  { name: "Coral Springs", available: true },
+  { name: "Fort Lauderdale", available: true },
+  { name: "Hollywood", available: true },
+  { name: "Cooper City", available: true },
 ];
 
-const FOOTER_LINKS = [
-  { label: "Plan a Permit", page: "PermitGuide" },
-  { label: "Estimate Costs", page: "FeeCalculator" },
-  { label: "Search Property", page: "PropertyGuide" },
-  { label: "My Projects", page: "ProjectDashboard" },
-];
-
-function CityCard({ city, onClick }) {
+function ClickCard({ to, children, className, style }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div
-      onClick={onClick}
+    <Link
+      to={to}
+      className={className}
+      style={{
+        ...style,
+        borderColor: hovered ? "#BFDBFE" : "#E2E8F0",
+        cursor: "pointer",
+        transition: "border-color 0.15s ease",
+        textDecoration: "none",
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        borderRadius: 14,
-        overflow: "hidden",
-        border: "1px solid #e5eeff",
-        backgroundColor: "#ffffff",
-        cursor: "pointer",
-        boxShadow: hovered ? "0 8px 24px rgba(10,25,47,0.14)" : "0 2px 8px rgba(10,25,47,0.06)",
-        transform: hovered ? "translateY(-2px)" : "translateY(0)",
-        transition: "box-shadow 0.18s, transform 0.18s",
-      }}
     >
-      <div style={{ height: 128, overflow: "hidden" }}>
-        <img
-          src={city.img}
-          alt={city.name}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transition: "transform 0.25s",
-            transform: hovered ? "scale(1.05)" : "scale(1)",
-          }}
-        />
-      </div>
-      <div style={{ padding: "12px 14px 14px" }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: "#0a192f" }}>{city.name}</div>
-        <div style={{ fontSize: 12, color: "#44474d", marginTop: 2 }}>Broward County</div>
-      </div>
-    </div>
+      {children(hovered)}
+    </Link>
   );
 }
 
 export default function Home() {
-  const navigate = useNavigate();
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInitialMessage, setAiInitialMessage] = useState("");
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  const goToCity = (cityName) => {
-    navigate(createPageUrl("PermitGuide") + `?city=${encodeURIComponent(cityName)}`);
+  const handleAsk = (msg) => {
+    setAiInitialMessage(msg);
+    setAiOpen(true);
   };
 
   return (
-    <div style={{ fontFamily: "'Public Sans', system-ui, sans-serif", backgroundColor: "#f8f9ff", color: "#0b1c30" }}>
+    <div className="pb-16 md:pb-0" style={{ backgroundColor: "#F8FAFC" }}>
 
       {/* ── HERO ── */}
-      <section
-        style={{
-          minHeight: 560,
-          backgroundImage: `linear-gradient(to top right, rgba(10,25,47,0.92) 40%, rgba(10,25,47,0.55) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuBBf7fNb5WGo7-nW-VMJeQRSRitPaTWHowgSvyB52vk3cjXwujRRzXezfrE0y48lLGV7sSz9Ctr5ckV0-hKWq8fUxOUWzg2Mr_6JxV91aaqgHf4SP18Oegwrzqr9p4t5_YLuvAl-exGb-_Jh2IUzIO-HnWdX5aodJInNG30YlqTePNWiIbI5hypA2_nRQAwt2je35UclI7eLLOBBHkiGL_LKnH0Xkhpok1oVdY6PMGIFd9csPR8SjyQUfMVivG4-eopSIweAU1hswkF')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: "flex",
-          alignItems: "center",
-          padding: "64px 24px",
-        }}
-      >
-        <div style={{ maxWidth: 600 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "4px 12px",
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.35)",
-              color: "rgba(255,255,255,0.85)",
-              fontSize: 12,
-              fontWeight: 500,
-              marginBottom: 20,
-            }}
-          >
-            Broward County, Florida
-          </div>
-
-          <h1
-            style={{
-              color: "#ffffff",
-              fontWeight: 900,
-              fontSize: "clamp(28px, 5vw, 46px)",
-              lineHeight: 1.15,
-              marginBottom: 18,
-            }}
-          >
-            Permits made simple for South Florida
-          </h1>
-
-          <p
-            style={{
-              color: "rgba(255,255,255,0.72)",
-              fontSize: 16,
-              lineHeight: 1.65,
-              marginBottom: 32,
-              maxWidth: 520,
-            }}
-          >
-            Your all-in-one guide to navigating building permits in Broward County. Professional clarity for property owners and pros.
-          </p>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link
-              to={createPageUrl("ProjectDashboard")}
-              style={{
-                padding: "12px 24px",
-                borderRadius: 8,
-                border: "1.5px solid rgba(255,255,255,0.6)",
-                color: "#ffffff",
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none",
-              }}
-            >
-              Start My Project
-            </Link>
-            <Link
-              to={createPageUrl("PropertyGuide")}
-              style={{
-                padding: "12px 24px",
-                borderRadius: 8,
-                background: "#ffffff",
-                color: "#0a192f",
-                fontWeight: 700,
-                fontSize: 14,
-                textDecoration: "none",
-              }}
-            >
-              Search Property
-            </Link>
-          </div>
+      <section style={{ backgroundColor: "#0F3575", padding: "52px 32px 96px", textAlign: "center" }}>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-5"
+          style={{ backgroundColor: "#1E4D99", color: "#93B8F4" }}>
+          🏛️ Trusted by Broward County municipalities
         </div>
-      </section>
 
-      {/* ── STATS BAR ── */}
-      <section style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e5eeff" }}>
-        <div
-          className="home-stats-grid"
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "28px 24px",
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 16,
-          }}
-        >
-          {STATS.map((s) => (
-            <div key={s.label} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 900, color: "#0a192f", lineHeight: 1.1 }}>
-                {s.value}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#44474d", letterSpacing: "0.08em", marginTop: 4 }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+        <h1 className="font-bold leading-tight" style={{ color: "#FFFFFF", fontSize: "clamp(26px, 5vw, 38px)", maxWidth: 560, margin: "0 auto 16px" }}>
+          Permits made simple for{" "}
+          <span style={{ color: "#60A5FA" }}>South Florida.</span>
+        </h1>
 
-      {/* ── WHY OPENPERMIT ── */}
-      <section style={{ backgroundColor: "#ffffff", padding: "64px 24px" }}>
-        <div style={{ maxWidth: 880, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <h2 style={{ fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 800, color: "#0a192f", marginBottom: 14 }}>
-              Why OpenPermit?
-            </h2>
-            <p style={{ fontSize: 15, color: "#44474d", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
-              Bridging the gap between government complexity and property development through transparency and tech.
-            </p>
-          </div>
+        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, maxWidth: 480, margin: "0 auto 32px", lineHeight: 1.65 }}>
+          Know exactly what permits you need, estimate your costs upfront, and search any Broward County property — all in one place.
+        </p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 20,
-            }}
-          >
-            {WHY_CARDS.map((card) => (
-              <div
-                key={card.title}
-                style={{
-                  backgroundColor: "#ffffff",
-                  borderRadius: 16,
-                  border: "1px solid #e5eeff",
-                  boxShadow: "0 2px 12px rgba(10,25,47,0.07)",
-                  padding: "28px 24px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    backgroundColor: "#e5eeff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ color: "#436085", fontSize: 26 }}>
-                    {card.icon}
-                  </span>
-                </div>
-                <h3 style={{ fontWeight: 700, fontSize: 17, color: "#0a192f", marginBottom: 8 }}>{card.title}</h3>
-                <p style={{ fontSize: 14, color: "#44474d", lineHeight: 1.65 }}>{card.body}</p>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link to={createPageUrl("PermitGuide")} className="font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
+            Start Planning Your Permit
+          </Link>
+          <Link to={createPageUrl("FeeCalculator")} className="font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.35)", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
+            Estimate Costs
+          </Link>
         </div>
       </section>
 
       {/* ── CITY SELECTOR ── */}
-      <section style={{ backgroundColor: "#f8fafc", padding: "64px 24px" }}>
-        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-          <div style={{ marginBottom: 36 }}>
-            <h2 style={{ fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 800, color: "#0a192f", marginBottom: 8 }}>
-              Choose Your City
-            </h2>
-            <p style={{ fontSize: 15, color: "#44474d" }}>
-              Select a municipality to see localized guidelines.
-            </p>
-          </div>
+      <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 16 }}>
+        <CitySelector />
+      </div>
 
-          <div
-            className="home-city-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(5, 1fr)",
-              gap: 16,
-            }}
-          >
-            {CITIES.map((city) => (
-              <CityCard key={city.name} city={city} onClick={() => goToCity(city.name)} />
-            ))}
+      {/* ── PERMIT EXPLAINER BANNER ── */}
+      {!bannerDismissed && (
+        <div className="flex justify-center px-4 mb-6">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+            <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1E3A8A" }} />
+            <span style={{ color: "#1E3A8A", fontSize: 13, fontWeight: 500 }}>A permit is official approval from the city before you start home improvements.</span>
+            <button onClick={() => setBannerDismissed(true)} className="ml-1 hover:opacity-70 transition-opacity flex-shrink-0" style={{ color: "#1E3A8A" }}>
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
+        </div>
+      )}
+
+      {/* ── AI SECTION ── */}
+      <HomeAISection onAsk={handleAsk} />
+
+      {/* AI Drawer */}
+      <AIDrawer
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        currentPageName="Home"
+        initialMessage={aiInitialMessage}
+      />
+
+      {/* ── HOW IT WORKS ── */}
+      <section style={{ padding: "48px 32px", textAlign: "center" }}>
+        <p className="font-semibold uppercase tracking-widest mb-2" style={{ color: "#3B82F6", fontSize: 11 }}>HOW IT WORKS</p>
+        <h2 className="font-bold mb-2" style={{ color: "#0F172A", fontSize: 22 }}>Three steps to permit-ready</h2>
+        <p className="mb-10" style={{ color: "#475569", fontSize: 14 }}>No more guessing. Know exactly what you need before you apply.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mx-auto" style={{ maxWidth: 700 }}>
+          {HOW_IT_WORKS.map(step => (
+            <ClickCard
+              key={step.num}
+              to={createPageUrl(step.page)}
+              className="bg-white rounded-xl border p-5 text-left block relative"
+              style={{ borderColor: "#E2E8F0" }}
+            >
+              {(hovered) => (
+                <>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3"
+                    style={{ backgroundColor: "#EFF6FF", color: "#1E4D99" }}>
+                    {step.num}
+                  </div>
+                  <p className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 13 }}>{step.title}</p>
+                  <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{step.body}</p>
+                  <ArrowRight
+                    className="absolute bottom-4 right-4 w-3.5 h-3.5 transition-opacity duration-150"
+                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
+                  />
+                </>
+              )}
+            </ClickCard>
+          ))}
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ backgroundColor: "#f8fafc", borderTop: "1px solid #e5eeff", padding: "40px 24px 80px" }}>
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            gap: 32,
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: "#0a192f", marginBottom: 6 }}>OpenPermit</div>
-            <p style={{ fontSize: 13, color: "#44474d" }}>© {new Date().getFullYear()} OpenPermit. All rights reserved.</p>
-          </div>
+      {/* ── WHAT YOU CAN DO ── */}
+      <section style={{ padding: "0 32px 48px", textAlign: "center" }}>
+        <p className="font-semibold uppercase tracking-widest mb-2" style={{ color: "#3B82F6", fontSize: 11 }}>WHAT YOU CAN DO</p>
+        <h2 className="font-bold mb-2" style={{ color: "#0F172A", fontSize: 22 }}>Everything in one place</h2>
+        <p className="mb-8" style={{ color: "#475569", fontSize: 14 }}>Built for Broward County homeowners and contractors.</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, auto)", gap: "8px 32px" }}>
-            {FOOTER_LINKS.map((link) => (
-              <Link
-                key={link.page}
-                to={createPageUrl(link.page)}
-                style={{ fontSize: 14, color: "#44474d", textDecoration: "none", fontWeight: 500 }}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <a href="#" style={{ fontSize: 14, color: "#44474d", textDecoration: "none", fontWeight: 500 }}>Privacy Policy</a>
-            <a href="#" style={{ fontSize: 14, color: "#44474d", textDecoration: "none", fontWeight: 500 }}>Terms of Service</a>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mx-auto" style={{ maxWidth: 700 }}>
+          {FEATURE_CARDS.map(card => (
+            <ClickCard
+              key={card.title}
+              to={createPageUrl(card.page)}
+              className="bg-white rounded-xl border p-4 text-left flex items-start gap-3 relative"
+              style={{ borderColor: "#E2E8F0" }}
+            >
+              {(hovered) => (
+                <>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
+                    <card.icon className="w-4 h-4" style={{ color: "#1E4D99" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold mb-0.5" style={{ color: "#0F172A", fontSize: 13 }}>{card.title}</p>
+                    <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{card.body}</p>
+                  </div>
+                  <ArrowRight
+                    className="absolute bottom-3 right-3 w-3.5 h-3.5 transition-opacity duration-150 flex-shrink-0"
+                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
+                  />
+                </>
+              )}
+            </ClickCard>
+          ))}
         </div>
-      </footer>
+      </section>
 
-      <style>{`
-        @media (max-width: 640px) {
-          .home-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .home-city-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-      `}</style>
+      {/* ── STATS BAR ── */}
+      <div style={{ backgroundColor: "#0D2B5E", padding: "24px 32px" }}>
+        <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+          {STATS.map(s => (
+            <div key={s.label} className="text-center">
+              <p className="font-bold" style={{ color: "#FFFFFF", fontSize: 22 }}>{s.value}</p>
+              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap justify-center gap-2 mt-5">
+          {CITIES.map(c => (
+            <span key={c.name} className="flex items-center gap-1 px-3 py-1 rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
+              {c.name}
+            </span>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }
