@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, Loader2, EyeOff } from "lucide-react";
 import { format } from "date-fns";
@@ -15,7 +16,10 @@ export default function MessagesTab({ project, currentUser, mode }) {
 
   const { data: messages = [] } = useQuery({
     queryKey: ["messages", project.id],
-    queryFn: () => base44.entities.ProjectMessage.filter({ project_id: project.id }),
+    queryFn: async () => {
+      const { data } = await supabase.from("project_messages").select("*").eq("project_id", project.id).order("created_at", { ascending: true });
+      return data || [];
+    },
     refetchInterval: 10000,
   });
 
@@ -34,10 +38,10 @@ export default function MessagesTab({ project, currentUser, mode }) {
     if (!text.trim()) return;
     setSending(true);
     const content = isInternal ? `[INTERNAL] ${text}` : text;
-    await base44.entities.ProjectMessage.create({
+    await supabase.from("project_messages").insert({
       project_id: project.id,
       sender_email: currentUser?.email,
-      sender_name: currentUser?.full_name || currentUser?.email,
+      sender_name: currentUser?.full_name || currentUser?.user_metadata?.full_name || currentUser?.email,
       sender_role: isContractor ? "contractor" : "owner",
       content,
       message_type: "message",
@@ -91,7 +95,7 @@ Write 2-3 sentences. No greeting needed, just the update text.`,
                 )}
                 <p className="text-sm leading-relaxed">{displayContent}</p>
                 <p className={`text-xs mt-1 ${mine ? "text-blue-200" : "opacity-50"}`}>
-                  {msg.created_date ? format(new Date(msg.created_date), "MMM d, h:mm a") : ""}
+                  {(msg.created_at || msg.created_date) ? format(new Date(msg.created_at || msg.created_date), "MMM d, h:mm a") : ""}
                 </p>
               </div>
             </div>

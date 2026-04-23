@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { CheckSquare, Square, MessageCircle, ExternalLink, Map } from "lucide-react";
 
 function getPermitGuideUrl(project) {
@@ -97,7 +97,7 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
   const saveProgress = async () => {
     setSaving(true);
     const checklist = docs.map(d => ({ label: d, checked: !!checked[d] }));
-    await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(checklist) });
+    await supabase.from("projects").update({ permit_checklist: JSON.stringify(checklist) }).eq("id", project.id);
     onUpdate && onUpdate(prev => ({ ...prev, permit_checklist: JSON.stringify(checklist) }));
     setSaving(false);
   };

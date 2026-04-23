@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Mail, Phone, Building2, CheckCircle, Clock, Trash2, Loader2 } from "lucide-react";
 
@@ -17,18 +17,21 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["collaborators", project.id],
-    queryFn: () => base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
+    queryFn: async () => {
+      const { data } = await supabase.from("project_collaborators").select("*").eq("project_id", project.id);
+      return data || [];
+    },
   });
 
   const handleInvite = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await base44.entities.ProjectCollaborator.create({
+    await supabase.from("project_collaborators").insert({
       project_id: project.id,
       name: form.name,
       email: form.email,
-      phone: form.phone || undefined,
-      company: form.company || undefined,
+      phone: form.phone || null,
+      company: form.company || null,
       role: form.role,
       status: "invited",
       invited_by: currentUser?.email,
@@ -40,7 +43,7 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
   };
 
   const removeCollaborator = async (id) => {
-    await base44.entities.ProjectCollaborator.delete(id);
+    await supabase.from("project_collaborators").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["collaborators", project.id] });
   };
 

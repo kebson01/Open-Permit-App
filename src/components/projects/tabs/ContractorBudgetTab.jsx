@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { Plus, Trash2, DollarSign, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,7 +18,10 @@ export default function ContractorBudgetTab({ project }) {
 
   const { data: items = [] } = useQuery({
     queryKey: ["budget", project.id],
-    queryFn: () => base44.entities.ProjectBudgetItem.filter({ project_id: project.id }),
+    queryFn: async () => {
+      const { data } = await supabase.from("project_budget_items").select("*").eq("project_id", project.id);
+      return data || [];
+    },
   });
 
   const totalEst = items.reduce((s, i) => s + (parseFloat(i.estimated_amount) || 0), 0);
@@ -29,7 +32,7 @@ export default function ContractorBudgetTab({ project }) {
   const addItem = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await base44.entities.ProjectBudgetItem.create({
+    await supabase.from("project_budget_items").insert({
       ...form,
       project_id: project.id,
       estimated_amount: parseFloat(form.estimated_amount) || 0,
@@ -42,12 +45,12 @@ export default function ContractorBudgetTab({ project }) {
   };
 
   const deleteItem = async (id) => {
-    await base44.entities.ProjectBudgetItem.delete(id);
+    await supabase.from("project_budget_items").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["budget", project.id] });
   };
 
   const markPaid = async (item) => {
-    await base44.entities.ProjectBudgetItem.update(item.id, { status: "paid" });
+    await supabase.from("project_budget_items").update({ status: "paid" }).eq("id", item.id);
     queryClient.invalidateQueries({ queryKey: ["budget", project.id] });
   };
 

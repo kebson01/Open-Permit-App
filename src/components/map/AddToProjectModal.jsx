@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { X, FolderOpen, CheckCircle2, Loader2, LogIn } from "lucide-react";
 
 export default function AddToProjectModal({ permitName, onClose }) {
@@ -11,13 +12,13 @@ export default function AddToProjectModal({ permitName, onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.isAuthenticated().then(async (is) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      const is = !!user;
       setAuthed(is);
       if (is) {
-        const me = await base44.auth.me();
-        setUser(me);
-        const list = await base44.entities.Project.filter({ owner_email: me.email });
-        setProjects(list);
+        setUser(user);
+        const { data } = await supabase.from("projects").select("*").eq("owner_email", user.email).order("created_at", { ascending: false });
+        setProjects(data || []);
       }
       setLoading(false);
     });
@@ -29,7 +30,7 @@ export default function AddToProjectModal({ permitName, onClose }) {
     try { checklist = JSON.parse(project.permit_checklist || "[]"); } catch {}
     if (!checklist.find(i => i.label === permitName)) {
       checklist.push({ label: permitName, checked: false });
-      await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(checklist) });
+      await supabase.from("projects").update({ permit_checklist: JSON.stringify(checklist) }).eq("id", project.id);
     }
     setSaving(null);
     setSaved(project.id);

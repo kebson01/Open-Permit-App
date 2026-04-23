@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, FolderOpen, Search, Loader2, Home, Briefcase } from "lucide-react";
 import NewProjectModal from "@/components/projects/NewProjectModal.jsx";
@@ -64,15 +65,15 @@ export default function ProjectDashboard() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me()
-      .then(u => setCurrentUser(u))
-      .catch(() => setCurrentUser(null))
-      .finally(() => setAuthLoading(false));
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUser({ ...user, email: user.email, full_name: user.user_metadata?.full_name, role: user.user_metadata?.role });
+      else setCurrentUser(null);
+    }).finally(() => setAuthLoading(false));
   }, []);
 
   const handleRoleSelect = async (role) => {
     setRoleSelecting(true);
-    await base44.auth.updateMe({ role });
+    await supabase.auth.updateUser({ data: { role } });
     setCurrentUser(prev => ({ ...prev, role }));
     setRoleSelecting(false);
   };
@@ -82,7 +83,11 @@ export default function ProjectDashboard() {
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects", currentUser?.email],
-    queryFn: () => base44.entities.Project.filter({ owner_email: currentUser.email }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*").eq("owner_email", currentUser.email).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!currentUser,
   });
 
@@ -100,7 +105,7 @@ export default function ProjectDashboard() {
     .sort((a, b) => {
       if (sort === "status") return (a.status || "").localeCompare(b.status || "");
       if (sort === "deadline") return (a.target_completion_date || "9999").localeCompare(b.target_completion_date || "9999");
-      return new Date(b.created_date || 0) - new Date(a.created_date || 0);
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
 
   const activeProjects = projects.filter(p => p.status !== "completed" && p.status !== "on_hold").length;
@@ -124,6 +129,7 @@ export default function ProjectDashboard() {
             Create a free account to start tracking your permit projects, save your document checklist, and manage timelines.
           </p>
           <button onClick={() => base44.auth.redirectToLogin(window.location.href)}
+
             className="w-full h-11 text-sm font-semibold text-white rounded-xl" style={{ background: "#3B82F6" }}>
             Create Account / Log In
           </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { Bell, X, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 
@@ -24,13 +24,8 @@ export default function NotificationBell({ currentUser }) {
 
   const fetchNotifications = async () => {
     try {
-      // Fetch all alert messages across projects where this user is involved
-      const allMessages = await base44.entities.ProjectMessage.filter({ message_type: "alert" });
-      // Show alerts relevant to current user (sent to them or about their projects)
-      const relevant = allMessages.filter(m =>
-        m.sender_email !== currentUser.email // not ones I sent
-      );
-      setNotifications(relevant.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      const { data } = await supabase.from("project_messages").select("*").eq("message_type", "alert").neq("sender_email", currentUser.email).order("created_at", { ascending: false });
+      setNotifications(data || []);
     } catch {}
   };
 
@@ -42,18 +37,16 @@ export default function NotificationBell({ currentUser }) {
 
   const handleAccept = async (notif) => {
     try {
-      // Find the collaborator record and update to active
-      const collabs = await base44.entities.ProjectCollaborator.filter({ project_id: notif.project_id });
-      const mine = collabs.find(c => c.email === currentUser.email && (c.status === "invited" || c.status === "pending"));
+      const { data: collabs } = await supabase.from("project_collaborators").select("*").eq("project_id", notif.project_id).eq("email", currentUser.email);
+      const mine = (collabs || []).find(c => c.status === "invited" || c.status === "pending");
       if (mine) {
-        await base44.entities.ProjectCollaborator.update(mine.id, { status: "active" });
-        // Send acceptance notification back
-        await base44.entities.ProjectMessage.create({
+        await supabase.from("project_collaborators").update({ status: "active" }).eq("id", mine.id);
+        await supabase.from("project_messages").insert({
           project_id: notif.project_id,
           sender_email: currentUser.email,
-          sender_name: currentUser.full_name || currentUser.email,
+          sender_name: currentUser.user_metadata?.full_name || currentUser.email,
           sender_role: "owner",
-          content: `${currentUser.full_name || "A user"} accepted the project invitation.`,
+          content: `${currentUser.user_metadata?.full_name || "A user"} accepted the project invitation.`,
           message_type: "alert",
         });
       }
@@ -64,9 +57,9 @@ export default function NotificationBell({ currentUser }) {
 
   const handleDecline = async (notif) => {
     try {
-      const collabs = await base44.entities.ProjectCollaborator.filter({ project_id: notif.project_id });
-      const mine = collabs.find(c => c.email === currentUser.email);
-      if (mine) await base44.entities.ProjectCollaborator.delete(mine.id);
+      const { data: collabs } = await supabase.from("project_collaborators").select("*").eq("project_id", notif.project_id).eq("email", currentUser.email);
+      const mine = (collabs || [])[0];
+      if (mine) await supabase.from("project_collaborators").delete().eq("id", mine.id);
       dismiss(notif.id);
       fetchNotifications();
     } catch {}
@@ -125,8 +118,8 @@ export default function NotificationBell({ currentUser }) {
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                {n.created_date && (
-                  <p className="text-xs text-gray-400 mt-1">{format(new Date(n.created_date), "MMM d, h:mm a")}</p>
+                {(n.created_at || n.created_date) && (
+                  <p className="text-xs text-gray-400 mt-1">{format(new Date(n.created_at || n.created_date), "MMM d, h:mm a")}</p>
                 )}
                 {isInvite(n.content) && (
                   <div className="flex gap-2 mt-2">
