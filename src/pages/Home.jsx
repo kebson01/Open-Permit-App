@@ -68,56 +68,60 @@ export default function Home() {
   };
 
   return (
-    <div className="pb-16 md:pb-0" style={{ backgroundColor: "#F8FAFC" }}>
+    <div className="pb-20 md:pb-0" style={{ backgroundColor: "#F8FAFC" }}>
 
       {/* ── HERO ── */}
-      <section style={{ backgroundColor: "#0F3575", padding: "52px 32px 96px", textAlign: "center" }}>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-5"
-          style={{ backgroundColor: "#1E4D99", color: "#93B8F4" }}>
-          🏛️ Trusted by Broward County municipalities
-        </div>
+      <section style={{ backgroundColor: "#0F3575", padding: "40px 20px 48px" }}>
+        <div className="max-w-lg mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-4"
+            style={{ backgroundColor: "#1E4D99", color: "#93B8F4" }}>
+            🏛️ South Florida &amp; Broward County
+          </div>
 
-        <h1 className="font-bold leading-tight" style={{ color: "#FFFFFF", fontSize: "clamp(26px, 5vw, 38px)", maxWidth: 560, margin: "0 auto 16px" }}>
-          Permits made simple for{" "}
-          <span style={{ color: "#60A5FA" }}>South Florida.</span>
-        </h1>
+          <h1 className="font-bold leading-tight mb-3" style={{ color: "#FFFFFF", fontSize: "clamp(28px, 7vw, 40px)" }}>
+            Permits made simple for{" "}
+            <span style={{ color: "#60A5FA" }}>South Florida.</span>
+          </h1>
 
-        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, maxWidth: 480, margin: "0 auto 32px", lineHeight: 1.65 }}>
-          Know exactly what permits you need, estimate your costs upfront, and search any Broward County property — all in one place.
-        </p>
+          <p className="mb-6" style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, lineHeight: 1.65 }}>
+            Know exactly what you need, estimate costs, and search any Broward County property.
+          </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link to={createPageUrl("PermitGuide")} className="font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
+          {/* City selector inside hero */}
+          <div className="mb-4">
+            <CitySelector compact />
+          </div>
+
+          <Link to={createPageUrl("PermitGuide")}
+            className="block w-full text-center font-semibold transition-opacity hover:opacity-90 mb-3"
+            style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "13px 24px", borderRadius: 10, fontSize: 15 }}>
             Start Planning Your Permit
           </Link>
-          <Link to={createPageUrl("FeeCalculator")} className="font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.35)", padding: "11px 24px", borderRadius: 8, fontSize: 14 }}>
+          <Link to={createPageUrl("FeeCalculator")}
+            className="block w-full text-center font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.35)", padding: "13px 24px", borderRadius: 10, fontSize: 15 }}>
             Estimate Costs
           </Link>
         </div>
       </section>
 
-      {/* ── CITY SELECTOR ── */}
-      <div className="flex justify-center px-4" style={{ marginTop: -36, position: "relative", zIndex: 10, marginBottom: 16 }}>
-        <CitySelector />
-      </div>
-
       {/* ── PERMIT EXPLAINER BANNER ── */}
       {!bannerDismissed && (
-        <div className="flex justify-center px-4 mb-6">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
-            <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1E3A8A" }} />
-            <span style={{ color: "#1E3A8A", fontSize: 13, fontWeight: 500 }}>A permit is official approval from the city before you start home improvements.</span>
-            <button onClick={() => setBannerDismissed(true)} className="ml-1 hover:opacity-70 transition-opacity flex-shrink-0" style={{ color: "#1E3A8A" }}>
-              <X className="w-3.5 h-3.5" />
+        <div className="px-4 pt-4">
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#1E3A8A" }} />
+            <span style={{ color: "#1E3A8A", fontSize: 13, fontWeight: 500, lineHeight: 1.5 }}>A permit is official city approval before you start home improvements — required by law.</span>
+            <button onClick={() => setBannerDismissed(true)} className="ml-auto hover:opacity-70 transition-opacity flex-shrink-0" style={{ color: "#1E3A8A" }}>
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
       {/* ── AI SECTION ── */}
-      <HomeAISection onAsk={handleAsk} />
+      <div className="px-0">
+        <HomeAISection onAsk={handleAsk} />
+      </div>
 
       {/* AI Drawer */}
       <AIDrawer
@@ -128,83 +132,70 @@ export default function Home() {
       />
 
       {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: "48px 32px", textAlign: "center" }}>
-        <p className="font-semibold uppercase tracking-widest mb-2" style={{ color: "#3B82F6", fontSize: 11 }}>HOW IT WORKS</p>
-        <h2 className="font-bold mb-2" style={{ color: "#0F172A", fontSize: 22 }}>Three steps to permit-ready</h2>
-        <p className="mb-10" style={{ color: "#475569", fontSize: 14 }}>No more guessing. Know exactly what you need before you apply.</p>
+      <section className="px-4 py-10">
+        <p className="font-semibold uppercase tracking-widest mb-1" style={{ color: "#3B82F6", fontSize: 11 }}>HOW IT WORKS</p>
+        <h2 className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 22 }}>Three steps to permit-ready</h2>
+        <p className="mb-6" style={{ color: "#475569", fontSize: 14 }}>No more guessing. Know exactly what you need before you apply.</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mx-auto" style={{ maxWidth: 700 }}>
+        <div className="space-y-3">
           {HOW_IT_WORKS.map(step => (
-            <ClickCard
+            <Link
               key={step.num}
               to={createPageUrl(step.page)}
-              className="bg-white rounded-xl border p-5 text-left block relative"
-              style={{ borderColor: "#E2E8F0" }}
+              className="flex items-start gap-4 bg-white rounded-2xl border p-4 hover:border-blue-200 hover:shadow-sm transition-all"
+              style={{ borderColor: "#E2E8F0", textDecoration: "none" }}
             >
-              {(hovered) => (
-                <>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3"
-                    style={{ backgroundColor: "#EFF6FF", color: "#1E4D99" }}>
-                    {step.num}
-                  </div>
-                  <p className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 13 }}>{step.title}</p>
-                  <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{step.body}</p>
-                  <ArrowRight
-                    className="absolute bottom-4 right-4 w-3.5 h-3.5 transition-opacity duration-150"
-                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
-                  />
-                </>
-              )}
-            </ClickCard>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                style={{ backgroundColor: "#EFF6FF", color: "#1E4D99" }}>
+                {step.num}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold mb-0.5" style={{ color: "#0F172A", fontSize: 14 }}>{step.title}</p>
+                <p style={{ color: "#475569", fontSize: 12, lineHeight: 1.6 }}>{step.body}</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-400 flex-shrink-0 mt-1" />
+            </Link>
           ))}
         </div>
       </section>
 
       {/* ── WHAT YOU CAN DO ── */}
-      <section style={{ padding: "0 32px 48px", textAlign: "center" }}>
-        <p className="font-semibold uppercase tracking-widest mb-2" style={{ color: "#3B82F6", fontSize: 11 }}>WHAT YOU CAN DO</p>
-        <h2 className="font-bold mb-2" style={{ color: "#0F172A", fontSize: 22 }}>Everything in one place</h2>
-        <p className="mb-8" style={{ color: "#475569", fontSize: 14 }}>Built for Broward County homeowners and contractors.</p>
+      <section className="px-4 pb-10">
+        <p className="font-semibold uppercase tracking-widest mb-1" style={{ color: "#3B82F6", fontSize: 11 }}>WHAT YOU CAN DO</p>
+        <h2 className="font-bold mb-1" style={{ color: "#0F172A", fontSize: 22 }}>Everything in one place</h2>
+        <p className="mb-6" style={{ color: "#475569", fontSize: 14 }}>Built for Broward County homeowners and contractors.</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mx-auto" style={{ maxWidth: 700 }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {FEATURE_CARDS.map(card => (
-            <ClickCard
+            <Link
               key={card.title}
               to={createPageUrl(card.page)}
-              className="bg-white rounded-xl border p-4 text-left flex items-start gap-3 relative"
-              style={{ borderColor: "#E2E8F0" }}
+              className="bg-white rounded-2xl border p-4 flex flex-col items-start gap-2 hover:border-blue-200 hover:shadow-sm transition-all"
+              style={{ borderColor: "#E2E8F0", textDecoration: "none" }}
             >
-              {(hovered) => (
-                <>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
-                    <card.icon className="w-4 h-4" style={{ color: "#1E4D99" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold mb-0.5" style={{ color: "#0F172A", fontSize: 13 }}>{card.title}</p>
-                    <p style={{ color: "#475569", fontSize: 11, lineHeight: 1.6 }}>{card.body}</p>
-                  </div>
-                  <ArrowRight
-                    className="absolute bottom-3 right-3 w-3.5 h-3.5 transition-opacity duration-150 flex-shrink-0"
-                    style={{ color: "#3B82F6", opacity: hovered ? 1 : 0 }}
-                  />
-                </>
-              )}
-            </ClickCard>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
+                <card.icon className="w-4 h-4" style={{ color: "#1E4D99" }} />
+              </div>
+              <div>
+                <p className="font-bold leading-snug" style={{ color: "#0F172A", fontSize: 13 }}>{card.title}</p>
+                <p className="mt-0.5" style={{ color: "#475569", fontSize: 11, lineHeight: 1.5 }}>{card.body}</p>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
       {/* ── STATS BAR ── */}
-      <div style={{ backgroundColor: "#0D2B5E", padding: "24px 32px" }}>
-        <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+      <div style={{ backgroundColor: "#0D2B5E", padding: "24px 20px" }}>
+        <div className="grid grid-cols-2 gap-5 max-w-xs mx-auto mb-5">
           {STATS.map(s => (
             <div key={s.label} className="text-center">
-              <p className="font-bold" style={{ color: "#FFFFFF", fontSize: 22 }}>{s.value}</p>
+              <p className="font-bold" style={{ color: "#FFFFFF", fontSize: 24 }}>{s.value}</p>
               <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{s.label}</p>
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap justify-center gap-2 mt-5">
+        <div className="flex flex-wrap justify-center gap-2">
           {CITIES.map(c => (
             <span key={c.name} className="flex items-center gap-1 px-3 py-1 rounded-full"
               style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>

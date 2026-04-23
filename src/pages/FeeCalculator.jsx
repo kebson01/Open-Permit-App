@@ -151,29 +151,26 @@ export default function FeeCalculator() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8">
-      {/* Header */}
-      <div className="mb-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-          <Calculator className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-800 leading-tight">Permit Fee Calculator</h1>
-          <p className="text-gray-500 text-xs sm:text-sm">Select your city and permit type to get an instant cost estimate based on official fee schedules.</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Header */}
+      <div className="px-4 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold text-white mb-1">Permit Fee Calculator</h1>
+          <p className="text-blue-200 text-sm mb-5">Estimate your project costs instantly. Select your city and permit type to view current fee schedules.</p>
 
-      {/* City Selector */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
-          <span className="text-sm font-medium text-gray-700">City:</span>
+          {/* City selector */}
           {singleCity ? (
-            <span className="font-semibold text-blue-700">{city}</span>
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 h-11">
+              <MapPin className="w-4 h-4 text-blue-300" />
+              <span className="text-white text-sm font-medium">{city}</span>
+            </div>
           ) : (
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-44 sm:w-52 rounded-xl text-sm">
-                <SelectValue placeholder="Choose city..." />
+              <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-0 shadow-md">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  <SelectValue placeholder="Select Jurisdiction..." />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 {CITIES.map(c => (
@@ -183,105 +180,123 @@ export default function FeeCalculator() {
             </Select>
           )}
         </div>
-
-        {/* City-specific note */}
-        {CITY_NOTES[city] && (
-          <div className="mt-3 flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
-          </div>
-        )}
       </div>
 
-      {/* Permit Selector */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-800 mb-1">Step 1: Select Permit Type</h3>
-        <p className="text-sm text-gray-500 mb-4">Choose the permit that best matches your project</p>
+    <div className="max-w-2xl mx-auto px-4 py-5 pb-24 md:pb-8">
+      {/* City note */}
+      {CITY_NOTES[city] && (
+        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 mb-5">
+          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
+        </div>
+      )}
 
-        {loadingRules ? (
-          <div className="text-center py-8">
-            <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
-            <p className="text-sm text-gray-400">Loading permits for {city}...</p>
-          </div>
-        ) : (
-          <>
-            <div className="relative mb-5">
-              <Input
-                placeholder="Search permits..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-4 rounded-xl"
-              />
-            </div>
+      {/* Search */}
+      <div className="relative mb-4">
+        <Input
+          placeholder="Search permit types..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-4 rounded-xl bg-white"
+        />
+      </div>
 
-            <div className="space-y-6">
-              {CATEGORY_ORDER.map(cat => {
-                if (!grouped[cat]) return null;
-                const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
-                return (
-                  <div key={cat}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg">{meta.icon}</span>
-                      <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{meta.label}</h4>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {grouped[cat].map(rule => (
-                        <button
-                          key={rule.id}
-                          onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
-                          className={`text-left px-4 py-3 rounded-xl border transition-all ${
-                            selectedRule?.id === rule.id
-                              ? "border-[#2c5282] bg-blue-50 shadow-sm"
-                              : "border-gray-200 hover:border-blue-300 bg-white hover:bg-gray-50"
-                          }`}
-                        >
-                          <p className={`text-sm font-medium ${selectedRule?.id === rule.id ? "text-[#2c5282]" : "text-gray-800"}`}>
-                            {rule.permit_name}
+      {/* Permit list by category */}
+      {loadingRules ? (
+        <div className="text-center py-12">
+          <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-sm text-gray-400">Loading permits for {city}...</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {CATEGORY_ORDER.map(cat => {
+            if (!grouped[cat]) return null;
+            const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
+            return (
+              <div key={cat}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">{meta.icon}</span>
+                  <h4 className="text-sm font-bold text-gray-700">{meta.label}</h4>
+                </div>
+                <div className="space-y-2">
+                  {grouped[cat].map(rule => (
+                    <button
+                      key={rule.id}
+                      onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
+                      className={`w-full text-left px-4 py-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                        selectedRule?.id === rule.id
+                          ? "border-blue-500 bg-blue-50 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-blue-300"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-800" : "text-gray-800"}`}>
+                          {rule.permit_name}
+                        </p>
+                        {rule.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.description}</p>
+                        )}
+                        {(rule.flat_fee || rule.base_fee) && (
+                          <p className="text-xs font-semibold text-blue-700 mt-1">
+                            Est. fee: ${(rule.flat_fee || rule.base_fee || 0).toLocaleString()}
+                            {rule.calc_type === "flat_plus_pct" && rule.rate_percentage > 0 ? ` + ${rule.rate_percentage}%` : ""}
                           </p>
-                          {rule.description && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.description}</p>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              {Object.keys(grouped).length === 0 && !loadingRules && (
-                <p className="text-center text-gray-400 py-6">No permits found{search ? ` matching "${search}"` : " for this city"}.</p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Step 2: Enter cost if needed */}
-      {selectedRule && (
-        <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-800 mb-1">Step 2: {needsCost ? "Enter Project Cost" : "Ready to Calculate"}</h3>
-          {needsCost ? (
-            <>
-              <p className="text-sm text-gray-500 mb-4">Enter the total estimated cost of labor and materials.</p>
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Estimated Construction / Project Cost ($)</Label>
-                <p className="text-xs text-gray-400 mt-0.5 mb-1.5">If unsure, get a contractor estimate first. Estimates are fine here.</p>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="e.g. 50000"
-                  value={constructionCost}
-                  onChange={e => setConstructionCost(e.target.value)}
-                  className="rounded-xl"
-                />
+                        )}
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                          selectedRule?.id === rule.id
+                            ? "bg-blue-700 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+                        }`}
+                      >
+                        {selectedRule?.id === rule.id ? "Selected" : "Select"}
+                      </button>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </>
+            );
+          })}
+          {Object.keys(grouped).length === 0 && !loadingRules && (
+            <p className="text-center text-gray-400 py-6">No permits found{search ? ` matching "${search}"` : " for this city"}.</p>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Enter cost + Calculate */}
+      {selectedRule && (
+        <div className="mt-5 bg-white rounded-2xl border border-blue-200 p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-0.5">Selected Permit</p>
+              <p className="font-bold text-gray-900 text-sm">{selectedRule.permit_name}</p>
+            </div>
+            <button onClick={handleReset} className="text-gray-400 hover:text-gray-600 p-1">
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+          {needsCost ? (
+            <div className="mb-4">
+              <Label className="text-sm font-medium text-gray-700 mb-1 block">Estimated Project Cost ($)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g. 50000"
+                value={constructionCost}
+                onChange={e => setConstructionCost(e.target.value)}
+                className="rounded-xl"
+              />
+              <p className="text-xs text-gray-400 mt-1">Contractor estimate is fine.</p>
+            </div>
           ) : (
-            <p className="text-sm text-gray-500 mb-4">This is a flat-rate permit. No additional details needed.</p>
+            <p className="text-sm text-gray-500 mb-4">Flat-rate permit — no cost input needed.</p>
           )}
           <Button
             onClick={handleCalculate}
             disabled={!canCalculate}
-            className="mt-5 w-full text-white rounded-xl h-12 text-base font-semibold shadow-md disabled:opacity-50"
+            className="w-full text-white rounded-xl h-12 text-base font-semibold shadow-md disabled:opacity-50"
             style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
           >
             <Calculator className="w-5 h-5 mr-2" />
@@ -292,9 +307,8 @@ export default function FeeCalculator() {
 
       {/* Results */}
       {results && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-5">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            {/* Total Header */}
             <div className="px-6 py-7 text-center" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
               <p className="text-blue-200 text-sm mb-1">Estimated Total Fee</p>
               <div className="flex items-center justify-center gap-2">
@@ -304,9 +318,8 @@ export default function FeeCalculator() {
               <p className="text-blue-200 text-xs mt-2">{selectedRule?.permit_name} · {city}</p>
             </div>
 
-            {/* Breakdown */}
-            <div className="p-6">
-              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="p-5">
+              <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-gray-500" />
                 Fee Breakdown
               </h4>
@@ -324,34 +337,33 @@ export default function FeeCalculator() {
               </div>
             </div>
 
-            {/* Disclaimer */}
-            <div className="mx-6 mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="mx-5 mb-5 p-3.5 bg-amber-50 rounded-xl border border-amber-200">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-amber-700 leading-relaxed">
-                  This is an <strong>estimate only</strong>. Actual fees are set at time of permit issuance. Additional trade permits (electrical, plumbing, mechanical) may be required and will add to the total.
+                  <strong>Estimate only.</strong> Actual fees are set at permit issuance. Additional trade permits may add to total.
                 </p>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="px-6 pb-6 flex flex-wrap gap-3">
+            <div className="px-5 pb-5 flex flex-col gap-2">
               {CITY_PORTAL_URLS[city] && (
-                <Button asChild className="flex-1 text-white rounded-xl" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+                <Button asChild className="w-full text-white rounded-xl h-11" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
                   <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Apply for Permit
+                    Apply for Permit in {city}
                   </a>
                 </Button>
               )}
-              <Button variant="outline" onClick={handleReset} className="rounded-xl">
+              <Button variant="outline" onClick={handleReset} className="w-full rounded-xl h-11">
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Calculate Another
+                Calculate Another Permit
               </Button>
             </div>
           </div>
         </motion.div>
       )}
+    </div>
     </div>
   );
 }

@@ -239,64 +239,76 @@ export default function PermitGuide() {
   })();
 
   return (
-    <div className="px-3 sm:px-6 py-4 sm:py-8 pb-20 md:pb-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Visual Permit Guide</h1>
-        <p className="text-gray-600 mt-0.5 text-xs sm:text-base">Tap any highlighted area to see permit requirements, documents, and estimated fees.</p>
-        <p className="mt-1 text-xs sm:text-sm" style={{ color: "#64748B" }}>A permit is the city's official OK to start your project.</p>
+    <div className="pb-20 md:pb-8 max-w-7xl mx-auto">
+      {/* Hero Header */}
+      <div className="px-4 pt-7 pb-5" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <h1 className="text-2xl font-bold text-white mb-1">Visual Permit Guide</h1>
+        <p className="text-blue-200 text-sm">Tap the icons on the property to identify required permits or upload a photo for AI analysis.</p>
       </div>
 
+      <div className="px-3 sm:px-4 pt-4">
       {/* ── Controls ── */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 mb-4 space-y-3">
 
-        {/* Row 1: Property Type + City together */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">Property</span>
+        {/* Row 1: Property Type + City */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
               onClick={() => handlePropertyTypeChange("residential")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                propertyType === "residential" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
               }`}
             >
               <Home className="w-3.5 h-3.5" />
-              Residential
+              Single-Family
             </button>
             <button
               onClick={() => handlePropertyTypeChange("commercial")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                propertyType === "commercial" ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                propertyType === "commercial" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              Commercial / Business
+              Commercial
             </button>
           </div>
+
+          {!singleCity && (
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+              <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
+                <SelectTrigger className="w-36 sm:w-44 rounded-xl h-9 text-xs font-medium border-blue-200">
+                  <SelectValue placeholder="Choose city..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CITIES.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        {/* Row 2: View */}
+        {/* Row 2: View tabs */}
         {(propertyType === "residential" || commercialSubtype) && (
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 flex-shrink-0">View</span>
-            <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-wrap">
-              {activeViews.map(v => (
-                <button
-                  key={v.id}
-                  onClick={() => setActiveView(v.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                    activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  <v.icon className="w-3.5 h-3.5" />
-                  {v.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 overflow-x-auto">
+            {activeViews.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setActiveView(v.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
+                  activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <v.icon className="w-3.5 h-3.5" />
+                {v.label}
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Row 3: Utility controls */}
+        {/* Row 3: Action buttons */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
           <button
             onClick={() => setShowHighlights(!showHighlights)}
@@ -311,7 +323,7 @@ export default function PermitGuide() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
           >
             <List className="w-3.5 h-3.5" />
-            Browse All Permits
+            All Permits
           </button>
 
           <button
@@ -319,30 +331,8 @@ export default function PermitGuide() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            Code of Ordinances
+            Ordinances
           </button>
-
-          {/* City selector (FIX 3) */}
-          {!singleCity && (
-            <div className="ml-auto flex flex-col gap-0.5">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-0.5">Select your city:</span>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
-                  <SelectTrigger className="w-44 sm:w-52 rounded-xl h-9 text-sm font-medium border-blue-200">
-                    <SelectValue placeholder="Choose city..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CITIES.map(c => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -436,6 +426,7 @@ export default function PermitGuide() {
         currentPageName="PermitGuide"
         initialMessage={aiInitialMessage}
       />
+      </div>
     </div>
   );
 }

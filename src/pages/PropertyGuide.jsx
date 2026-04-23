@@ -257,51 +257,52 @@ export default function PropertyGuide() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="py-10 px-4" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-7 h-7 text-blue-300" />
-            <h1 className="text-3xl font-bold text-white">Property Search</h1>
-          </div>
-          <p className="text-blue-200 text-sm mb-6">
-            Look up any Broward County property to see its permit history and building details.
+      <div className="px-4 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold text-white mb-1">Property Search</h1>
+          <p className="text-blue-200 text-sm mb-5">
+            Find public records and assessment details for any Broward County property.
           </p>
 
           {/* Search bar */}
-          <div className="flex gap-2 bg-white rounded-xl p-2 shadow-lg mb-3">
-            <div className="flex-1 flex items-center gap-2 px-3">
-              <Search className="w-5 h-5 text-gray-400 shrink-0" />
-              <input
-                className="flex-1 border-0 outline-none text-base text-gray-800 placeholder-gray-400 bg-transparent"
-                placeholder="Enter address or folio number..."
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && doSearch()}
-              />
+          <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 shadow-lg mb-3">
+            <Search className="w-5 h-5 text-gray-400 shrink-0" />
+            <input
+              className="flex-1 border-0 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent"
+              placeholder="Enter address or folio number..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && doSearch()}
+            />
+          </div>
+
+          {/* City filter + Search button row */}
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-3 h-11">
+              <MapPin className="w-4 h-4 text-blue-300 shrink-0" />
+              <select
+                value={selectedCity}
+                onChange={e => setSelectedCity(e.target.value)}
+                className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+              >
+                {CITIES.map(c => <option key={c} value={c} className="text-gray-800">{c}</option>)}
+              </select>
             </div>
             <button
               onClick={doSearch}
               disabled={loading}
-              className="px-6 py-2 rounded-lg text-white font-semibold text-sm shrink-0 disabled:opacity-60 transition-opacity hover:opacity-90"
+              className="px-5 h-11 rounded-xl text-white font-semibold text-sm shrink-0 disabled:opacity-60 transition-opacity hover:opacity-90"
               style={{ background: "#3B82F6" }}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
             </button>
           </div>
 
-          {/* City filter */}
-          <div className="flex items-center justify-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-300" />
-            <select
-              value={selectedCity}
-              onChange={e => setSelectedCity(e.target.value)}
-              className="bg-white/10 border border-white/20 text-white text-sm rounded-xl h-9 px-3 focus:outline-none"
-            >
-              {CITIES.map(c => <option key={c} value={c} className="text-gray-800">{c}</option>)}
-            </select>
+          {/* Info notice */}
+          <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-blue-900/40 border border-blue-400/20">
+            <Search className="w-3.5 h-3.5 text-blue-300 mt-0.5 shrink-0" />
+            <p className="text-blue-200 text-xs">Look up historical permits, zoning classifications, and building details for any registered property.</p>
           </div>
-
-          <p className="text-white/50 text-xs mt-3">Search by address or folio number · Up to 20 results</p>
         </div>
       </div>
 
