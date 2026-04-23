@@ -92,9 +92,12 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center justify-between h-14">
 
             {/* LEFT — Brand */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <Building2 className="w-5 h-5 text-blue-400" />
-              <span className="text-white font-semibold text-base">OpenPermit</span>
+            <Link to="/" className="flex items-center flex-shrink-0">
+              <img
+                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/d21badc44_openpermit_logo_transparent.png"
+                alt="OpenPermit"
+                style={{ height: '40px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+              />
             </Link>
 
             {/* CENTER — Primary nav (desktop) */}
@@ -231,10 +234,12 @@ export default function Layout({ children, currentPageName }) {
       <footer className="py-8 pb-20 md:pb-8" style={{ backgroundColor: "#0D2B5E", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 className="w-4 h-4 text-blue-400" />
-              <span className="text-white font-bold text-sm">OpenPermit</span>
-            </div>
+            <img
+              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/d21badc44_openpermit_logo_transparent.png"
+              alt="OpenPermit"
+              style={{ height: '36px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+              className="mb-1"
+            />
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Making permits simple for South Florida homeowners and contractors.</p>
           </div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>© 2026 OpenPermit. All rights reserved.</p>
