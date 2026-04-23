@@ -306,51 +306,77 @@ export default function PropertyGuide() {
         </div>
       </div>
 
-      {/* Results */}
-      <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
-        {selected ? (
-          <PropertyDetail property={selected} onBack={() => setSelected(null)} />
-        ) : (
-          <>
-            {loading && (
-              <div className="flex items-center justify-center gap-2 text-blue-600 py-12">
-                <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
+      {/* Results — desktop has sidebar */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 pb-24 md:pb-8">
+        <div className="md:flex md:gap-6 md:items-start">
+
+          {/* Left sidebar (desktop only) */}
+          {!selected && (
+            <div className="hidden md:block w-56 shrink-0 space-y-4">
+              {/* Transparency notice */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-blue-800 mb-1">Public Access Records</p>
+                <p className="text-xs text-blue-700 leading-relaxed">Look up historical permits, zoning classifications, and building details for any registered property.</p>
               </div>
-            )}
-            {error && (
-              <div className="text-center py-8 text-red-600 bg-red-50 rounded-xl border border-red-100">
-                <p className="font-medium">Search error</p>
-                <p className="text-sm mt-1">{error}</p>
-              </div>
-            )}
-            {searched && !loading && !error && results.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-                <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-                <p className="font-semibold text-gray-700">No properties found</p>
-                <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
-                  Try a shorter address or folio number. Only Broward County properties are available.
-                </p>
-              </div>
-            )}
-            {searched && !loading && results.length > 0 && (
-              <p className="text-sm text-gray-500 mb-4">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
-            )}
-            <div className="grid gap-3">
-              {results.map((prop, i) => (
-                <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => setSelected(prop)} />
-              ))}
+
+              {/* Recent searches hint */}
+              {searched && results.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Results</p>
+                  <p className="text-sm font-bold text-gray-800">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
+                </div>
+              )}
             </div>
-            {!searched && !loading && (
-              <div className="text-center py-16 text-gray-400">
-                <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-                <p className="font-medium text-gray-700 text-lg">Search for a property</p>
-                <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">
-                  Enter an address or folio number to look up any Broward County property and its permit history.
-                </p>
-              </div>
+          )}
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {selected ? (
+              <PropertyDetail property={selected} onBack={() => setSelected(null)} />
+            ) : (
+              <>
+                {loading && (
+                  <div className="flex items-center justify-center gap-2 text-blue-600 py-12">
+                    <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
+                  </div>
+                )}
+                {error && (
+                  <div className="text-center py-8 text-red-600 bg-red-50 rounded-xl border border-red-100">
+                    <p className="font-medium">Search error</p>
+                    <p className="text-sm mt-1">{error}</p>
+                  </div>
+                )}
+                {searched && !loading && !error && results.length === 0 && (
+                  <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                    <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+                    <p className="font-semibold text-gray-700">No properties found</p>
+                    <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                      Try a shorter address or folio number. Only Broward County properties are available.
+                    </p>
+                  </div>
+                )}
+                {searched && !loading && results.length > 0 && (
+                  <p className="text-sm text-gray-500 mb-4 md:hidden">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
+                )}
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {results.map((prop, i) => (
+                    <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => setSelected(prop)} />
+                  ))}
+                </div>
+                {!searched && !loading && (
+                  <div className="text-center py-16 text-gray-400">
+                    <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                    <p className="font-medium text-gray-700 text-lg">Search for a property</p>
+                    <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">
+                      Enter an address or folio number to look up any Broward County property and its permit history.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+
+        </div>
       </div>
     </div>
   );

@@ -239,194 +239,191 @@ export default function PermitGuide() {
   })();
 
   return (
-    <div className="pb-20 md:pb-8 max-w-7xl mx-auto">
+    <div className="pb-20 md:pb-8">
       {/* Hero Header */}
-      <div className="px-4 pt-7 pb-5" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-        <h1 className="text-2xl font-bold text-white mb-1">Visual Permit Guide</h1>
-        <p className="text-blue-200 text-sm">Tap the icons on the property to identify required permits or upload a photo for AI analysis.</p>
-      </div>
-
-      <div className="px-3 sm:px-4 pt-4">
-      {/* ── Controls ── */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 mb-4 space-y-3">
-
-        {/* Row 1: Property Type + City */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => handlePropertyTypeChange("residential")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              <Home className="w-3.5 h-3.5" />
-              Single-Family
-            </button>
-            <button
-              onClick={() => handlePropertyTypeChange("commercial")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                propertyType === "commercial" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              Commercial
-            </button>
+      <div className="px-4 md:px-8 pt-7 pb-5" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <div className="max-w-7xl mx-auto flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Visual Permit Guide</h1>
+            <p className="text-blue-200 text-sm">Tap the icons on the property to identify required permits or upload a photo for AI analysis.</p>
           </div>
-
           {!singleCity && (
             <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
               <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
-                <SelectTrigger className="w-36 sm:w-44 rounded-xl h-9 text-xs font-medium border-blue-200">
+                <SelectTrigger className="w-44 rounded-xl h-9 text-sm bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Choose city..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CITIES.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
+                  {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Row 2: View tabs */}
-        {(propertyType === "residential" || commercialSubtype) && (
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 overflow-x-auto">
-            {activeViews.map(v => (
-              <button
-                key={v.id}
-                onClick={() => setActiveView(v.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
-                  activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                <v.icon className="w-3.5 h-3.5" />
-                {v.label}
-              </button>
-            ))}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 pt-4">
+        {/* Desktop two-column layout */}
+        <div className="md:flex md:gap-6 md:items-start">
+
+          {/* Left sidebar */}
+          <div className="md:w-64 md:shrink-0 space-y-4">
+
+            {/* Property type + view controls */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 space-y-3">
+              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => handlePropertyTypeChange("residential")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                    propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  Single-Family
+                </button>
+                <button
+                  onClick={() => handlePropertyTypeChange("commercial")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                    propertyType === "commercial" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  Commercial
+                </button>
+              </div>
+
+              {(propertyType === "residential" || commercialSubtype) && (
+                <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-col">
+                  {activeViews.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => setActiveView(v.id)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        activeView === v.id ? "bg-blue-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"
+                      }`}
+                    >
+                      <v.icon className="w-3.5 h-3.5" />
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2 pt-1 border-t border-gray-100">
+                <button
+                  onClick={() => setShowHighlights(!showHighlights)}
+                  className={`w-full flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-600"}`}
+                >
+                  {showHighlights ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showHighlights ? "Hide Zone Markers" : "Show Zone Markers"}
+                </button>
+                <button
+                  onClick={() => setPanelOpen(true)}
+                  className="w-full flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  Browse All Permits
+                </button>
+                <button
+                  onClick={() => setOrdinancesPanelOpen(true)}
+                  className="w-full flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Code of Ordinances
+                </button>
+              </div>
+            </div>
+
+            {/* AI Smart Check panel (desktop sidebar) */}
+            <div className="rounded-2xl p-4 text-white" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #1E3A8A 100%)" }}>
+              <p className="font-bold text-sm mb-1 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-blue-300" />
+                AI Smart Check
+              </p>
+              <p className="text-blue-200 text-xs leading-relaxed mb-3">
+                Upload a photo of your proposed project area. Our AI will identify potential permit conflicts automatically.
+              </p>
+              {!showPhotoAnalyzer ? (
+                <button
+                  onClick={() => setShowPhotoAnalyzer(true)}
+                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-blue-400/50 rounded-xl py-4 text-blue-200 hover:border-blue-300 hover:text-white transition-colors text-xs font-medium"
+                >
+                  <Camera className="w-4 h-4" />
+                  Upload or Take Photo
+                </button>
+              ) : (
+                <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} />
+              )}
+            </div>
           </div>
-        )}
 
-        {/* Row 3: Action buttons */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
-          <button
-            onClick={() => setShowHighlights(!showHighlights)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${showHighlights ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-600"}`}
-          >
-            {showHighlights ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {showHighlights ? "Hide Zones" : "Show Zones"}
-          </button>
+          {/* Main content area */}
+          <div className="flex-1 min-w-0 mt-4 md:mt-0">
+            <CityBanner city={city} />
 
-          <button
-            onClick={() => setPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
-          >
-            <List className="w-3.5 h-3.5" />
-            All Permits
-          </button>
+            {propertyType === "commercial" && !commercialSubtype && (
+              <CommercialSubtypeSelector onSelect={handleCommercialSubtypeSelect} />
+            )}
 
-          <button
-            onClick={() => setOrdinancesPanelOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Ordinances
-          </button>
+            {propertyType === "commercial" && commercialSubtype && (
+              <div className="mb-3 flex items-center gap-2 flex-wrap">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <commercialSubtype.icon className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="text-xs font-medium text-indigo-700">{commercialSubtype.label}: {commercialSubtype.desc}</span>
+                </div>
+                <button onClick={() => setCommercialSubtype(null)} className="text-xs text-gray-400 hover:text-gray-600 underline">
+                  Change type
+                </button>
+              </div>
+            )}
+
+            {(propertyType === "residential" || commercialSubtype) && (
+              <>
+                <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
+
+                {/* Mobile AI banner */}
+                <div className="md:hidden mt-4">
+                  {!showPhotoAnalyzer ? (
+                    <button
+                      onClick={() => setShowPhotoAnalyzer(true)}
+                      className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+                        <Camera className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className="font-bold text-blue-900 text-sm flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" />AI Photo Analysis</p>
+                        <p className="text-blue-800 text-xs mt-0.5">Upload a photo — AI identifies permits you need</p>
+                      </div>
+                    </button>
+                  ) : (
+                    <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} />
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Persistent city context banner */}
-      <CityBanner city={city} />
-
-      {/* FIX 2: Commercial sub-type selector */}
-      {propertyType === "commercial" && !commercialSubtype && (
-        <CommercialSubtypeSelector onSelect={handleCommercialSubtypeSelect} />
-      )}
-
-      {/* Commercial sub-type indicator (when selected) */}
-      {propertyType === "commercial" && commercialSubtype && (
-        <div className="mb-3 flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl border border-indigo-100">
-            <commercialSubtype.icon className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="text-xs font-medium text-indigo-700">{commercialSubtype.label}: {commercialSubtype.desc}</span>
-          </div>
-          <button
-            onClick={() => setCommercialSubtype(null)}
-            className="text-xs text-gray-400 hover:text-gray-600 underline"
-          >
-            Change type
-          </button>
-        </div>
-      )}
-
-      {/* House diagram — only show when residential OR commercial subtype is selected */}
-      {(propertyType === "residential" || commercialSubtype) && (
-        <>
-          <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
-
-          {/* AI Photo Analysis Banner */}
-          {!showPhotoAnalyzer ? (
-            <button
-              onClick={() => setShowPhotoAnalyzer(true)}
-              className="mt-4 w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-left flex-1">
-                <p className="font-bold text-blue-900 text-sm flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  AI Photo Analysis
-                </p>
-                <p className="text-blue-800 text-xs mt-0.5">Upload a photo of your property — AI will identify what permits you need</p>
-              </div>
-              <span className="text-xs font-semibold text-blue-800 bg-blue-200 px-2.5 py-1 rounded-lg flex-shrink-0">Try it →</span>
-            </button>
-          ) : (
-            <div className="mt-4">
-              <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} />
-            </div>
-          )}
-        </>
-      )}
-
       {selectedPermit && (
-        <PermitPopup
-          permit={selectedPermit}
-          city={city}
-          userMode="homeowner"
-          onClose={() => setSelectedPermit(null)}
-        />
+        <PermitPopup permit={selectedPermit} city={city} userMode="homeowner" onClose={() => setSelectedPermit(null)} />
       )}
 
       <PermitsPanel
-        permits={panelPermits}
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
+        permits={panelPermits} open={panelOpen} onClose={() => setPanelOpen(false)}
         onSelectPermit={(p) => { setSelectedPermit(p); setPanelOpen(false); }}
-        initialSearch={urlZone}
-        city={city}
+        initialSearch={urlZone} city={city}
       />
-
-      {panelOpen && (
-        <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setPanelOpen(false)} />
-      )}
+      {panelOpen && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setPanelOpen(false)} />}
 
       <OrdinancesPanel
-        open={ordinancesPanelOpen}
-        onClose={() => setOrdinancesPanelOpen(false)}
-        city={city}
-        onAskAI={(msg) => { setAiInitialMessage(msg); setAiOpen(true); }}
+        open={ordinancesPanelOpen} onClose={() => setOrdinancesPanelOpen(false)}
+        city={city} onAskAI={(msg) => { setAiInitialMessage(msg); setAiOpen(true); }}
       />
 
-      <AIDrawer
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        currentPageName="PermitGuide"
-        initialMessage={aiInitialMessage}
-      />
-      </div>
+      <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitGuide" initialMessage={aiInitialMessage} />
     </div>
   );
 }

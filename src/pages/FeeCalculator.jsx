@@ -153,216 +153,252 @@ export default function FeeCalculator() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Header */}
-      <div className="px-4 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold text-white mb-1">Permit Fee Calculator</h1>
-          <p className="text-blue-200 text-sm mb-5">Estimate your project costs instantly. Select your city and permit type to view current fee schedules.</p>
-
-          {/* City selector */}
-          {singleCity ? (
-            <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 h-11">
-              <MapPin className="w-4 h-4 text-blue-300" />
-              <span className="text-white text-sm font-medium">{city}</span>
+      <div className="px-4 md:px-8 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="md:flex md:items-end md:justify-between gap-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Permit Fee Calculator</h1>
+              <p className="text-blue-200 text-sm">Estimate your project costs by adding permit types based on your scope of work.</p>
             </div>
-          ) : (
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-0 shadow-md">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  <SelectValue placeholder="Select Jurisdiction..." />
+            {/* Desktop city selector in header */}
+            <div className="hidden md:block w-64 shrink-0">
+              {singleCity ? (
+                <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 h-11">
+                  <MapPin className="w-4 h-4 text-blue-300" />
+                  <span className="text-white text-sm font-medium">{city}</span>
                 </div>
-              </SelectTrigger>
-              <SelectContent>
-                {CITIES.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+              ) : (
+                <Select value={city} onValueChange={setCity}>
+                  <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-0 shadow-md">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-600" />
+                      <SelectValue placeholder="Select Jurisdiction..." />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-    <div className="max-w-2xl mx-auto px-4 py-5 pb-24 md:pb-8">
-      {/* City note */}
-      {CITY_NOTES[city] && (
-        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 mb-5">
-          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
-        </div>
-      )}
-
-      {/* Search */}
-      <div className="relative mb-4">
-        <Input
-          placeholder="Search permit types..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-4 rounded-xl bg-white"
-        />
+    <div className="max-w-6xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-8">
+      {/* Mobile city selector */}
+      <div className="md:hidden mb-4">
+        {singleCity ? (
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 h-11 shadow-sm">
+            <MapPin className="w-4 h-4 text-blue-600" />
+            <span className="text-gray-800 text-sm font-medium">{city}</span>
+          </div>
+        ) : (
+          <Select value={city} onValueChange={setCity}>
+            <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-blue-600" />
+                <SelectValue placeholder="Select city..." />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      {/* Permit list by category */}
-      {loadingRules ? (
-        <div className="text-center py-12">
-          <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-400">Loading permits for {city}...</p>
+      {/* Desktop 3-col layout wrapper */}
+      <div className="md:flex md:gap-6 md:items-start">
+      {/* Main permit list column */}
+      <div className="flex-1 min-w-0">
+        {/* City note */}
+        {CITY_NOTES[city] && (
+          <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 mb-4">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="relative mb-5">
+          <Input
+            placeholder="Search for permit types (e.g. 'Roofing', 'HVAC')..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-4 rounded-xl bg-white"
+          />
         </div>
-      ) : (
-        <div className="space-y-6">
-          {CATEGORY_ORDER.map(cat => {
-            if (!grouped[cat]) return null;
-            const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
-            return (
-              <div key={cat}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base">{meta.icon}</span>
-                  <h4 className="text-sm font-bold text-gray-700">{meta.label}</h4>
-                </div>
-                <div className="space-y-2">
-                  {grouped[cat].map(rule => (
-                    <button
-                      key={rule.id}
-                      onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
-                      className={`w-full text-left px-4 py-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                        selectedRule?.id === rule.id
-                          ? "border-blue-500 bg-blue-50 shadow-sm"
-                          : "border-gray-200 bg-white hover:border-blue-300"
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-800" : "text-gray-800"}`}>
-                          {rule.permit_name}
-                        </p>
-                        {rule.description && (
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.description}</p>
-                        )}
-                        {(rule.flat_fee || rule.base_fee) && (
-                          <p className="text-xs font-semibold text-blue-700 mt-1">
-                            Est. fee: ${(rule.flat_fee || rule.base_fee || 0).toLocaleString()}
-                            {rule.calc_type === "flat_plus_pct" && rule.rate_percentage > 0 ? ` + ${rule.rate_percentage}%` : ""}
-                          </p>
-                        )}
-                      </div>
+
+        {/* Category filter pills */}
+        {!loadingRules && Object.keys(grouped).length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-5">
+            {CATEGORY_ORDER.filter(c => grouped[c]).map(cat => {
+              const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
+              return (
+                <span key={cat} className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-700">
+                  {meta.icon} {meta.label.replace(" Permits", "").replace(" Code Services", "")}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Permit list by category */}
+        {loadingRules ? (
+          <div className="text-center py-12">
+            <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Loading permits for {city}...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {CATEGORY_ORDER.map(cat => {
+              if (!grouped[cat]) return null;
+              const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
+              return (
+                <div key={cat}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">{meta.icon}</span>
+                    <h4 className="text-sm font-bold text-gray-700">{meta.label}</h4>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {grouped[cat].map(rule => (
                       <button
-                        onClick={e => { e.stopPropagation(); setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
-                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                        key={rule.id}
+                        onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
+                        className={`text-left px-4 py-4 rounded-2xl border transition-all flex flex-col justify-between ${
                           selectedRule?.id === rule.id
-                            ? "bg-blue-700 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+                            ? "border-blue-500 bg-blue-50 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
                         }`}
                       >
-                        {selectedRule?.id === rule.id ? "Selected" : "Select"}
+                        <div className="mb-3">
+                          <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-800" : "text-gray-800"}`}>
+                            {rule.permit_name}
+                          </p>
+                          {rule.description && (
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{rule.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          {(rule.flat_fee || rule.base_fee) && (
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase tracking-wider">Base Fee</p>
+                              <p className="text-sm font-bold text-gray-900">
+                                ${(rule.flat_fee || rule.base_fee || 0).toLocaleString()}
+                                {rule.calc_type === "flat_plus_pct" && rule.rate_percentage > 0 ? ` + ${rule.rate_percentage}%` : ""}
+                              </p>
+                            </div>
+                          )}
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            selectedRule?.id === rule.id
+                              ? "bg-blue-700 text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+                          }`}>
+                            {selectedRule?.id === rule.id ? "Selected" : "Select"}
+                          </span>
+                        </div>
                       </button>
-                    </button>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-          {Object.keys(grouped).length === 0 && !loadingRules && (
-            <p className="text-center text-gray-400 py-6">No permits found{search ? ` matching "${search}"` : " for this city"}.</p>
-          )}
-        </div>
-      )}
-
-      {/* Step 2: Enter cost + Calculate */}
-      {selectedRule && (
-        <div className="mt-5 bg-white rounded-2xl border border-blue-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div>
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-0.5">Selected Permit</p>
-              <p className="font-bold text-gray-900 text-sm">{selectedRule.permit_name}</p>
-            </div>
-            <button onClick={handleReset} className="text-gray-400 hover:text-gray-600 p-1">
-              <RotateCcw className="w-4 h-4" />
-            </button>
+              );
+            })}
+            {Object.keys(grouped).length === 0 && !loadingRules && (
+              <p className="text-center text-gray-400 py-6">No permits found{search ? ` matching "${search}"` : " for this city"}.</p>
+            )}
           </div>
-          {needsCost ? (
-            <div className="mb-4">
-              <Label className="text-sm font-medium text-gray-700 mb-1 block">Estimated Project Cost ($)</Label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="e.g. 50000"
-                value={constructionCost}
-                onChange={e => setConstructionCost(e.target.value)}
-                className="rounded-xl"
-              />
-              <p className="text-xs text-gray-400 mt-1">Contractor estimate is fine.</p>
+        )}
+      </div>
+
+      {/* Right sidebar — Estimate panel (desktop only inline, mobile below) */}
+      <div className="md:w-72 md:shrink-0 mt-5 md:mt-0">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden sticky top-4">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-blue-600" />
+            <h3 className="font-bold text-gray-800 text-sm">Estimate</h3>
+          </div>
+
+          {!selectedRule ? (
+            <div className="px-4 py-8 text-center text-gray-400">
+              <Calculator className="w-8 h-8 mx-auto mb-2 text-gray-200" />
+              <p className="text-sm">Select a permit type to calculate your estimated fee.</p>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 mb-4">Flat-rate permit — no cost input needed.</p>
-          )}
-          <Button
-            onClick={handleCalculate}
-            disabled={!canCalculate}
-            className="w-full text-white rounded-xl h-12 text-base font-semibold shadow-md disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
-          >
-            <Calculator className="w-5 h-5 mr-2" />
-            Calculate Estimated Fee
-          </Button>
-        </div>
-      )}
-
-      {/* Results */}
-      {results && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-5">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="px-6 py-7 text-center" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-              <p className="text-blue-200 text-sm mb-1">Estimated Total Fee</p>
-              <div className="flex items-center justify-center gap-2">
-                <DollarSign className="w-8 h-8 text-yellow-300" />
-                <span className="text-4xl font-extrabold text-white">{results.total.toFixed(2)}</span>
-              </div>
-              <p className="text-blue-200 text-xs mt-2">{selectedRule?.permit_name} · {city}</p>
-            </div>
-
-            <div className="p-5">
-              <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gray-500" />
-                Fee Breakdown
-              </h4>
-              <div className="divide-y divide-gray-100">
-                {results.breakdown.map((item, i) => (
-                  <div key={i} className="flex justify-between items-center py-2.5">
-                    <span className="text-sm text-gray-600">{item.label}</span>
-                    <span className="text-sm font-semibold text-gray-800 ml-4">${item.amount.toFixed(2)}</span>
+            <div className="p-4">
+              <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">{(CATEGORY_META[selectedRule.category] || {}).label || selectedRule.category}</p>
+                    <p className="font-semibold text-gray-900 text-sm">{selectedRule.permit_name}</p>
                   </div>
-                ))}
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-sm font-bold text-gray-800">Estimated Total</span>
-                  <span className="text-base font-extrabold text-blue-700">${results.total.toFixed(2)}</span>
+                  <button onClick={handleReset} className="text-gray-300 hover:text-gray-500 p-0.5 shrink-0">
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div className="mx-5 mb-5 p-3.5 bg-amber-50 rounded-xl border border-amber-200">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  <strong>Estimate only.</strong> Actual fees are set at permit issuance. Additional trade permits may add to total.
-                </p>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 flex flex-col gap-2">
-              {CITY_PORTAL_URLS[city] && (
-                <Button asChild className="w-full text-white rounded-xl h-11" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-                  <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Apply for Permit in {city}
-                  </a>
-                </Button>
+              {needsCost && (
+                <div className="mb-4">
+                  <Label className="text-xs font-medium text-gray-700 mb-1 block">Project Cost ($)</Label>
+                  <Input
+                    type="number" min="0" placeholder="e.g. 50000"
+                    value={constructionCost}
+                    onChange={e => setConstructionCost(e.target.value)}
+                    className="rounded-xl text-sm"
+                  />
+                </div>
               )}
-              <Button variant="outline" onClick={handleReset} className="w-full rounded-xl h-11">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Calculate Another Permit
+
+              {results && (
+                <div className="mb-4 divide-y divide-gray-100">
+                  {results.breakdown.map((item, i) => (
+                    <div key={i} className="flex justify-between py-2">
+                      <span className="text-xs text-gray-600">{item.label}</span>
+                      <span className="text-xs font-semibold text-gray-800">${item.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                onClick={handleCalculate}
+                disabled={!canCalculate}
+                className="w-full text-white rounded-xl h-10 text-sm font-semibold disabled:opacity-50 mb-3"
+                style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
+              >
+                <Calculator className="w-4 h-4 mr-1.5" />
+                {results ? "Recalculate" : "Calculate Fee"}
               </Button>
+
+              {results && (
+                <>
+                  <div className="rounded-xl p-3 text-center mb-3" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+                    <p className="text-blue-200 text-xs mb-0.5">Estimated Total</p>
+                    <p className="text-2xl font-extrabold text-white">${results.total.toFixed(2)}</p>
+                  </div>
+                  {CITY_PORTAL_URLS[city] && (
+                    <Button asChild className="w-full text-white rounded-xl h-10 text-sm mb-2" style={{ background: "#1E4D99" }}>
+                      <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Apply for Permit
+                      </a>
+                    </Button>
+                  )}
+                  <p className="text-xs text-gray-400 text-center leading-snug">Fees are estimates only and subject to departmental verification.</p>
+                </>
+              )}
+
+              {!results && (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 mt-2">
+                  <p className="text-xs text-amber-700">Fees are estimates based on official schedules. Professional review may result in adjustments.</p>
+                </div>
+              )}
             </div>
-          </div>
-        </motion.div>
-      )}
+          )}
+        </div>
+      </div>
+
+      </div>{/* end desktop layout wrapper */}
     </div>
     </div>
   );
