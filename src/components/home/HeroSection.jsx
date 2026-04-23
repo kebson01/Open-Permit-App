@@ -16,9 +16,15 @@ export default function HeroSection() {
           🏛️ Trusted by South Florida Municipalities
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
-          Welcome to
-          <span className="block text-blue-400 mt-1">OpenPermit</span>
+        <div className="flex justify-center mb-4">
+          <img
+            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/6d9389e82_openpermit_logo_transparent.png"
+            alt="OpenPermit"
+            style={{ height: '80px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+          />
+        </div>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
+          Welcome to OpenPermit
         </h1>
 
         <p className="mt-4 text-sm sm:text-lg text-white/90 max-w-xl mx-auto leading-relaxed px-2">
