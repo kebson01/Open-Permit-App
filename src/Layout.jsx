@@ -94,9 +94,9 @@ export default function Layout({ children, currentPageName }) {
             {/* LEFT — Brand */}
             <Link to="/" className="flex items-center flex-shrink-0">
               <img
-                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/1be927e0f_generated_image.png"
+                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
                 alt="OpenPermit"
-                style={{ height: '40px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                className="h-9 w-auto"
               />
             </Link>
 
@@ -235,10 +235,9 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <img
-              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/1be927e0f_generated_image.png"
+              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
               alt="OpenPermit"
-              style={{ height: '36px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-              className="mb-1"
+              className="h-10 w-auto mb-1 brightness-0 invert"
             />
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Making permits simple for South Florida homeowners and contractors.</p>
           </div>
