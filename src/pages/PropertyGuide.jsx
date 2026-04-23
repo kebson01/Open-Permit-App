@@ -2,17 +2,17 @@ import { useState } from "react";
 import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
+const EDGE_FUNCTION_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
+
 const CITY_PORTALS = {
   "Weston": "https://www.westonfl.org/Permits",
   "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit",
   "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
   "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
-  "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937"
+  "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
 };
 
 const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
-
-const PROPERTY_COLS = "FOLIO_NUMBER, full_address, city_name, SITUS_CITY, SITUS_ZIP_CODE, BLDG_YEAR_BUILT, BEDS, BATHS, BLDG_TOT_SQ_FOOTAGE, BLDG_UNDER_AIR_SQ_FOOTAGE, USE_TYPE";
 
 const STATUS_STYLES = {
   "Completed": { bg: "#DCFCE7", color: "#166534" },
@@ -22,26 +22,26 @@ const STATUS_STYLES = {
   "Cancelled": { bg: "#FEF2F2", color: "#991B1B" },
 };
 
+function isFolioSearch(term) {
+  return /^[0-9A-Za-z]{8,15}$/.test(term) && !/\s/.test(term);
+}
+
 async function searchProperties(searchTerm, selectedCity) {
   const term = searchTerm.trim();
   if (!term) return [];
 
-  const isFolio = /^[0-9A-Za-z]{8,15}$/.test(term) && !/\s/.test(term);
-
-  let query = supabase.from("broward_properties_public").select(PROPERTY_COLS);
-
-  if (isFolio) {
-    query = query.eq("FOLIO_NUMBER", term).limit(5);
+  let url;
+  if (isFolioSearch(term)) {
+    url = `${EDGE_FUNCTION_URL}?q=${encodeURIComponent(term)}&type=folio`;
   } else {
-    query = query.ilike("full_address", `%${term.toUpperCase()}%`).order("full_address").limit(20);
-    if (selectedCity && selectedCity !== "All Cities") {
-      query = query.eq("city_name", selectedCity);
-    }
+    const city = selectedCity && selectedCity !== "All Cities" ? selectedCity : "";
+    url = `${EDGE_FUNCTION_URL}?q=${encodeURIComponent(term)}&city=${encodeURIComponent(city)}&type=address`;
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  const res = await fetch(url);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json.data || [];
 }
 
 async function getPermitHistory(folioNumber) {
@@ -93,7 +93,7 @@ function PropertyDetail({ property: p, onBack }) {
   const isWeston = p.city_name === "Weston";
   const portalUrl = CITY_PORTALS[p.city_name];
 
-  // Auto-load permits for Weston
+  // Load permits for Weston on mount
   useState(() => {
     if (isWeston) {
       setLoadingPermits(true);
@@ -132,7 +132,12 @@ function PropertyDetail({ property: p, onBack }) {
       <div className="grid sm:grid-cols-2 gap-4 mb-5">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
-          {p.USE_TYPE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Use Type</span><span className="text-sm font-medium text-gray-900">{p.USE_TYPE}</span></div>}
+          {p.USE_TYPE && (
+            <div className="flex justify-between py-1.5">
+              <span className="text-sm text-gray-500">Use Type</span>
+              <span className="text-sm font-medium text-gray-900">{p.USE_TYPE}</span>
+            </div>
+          )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Building Details</h3>
@@ -158,7 +163,7 @@ function PropertyDetail({ property: p, onBack }) {
         {!isWeston ? (
           <div className="text-center py-10 px-4">
             <p className="text-gray-700 font-medium">Permit history coming soon</p>
-            <p className="text-gray-400 text-sm mt-1">Search directly at the city's permit portal for current records.</p>
+            <p className="text-gray-400 text-sm mt-1">Search directly at the city's permit portal.</p>
             {portalUrl && (
               <a href={portalUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 mt-3 text-sm text-blue-600 hover:underline font-medium">
@@ -173,7 +178,7 @@ function PropertyDetail({ property: p, onBack }) {
         ) : permits && permits.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-600 font-medium">No permit records found</p>
-            <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">No permitted work on file, or records may predate our database.</p>
+            <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">No permitted work on file for this folio.</p>
           </div>
         ) : permits && permits.length > 0 ? (
           <div className="overflow-x-auto">
@@ -311,7 +316,13 @@ export default function PropertyGuide() {
                 <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
               </div>
             )}
-            {searched && !loading && results.length === 0 && (
+            {error && (
+              <div className="text-center py-8 text-red-600 bg-red-50 rounded-xl border border-red-100">
+                <p className="font-medium">Search error</p>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
+            )}
+            {searched && !loading && !error && results.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
                 <p className="font-semibold text-gray-700">No properties found</p>
