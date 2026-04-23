@@ -18,7 +18,7 @@ export default function HeroSection() {
 
         <div className="flex justify-center mb-4">
           <img
-            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/d21badc44_openpermit_logo_transparent.png"
+            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/1be927e0f_generated_image.png"
             alt="OpenPermit"
             style={{ height: '80px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
           />
