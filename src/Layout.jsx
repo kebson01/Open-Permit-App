@@ -4,7 +4,8 @@ import { createPageUrl } from "@/utils";
 import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
 import FloatingAIButton from "@/components/ai/FloatingAIButton";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import AuthModal from "@/components/auth/AuthModal";
 
 const centerNavLinks = [
   { name: "Plan a Permit", page: "PermitGuide" },
@@ -18,11 +19,34 @@ export default function Layout({ children, currentPageName }) {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [navVisible, setNavVisible] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const lastScrollY = useRef(0);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(setCurrentUser).catch(() => {});
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser({
+          ...session.user,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name,
+          role: session.user.user_metadata?.role,
+        });
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUser({
+          ...session.user,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name,
+          role: session.user.user_metadata?.role,
+        });
+      } else {
+        setCurrentUser(null);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -146,10 +170,10 @@ export default function Layout({ children, currentPageName }) {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-colors"
                   >
                     My Account
-                    {(isAdmin || isCityAdmin) && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                    <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                   </button>
 
-                  {accountDropdownOpen && (isAdmin || isCityAdmin) && (
+                  {accountDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden">
                       {adminDropdownLinks.map(link => (
                         <Link
@@ -162,12 +186,18 @@ export default function Layout({ children, currentPageName }) {
                           {link.name}
                         </Link>
                       ))}
+                      <button
+                        onClick={async () => { await supabase.auth.signOut(); setAccountDropdownOpen(false); }}
+                        className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 mt-0.5"
+                      >
+                        Sign Out
+                      </button>
                     </div>
                   )}
                 </div>
               ) : (
                 <button
-                  onClick={() => base44.auth.redirectToLogin(window.location.href)}
+                  onClick={() => setShowAuthModal(true)}
                   className="px-3 py-1.5 rounded-md border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-colors"
                 >
                   Log In
@@ -202,10 +232,18 @@ export default function Layout({ children, currentPageName }) {
             ))}
             {!currentUser && (
               <button
-                onClick={() => { base44.auth.redirectToLogin(window.location.href); setMobileOpen(false); }}
+                onClick={() => { setMobileOpen(false); setShowAuthModal(true); }}
                 className="block w-full text-left px-5 py-3.5 text-sm font-medium text-blue-100 hover:text-white hover:bg-white/5"
               >
                 Log In
+              </button>
+            )}
+            {currentUser && (
+              <button
+                onClick={async () => { await supabase.auth.signOut(); setMobileOpen(false); }}
+                className="block w-full text-left px-5 py-3.5 text-sm font-medium text-blue-100 hover:text-white hover:bg-white/5"
+              >
+                Sign Out
               </button>
             )}
           </div>
@@ -247,6 +285,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Floating AI Button */}
       <FloatingAIButton currentPageName={currentPageName} />
+
+      {/* Auth Modal */}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
 }

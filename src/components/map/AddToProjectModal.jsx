@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
-import { X, FolderOpen, CheckCircle2, Loader2, LogIn } from "lucide-react";
+import { X, FolderOpen, CheckCircle2, Loader2 } from "lucide-react";
+import AuthModal from "@/components/auth/AuthModal";
 
 export default function AddToProjectModal({ permitName, onClose }) {
   const [user, setUser] = useState(null);
@@ -55,18 +55,7 @@ export default function AddToProjectModal({ permitName, onClose }) {
           {loading ? (
             <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-blue-400" /></div>
           ) : !authed ? (
-            <div className="text-center py-4">
-              <LogIn className="w-10 h-10 text-blue-300 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-gray-800 mb-1">Create a free account</p>
-              <p className="text-xs text-gray-500 mb-4">Save permits to your projects and track everything in one place.</p>
-              <button
-                onClick={() => base44.auth.redirectToLogin(window.location.href)}
-                className="px-5 py-2 rounded-xl text-sm font-semibold text-white"
-                style={{ background: "#3B82F6" }}
-              >
-                Sign up / Log in
-              </button>
-            </div>
+            <AuthModal onClose={() => { setAuthed(false); onClose(); }} />
           ) : projects.length === 0 ? (
             <div className="text-center py-4">
               <FolderOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />

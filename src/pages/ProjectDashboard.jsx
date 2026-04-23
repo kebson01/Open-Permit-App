@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
+import AuthModal from "@/components/auth/AuthModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, FolderOpen, Search, Loader2, Home, Briefcase } from "lucide-react";
 import NewProjectModal from "@/components/projects/NewProjectModal.jsx";
@@ -118,24 +118,7 @@ export default function ProjectDashboard() {
   }
 
   if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-5">
-            <FolderOpen className="w-8 h-8 text-blue-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Track Your Permit Projects</h2>
-          <p className="text-gray-500 mb-6 text-sm leading-relaxed">
-            Create a free account to start tracking your permit projects, save your document checklist, and manage timelines.
-          </p>
-          <button onClick={() => base44.auth.redirectToLogin(window.location.href)}
-
-            className="w-full h-11 text-sm font-semibold text-white rounded-xl" style={{ background: "#3B82F6" }}>
-            Create Account / Log In
-          </button>
-        </div>
-      </div>
-    );
+    return <AuthModal onClose={() => window.location.href = "/"} />;
   }
 
   // Show onboarding if role not yet determined (new users default to "user" role only after going through this)
