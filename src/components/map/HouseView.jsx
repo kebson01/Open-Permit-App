@@ -403,13 +403,17 @@ export default function HouseView({ view, showHighlights, onZoneClick }) {
       {/* Legend */}
       {showHighlights && !isFullscreen && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Permit Zones Legend</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Permit Zones Legend — click any zone to learn more</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-2">
             {legend.map(item => (
-              <div key={item.label} className="flex items-center gap-1.5">
+              <button
+                key={item.label}
+                onClick={() => onZoneClick(item.label, "")}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
                 <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: item.color, opacity: 0.85 }} />
-                <span className="text-xs text-gray-600">{item.label}</span>
-              </div>
+                <span className="text-xs text-gray-600 hover:text-gray-900">{item.label}</span>
+              </button>
             ))}
           </div>
         </div>

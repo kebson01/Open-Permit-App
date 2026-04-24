@@ -1,6 +1,30 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat, Layers, BookOpen } from "lucide-react";
+import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat, Layers, BookOpen, X, ArrowRight } from "lucide-react";
+
+const ZONE_INFO = {
+  "Roof / Re-Roof": "Required for any roof replacement or repair over 25% of roof area. In Broward County (HVHZ), all roofing must meet 170mph wind resistance standards.",
+  "Solar Panels": "Electrical and building permits required. HOAs cannot prohibit solar installation under Florida Statute 163.04.",
+  "Window Replacement": "Impact-resistant windows required in HVHZ (all of Broward County). Permit required for all window replacements.",
+  "Door Replacement": "Permit required for exterior door replacements. Impact-rated doors required in HVHZ.",
+  "Garage Door": "Permit required. Must meet wind load requirements for HVHZ (170mph).",
+  "A/C Replacement": "Mechanical permit required. NOC required if job value exceeds $15,000 in Weston.",
+  "Electrical Service": "Electrical permit required for panel upgrades, new circuits, or service changes.",
+  "Pool & Spa": "Building, electrical, and plumbing permits required. Florida barrier law requires 4ft fence enclosure within 90 days.",
+  "Pool Equipment": "Permit required for equipment replacement. Electrical permit needed if wiring is involved.",
+  "Driveway / Walkway": "Permit required for new driveways or significant expansions. Check setback requirements.",
+  "Driveway (Paver)": "Permit required for new driveways or significant expansions. Check setback requirements.",
+  "Walkway / Sidewalk": "Permit required for new driveways or significant expansions. Check setback requirements.",
+  "Fence / Gate": "Permit required for fence and gate installation. Height and setback rules vary by city.",
+  "Patio / Slab": "Permit required for new patio slabs or significant concrete work.",
+  "Covered Patio": "Building permit required for covered outdoor structures.",
+  "Pergola": "Permit required for pergola or gazebo structures.",
+  "Residential Remodel": "Building permit required for interior renovations affecting structure, electrical, or plumbing.",
+  "Residential Addition": "Building permit required for any addition to the living space.",
+  "Plumbing": "Plumbing permit required for new fixtures, drain work, or supply line changes.",
+  "Pool Deck": "Permit required for pool deck construction or resurfacing.",
+  "Irrigation System": "Permit required for new irrigation or sprinkler systems.",
+};
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
@@ -214,16 +238,23 @@ export default function PermitGuide() {
     setCommercialView(sub.view);
   };
 
+  const [zoneInfoPanel, setZoneInfoPanel] = useState(null);
+
   const handleZoneClick = (zoneLabel, zoneDesc) => {
     const mapZone = LABEL_TO_MAP_ZONE[zoneLabel];
     const matching = mapZone ? allPermits.filter(p => p.map_zone === mapZone) : [];
+    const zoneDescription = ZONE_INFO[zoneLabel] || zoneDesc || "";
+
+    // Show quick info panel
+    setZoneInfoPanel({ label: zoneLabel, description: zoneDescription });
+
     if (matching.length === 1) {
       setSelectedPermit(matching[0]);
     } else if (matching.length > 1) {
       const exact = matching.find(p => p.name === zoneLabel) || matching[0];
       setSelectedPermit({ ...exact, _allMatching: matching });
     } else {
-      setSelectedPermit({ name: zoneLabel, description: zoneDesc || "", typical_requirements: [], documents_needed: [], inspections_required: [] });
+      setSelectedPermit({ name: zoneLabel, description: zoneDescription, typical_requirements: [], documents_needed: [], inspections_required: [] });
     }
   };
 
@@ -408,7 +439,7 @@ export default function PermitGuide() {
       </div>
 
       {selectedPermit && (
-        <PermitPopup permit={selectedPermit} city={city} userMode="homeowner" onClose={() => setSelectedPermit(null)} />
+        <PermitPopup permit={selectedPermit} city={city} userMode="homeowner" onClose={() => { setSelectedPermit(null); setZoneInfoPanel(null); }} />
       )}
 
       <PermitsPanel
@@ -424,6 +455,28 @@ export default function PermitGuide() {
       />
 
       <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitGuide" initialMessage={aiInitialMessage} />
+
+      {/* Zone Info Panel */}
+      {zoneInfoPanel && !selectedPermit && (
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-bold text-gray-900 text-sm">{zoneInfoPanel.label}</h3>
+              <button onClick={() => setZoneInfoPanel(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed mb-3">{zoneInfoPanel.description}</p>
+            <a
+              href={`/PermitGuide?city=${encodeURIComponent(city)}&zone=${encodeURIComponent(zoneInfoPanel.label)}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}
+            >
+              View Full Requirements <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

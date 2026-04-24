@@ -272,11 +272,15 @@ export default function Layout({ children, currentPageName }) {
       <footer className="py-8 pb-20 md:pb-8" style={{ backgroundColor: "#0D2B5E", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <img
-              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
-              alt="OpenPermit"
-              className="h-10 w-auto mb-1 brightness-0 invert"
-            />
+            <div className="flex items-center gap-2 mb-1">
+              <img
+                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
+                alt="OpenPermit"
+                className="h-10 w-auto brightness-0 invert"
+                onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "block"; }}
+              />
+              <span style={{ display: "none", color: "#ffffff", fontWeight: 700, fontSize: 20 }}>OpenPermit</span>
+            </div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Making permits simple for South Florida homeowners and contractors.</p>
           </div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>© 2026 OpenPermit. All rights reserved.</p>

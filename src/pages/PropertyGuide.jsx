@@ -1,6 +1,13 @@
 import { useState } from "react";
-import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink } from "lucide-react";
+import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+
+function formatDate(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
 
 const EDGE_FUNCTION_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
 
@@ -132,10 +139,10 @@ function PropertyDetail({ property: p, onBack }) {
       <div className="grid sm:grid-cols-2 gap-4 mb-5">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
-          {p.USE_TYPE && (
+          {(p.use_type_label || p.USE_TYPE) && (
             <div className="flex justify-between py-1.5">
-              <span className="text-sm text-gray-500">Use Type</span>
-              <span className="text-sm font-medium text-gray-900">{p.USE_TYPE}</span>
+              <span className="text-sm text-gray-500">Property Type</span>
+              <span className="text-sm font-medium text-gray-900">{p.use_type_label || p.USE_TYPE}</span>
             </div>
           )}
         </div>
@@ -208,7 +215,7 @@ function PropertyDetail({ property: p, onBack }) {
                         <span className="text-xs text-gray-400">{r.PERMIT_STATUS || "—"}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{r.OPEN_DATE || "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{formatDate(r.OPEN_DATE)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -217,15 +224,27 @@ function PropertyDetail({ property: p, onBack }) {
         ) : null}
       </div>
 
-      {portalUrl && (
-        <div className="flex justify-center">
+      <div className="flex flex-wrap justify-center gap-3 mt-5">
+        <Link
+          to={`/PermitGuide?city=${encodeURIComponent(p.city_name || "")}`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}
+        >
+          <Home className="w-4 h-4" /> Start a Permit for This Property →
+        </Link>
+        <Link
+          to={`/FeeCalculator?city=${encodeURIComponent(p.city_name || "")}`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-blue-700 border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+        >
+          <Calculator className="w-4 h-4" /> Estimate Permit Costs →
+        </Link>
+        {portalUrl && (
           <a href={portalUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}>
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
             <ExternalLink className="w-4 h-4" /> Apply / Search Permits at {p.city_name}
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

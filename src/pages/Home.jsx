@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
-import { ArrowRight, Sparkles, MousePointerClick, DollarSign, Building2, Upload, CalendarCheck, HeadphonesIcon, MapPin, ChevronDown, Home as HomeIcon } from "lucide-react";
+import { ArrowRight, Sparkles, MousePointerClick, DollarSign, Building2, MapPin, ChevronDown, Home as HomeIcon, ClipboardList } from "lucide-react";
 
 const JURISDICTIONS = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
 
@@ -35,10 +35,10 @@ const HOW_IT_WORKS = [
 const TOOLKIT = [
   { icon: MousePointerClick, title: "Identify the permit you need", body: "AI-driven search through 500+ permit types based on your specific project description and location.", page: "PermitGuide" },
   { icon: DollarSign,        title: "Estimate costs in advance",    body: "Accurate fee calculation including city, county, and state surcharges to help budget your construction project.", page: "FeeCalculator" },
-  { icon: Building2,         title: "Search any property",          body: "View historical permit data, zoning designations, and outstanding violations for any parcel in South Florida.", page: "PropertyGuide" },
-  { icon: Upload,            title: "Digital submissions",          body: "Apply for permits online without visiting City Hall. Securely upload blueprints and track approval status in real-time.", page: "ProjectDashboard" },
-  { icon: CalendarCheck,     title: "Schedule inspections",         body: "Book on-site or virtual inspections with a single click and receive notifications when the inspector is en route.", page: "ProjectDashboard" },
-  { icon: HeadphonesIcon,    title: "Expert consultation",          body: "Connect with local planners and permit technicians for complex projects requiring specialized zoning variances.", page: "ProjectDashboard" },
+  { icon: Building2,         title: "Search any property",          body: "View building details, permit history, and zoning info for any of 758,000+ Broward County properties.", page: "PropertyGuide" },
+  { icon: HomeIcon,          title: "Visual Permit Guide",          body: "Tap zones on an interactive home diagram to identify exactly which permits apply to your project.", page: "PermitGuide" },
+  { icon: Sparkles,          title: "AI Permit Assistant",          body: "Ask plain-English questions about permits, codes, and requirements. Trained on Broward municipal codes.", page: "PermitGuide" },
+  { icon: ClipboardList,     title: "Weston Permit History",        body: "Search 115,000+ historical permit records for any Weston property by address or folio number.", page: "PropertyGuide" },
 ];
 
 export default function Home() {
@@ -76,7 +76,7 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-5"
                 style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#b1c5ff", border: "1px solid rgba(177,197,255,0.3)" }}>
-                🏛️ Official Municipal Portal
+                📍 Broward County · 5 Cities Covered
               </div>
 
               <h1 className="font-bold leading-tight mb-4" style={{ color: "#ffffff", fontSize: "clamp(28px, 4vw, 46px)", letterSpacing: "-0.5px" }}>
@@ -313,7 +313,7 @@ export default function Home() {
               Ready to start your project?
             </h2>
             <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14 }}>
-              Join 2,400+ residents and contractors who have simplified their permit process this year.
+              Built for Broward County homeowners and contractors.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
