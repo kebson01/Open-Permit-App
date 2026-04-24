@@ -17,9 +17,10 @@ const CITY_PORTALS = {
   "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
   "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
   "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
+  "Sunrise": "https://sunrisefl.gov/openforbusiness",
 };
 
-const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
 
 const STATUS_STYLES = {
   "Completed": { bg: "#DCFCE7", color: "#166534" },

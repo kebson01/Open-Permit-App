@@ -107,8 +107,8 @@ async function fetchPermitTypes(city = "Weston") {
   }));
 }
 
-const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
-const AVAILABLE_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City"];
+const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
+const AVAILABLE_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
 const COMING_SOON_CITIES = [];
 
 const RESIDENTIAL_VIEWS = [

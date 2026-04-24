@@ -11,6 +11,14 @@ const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABAS
 
 const ALL_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
 
+// Sunrise surcharge calculation helper
+function calcSunriseSurcharges(permitFee, constructionValue) {
+  const bcaib = Math.max(permitFee * 0.015, 2.00);
+  const fbc = Math.max(permitFee * 0.010, 2.00);
+  const bra = Math.max((constructionValue / 1000) * 0.52, 2.00);
+  return { bcaib, fbc, bra };
+}
+
 const CITY_NOTES = {
   "Weston": "NOC required if job value over $2,500 (A/C: $15,000). Fees effective October 1, 2025.",
   "Coral Springs": "NOC required if job value over $5,000. Fees effective FY2025.",
@@ -88,9 +96,9 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
 
   if (isPercentage) {
     const calculated = cost * ((rule.rate_percentage || 4.40) / 100);
-    const minFee = rule.base_fee || 208.46;
+    const minFee = 208.46;
     permitFee = Math.max(calculated, minFee);
-    breakdown.push({ label: "Permit Fee (4.40% of construction value)", amount: permitFee });
+    breakdown.push({ label: `Permit Fee (${rule.rate_percentage || 4.40}% of construction value)`, amount: permitFee });
     if (calculated < minFee) {
       breakdown.push({ label: "  (Minimum fee applied)", amount: 0 });
     }
@@ -104,27 +112,19 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
     if (rule.permit_name?.toLowerCase().includes("roof") && sqft > 3000) {
       const overageSqft = sqft - 3000;
       const overage = Math.ceil(overageSqft / 1000) * 101.56;
-      breakdown.push({ label: `Roof overage (${Math.ceil(overageSqft / 1000)} × $101.56 per 1,000 SF)`, amount: overage });
+      breakdown.push({ label: `Roof overage (${Math.ceil(overageSqft / 1000)} × $101.56/1,000 SF)`, amount: overage });
       permitFee += overage;
     }
   }
 
-  // Tech/Admin fee
-  const techFee = rule.technology_admin_fee || 80.18;
-  breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
+  const techFee = rule.technology_admin_fee || 0;
+  if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
 
-  // BRA: $0.52 per $1,000 of construction value, min $2.00
-  // For flat fees, use flat_fee as basis
+  // BRA: use constructionValue for percentage permits, flat_fee for flat permits
   const braBase = isPercentage ? cost : (rule.flat_fee || 0);
-  const braFee = Math.max(2.00, (braBase / 1000) * 0.52);
+  const { bcaib: bcaibFee, fbc: fbcFee, bra: braFee } = calcSunriseSurcharges(permitFee, braBase);
   breakdown.push({ label: "BRA Surcharge ($0.52/$1,000)", amount: braFee });
-
-  // BCAIB: 1.5% of permit fee, min $2.00
-  const bcaibFee = Math.max(2.00, permitFee * 0.015);
   breakdown.push({ label: "BCAIB Surcharge (1.5%)", amount: bcaibFee });
-
-  // FBC: 1.0% of permit fee, min $2.00
-  const fbcFee = Math.max(2.00, permitFee * 0.01);
   breakdown.push({ label: "FBC Surcharge (1.0%)", amount: fbcFee });
 
   const total = permitFee + techFee + braFee + bcaibFee + fbcFee;
