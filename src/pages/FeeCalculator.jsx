@@ -28,6 +28,24 @@ const CITY_NOTES = {
   "Sunrise": "NOC required if job value over $2,500 (A/C: $7,500). Fees effective October 1, 2024.",
 };
 
+const CITY_FEE_SUMMARY = {
+  "Weston": "Flat 1.5% rate on all permit types. Technology fee: $75.",
+  "Coral Springs": "Variable rates by permit type: 0.14%–5.30%. Lowest minimum fee in Broward ($54.55).",
+  "Fort Lauderdale": "1.85% rate. Digital submissions only via LauderBuild. Walk-Thru available for small projects.",
+  "Hollywood": "2.20% tiered rate + separate 25% process fee. Express Review every Wednesday.",
+  "Cooper City": "1.85% rate. ALL applications must be notarized. Hold Harmless Agreement required.",
+  "Sunrise": "Fixed flat fees per permit type. No percentage calculation for most residential permits.",
+};
+
+const CITY_ACCENT = {
+  "Weston":          { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-800",   dot: "bg-blue-500" },
+  "Coral Springs":   { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-800",  dot: "bg-green-500" },
+  "Fort Lauderdale": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-800", dot: "bg-purple-500" },
+  "Hollywood":       { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", dot: "bg-orange-500" },
+  "Cooper City":     { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-800",    dot: "bg-red-500" },
+  "Sunrise":         { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-800",  dot: "bg-amber-500" },
+};
+
 const CITY_PORTAL_URLS = {
   "Weston": "https://www.westonfl.org/Permits",
   "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
@@ -106,7 +124,7 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
     }
   } else {
     // flat
-    permitFee = rule.flat_fee || 0;
+    permitFee = rule.base_fee || 0;
     breakdown.push({ label: "Permit Fee", amount: permitFee });
 
     // Roof overage: $101.56 per 1,000 SF over 3,000 SF
@@ -122,8 +140,8 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
   const techFee = rule.technology_admin_fee || 0;
   if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
 
-  // BRA: use constructionValue for percentage permits, flat_fee for flat permits
-  const braBase = isPercentage ? cost : (rule.flat_fee || 0);
+  // BRA: use constructionValue for percentage permits, base_fee for flat permits
+  const braBase = isPercentage ? cost : (rule.base_fee || 0);
   const { bcaib: bcaibFee, fbc: fbcFee, bra: braFee } = calcSunriseSurcharges(permitFee, braBase);
   breakdown.push({ label: "BRA Surcharge ($0.52/$1,000)", amount: braFee });
   breakdown.push({ label: "BCAIB Surcharge (1.5%)", amount: bcaibFee });
@@ -317,13 +335,33 @@ export default function FeeCalculator() {
         <div className="md:flex md:gap-6 md:items-start">
           {/* Main permit list column */}
           <div className="flex-1 min-w-0">
-            {/* City note */}
-            {CITY_NOTES[city] && (
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 mb-4">
-                <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
-              </div>
-            )}
+            {/* City accent badge + NOC note */}
+            {(() => {
+              const accent = CITY_ACCENT[city] || CITY_ACCENT["Weston"];
+              return (
+                <div className="mb-4 space-y-2">
+                  {/* City badge */}
+                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${accent.bg} ${accent.border} ${accent.text}`}>
+                    <span className={`w-2 h-2 rounded-full ${accent.dot}`} />
+                    {city} Fee Schedule
+                  </div>
+                  {/* NOC banner */}
+                  {CITY_NOTES[city] && (
+                    <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                      <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
+                    </div>
+                  )}
+                  {/* Fee structure summary */}
+                  {CITY_FEE_SUMMARY[city] && (
+                    <div className={`flex items-start gap-2 p-3 rounded-xl border ${accent.bg} ${accent.border}`}>
+                      <Calculator className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${accent.text}`} />
+                      <p className={`text-xs font-medium ${accent.text}`}>{CITY_FEE_SUMMARY[city]}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Search */}
             <div className="relative mb-5">
@@ -394,11 +432,11 @@ export default function FeeCalculator() {
                               <div className="flex items-center justify-between">
                                 <div>
                                   {isSunriseFlat && (
-                                    <>
-                                      <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
-                                      <p className="text-sm font-bold text-gray-900">${(rule.flat_fee || rule.base_fee || 0).toFixed(2)}</p>
-                                    </>
-                                  )}
+                                     <>
+                                       <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
+                                       <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toFixed(2)}</p>
+                                     </>
+                                   )}
                                   {isSunrisePctCard && (
                                     <>
                                       <p className="text-xs text-gray-400 uppercase tracking-wider">Rate</p>
