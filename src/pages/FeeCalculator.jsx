@@ -20,11 +20,11 @@ function calcSunriseSurcharges(permitFee, constructionValue) {
 }
 
 const CITY_NOTES = {
-  "Weston": "NOC required if job value over $2,500 (A/C: $15,000). Fees effective October 1, 2025.",
-  "Coral Springs": "NOC required if job value over $5,000. Fees effective FY2025.",
-  "Hollywood": "Includes 2% city processing fee. NOC required if over $5,000 (A/C: $15,000). Express permits available Wednesday for select types.",
-  "Fort Lauderdale": "All permits submitted digitally through LauderBuild. NOC required if over $2,500. Fees based on Broward County base rate.",
-  "Cooper City": "All applications must be notarized. NOC required if over $2,500. Hold Harmless Agreement may be required for drainage easements.",
+  "Weston": "NOC required if job value over $2,500 (A/C: $15,000). Fees effective October 2025.",
+  "Coral Springs": "NOC required if job value over $5,000 (A/C: $15,000).",
+  "Hollywood": "NOC required if job value over $5,000 (A/C: $15,000). Process fee: 25% of job cost charged separately. Express Review: Wednesdays.",
+  "Fort Lauderdale": "NOC required if job value over $2,500 (A/C: $15,000). Digital submissions only via LauderBuild.",
+  "Cooper City": "NOC required if job value over $2,500 (A/C: $15,000). All applications must be NOTARIZED. Hold Harmless Agreement required.",
   "Sunrise": "NOC required if job value over $2,500 (A/C: $7,500). Fees effective October 1, 2024.",
 };
 
@@ -55,11 +55,13 @@ function calculateStandardFee(rule, constructionCost, surcharge) {
   const breakdown = [];
 
   let permitFee = 0;
-  if (rule.calc_type === "flat_plus_pct") {
-    const pctFee = cost * ((rule.rate_percentage || 0) / 100);
+  if (rule.rate_percentage > 0) {
+    // base_fee is the minimum; if pct of job value exceeds it, use that
+    const pctFee = cost * (rule.rate_percentage / 100);
     permitFee = Math.max(rule.base_fee || 0, pctFee);
   } else {
-    permitFee = rule.flat_fee || rule.base_fee || 0;
+    // flat fee — base_fee is the full fee
+    permitFee = rule.base_fee || 0;
   }
   breakdown.push({ label: "Base Permit Fee", amount: permitFee });
 
@@ -214,7 +216,7 @@ export default function FeeCalculator() {
 
   const needsCost = isSunrise
     ? isSunrisePct
-    : (selectedRule?.calc_type === "flat_plus_pct" && (selectedRule?.rate_percentage > 0));
+    : (selectedRule?.rate_percentage > 0);
 
   const canCalculate = selectedRule && (isSunriseFlat || (needsCost ? (constructionCost && parseFloat(constructionCost) > 0) : true));
 
@@ -394,7 +396,7 @@ export default function FeeCalculator() {
                                   {isSunriseFlat && (
                                     <>
                                       <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
-                                      <p className="text-sm font-bold text-gray-900">${(rule.flat_fee || 0).toFixed(2)}</p>
+                                      <p className="text-sm font-bold text-gray-900">${(rule.flat_fee || rule.base_fee || 0).toFixed(2)}</p>
                                     </>
                                   )}
                                   {isSunrisePctCard && (
@@ -403,13 +405,19 @@ export default function FeeCalculator() {
                                       <p className="text-sm font-bold text-gray-900">{rule.rate_percentage || 4.40}% of job value</p>
                                     </>
                                   )}
-                                  {!isSunrise && (rule.flat_fee || rule.base_fee) && (
+                                  {!isSunrise && (
                                     <>
-                                      <p className="text-xs text-gray-400 uppercase tracking-wider">Base Fee</p>
-                                      <p className="text-sm font-bold text-gray-900">
-                                        ${(rule.flat_fee || rule.base_fee || 0).toLocaleString()}
-                                        {rule.calc_type === "flat_plus_pct" && rule.rate_percentage > 0 ? ` + ${rule.rate_percentage}%` : ""}
-                                      </p>
+                                      {(rule.rate_percentage > 0) ? (
+                                        <>
+                                          <p className="text-xs text-gray-400 uppercase tracking-wider">Base Fee</p>
+                                          <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toLocaleString()} + {rule.rate_percentage}%</p>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
+                                          <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toLocaleString()}</p>
+                                        </>
+                                      )}
                                     </>
                                   )}
                                 </div>
