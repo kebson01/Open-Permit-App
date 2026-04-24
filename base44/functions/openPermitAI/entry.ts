@@ -9,6 +9,7 @@ const ORDINANCE_URLS = {
   "Coral Springs": "https://library.municode.com/fl/coral_springs/codes/code_of_ordinances",
   "Fort Lauderdale": "https://library.municode.com/fl/fort_lauderdale/codes/code_of_ordinances",
   "Cooper City": "https://library.municode.com/fl/cooper_city/codes/code_of_ordinances",
+  "Sunrise": "https://library.municode.com/fl/sunrise/codes/code_of_ordinances",
 };
 
 const CITY_PORTAL_URLS = {
@@ -17,6 +18,7 @@ const CITY_PORTAL_URLS = {
   "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
   "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
   "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
+  "Sunrise": "https://sunrisefl.gov/openforbusiness",
 };
 
 const CITY_DEPT_INFO = {
@@ -25,6 +27,7 @@ const CITY_DEPT_INFO = {
   "Fort Lauderdale": { phone: "(954) 828-6520", hours: "Mon–Fri 7:30AM–4:30PM", noc_threshold: "$2,500" },
   "Hollywood": { phone: "(954) 921-3335", hours: "Mon–Thu 7AM–6PM", noc_threshold: "$5,000" },
   "Cooper City": { phone: "(954) 434-4300", hours: "Mon–Fri 8AM–5PM", noc_threshold: "$2,500" },
+  "Sunrise": { phone: "(954) 572-2354", hours: "Mon–Thu 8AM–5PM, Fri 8AM–4PM (Professional Day: Wed 8AM–Noon)", noc_threshold: "$2,500 (A/C: $7,500)" },
 };
 
 // Only use web search for very specific questions not answerable from local data
@@ -313,15 +316,17 @@ Deno.serve(async (req) => {
       "Fort Lauderdale": "Digital only (LauderBuild — no paper accepted)",
       "Hollywood": "Online (Accela) or in person",
       "Cooper City": "In person (applications must be notarized)",
+      "Sunrise": "Online via Open for Business portal (sunrisefl.gov/openforbusiness)",
     };
 
     const CITY_NOTES = {
       "Fort Lauderdale": "All permit submissions must be made digitally through LauderBuild — no paper applications accepted.",
       "Hollywood": "Express same-day permits available for AC, roof, electrical, and water heater — submit Tuesday 6PM to Wednesday 9AM.",
       "Cooper City": "All applications must be notarized. Hold Harmless Agreement required for drainage easements.",
+      "Sunrise": "Professional Day is every Wednesday 8AM–Noon (walk-in plan review available). NOC threshold is $2,500 for most permits but $7,500 for A/C replacements. Fee structure: flat fees for most residential permits (A/C: $208.45, Roof: $416.91, Windows: $310.01); new construction: 4.4% of valuation per trade.",
     };
 
-    const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. You have access to a comprehensive permit database covering 5 cities with 122 total permit types, all sourced from official municipal documents. Current city: ${currentCity}.
+    const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. You have access to a comprehensive permit database covering 6 cities, all sourced from official municipal documents. Current city: ${currentCity}.
 
 City reference data:
 - Weston: 39 permit types | Phone: (954) 385-2600 | Hours: Mon–Fri 8AM–4:30PM | NOC threshold: $2,500 | Portal: westonfl.org/Permits | Ordinance: codelibrary.amlegal.com/codes/weston/
@@ -329,8 +334,9 @@ City reference data:
 - Fort Lauderdale: 17 permit types | Phone: (954) 828-6520 | Hours: Mon–Fri 7:30AM–4:30PM | NOC threshold: $2,500 | Portal: LauderBuild (digital only — no paper) | Ordinance: library.municode.com/fl/fort_lauderdale
 - Hollywood: 23 permit types | Phone: (954) 921-3335 | Hours: Mon–Thu 7AM–6PM | NOC threshold: $5,000 (AC: $15,000) | Portal: Accela | Express Wed permits for AC/roof/electrical/water heater | Ordinance: codelibrary.amlegal.com/codes/hollywood/
 - Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | Portal: coopercity.gov | All applications must be notarized | Ordinance: library.municode.com/fl/cooper_city
+- Sunrise: Phone: (954) 572-2354 | Email: askbuilding@sunrisefl.gov | Hours: Mon–Thu 8AM–5PM, Fri 8AM–4PM | Professional Day: Wed 8AM–Noon (walk-in plan review) | NOC threshold: $2,500 (A/C: $7,500) | Portal: sunrisefl.gov/openforbusiness | Ordinance: library.municode.com/fl/sunrise | Fee structure: flat fees for most residential permits (A/C $208.45, Roof $416.91, Windows $310.01); new construction: 4.4% of valuation per trade | Broward County HVHZ — 170mph wind requirements apply to all exterior work
 
-Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City → Municode (library.municode.com).
+Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City, Sunrise → Municode (library.municode.com).
 ${localDataSection}${zoningSection}${fbcSection}
 
 INSTRUCTIONS:
