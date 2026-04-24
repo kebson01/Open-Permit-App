@@ -3,15 +3,9 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
 import { ArrowRight, Sparkles, MousePointerClick, DollarSign, Building2, MapPin, ChevronDown, Home as HomeIcon, ClipboardList } from "lucide-react";
+import { useCities } from "@/hooks/useCities";
 
-const JURISDICTIONS = [
-  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
-  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
-  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
-  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
-  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
-  "Weston", "Wilton Manors",
-];
+
 
 const AI_CHIPS = [
   "What permits do I need to add a room?",
@@ -49,6 +43,7 @@ const TOOLKIT = [
 ];
 
 export default function Home() {
+  const { cities, loading: citiesLoading } = useCities();
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
   const [jurisdiction, setJurisdiction] = useState("Fort Lauderdale");
@@ -128,7 +123,10 @@ export default function Home() {
                       onChange={e => setJurisdiction(e.target.value)}
                       className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/30"
                     >
-                      {JURISDICTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+                      {citiesLoading
+                        ? <option>Loading...</option>
+                        : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)
+                      }
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
@@ -180,7 +178,10 @@ export default function Home() {
                   onChange={e => setJurisdiction(e.target.value)}
                   className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white appearance-none focus:outline-none"
                 >
-                  {JURISDICTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+                  {citiesLoading
+                    ? <option>Loading...</option>
+                    : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)
+                  }
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>

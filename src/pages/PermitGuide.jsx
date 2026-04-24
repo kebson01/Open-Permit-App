@@ -26,6 +26,7 @@ const ZONE_INFO = {
   "Irrigation System": "Permit required for new irrigation or sprinkler systems.",
 };
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCities, cityHasService } from "@/hooks/useCities";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
@@ -107,16 +108,7 @@ async function fetchPermitTypes(city = "Weston") {
   }));
 }
 
-const DEFAULT_CITIES = [
-  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
-  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
-  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
-  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
-  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
-  "Weston", "Wilton Manors",
-];
-const AVAILABLE_CITIES = DEFAULT_CITIES;
-const COMING_SOON_CITIES = [];
+
 
 const RESIDENTIAL_VIEWS = [
   { id: "front",  label: "Front View",   icon: Home },
@@ -202,11 +194,17 @@ function CommercialSubtypeSelector({ onSelect }) {
 export default function PermitGuide() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlCity = urlParams.get("city") || "";
-  const urlCities = urlParams.get("cities");
   const urlPropertyType = urlParams.get("propertyType") || "residential";
   const urlZone = urlParams.get("zone") || "";
-  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : DEFAULT_CITIES);
-  const singleCity = CITIES.length === 1;
+
+  const { cities, loading: citiesLoading } = useCities();
+  // Filter to only cities with permit_types service enabled
+  const permitCities = cities.filter(c => {
+    const svcs = Array.isArray(c.enabled_services) ? c.enabled_services : (typeof c.enabled_services === "string" ? JSON.parse(c.enabled_services || "[]") : []);
+    return svcs.includes("permit_types") || svcs.includes("permit_guide") || svcs.length === 0;
+  });
+  const CITIES = urlCity ? [urlCity] : permitCities.map(c => c.name);
+  const singleCity = !!urlCity;
 
   const [propertyType, setPropertyType] = useState(urlPropertyType);
   const [commercialSubtype, setCommercialSubtype] = useState(null); // null = show selector
@@ -293,7 +291,10 @@ export default function PermitGuide() {
                   <SelectValue placeholder="Choose city..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {citiesLoading
+                ? <SelectItem value="_loading" disabled>Loading cities...</SelectItem>
+                : CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
+              }
                 </SelectContent>
               </Select>
             </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator } from "lucide-react";
+import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -20,14 +21,7 @@ const CITY_PORTALS = {
   "Sunrise": "https://sunrisefl.gov/openforbusiness",
 };
 
-const CITIES = [
-  "All Cities", "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie",
-  "Deerfield Beach", "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood",
-  "Lauderdale Lakes", "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point",
-  "Margate", "Miramar", "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park",
-  "Pembroke Pines", "Plantation", "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches",
-  "Sunrise", "Tamarac", "West Park", "Weston", "Wilton Manors",
-];
+
 
 const STATUS_STYLES = {
   "Completed": { bg: "#DCFCE7", color: "#166534" },
@@ -261,6 +255,7 @@ export default function PropertyGuide() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlCity = urlParams.get("city") || "";
 
+  const { cities, loading: citiesLoading } = useCities();
   const [query, setQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState(urlCity || "All Cities");
   const [results, setResults] = useState([]);
@@ -312,7 +307,11 @@ export default function PropertyGuide() {
                 onChange={e => setSelectedCity(e.target.value)}
                 className="flex-1 bg-transparent text-white text-sm focus:outline-none"
               >
-                {CITIES.map(c => <option key={c} value={c} className="text-gray-800">{c}</option>)}
+                <option value="All Cities" className="text-gray-800">All Cities</option>
+              {citiesLoading
+                ? null
+                : cities.map(c => <option key={c.name} value={c.name} className="text-gray-800">{c.name}</option>)
+              }
               </select>
             </div>
             <button

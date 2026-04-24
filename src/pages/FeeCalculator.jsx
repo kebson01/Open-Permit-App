@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock } from "lucide-react";
+import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2 } from "lucide-react";
+import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,44 +10,7 @@ const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
-const ALL_CITIES = [
-  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
-  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
-  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
-  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
-  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
-  "Weston", "Wilton Manors",
-];
 
-// Cities with full fee data in Supabase
-const CITIES_WITH_FEE_DATA = new Set([
-  "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise",
-  "Pompano Beach", "Pembroke Pines", "Miramar",
-]);
-
-// Cities that use Broward County Building Division
-const BROWARD_COUNTY_CITIES = new Set([
-  "Hillsboro Beach", "Lazy Lake", "Sea Ranch Lakes", "Pembroke Park", "Southwest Ranches", "West Park",
-]);
-
-const CITY_PHONES = {
-  "Coconut Creek": "(954) 973-6751",
-  "Dania Beach": "(954) 924-6800",
-  "Davie": "(954) 797-1031",
-  "Deerfield Beach": "(954) 480-4208",
-  "Hallandale Beach": "(954) 457-1321",
-  "Lauderdale Lakes": "(954) 535-2800",
-  "Lauderdale-by-the-Sea": "(954) 776-0576",
-  "Lauderhill": "(954) 730-3020",
-  "Lighthouse Point": "(954) 942-2000",
-  "Margate": "(954) 972-0828",
-  "North Lauderdale": "(954) 722-0900",
-  "Oakland Park": "(954) 630-4400",
-  "Parkland": "(954) 753-5040",
-  "Plantation": "(954) 765-5135",
-  "Tamarac": "(954) 724-2400",
-  "Wilton Manors": "(954) 390-2100",
-};
 
 // Sunrise surcharge calculation helper
 function calcSunriseSurcharges(permitFee, constructionValue) {
@@ -224,11 +188,15 @@ function SunriseCityInfo() {
 export default function FeeCalculator() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlCity = urlParams.get("city") || "";
-  const urlCities = urlParams.get("cities");
-  const CITIES = urlCity ? [urlCity] : (urlCities ? urlCities.split(",").map(s => s.trim()) : ALL_CITIES);
-  const singleCity = CITIES.length === 1;
+  const singleCity = !!urlCity;
 
+  const { cities, loading: citiesLoading } = useCities();
   const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
+
+  // Find the current city object from the cities list
+  const cityObj = cities.find(c => c.name === city) || null;
+  const hasFeeData = cityHasFeeData(cityObj);
+  const usesBroward = cityUsesBrowardCounty(cityObj);
   const [feeRules, setFeeRules] = useState([]);
   const [surcharge, setSurcharge] = useState(null);
   const [loadingRules, setLoadingRules] = useState(false);
@@ -247,10 +215,17 @@ export default function FeeCalculator() {
     setRoofSqFt("");
     setResults(null);
     setSearch("");
-    loadCityData(city);
+    loadCityData(city, cities.find(c => c.name === city) || null);
   }, [city]);
 
-  const loadCityData = async (cityName) => {
+  const loadCityData = async (cityName, cityRecord) => {
+    // Skip DB fetch for cities without fee data
+    if (cityRecord && !cityHasFeeData(cityRecord)) {
+      setFeeRules([]);
+      setSurcharge(null);
+      setLoadingRules(false);
+      return;
+    }
     setLoadingRules(true);
     const encoded = encodeURIComponent(cityName);
     const [rulesRes, surchargeRes] = await Promise.all([
@@ -333,11 +308,11 @@ export default function FeeCalculator() {
                   <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-0 shadow-md">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-blue-600" />
-                      <SelectValue placeholder="Select Jurisdiction..." />
+                      {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select Jurisdiction..." />}
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {cities.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}
@@ -359,11 +334,11 @@ export default function FeeCalculator() {
               <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600" />
-                  <SelectValue placeholder="Select city..." />
+                  {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select city..." />}
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {cities.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           )}
@@ -400,13 +375,13 @@ export default function FeeCalculator() {
               );
             })()}
 
-            {/* Coming Soon message for cities without fee data */}
-            {!CITIES_WITH_FEE_DATA.has(city) && !loadingRules && (
+            {/* Coming Soon / Broward County message for cities without fee data */}
+            {cityObj && !hasFeeData && !loadingRules && (
               <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center mb-4">
                 <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
                   <Info className="w-6 h-6 text-blue-500" />
                 </div>
-                {BROWARD_COUNTY_CITIES.has(city) ? (
+                {usesBroward ? (
                   <>
                     <p className="font-semibold text-gray-800 mb-1">{city} uses Broward County Building Division</p>
                     <p className="text-sm text-gray-500 leading-relaxed mb-3">
@@ -425,10 +400,15 @@ export default function FeeCalculator() {
                     <p className="text-sm text-gray-500 leading-relaxed mb-3">
                       For current permit fees, contact the {city} Building Department directly.
                     </p>
-                    {CITY_PHONES[city] && (
-                      <a href={`tel:${CITY_PHONES[city].replace(/\D/g, "")}`} className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
-                        <Phone className="w-4 h-4" /> {CITY_PHONES[city]}
+                    {cityObj.building_department_phone && (
+                      <a href={`tel:${cityObj.building_department_phone.replace(/\D/g, "")}`} className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
+                        <Phone className="w-4 h-4" /> {cityObj.building_department_phone}
                       </a>
+                    )}
+                    {cityObj.portal_url && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        <a href={cityObj.portal_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{cityObj.portal_url.replace(/^https?:\/\//, "")}</a>
+                      </p>
                     )}
                   </>
                 )}
@@ -436,7 +416,7 @@ export default function FeeCalculator() {
             )}
 
             {/* Search — only show if city has fee data */}
-            {CITIES_WITH_FEE_DATA.has(city) && (
+            {hasFeeData && (
             <div className="relative mb-5">
               <Input
                 placeholder="Search for permit types (e.g. 'Roofing', 'HVAC')..."
