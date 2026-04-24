@@ -24,7 +24,12 @@ export default function Layout({ children, currentPageName }) {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      // Give up waiting after 2s — show app as unauthenticated
+    }, 2000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       if (session?.user) {
         setCurrentUser({
           ...session.user,
@@ -33,7 +38,10 @@ export default function Layout({ children, currentPageName }) {
           role: session.user.user_metadata?.role,
         });
       }
+    }).catch(() => {
+      clearTimeout(timeout);
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setCurrentUser({
@@ -46,7 +54,11 @@ export default function Layout({ children, currentPageName }) {
         setCurrentUser(null);
       }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
