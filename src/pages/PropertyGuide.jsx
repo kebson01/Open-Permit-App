@@ -20,7 +20,14 @@ const CITY_PORTALS = {
   "Sunrise": "https://sunrisefl.gov/openforbusiness",
 };
 
-const CITIES = ["All Cities", "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
+const CITIES = [
+  "All Cities", "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie",
+  "Deerfield Beach", "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood",
+  "Lauderdale Lakes", "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point",
+  "Margate", "Miramar", "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park",
+  "Pembroke Pines", "Plantation", "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches",
+  "Sunrise", "Tamarac", "West Park", "Weston", "Wilton Manors",
+];
 
 const STATUS_STYLES = {
   "Completed": { bg: "#DCFCE7", color: "#166534" },

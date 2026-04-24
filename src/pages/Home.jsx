@@ -4,7 +4,14 @@ import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
 import { ArrowRight, Sparkles, MousePointerClick, DollarSign, Building2, MapPin, ChevronDown, Home as HomeIcon, ClipboardList } from "lucide-react";
 
-const JURISDICTIONS = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
+const JURISDICTIONS = [
+  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
+  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
+  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
+  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
+  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
+  "Weston", "Wilton Manors",
+];
 
 const AI_CHIPS = [
   "What permits do I need to add a room?",
@@ -76,7 +83,7 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-5"
                 style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#b1c5ff", border: "1px solid rgba(177,197,255,0.3)" }}>
-                📍 Broward County · 6 Cities Covered
+                📍 All 31 Broward County Cities
               </div>
 
               <h1 className="font-bold leading-tight mb-4" style={{ color: "#ffffff", fontSize: "clamp(28px, 4vw, 46px)", letterSpacing: "-0.5px" }}>

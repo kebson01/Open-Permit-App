@@ -9,7 +9,44 @@ const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
-const ALL_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
+const ALL_CITIES = [
+  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
+  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
+  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
+  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
+  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
+  "Weston", "Wilton Manors",
+];
+
+// Cities with full fee data in Supabase
+const CITIES_WITH_FEE_DATA = new Set([
+  "Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise",
+  "Pompano Beach", "Pembroke Pines", "Miramar",
+]);
+
+// Cities that use Broward County Building Division
+const BROWARD_COUNTY_CITIES = new Set([
+  "Hillsboro Beach", "Lazy Lake", "Sea Ranch Lakes", "Pembroke Park", "Southwest Ranches", "West Park",
+]);
+
+const CITY_PHONES = {
+  "Coconut Creek": "(954) 973-6751",
+  "Dania Beach": "(954) 924-6800",
+  "Davie": "(954) 797-1031",
+  "Deerfield Beach": "(954) 480-4208",
+  "Hallandale Beach": "(954) 457-1321",
+  "Lauderdale Lakes": "(954) 535-2800",
+  "Lauderdale-by-the-Sea": "(954) 776-0576",
+  "Lauderhill": "(954) 730-3020",
+  "Lighthouse Point": "(954) 942-2000",
+  "Margate": "(954) 972-0828",
+  "North Lauderdale": "(954) 722-0900",
+  "Oakland Park": "(954) 630-4400",
+  "Parkland": "(954) 753-5040",
+  "Plantation": "(954) 765-5135",
+  "Tamarac": "(954) 724-2400",
+  "Wilton Manors": "(954) 390-2100",
+};
 
 // Sunrise surcharge calculation helper
 function calcSunriseSurcharges(permitFee, constructionValue) {
@@ -363,7 +400,43 @@ export default function FeeCalculator() {
               );
             })()}
 
-            {/* Search */}
+            {/* Coming Soon message for cities without fee data */}
+            {!CITIES_WITH_FEE_DATA.has(city) && !loadingRules && (
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                  <Info className="w-6 h-6 text-blue-500" />
+                </div>
+                {BROWARD_COUNTY_CITIES.has(city) ? (
+                  <>
+                    <p className="font-semibold text-gray-800 mb-1">{city} uses Broward County Building Division</p>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
+                      Permitting for {city} is handled directly by Broward County. Contact the Broward County Building Division for fee schedules and permit applications.
+                    </p>
+                    <a href="tel:9547655200" className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
+                      <Phone className="w-4 h-4" /> (954) 765-5200
+                    </a>
+                    <p className="text-xs text-gray-400 mt-1">
+                      <a href="https://www.broward.org/Building" target="_blank" rel="noopener noreferrer" className="hover:underline">broward.org/Building</a>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-gray-800 mb-1">Fee schedule coming soon for {city}</p>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
+                      For current permit fees, contact the {city} Building Department directly.
+                    </p>
+                    {CITY_PHONES[city] && (
+                      <a href={`tel:${CITY_PHONES[city].replace(/\D/g, "")}`} className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
+                        <Phone className="w-4 h-4" /> {CITY_PHONES[city]}
+                      </a>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Search — only show if city has fee data */}
+            {CITIES_WITH_FEE_DATA.has(city) && (
             <div className="relative mb-5">
               <Input
                 placeholder="Search for permit types (e.g. 'Roofing', 'HVAC')..."
@@ -372,6 +445,7 @@ export default function FeeCalculator() {
                 className="pl-4 rounded-xl bg-white"
               />
             </div>
+            )}
 
             {/* Category filter pills */}
             {!loadingRules && Object.keys(grouped).length > 0 && (

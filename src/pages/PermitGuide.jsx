@@ -107,8 +107,15 @@ async function fetchPermitTypes(city = "Weston") {
   }));
 }
 
-const DEFAULT_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
-const AVAILABLE_CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Sunrise"];
+const DEFAULT_CITIES = [
+  "Coconut Creek", "Cooper City", "Coral Springs", "Dania Beach", "Davie", "Deerfield Beach",
+  "Fort Lauderdale", "Hallandale Beach", "Hillsboro Beach", "Hollywood", "Lauderdale Lakes",
+  "Lauderdale-by-the-Sea", "Lauderhill", "Lazy Lake", "Lighthouse Point", "Margate", "Miramar",
+  "North Lauderdale", "Oakland Park", "Parkland", "Pembroke Park", "Pembroke Pines", "Plantation",
+  "Pompano Beach", "Sea Ranch Lakes", "Southwest Ranches", "Sunrise", "Tamarac", "West Park",
+  "Weston", "Wilton Manors",
+];
+const AVAILABLE_CITIES = DEFAULT_CITIES;
 const COMING_SOON_CITIES = [];
 
 const RESIDENTIAL_VIEWS = [
