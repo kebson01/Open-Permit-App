@@ -135,6 +135,28 @@ async function fetchLocalPermitData(city = "Weston") {
   }
 }
 
+async function fetchCountyRequirements() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/county_requirements?select=*&order=sort_order.asc`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatCountyRequirementsForPrompt(requirements) {
+  if (!requirements.length) return "";
+  const lines = ["BROWARD COUNTY-WIDE REQUIREMENTS (apply to ALL 31 cities):"];
+  requirements.forEach(r => {
+    lines.push(`- [${r.category || "general"}] ${r.title}: ${r.description || ""}${r.statute_reference ? ` (${r.statute_reference})` : ""}${r.applies_to ? ` | Applies to: ${r.applies_to}` : ""}`);
+  });
+  return lines.join("\n");
+}
+
 async function fetchZoningData(city) {
   try {
     const [zoningRes, ordinanceRes] = await Promise.all([
@@ -215,11 +237,12 @@ Deno.serve(async (req) => {
     const currentCity = city || "Weston";
     const portalUrl = CITY_PORTAL_URLS[currentCity] || CITY_PORTAL_URLS["Weston"];
 
-    // Fetch permit data, zoning data, and FBC data in parallel
-    const [permitData, zoningData, fbcData] = await Promise.all([
+    // Fetch permit data, zoning data, FBC data, and county requirements in parallel
+    const [permitData, zoningData, fbcData, countyRequirements] = await Promise.all([
       fetchLocalPermitData(currentCity),
       fetchZoningData(currentCity),
       fetchFBCData(message),
+      fetchCountyRequirements(),
     ]);
 
     const localDataSection = permitData.length
@@ -251,6 +274,10 @@ Deno.serve(async (req) => {
 
     const fbcSection = fbcData.sections.length > 0
       ? `\n\n${formatFBCForPrompt(fbcData.sections)}`
+      : "";
+
+    const countySection = countyRequirements.length > 0
+      ? `\n\n${formatCountyRequirementsForPrompt(countyRequirements)}`
       : "";
 
     const useWebSearch = needsWebSearch(message, hasZoningData);
@@ -326,34 +353,76 @@ Deno.serve(async (req) => {
       "Sunrise": "Professional Day is every Wednesday 8AM–Noon (walk-in plan review available). NOC threshold is $2,500 for most permits but $7,500 for A/C replacements. Fee structure: flat fees for most residential permits (A/C: $208.45, Roof: $416.91, Windows: $310.01); new construction: 4.4% of valuation per trade.",
     };
 
-    const systemContext = `You are OpenPermit AI, a permit assistant for Broward County, South Florida. You have access to a comprehensive permit database covering 6 cities, all sourced from official municipal documents. Current city: ${currentCity}.
+    const systemContext = `You are OpenPermit AI, a building permit expert for all 31 Broward County, Florida municipalities.
 
-City reference data:
-- Weston: 39 permit types | Phone: (954) 385-2600 | Hours: Mon–Fri 8AM–4:30PM | NOC threshold: $2,500 | Portal: westonfl.org/Permits | Ordinance: codelibrary.amlegal.com/codes/weston/
-- Coral Springs: 22 permit types | Phone: (954) 344-1025 | Hours: Mon–Thu 7:30AM–5PM, Fri 7:30AM–2:30PM | NOC threshold: $5,000 | Portal: eTrakit (coralsprings.gov) | Ordinance: library.municode.com/fl/coral_springs
-- Fort Lauderdale: 17 permit types | Phone: (954) 828-6520 | Hours: Mon–Fri 7:30AM–4:30PM | NOC threshold: $2,500 | Portal: LauderBuild (digital only — no paper) | Ordinance: library.municode.com/fl/fort_lauderdale
-- Hollywood: 23 permit types | Phone: (954) 921-3335 | Hours: Mon–Thu 7AM–6PM | NOC threshold: $5,000 (AC: $15,000) | Portal: Accela | Express Wed permits for AC/roof/electrical/water heater | Ordinance: codelibrary.amlegal.com/codes/hollywood/
-- Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | Portal: coopercity.gov | All applications must be notarized | Ordinance: library.municode.com/fl/cooper_city
-- Sunrise: Phone: (954) 572-2354 | Email: askbuilding@sunrisefl.gov | Hours: Mon–Thu 8AM–5PM, Fri 8AM–4PM | Professional Day: Wed 8AM–Noon (walk-in plan review) | NOC threshold: $2,500 (A/C: $7,500) | Portal: sunrisefl.gov/openforbusiness | Ordinance: library.municode.com/fl/sunrise | Fee structure: flat fees for most residential permits (A/C $208.45, Roof $416.91, Windows $310.01); new construction: 4.4% of valuation per trade | Broward County HVHZ — 170mph wind requirements apply to all exterior work
+You have access to TWO layers of information:
 
-Ordinance platforms: Weston & Hollywood → American Legal Publishing (codelibrary.amlegal.com). Coral Springs, Fort Lauderdale, Cooper City, Sunrise → Municode (library.municode.com).
+LAYER 1 — BROWARD COUNTY-WIDE REQUIREMENTS (apply to ALL cities unless overridden):
+These are rules set by the state, Broward County, or BORA that apply everywhere:
+- HVHZ: ALL of Broward County is in the High-Velocity Hurricane Zone (170 mph wind design)
+- Florida Building Code: 8th Edition (2023), effective January 1, 2024
+- Broward County Uniform Building Permit Application: revised Jan 8, 2026 — required March 9, 2026
+- Notice of Commencement (NOC): required for ALL jobs ≥ $2,500
+- State surcharges: DCA 1.5% + DBPR 1.0% of permit fee (FL Statutes §553.721 and §468.631)
+- BORA (Board of Rules & Appeals): countywide code interpretation and product approvals
+- Permit validity: 180 days from issuance
+- Work without permit: double fee minimum (all cities)
+- Pool barrier law: 4-ft fence required within 90 days (FL Statute §515)
+- Solar protection: HOAs CANNOT ban solar panels (FL Statute §163.04)
+- Asbestos: survey required for pre-1980 demolition/major renovation
+- Water heater form: Broward County Water Heater Data Form required countywide
+- Fenestration chart: Broward County Fenestration Wind Load Chart required for all window/door permits
+- Private providers: available in all cities (FL Statute §553.79) — usually 10–40% fee discount
+- Owner-builder: FL Statute §489.103 — primary residence only, cannot sell within 1 year
+- HOA approval: separate from city permit — city permit does NOT override HOA rules
+${countySection}
+
+LAYER 2 — CITY-SPECIFIC RULES (override or add to county baseline):
+Current city context: ${currentCity}
+- Weston: 39 permit types | Phone: (954) 385-2600 | Hours: Mon–Fri 8AM–4:30PM | NOC threshold: $2,500 | Portal: westonfl.org/Permits
+- Coral Springs: 22 permit types | Phone: (954) 344-1025 | Hours: Mon–Thu 7:30AM–5PM, Fri 7:30AM–2:30PM | NOC threshold: $5,000 | Portal: eTrakit (coralsprings.gov)
+- Fort Lauderdale: 17 permit types | Phone: (954) 828-6520 | Hours: Mon–Fri 7:30AM–4:30PM | NOC threshold: $2,500 | Portal: LauderBuild (digital only — no paper)
+- Hollywood: 23 permit types | Phone: (954) 921-3335 | Hours: Mon–Thu 7AM–6PM | NOC threshold: $5,000 (AC: $15,000) | Express Wed permits for AC/roof/electrical/water heater
+- Cooper City: 21 permit types | Phone: (954) 434-4300 | Hours: Mon–Fri 8AM–5PM | NOC threshold: $2,500 | All applications must be notarized
+- Sunrise: Phone: (954) 572-2354 | Hours: Mon–Thu 8AM–5PM, Fri 8AM–4PM | Professional Day: Wed 8AM–Noon | NOC threshold: $2,500 (A/C: $7,500) | Flat fees for most residential permits
+
+KEY CITY DIFFERENCES TO HIGHLIGHT:
+- Fees range from 0.95% (Davie) to 5% for pools (Lauderdale-by-the-Sea)
+- CLOSED Fridays: Coconut Creek, Lauderdale Lakes, Lauderhill, Margate, Miramar, North Lauderdale, Tamarac
+- Notarization required: Cooper City, Lauderhill (both owner AND contractor)
+- HOA Affidavit required with permit: Hallandale Beach, Miramar, North Lauderdale
+- Asbestos Certificate for ALL demolitions (not just pre-1980): Hallandale Beach only
+- Plantation fees: per square foot (Ordinance #2059) — unique in Broward
+- Sunrise fees: flat dollar amounts (not % of value) — unique in Broward
+- Green Building Program 50% discount: Wilton Manors only
+- Lowest rates: Lighthouse Point (1.35%), Davie (0.95%)
+- Highest pool rate: Lauderdale-by-the-Sea (5%)
+- Payment by check only: Lighthouse Point
 ${localDataSection}${zoningSection}${fbcSection}
 
-INSTRUCTIONS:
-- You have been provided with the complete permit database, local zoning/ordinance data, AND Florida Building Code (FBC) sections above. Use all of these to answer questions.
-- For permit types, documents, requirements, timelines, fees, setbacks, heights, lot coverage, FBC code sections, and HVHZ requirements: answer ONLY from the provided local data. Do NOT use web search for these.
-- When FBC sections are provided, cite the section number (e.g. "per FBC §R905.2") and include relevant key_numbers.
-- All Broward County properties are in the HVHZ (High Velocity Hurricane Zone) — always mention 170+ mph wind requirements and Florida Product Approval for any exterior work.
-- Only use web search for HOA-specific rules, deed restrictions, or historical district requirements not in the local data.
-- Never fetch ordinance URLs directly — reference them as links only.
+WHEN ANSWERING:
+1. Always apply county-wide HVHZ requirements to every permit question
+2. If a user asks about a specific city, layer in city-specific rules on top of county baseline
+3. If a user asks a general question (not city-specific), answer using county-wide requirements + note cities may vary
+4. Always mention the 8th Edition FBC (2023) when relevant
+5. Always mention NOC if job value > $2,500
+6. For window/door permits: always mention HVHZ impact-rated requirement + Fenestration Wind Load Chart
+7. For roofing: always mention HVHZ attachment requirements, 6-nail minimum, re-nailing
+8. For pools: always mention the 90-day barrier law
+9. For solar: mention HOA cannot prohibit (FL Statute §163.04)
+10. Be specific with dollar amounts, percentages, and form names — users need exact info
+
+RESPONSE RULES:
 - Always respond with structured JSON matching the schema.
 - portal_url="${portalUrl}", city_name="${currentCity}", dept_phone="${cityDeptInfo.phone}", dept_hours="${cityDeptInfo.hours}".
 - quick_facts.how_to_apply: "${HOW_TO_APPLY[currentCity] || "Online or in person"}".
-- Notice of Commencement threshold for ${currentCity}: ${cityDeptInfo.noc_threshold}. Use the correct threshold when mentioning NOC requirements.
+- Notice of Commencement threshold for ${currentCity}: ${cityDeptInfo.noc_threshold}.
 - requirements_note: always add "These are ${currentCity}'s requirements. Your HOA may have additional rules." for residential projects.
 - caveats: always include HOA note for residential projects.${CITY_NOTES[currentCity] ? `\n- Important note for ${currentCity}: ${CITY_NOTES[currentCity]}` : ""}
 - For conversational/meta questions: set is_plain_text=true and populate plain_text_reply only.
-- Max 6 documents and 6 requirements. direct_answer is one sentence.`;
+- Max 6 documents and 6 requirements. direct_answer is one sentence.
+- When FBC sections are provided, cite the section number (e.g. "per FBC §R905.2").
+- Only use web search for HOA-specific rules, deed restrictions, or historical district requirements.`;
 
     const conversationContext = history ? `\nConversation:\n${history}` : "";
 
