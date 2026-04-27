@@ -1,6 +1,33 @@
 import React, { useState, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
+
+async function sbGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_HEADERS });
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function sbPost(path, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "POST", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body),
+  });
+}
+
+async function sbPatch(path, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "PATCH", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body),
+  });
+}
+
+async function sbDelete(path) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+  });
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +40,7 @@ function SurchargePanel({ city }) {
   const queryClient = useQueryClient();
   const { data: surcharges = [] } = useQuery({
     queryKey: ["citySurcharges", city.id],
-    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
+    queryFn: () => sbGet(`city_surcharges?city_name=eq.${encodeURIComponent(city.name)}&limit=1`),
   });
   const surcharge = surcharges[0];
   const [editing, setEditing] = useState(false);
@@ -21,18 +48,22 @@ function SurchargePanel({ city }) {
   const [saving, setSaving] = useState(false);
 
   const startEdit = () => {
-    setForm(surcharge || { city_id: city.id, city_name: city.name });
+    setForm(surcharge || { city_name: city.name });
     setEditing(true);
   };
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const handleSave = async () => {
     setSaving(true);
-    const data = { ...form };
+    const { id, created_at, ...rest } = form;
+    const data = { ...rest };
     ["technology_admin", "board_of_rules_rate", "educational_rate", "dca_rate", "dbpr_rate"]
       .forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
-    if (surcharge?.id) await base44.entities.CitySurcharge.update(surcharge.id, data);
-    else await base44.entities.CitySurcharge.create(data);
+    if (surcharge?.id) {
+      await sbPatch(`city_surcharges?id=eq.${surcharge.id}`, data);
+    } else {
+      await sbPost("city_surcharges", { ...data, city_name: city.name });
+    }
     queryClient.invalidateQueries({ queryKey: ["citySurcharges", city.id] });
     setSaving(false);
     setEditing(false);
@@ -554,18 +585,10 @@ function ImportExportPanel({ city, rules, onImported }) {
     setImporting(true);
     try {
       // Delete all existing rules for this city
-      for (const rule of rules) {
-        await base44.entities.FeeRule.delete(rule.id);
-      }
-      // Create all new rules from the JSON
-      for (const rule of previewData) {
-        const { id, ...ruleData } = rule;
-        await base44.entities.FeeRule.create({
-          ...ruleData,
-          city_id: city.id,
-          city_name: city.name,
-        });
-      }
+      await sbDelete(`fee_rules?city_name=eq.${encodeURIComponent(city.name)}`);
+      // Bulk insert all new rules
+      const newRules = previewData.map(({ id, ...r }) => ({ ...r, city_name: city.name }));
+      await sbPost("fee_rules", newRules);
       setImportResult({ success: true, count: previewData.length });
       setPreviewData(null);
       onImported();
@@ -699,7 +722,7 @@ export default function CityFeeRulesPanel({ city }) {
 
   const { data: rules = [] } = useQuery({
     queryKey: ["feeRules", city.id],
-    queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
+    queryFn: () => sbGet(`fee_rules?city_name=eq.${encodeURIComponent(city.name)}&order=sort_order.asc`),
   });
 
   const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });

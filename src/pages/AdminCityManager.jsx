@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,17 @@ import CodeOfOrdinancesPanel from "@/components/admin/CodeOfOrdinancesPanel.jsx"
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 import PermitImportTool from "@/components/admin/PermitImportTool.jsx";
 import CitySupabaseStats from "@/components/admin/CitySupabaseStats.jsx";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_HEADERS, ...options });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || res.statusText); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
 
 export default function AdminCityManager() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -39,13 +49,13 @@ export default function AdminCityManager() {
   }, []);
 
   const { data: cities = [], isLoading } = useQuery({
-    queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
+    queryKey: ["admin-cities"],
+    queryFn: () => sbFetch("cities?select=*&order=name.asc"),
   });
 
   const deleteCityMutation = useMutation({
-    mutationFn: (id) => base44.entities.City.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cities"] }),
+    mutationFn: (id) => sbFetch(`cities?id=eq.${id}`, { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-cities"] }),
   });
 
   if (!currentUser) return <div className="p-8 text-center text-gray-500">Loading...</div>;
@@ -217,7 +227,7 @@ export default function AdminCityManager() {
           city={editingCity}
           onClose={() => setShowCityForm(false)}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ["cities"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
             setShowCityForm(false);
           }}
         />
