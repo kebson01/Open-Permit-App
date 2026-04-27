@@ -10,8 +10,6 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-const EDGE_FUNCTION_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
-
 const CITY_PORTALS = {
   "Weston": "https://www.westonfl.org/Permits",
   "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit",
@@ -35,22 +33,59 @@ function isFolioSearch(term) {
   return /^[0-9A-Za-z]{8,15}$/.test(term) && !/\s/.test(term);
 }
 
+const SUPABASE_URL_DIRECT = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_FETCH_HEADERS = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  Accept: "application/json",
+};
+
+const CITY_CODE_MAP = {
+  "WS": "Weston", "CS": "Coral Springs", "FL": "Fort Lauderdale",
+  "HW": "Hollywood", "CC": "Cooper City", "PB": "Pembroke Pines",
+  "MR": "Miramar", "SU": "Sunrise", "PL": "Plantation", "DV": "Davie",
+  "DP": "Deerfield Beach", "PO": "Pompano Beach", "LH": "Lauderhill",
+  "TM": "Tamarac", "NK": "North Lauderdale", "MC": "Margate",
+  "CO": "Coconut Creek", "LK": "Lauderdale Lakes", "OB": "Oakland Park",
+  "WP": "Wilton Manors", "LB": "Lauderdale-by-the-Sea", "HA": "Hallandale Beach",
+  "SW": "Southwest Ranches", "WR": "West Park", "PV": "Pembroke Park",
+  "HC": "Hillsboro Beach", "LY": "Lazy Lake", "SH": "Sea Ranch Lakes",
+};
+
 async function searchProperties(searchTerm, selectedCity) {
-  const term = searchTerm.trim();
+  const term = searchTerm.trim().toUpperCase();
   if (!term) return [];
+
+  const SELECT_COLS = "FOLIO_NUMBER,full_address,SITUS_CITY,SITUS_ZIP_CODE,USE_TYPE,BLDG_YEAR_BUILT,BEDS,BATHS,BLDG_TOT_SQ_FOOTAGE,BLDG_UNDER_AIR_SQ_FOOTAGE";
 
   let url;
   if (isFolioSearch(term)) {
-    url = `${EDGE_FUNCTION_URL}?q=${encodeURIComponent(term)}&type=folio`;
+    const folio = term.replace(/[-\s]/g, "");
+    url = `${SUPABASE_URL_DIRECT}/rest/v1/broward_properties?select=${SELECT_COLS}&FOLIO_NUMBER=eq.${encodeURIComponent(folio)}&limit=10`;
   } else {
-    const city = selectedCity && selectedCity !== "All Cities" ? selectedCity : "";
-    url = `${EDGE_FUNCTION_URL}?q=${encodeURIComponent(term)}&city=${encodeURIComponent(city)}&type=address`;
+    const cityFilter = selectedCity && selectedCity !== "All Cities" ? `&SITUS_CITY=eq.${encodeURIComponent(selectedCity)}` : "";
+    // Use just the first meaningful token for the DB query, then filter client-side
+    const tokens = term.split(/\s+/).filter(t => t.length > 1);
+    const keyToken = tokens.find(t => /^\d+$/.test(t)) || tokens[0];
+    url = `${SUPABASE_URL_DIRECT}/rest/v1/broward_properties?select=${SELECT_COLS}&full_address=ilike.*${encodeURIComponent(keyToken)}*${cityFilter}&limit=100`;
   }
 
-  const res = await fetch(url);
-  const json = await res.json();
-  if (json.error) throw new Error(json.error);
-  return json.data || [];
+  const res = await fetch(url, { headers: SB_FETCH_HEADERS });
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error(rows?.message || "Search failed");
+
+  // Client-side filter for multi-token addresses
+  const tokens = term.split(/\s+/).filter(t => t.length > 1);
+  let filtered = rows;
+  if (!isFolioSearch(term) && tokens.length > 1) {
+    filtered = rows.filter(p => p.full_address && tokens.every(t => p.full_address.toUpperCase().includes(t)));
+  }
+
+  return filtered.slice(0, 25).map(p => ({
+    ...p,
+    city_name: CITY_CODE_MAP[p.SITUS_CITY] || p.SITUS_CITY || "",
+  }));
 }
 
 async function getPermitHistory(folioNumber) {
