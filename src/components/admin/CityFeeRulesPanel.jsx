@@ -1,21 +1,43 @@
 import React, { useState, useRef } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Download, Upload, FileJson, Trash2, CheckCircle2, AlertCircle,
+  Download, Upload, FileJson, CheckCircle2, AlertCircle,
   Settings2, ChevronDown, ChevronUp, Plus, Pencil
 } from "lucide-react";
+import { SUPABASE_URL, SB_HEADERS, sbInsert, sbUpdate, sbDeleteWhere } from "@/lib/supabase";
+
+const SB_WRITE_HEADERS = { ...SB_HEADERS, Prefer: "return=representation" };
+
+// ── Supabase fetch helpers ────────────────────────────────────────────────────
+async function fetchFeeRules(cityName) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encodeURIComponent(cityName)}&order=sort_order.asc`,
+    { headers: SB_HEADERS }
+  );
+  return res.json();
+}
+
+async function fetchSurcharge(cityName) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encodeURIComponent(cityName)}&limit=1`,
+    { headers: SB_HEADERS }
+  );
+  const data = await res.json();
+  return Array.isArray(data) && data.length > 0 ? data[0] : null;
+}
+
+async function upsertSurcharge(surcharge, cityName, cityId) {
+  const data = { ...surcharge, city_id: cityId, city_name: cityName };
+  if (surcharge?.id) {
+    return sbUpdate("city_surcharges", surcharge.id, data);
+  }
+  return sbInsert("city_surcharges", data);
+}
 
 // ── Surcharge Panel ─────────────────────────────────────────────────────────
-function SurchargePanel({ city }) {
-  const queryClient = useQueryClient();
-  const { data: surcharges = [] } = useQuery({
-    queryKey: ["citySurcharges", city.id],
-    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
-  });
-  const surcharge = surcharges[0];
+function SurchargePanel({ city, surcharge, onSaved }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -31,11 +53,10 @@ function SurchargePanel({ city }) {
     const data = { ...form };
     ["technology_admin", "board_of_rules_rate", "educational_rate", "dca_rate", "dbpr_rate"]
       .forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
-    if (surcharge?.id) await base44.entities.CitySurcharge.update(surcharge.id, data);
-    else await base44.entities.CitySurcharge.create(data);
-    queryClient.invalidateQueries({ queryKey: ["citySurcharges", city.id] });
+    await upsertSurcharge(data, city.name, city.id);
     setSaving(false);
     setEditing(false);
+    onSaved();
   };
 
   return (
@@ -101,398 +122,8 @@ function SurchargePanel({ city }) {
 function ImportExportPanel({ city, rules, onImported }) {
   const fileRef = useRef();
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState(null); // { success, count, error }
+  const [importResult, setImportResult] = useState(null);
   const [previewData, setPreviewData] = useState(null);
-
-  const WESTON_TEMPLATE = {
-    city: "Weston",
-    resolution: "2024-128",
-    effective_date: "October 1, 2024",
-    surcharges: {
-      technology_admin: 127.00,
-      board_of_rules_rate: 0.52,
-      educational_rate: 0.0003,
-      dca_rate: 0.01,
-      dbpr_rate: 0.015
-    },
-    fee_rules: [
-      // ── BUILDING / STRUCTURES ──────────────────────────────────────
-      {
-        permit_id: "new_construction",
-        permit_name: "New Construction / Addition",
-        category: "building",
-        description: "New residential or commercial structure, or addition to existing structure",
-        calc_type: "tiered_cost",
-        base_fee: 115.79,
-        cost_threshold: 1000,
-        tiers_config: JSON.stringify([
-          { min: 1000, max: 1250000, base: 0, rate: 0.0155 },
-          { min: 1250000, max: 3000000, base: 19359.50, rate: 0.0135 },
-          { min: 3000000, max: null, base: 42954.50, rate: 0.0120 }
-        ]),
-        include_city_surcharges: true,
-        sort_order: 1
-      },
-      {
-        permit_id: "residential_alteration",
-        permit_name: "Residential Remodel / Alteration",
-        category: "building",
-        description: "Interior or exterior renovation of an existing residential structure",
-        calc_type: "tiered_cost",
-        base_fee: 115.79,
-        cost_threshold: 1000,
-        tiers_config: JSON.stringify([
-          { min: 1000, max: 1250000, base: 0, rate: 0.0155 },
-          { min: 1250000, max: 3000000, base: 19359.50, rate: 0.0135 },
-          { min: 3000000, max: null, base: 42954.50, rate: 0.0120 }
-        ]),
-        include_city_surcharges: true,
-        sort_order: 2
-      },
-      {
-        permit_id: "commercial_buildout",
-        permit_name: "Commercial Build-Out / Tenant Improvement",
-        category: "building",
-        description: "Commercial interior tenant improvements or build-out",
-        calc_type: "tiered_cost",
-        base_fee: 115.79,
-        cost_threshold: 1000,
-        tiers_config: JSON.stringify([
-          { min: 1000, max: 1250000, base: 0, rate: 0.0155 },
-          { min: 1250000, max: 3000000, base: 19359.50, rate: 0.0135 },
-          { min: 3000000, max: null, base: 42954.50, rate: 0.0120 }
-        ]),
-        planning_zoning_fee: 650.00,
-        include_city_surcharges: true,
-        sort_order: 3
-      },
-      {
-        permit_id: "demolition_sfr",
-        permit_name: "Demolition – Single Family Residential",
-        category: "building",
-        description: "Demolition of a single-family residential structure (per structure per trade)",
-        calc_type: "flat",
-        flat_fee: 117.26,
-        include_city_surcharges: false,
-        sort_order: 4
-      },
-      {
-        permit_id: "demolition_other",
-        permit_name: "Demolition – Commercial / Multi-Family",
-        category: "building",
-        description: "Demolition of commercial or multi-family structure (per floor per structure per trade)",
-        calc_type: "flat_per_unit",
-        input_field: "floors",
-        fee_per_unit: 158.30,
-        unit_label: "floors",
-        include_city_surcharges: false,
-        sort_order: 5
-      },
-      // ── NON-STRUCTURES ─────────────────────────────────────────────
-      {
-        permit_id: "hurricane_shutters",
-        permit_name: "Hurricane Shutters",
-        category: "building",
-        description: "Residential hurricane shutters (up to two stories) – first opening + each additional",
-        calc_type: "flat_plus_units",
-        input_field: "openings",
-        base_fee: 112.57,
-        unit_threshold: 1,
-        rate_per_unit: 9.38,
-        unit_label: "openings",
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 6
-      },
-      {
-        permit_id: "garage_door",
-        permit_name: "Garage Door Replacement",
-        category: "building",
-        description: "Residential garage door replacement (per door)",
-        calc_type: "flat_per_unit",
-        input_field: "units",
-        fee_per_unit: 199.34,
-        unit_label: "doors",
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 7
-      },
-      {
-        permit_id: "ac_unit",
-        permit_name: "A/C Unit Replacement",
-        category: "building",
-        description: "Residential ground-mounted air conditioning unit (up to 5 tons)",
-        calc_type: "flat",
-        flat_fee: 199.34,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 8
-      },
-      {
-        permit_id: "water_heater",
-        permit_name: "Water Heater Replacement",
-        category: "plumbing",
-        description: "Residential water heater replacement (up to 80 gallons)",
-        calc_type: "flat",
-        flat_fee: 199.34,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 9
-      },
-      {
-        permit_id: "fence",
-        permit_name: "Residential Fence",
-        category: "building",
-        description: "Residential fence installation (base fee covers first 100 linear ft)",
-        calc_type: "flat_plus_linear",
-        base_fee: 199.34,
-        base_includes_ft: 100,
-        rate_per_linear_ft: 0.35,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 10
-      },
-      {
-        permit_id: "pool_sfr",
-        permit_name: "Swimming Pool / Spa – Single Family",
-        category: "building",
-        description: "New swimming pool, spa, or hot tub for single-family residential (includes all trades)",
-        calc_type: "flat",
-        flat_fee: 1113.97,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 11
-      },
-      {
-        permit_id: "pool_other",
-        permit_name: "Swimming Pool / Spa – Commercial / Multi-Family",
-        category: "building",
-        description: "New swimming pool, spa, or hot tub for commercial/multi-family (includes all trades)",
-        calc_type: "flat",
-        flat_fee: 1993.42,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 12
-      },
-      {
-        permit_id: "low_voltage_alarm",
-        permit_name: "Low Voltage Alarm System",
-        category: "electrical",
-        description: "Hardwired low-voltage alarm system, home automation, CCTV, access control (per F.S. 553.793)",
-        calc_type: "flat",
-        flat_fee: 40.00,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 13
-      },
-      // ── FIRE CODE SERVICES ─────────────────────────────────────────
-      {
-        permit_id: "fire_sprinkler",
-        permit_name: "Fire Sprinkler System",
-        category: "fire",
-        description: "Sprinkler system plan review and inspection (base covers 1-12 heads)",
-        calc_type: "flat_plus_units",
-        input_field: "sprinklerHeads",
-        base_fee: 350.00,
-        unit_threshold: 12,
-        rate_per_unit: 0.70,
-        unit_label: "heads",
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 14
-      },
-      {
-        permit_id: "fire_alarm",
-        permit_name: "Fire Alarm System",
-        category: "fire",
-        description: "Fire alarm system plan review and inspection (base covers 1-12 devices)",
-        calc_type: "flat_plus_units",
-        input_field: "alarmDevices",
-        base_fee: 350.00,
-        unit_threshold: 12,
-        rate_per_unit: 0.70,
-        unit_label: "devices",
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 15
-      },
-      {
-        permit_id: "fire_standpipe",
-        permit_name: "Fire Standpipe System",
-        category: "fire",
-        description: "Fire standpipe system plan review",
-        calc_type: "flat",
-        flat_fee: 350.00,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 16
-      },
-      {
-        permit_id: "fire_pump",
-        permit_name: "Fire Pump",
-        category: "fire",
-        description: "Fire pump plan review",
-        calc_type: "flat",
-        flat_fee: 612.50,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 17
-      },
-      {
-        permit_id: "smoke_control",
-        permit_name: "Smoke Control System",
-        category: "fire",
-        description: "Smoke control / smoke evacuation system",
-        calc_type: "flat",
-        flat_fee: 1400.00,
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 18
-      },
-      {
-        permit_id: "fire_site_review",
-        permit_name: "Fire – Site Development / Building Plan Review",
-        category: "fire",
-        description: "Multi-family or non-residential fire plan review fee based on square footage",
-        calc_type: "per_sqft_tier",
-        input_field: "squareFeet",
-        tiers_config: JSON.stringify([
-          { max: 1500,  fee: 787.50 },
-          { max: 2500,  fee: 962.50 },
-          { max: 3500,  fee: 1137.50 },
-          { max: 5000,  fee: 1312.50 },
-          { max: 7500,  fee: 1400.00 },
-          { max: 10000, fee: 1487.50 },
-          { max: 15000, fee: 1575.00 },
-          { max: 20000, fee: 1750.00 },
-          { max: null,  base: 1750.00, rate_per_sqft: 0.04 }
-        ]),
-        technology_admin_fee: 127.00,
-        include_city_surcharges: false,
-        sort_order: 19
-      },
-      // ── ENGINEERING ────────────────────────────────────────────────
-      {
-        permit_id: "eng_paving_sfr",
-        permit_name: "Paving / Drainage / Water & Sewer – Single Family",
-        category: "engineering",
-        description: "Engineering permit for paving, drainage, water & sewer on single-family property",
-        calc_type: "flat",
-        flat_fee: 375.00,
-        include_city_surcharges: false,
-        sort_order: 20
-      },
-      {
-        permit_id: "eng_paving_commercial",
-        permit_name: "Paving / Drainage / Water & Sewer – Commercial",
-        category: "engineering",
-        description: "Engineering permit for commercial/multi-family paving & drainage (cost estimate based)",
-        calc_type: "eng_cost_tier",
-        input_field: "constructionCost",
-        tiers_config: JSON.stringify([
-          { min: 0,      max: 30000,   base: 550, rate: 0.06 },
-          { min: 30000,  max: 100000,  base: 550, rate: 0.05 },
-          { min: 100000, max: null,    base: 550, rate: 0.04 }
-        ]),
-        include_city_surcharges: false,
-        sort_order: 21
-      },
-      {
-        permit_id: "eng_pavement_sfr",
-        permit_name: "Pavement, Sealcoating & Restriping – Single Family",
-        category: "engineering",
-        description: "Engineering permit for residential pavement, sealcoating, restriping",
-        calc_type: "flat",
-        flat_fee: 200.00,
-        include_city_surcharges: false,
-        sort_order: 22
-      },
-      {
-        permit_id: "eng_earthwork_sfr",
-        permit_name: "Earthwork Permit – Single Family",
-        category: "engineering",
-        description: "Earthwork permit for single-family residential property",
-        calc_type: "flat",
-        flat_fee: 375.00,
-        include_city_surcharges: false,
-        sort_order: 23
-      },
-      // ── PLANNING & ZONING ──────────────────────────────────────────
-      {
-        permit_id: "pz_sfr_pool_addition",
-        permit_name: "Site Plan Review – Single Family (Pool / Addition)",
-        category: "planning",
-        description: "Planning & zoning site plan review for single-family pool or addition",
-        calc_type: "flat",
-        flat_fee: 700.00,
-        include_city_surcharges: false,
-        sort_order: 24
-      },
-      {
-        permit_id: "pz_fence_deck",
-        permit_name: "Site Plan Review – Fence, Deck, Enclosure",
-        category: "planning",
-        description: "Planning & zoning site plan review for fences, decks, enclosures",
-        calc_type: "flat",
-        flat_fee: 450.00,
-        include_city_surcharges: false,
-        sort_order: 25
-      },
-      {
-        permit_id: "pz_sign_permit",
-        permit_name: "Sign Permit – Planning & Zoning Review",
-        category: "planning",
-        description: "Site plan review for sign permit (base + 3.75% of cost estimate)",
-        calc_type: "flat_plus_pct",
-        input_field: "constructionCost",
-        base_fee: 450.00,
-        rate_percentage: 3.75,
-        include_city_surcharges: false,
-        sort_order: 26
-      },
-      {
-        permit_id: "vacation_rental",
-        permit_name: "Vacation Rental Registration",
-        category: "planning",
-        description: "Vacation rental property application registration fee",
-        calc_type: "flat",
-        flat_fee: 500.00,
-        include_city_surcharges: false,
-        sort_order: 27
-      },
-      // ── CERTIFICATES ───────────────────────────────────────────────
-      {
-        permit_id: "cert_occupancy",
-        permit_name: "Certificate of Occupancy",
-        category: "certificate",
-        description: "Certificate of Occupancy issuance",
-        calc_type: "flat",
-        flat_fee: 117.26,
-        include_city_surcharges: false,
-        sort_order: 28
-      },
-      {
-        permit_id: "cert_completion",
-        permit_name: "Certificate of Completion",
-        category: "certificate",
-        description: "Certificate of Completion issuance",
-        calc_type: "flat",
-        flat_fee: 136.02,
-        include_city_surcharges: false,
-        sort_order: 29
-      },
-      {
-        permit_id: "cert_temp_co",
-        permit_name: "Temporary Certificate of Occupancy",
-        category: "certificate",
-        description: "Temporary Certificate of Occupancy",
-        calc_type: "flat",
-        flat_fee: 269.70,
-        include_city_surcharges: false,
-        sort_order: 30
-      }
-    ]
-  };
 
   const handleExport = () => {
     const exportData = {
@@ -500,7 +131,7 @@ function ImportExportPanel({ city, rules, onImported }) {
       city_id: city.id,
       exported_at: new Date().toISOString(),
       fee_rules: rules.map(r => {
-        const { id, created_date, updated_date, created_by, city_id, city_name, ...rest } = r;
+        const { id, created_at, updated_at, city_id, city_name, ...rest } = r;
         return rest;
       })
     };
@@ -509,22 +140,6 @@ function ImportExportPanel({ city, rules, onImported }) {
     const a = document.createElement("a");
     a.href = url;
     a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownloadTemplate = () => {
-    const template = {
-      ...WESTON_TEMPLATE,
-      city: city.name,
-      city_id: city.id,
-      _instructions: "Edit the fee_rules array to match this city's schedule. Upload this file to replace all existing rules. 'tiers_config' must be a JSON string. Use null for max=Infinity in tiers."
-    };
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules_template.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -554,18 +169,14 @@ function ImportExportPanel({ city, rules, onImported }) {
     setImporting(true);
     try {
       // Delete all existing rules for this city
-      for (const rule of rules) {
-        await base44.entities.FeeRule.delete(rule.id);
-      }
-      // Create all new rules from the JSON
-      for (const rule of previewData) {
-        const { id, ...ruleData } = rule;
-        await base44.entities.FeeRule.create({
-          ...ruleData,
-          city_id: city.id,
-          city_name: city.name,
-        });
-      }
+      await sbDeleteWhere("fee_rules", "city_name", city.name);
+      // Bulk insert new rules
+      const newRules = previewData.map(({ id, ...r }) => ({
+        ...r,
+        city_id: city.id,
+        city_name: city.name,
+      }));
+      await sbInsert("fee_rules", newRules);
       setImportResult({ success: true, count: previewData.length });
       setPreviewData(null);
       onImported();
@@ -581,18 +192,13 @@ function ImportExportPanel({ city, rules, onImported }) {
         <FileJson className="w-4 h-4 text-blue-600" />
         <span className="text-sm font-semibold text-blue-800">JSON Fee Schedule Management</span>
       </div>
-
       <p className="text-xs text-blue-700 mb-3">
         Export the current fee schedule as JSON, edit it externally, then re-upload to update all fees at once.
       </p>
-
       <div className="flex flex-wrap gap-2 mb-3">
         <Button size="sm" variant="outline" className="text-blue-700 border-blue-300 bg-white" onClick={handleExport} disabled={rules.length === 0}>
           <Download className="w-3.5 h-3.5 mr-1" />
           {rules.length > 0 ? `Export ${rules.length} Rules` : "Export (empty)"}
-        </Button>
-        <Button size="sm" variant="outline" className="text-gray-600 border-gray-300 bg-white" onClick={handleDownloadTemplate}>
-          <Download className="w-3.5 h-3.5 mr-1" /> Download Template
         </Button>
         <Button size="sm" className="gradient-primary text-white" onClick={() => fileRef.current?.click()}>
           <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON
@@ -600,7 +206,6 @@ function ImportExportPanel({ city, rules, onImported }) {
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
       </div>
 
-      {/* Preview before confirming import */}
       {previewData && (
         <div className="border border-blue-300 bg-white rounded-lg p-3 mt-2">
           <p className="text-sm font-semibold text-gray-800 mb-1">
@@ -638,10 +243,9 @@ function ImportExportPanel({ city, rules, onImported }) {
   );
 }
 
-// ── Rule List (read-only view) ───────────────────────────────────────────────
+// ── Rule List ────────────────────────────────────────────────────────────────
 function RulesList({ rules }) {
   const [expanded, setExpanded] = useState(null);
-
   const grouped = rules
     .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     .reduce((acc, r) => {
@@ -698,15 +302,21 @@ export default function CityFeeRulesPanel({ city }) {
   const queryClient = useQueryClient();
 
   const { data: rules = [] } = useQuery({
-    queryKey: ["feeRules", city.id],
-    queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
+    queryKey: ["feeRules", city.name],
+    queryFn: () => fetchFeeRules(city.name),
   });
 
-  const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });
+  const { data: surcharge, refetch: refetchSurcharge } = useQuery({
+    queryKey: ["citySurcharge", city.name],
+    queryFn: () => fetchSurcharge(city.name),
+  });
+
+  const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.name] });
+  const onSurchargeSaved = () => refetchSurcharge();
 
   return (
     <div>
-      <SurchargePanel city={city} />
+      <SurchargePanel city={city} surcharge={surcharge} onSaved={onSurchargeSaved} />
       <ImportExportPanel city={city} rules={rules} onImported={onImported} />
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm text-gray-500">{rules.length} fee rule{rules.length !== 1 ? "s" : ""} currently loaded</p>

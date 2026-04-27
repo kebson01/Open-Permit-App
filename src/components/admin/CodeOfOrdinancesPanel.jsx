@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Plus, Search, Pencil, Trash2, ExternalLink, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SUPABASE_URL, SB_HEADERS, sbInsert, sbUpdate, sbDelete } from "@/lib/supabase";
 
 const CATEGORIES = [
   { value: "zoning", label: "Zoning" },
@@ -35,19 +35,18 @@ const CATEGORY_COLORS = {
 };
 
 const EMPTY_FORM = {
-  chapter_number: "",
-  chapter_title: "",
-  section_number: "",
-  section_title: "",
-  category: "building",
-  content: "",
-  effective_date: "",
-  last_amended: "",
-  ordinance_number: "",
-  reference_url: "",
-  tags: "",
-  is_active: true,
+  chapter_number: "", chapter_title: "", section_number: "", section_title: "",
+  category: "building", content: "", effective_date: "", last_amended: "",
+  ordinance_number: "", reference_url: "", tags: "", is_active: true,
 };
+
+async function fetchOrdinances(cityName) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/city_ordinance_sections?city_name=eq.${encodeURIComponent(cityName)}&order=section_number.asc`,
+    { headers: SB_HEADERS }
+  );
+  return res.json();
+}
 
 function OrdinanceForm({ cityId, cityName, initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
@@ -79,12 +78,7 @@ function OrdinanceForm({ cityId, cityName, initial, onSave, onCancel }) {
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600 block mb-1">Category *</label>
-          <select
-            required
-            value={form.category}
-            onChange={e => set("category", e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-          >
+          <select required value={form.category} onChange={e => set("category", e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </div>
@@ -141,24 +135,24 @@ export default function CodeOfOrdinancesPanel({ city }) {
   const [editing, setEditing] = useState(null);
 
   const { data: ordinances = [], isLoading } = useQuery({
-    queryKey: ["ordinances", city.id],
-    queryFn: () => base44.entities.CodeOfOrdinance.filter({ city_id: city.id }),
+    queryKey: ["ordinances", city.name],
+    queryFn: () => fetchOrdinances(city.name),
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["ordinances", city.id] });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["ordinances", city.name] });
 
   const createMut = useMutation({
-    mutationFn: d => base44.entities.CodeOfOrdinance.create(d),
+    mutationFn: d => sbInsert("city_ordinance_sections", d),
     onSuccess: () => { invalidate(); setShowForm(false); },
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, ...d }) => base44.entities.CodeOfOrdinance.update(id, d),
+    mutationFn: ({ id, ...d }) => sbUpdate("city_ordinance_sections", id, d),
     onSuccess: () => { invalidate(); setEditing(null); },
   });
 
   const deleteMut = useMutation({
-    mutationFn: id => base44.entities.CodeOfOrdinance.delete(id),
+    mutationFn: id => sbDelete("city_ordinance_sections", id),
     onSuccess: invalidate,
   });
 
@@ -172,23 +166,13 @@ export default function CodeOfOrdinancesPanel({ city }) {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap gap-3 items-center justify-between">
         <div className="flex gap-2 flex-1 min-w-0">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              className="pl-9"
-              placeholder="Search ordinances..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <Input className="pl-9" placeholder="Search ordinances..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <select
-            value={filterCat}
-            onChange={e => setFilterCat(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-          >
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
             <option value="all">All Categories</option>
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
@@ -200,14 +184,12 @@ export default function CodeOfOrdinancesPanel({ city }) {
 
       {showForm && !editing && (
         <OrdinanceForm
-          cityId={city.id}
-          cityName={city.name}
+          cityId={city.id} cityName={city.name}
           onSave={d => createMut.mutate(d)}
           onCancel={() => setShowForm(false)}
         />
       )}
 
-      {/* Table */}
       {isLoading ? (
         <div className="text-center py-10 text-gray-400">Loading...</div>
       ) : filtered.length === 0 ? (
@@ -270,8 +252,7 @@ export default function CodeOfOrdinancesPanel({ city }) {
                     <tr>
                       <td colSpan={7} className="px-4 py-3">
                         <OrdinanceForm
-                          cityId={city.id}
-                          cityName={city.name}
+                          cityId={city.id} cityName={city.name}
                           initial={editing}
                           onSave={d => updateMut.mutate({ id: editing.id, ...d })}
                           onCancel={() => setEditing(null)}

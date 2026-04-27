@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import CodeOfOrdinancesPanel from "@/components/admin/CodeOfOrdinancesPanel.jsx"
 import InviteCityAdminModal from "@/components/admin/InviteCityAdminModal.jsx";
 import PermitImportTool from "@/components/admin/PermitImportTool.jsx";
 import CitySupabaseStats from "@/components/admin/CitySupabaseStats.jsx";
+import { SUPABASE_URL, SB_HEADERS, sbDelete } from "@/lib/supabase";
 
 export default function AdminCityManager() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -40,11 +40,17 @@ export default function AdminCityManager() {
 
   const { data: cities = [], isLoading } = useQuery({
     queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: async () => {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/cities?select=*&order=name.asc`,
+        { headers: SB_HEADERS }
+      );
+      return res.json();
+    },
   });
 
   const deleteCityMutation = useMutation({
-    mutationFn: (id) => base44.entities.City.delete(id),
+    mutationFn: (id) => sbDelete("cities", id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cities"] }),
   });
 
@@ -63,7 +69,7 @@ export default function AdminCityManager() {
 
   const isSuperAdmin = currentUser.role === "admin";
   const cityAdminAssignedCity = currentUser.assigned_city_id;
-  
+
   let filtered = cities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
   if (!isSuperAdmin && cityAdminAssignedCity) {
     filtered = filtered.filter(c => c.id === cityAdminAssignedCity);
@@ -116,12 +122,12 @@ export default function AdminCityManager() {
 
         {/* Search (only in cities tab) */}
         {mainTab === "cities" && (
-        <Input
-          placeholder="Search cities..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="mb-5 max-w-sm"
-        />
+          <Input
+            placeholder="Search cities..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="mb-5 max-w-sm"
+          />
         )}
 
         {/* City List */}
@@ -177,7 +183,6 @@ export default function AdminCityManager() {
                 </div>
                 {expandedCity === city.id && (
                   <div className="border-t border-gray-100 bg-gray-50">
-                    {/* Tabs */}
                     <div className="flex gap-0 border-b border-gray-200 overflow-x-auto">
                       {["data_overview", "permit_types", "fee_rules", "ordinances"].map(tab => (
                         <button
