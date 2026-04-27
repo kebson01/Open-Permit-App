@@ -1,9 +1,6 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
-const SB_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" };
 import { Input } from "@/components/ui/input";
 import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen, ExternalLink } from "lucide-react";
 
@@ -52,18 +49,13 @@ export default function CityFormModal({ city, onClose, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
+    // Auto-generate slug from name if not set
     const slug = form.slug || form.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    // Remove Base44-only fields that Supabase doesn't have
-    const { id, created_date, updated_date, created_by, ...rest } = form;
-    const data = { ...rest, slug };
+    const data = { ...form, slug };
     if (city?.id) {
-      await fetch(`${SUPABASE_URL}/rest/v1/cities?id=eq.${city.id}`, {
-        method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(data),
-      });
+      await base44.entities.City.update(city.id, data);
     } else {
-      await fetch(`${SUPABASE_URL}/rest/v1/cities`, {
-        method: "POST", headers: SB_HEADERS, body: JSON.stringify(data),
-      });
+      await base44.entities.City.create(data);
     }
     setSaving(false);
     onSaved();

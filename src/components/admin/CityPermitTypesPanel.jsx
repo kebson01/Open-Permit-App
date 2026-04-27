@@ -1,23 +1,9 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, X } from "lucide-react";
-
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
-const SB_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" };
-
-async function getPermitTable(cityName, permitTableName) {
-  if (permitTableName) return permitTableName;
-  return `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
-}
-
-async function sbGet(table) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=category,name`, { headers: SB_HEADERS });
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
-}
 
 const CATEGORIES = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
 
@@ -49,8 +35,9 @@ function TagsInput({ label, value = [], onChange, placeholder }) {
   );
 }
 
-function PermitTypeForm({ permit, cityId, cityName, cityTableName, onSaved, onCancel }) {
+function PermitTypeForm({ permit, cityId, cityName, onSaved, onCancel }) {
   const [form, setForm] = useState(permit || {
+    city_id: cityId,
     city_name: cityName,
     name: "",
     category: "building",
@@ -67,16 +54,10 @@ function PermitTypeForm({ permit, cityId, cityName, cityTableName, onSaved, onCa
 
   const handleSave = async () => {
     setSaving(true);
-    const table = cityTableName || `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
-    const { id, city_id, ...rest } = form;
     if (permit?.id) {
-      await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${permit.id}`, {
-        method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(rest),
-      });
+      await base44.entities.PermitType.update(permit.id, form);
     } else {
-      await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-        method: "POST", headers: SB_HEADERS, body: JSON.stringify(rest),
-      });
+      await base44.entities.PermitType.create(form);
     }
     setSaving(false);
     onSaved();
@@ -194,15 +175,14 @@ export default function CityPermitTypesPanel({ city }) {
   const [editingPermit, setEditingPermit] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const queryClient = useQueryClient();
-  const table = city.permit_table_name || `${city.name.toLowerCase().replace(/ /g, "_")}_permit_types`;
 
   const { data: permits = [] } = useQuery({
     queryKey: ["permitTypes", city.id],
-    queryFn: () => sbGet(table),
+    queryFn: () => base44.entities.PermitType.filter({ city_id: city.id }),
   });
 
   const deletePermit = useMutation({
-    mutationFn: (id) => fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } }),
+    mutationFn: (id) => base44.entities.PermitType.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["permitTypes", city.id] }),
   });
 
@@ -229,7 +209,7 @@ export default function CityPermitTypesPanel({ city }) {
       </div>
 
       {showAddForm && !editingPermit && (
-        <PermitTypeForm cityId={city.id} cityName={city.name} cityTableName={table} onSaved={onSaved} onCancel={() => setShowAddForm(false)} />
+        <PermitTypeForm cityId={city.id} cityName={city.name} onSaved={onSaved} onCancel={() => setShowAddForm(false)} />
       )}
 
       {permits.length === 0 && !showAddForm && (
@@ -241,7 +221,7 @@ export default function CityPermitTypesPanel({ city }) {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">{cat}</p>
           {catPermits.map(permit =>
             editingPermit?.id === permit.id ? (
-              <PermitTypeForm key={permit.id} permit={editingPermit} cityId={city.id} cityName={city.name} cityTableName={table} onSaved={onSaved} onCancel={() => setEditingPermit(null)} />
+              <PermitTypeForm key={permit.id} permit={editingPermit} cityId={city.id} cityName={city.name} onSaved={onSaved} onCancel={() => setEditingPermit(null)} />
             ) : (
               <PermitTypeRow key={permit.id} permit={permit} onEdit={setEditingPermit} onDelete={(id) => deletePermit.mutate(id)} />
             )

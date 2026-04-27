@@ -1,16 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Plus, Search, Pencil, Trash2, ExternalLink, X, Check } from "lucide-react";
-
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
-const SB_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
-
-const sbFetch = async (path, opts = {}) => {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { ...SB_HEADERS, Prefer: "return=representation" }, ...opts });
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -151,23 +142,23 @@ export default function CodeOfOrdinancesPanel({ city }) {
 
   const { data: ordinances = [], isLoading } = useQuery({
     queryKey: ["ordinances", city.id],
-    queryFn: () => sbFetch(`city_ordinance_sections?city_name=eq.${encodeURIComponent(city.name)}&order=chapter_number.asc`),
+    queryFn: () => base44.entities.CodeOfOrdinance.filter({ city_id: city.id }),
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["ordinances", city.id] });
 
   const createMut = useMutation({
-    mutationFn: d => sbFetch("city_ordinance_sections", { method: "POST", body: JSON.stringify({ ...d, city_name: city.name }) }),
+    mutationFn: d => base44.entities.CodeOfOrdinance.create(d),
     onSuccess: () => { invalidate(); setShowForm(false); },
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, ...d }) => sbFetch(`city_ordinance_sections?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(d) }),
+    mutationFn: ({ id, ...d }) => base44.entities.CodeOfOrdinance.update(id, d),
     onSuccess: () => { invalidate(); setEditing(null); },
   });
 
   const deleteMut = useMutation({
-    mutationFn: id => sbFetch(`city_ordinance_sections?id=eq.${id}`, { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } }),
+    mutationFn: id => base44.entities.CodeOfOrdinance.delete(id),
     onSuccess: invalidate,
   });
 

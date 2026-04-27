@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useCities } from "@/hooks/useCities";
+import { supabase } from "@/lib/supabaseClient";
 import { X, Loader2, Home, Briefcase, ArrowRight } from "lucide-react";
 
 const PROJECT_TYPES = [
@@ -18,7 +17,7 @@ const PROJECT_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-
+const CITIES = ["Weston", "Coral Springs", "Fort Lauderdale", "Hollywood", "Cooper City", "Pembroke Pines", "Miramar", "Davie", "Plantation", "Sunrise"];
 
 function RoleStep({ onSelect }) {
   const [selected, setSelected] = useState(null);
@@ -86,7 +85,6 @@ function RoleStep({ onSelect }) {
 }
 
 function ProjectForm({ user, isContractor, onClose, onCreated }) {
-  const { cities } = useCities();
   const [form, setForm] = useState({
     name: "",
     project_type: "remodel",
@@ -119,13 +117,9 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
     const { data: created, error } = await supabase.from("projects").insert(payload).select().single();
     if (error) throw error;
 
-    // Send invite email to client if contractor checked the box
+    // Invite client if contractor checked the box and provided an email
     if (isContractor && form.invite_client && form.client_email) {
-      await base44.integrations.Core.SendEmail({
-        to: form.client_email,
-        subject: `You've been added to a permit project on OpenPermit`,
-        body: `Your contractor has started a permit project for you on OpenPermit.\n\nProject: ${form.name}\nAddress: ${form.property_address || "N/A"}\n\nVisit https://openpermit.base44.app to view your project status and documents.`,
-      }).catch(() => {});
+      await base44.users.inviteUser(form.client_email, "user").catch(() => {});
     }
 
     setSaving(false);
@@ -173,7 +167,7 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
           onChange={e => setForm(p => ({ ...p, city_name: e.target.value }))}
           className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
         >
-          {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
