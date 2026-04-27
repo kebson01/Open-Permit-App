@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
@@ -103,7 +103,7 @@ function PropertyDetail({ property: p, onBack }) {
   const portalUrl = CITY_PORTALS[p.city_name];
 
   // Load permits for Weston on mount
-  useState(() => {
+  useEffect(() => {
     if (isWeston) {
       setLoadingPermits(true);
       getPermitHistory(p.FOLIO_NUMBER).then(data => {
@@ -111,7 +111,7 @@ function PropertyDetail({ property: p, onBack }) {
         setLoadingPermits(false);
       });
     }
-  });
+  }, [p.FOLIO_NUMBER]);
 
   return (
     <div>
