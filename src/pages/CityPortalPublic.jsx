@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { loadCities } from "@/hooks/useCities";
 import { Building2, Calculator, Map, AlertCircle, ExternalLink } from "lucide-react";
 import FeeCalculatorEmbed from "@/components/city/FeeCalculatorEmbed";
 import PermitGuideEmbed from "@/components/city/PermitGuideEmbed";
@@ -14,13 +14,11 @@ export default function CityPortalPublic() {
 
   useEffect(() => {
     if (!slug) { setLoading(false); return; }
-    base44.entities.City.list().then(all => {
-      // Match by slug first, then fallback to name match
+    loadCities().then(all => {
       const found = all.find(c => c.slug === slug) || all.find(c => c.name?.toLowerCase().replace(/\s+/g, "-") === slug) || null;
       setCity(found);
-      if (found?.enabled_services?.length > 0) {
-        setActiveTab(found.enabled_services[0]);
-      }
+      const services = Array.isArray(found?.enabled_services) ? found.enabled_services : (typeof found?.enabled_services === "string" ? JSON.parse(found?.enabled_services || "[]") : []);
+      if (services.length > 0) setActiveTab(services[0]);
       setLoading(false);
     });
   }, [slug]);
