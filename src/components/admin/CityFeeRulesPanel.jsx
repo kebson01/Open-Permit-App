@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -10,28 +10,20 @@ async function sbGet(path) {
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
-
 async function sbPost(path, body) {
-  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: "POST", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body),
-  });
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, { method: "POST", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body) });
 }
-
 async function sbPatch(path, body) {
-  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: "PATCH", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body),
-  });
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, { method: "PATCH", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(body) });
+}
+async function sbDelete(path) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } });
 }
 
-async function sbDelete(path) {
-  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-  });
-}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Download, Upload, FileJson, Trash2, CheckCircle2, AlertCircle,
+  Download, Upload, FileJson, CheckCircle2, AlertCircle,
   Settings2, ChevronDown, ChevronUp, Plus, Pencil
 } from "lucide-react";
 

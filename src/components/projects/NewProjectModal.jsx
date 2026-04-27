@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { X, Loader2, Home, Briefcase, ArrowRight } from "lucide-react";
 
 const PROJECT_TYPES = [
@@ -117,9 +117,13 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
     const { data: created, error } = await supabase.from("projects").insert(payload).select().single();
     if (error) throw error;
 
-    // Invite client if contractor checked the box and provided an email
+    // Send invite email to client if contractor checked the box
     if (isContractor && form.invite_client && form.client_email) {
-      await base44.users.inviteUser(form.client_email, "user").catch(() => {});
+      await base44.integrations.Core.SendEmail({
+        to: form.client_email,
+        subject: `You've been added to a permit project on OpenPermit`,
+        body: `Your contractor has started a permit project for you on OpenPermit.\n\nProject: ${form.name}\nAddress: ${form.property_address || "N/A"}\n\nVisit https://openpermit.base44.app to view your project status and documents.`,
+      }).catch(() => {});
     }
 
     setSaving(false);

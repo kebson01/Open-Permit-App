@@ -14,13 +14,11 @@ export default function InviteCityAdminModal({ city, onClose }) {
     if (!email.trim()) return;
     setSending(true);
     setError("");
-    await base44.users.inviteUser(email.trim(), "city_admin");
-    // After invite, we can't set city_name directly since the user doesn't exist yet.
-    // We send an email note as a reminder.
+    // Send invite email via Base44 integration (not entity storage)
     await base44.integrations.Core.SendEmail({
       to: email.trim(),
       subject: `You've been invited to manage ${city.name} permits`,
-      body: `You've been invited as a city administrator for ${city.name}.\n\nOnce you log in, your account will need to be assigned to "${city.name}" by the system administrator.\n\nPlease contact your admin after logging in to complete setup.`,
+      body: `You've been invited as a city administrator for ${city.name} on OpenPermit.\n\nPlease visit https://openpermit.base44.app to register or sign in.\n\nOnce logged in, contact your system administrator to have your account assigned to "${city.name}".`,
     });
     setSending(false);
     setSent(true);

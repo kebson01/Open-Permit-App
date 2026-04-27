@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { useCities } from "@/hooks/useCities";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, Loader2, MapPin, Home, Building2, HelpCircle } from "lucide-react";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 function QuestionField({ q, value, onChange }) {
   if (q.type === "select") {
@@ -81,16 +85,13 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
   const { description, aiParsed } = intro;
 
   const [step, setStep] = useState("city"); // city → property_type → details → review
-  const [cityId, setCityId] = useState("");
+  const [cityId, setCityId] = useState(""); // kept for compatibility but cityName is the source of truth
   const [cityName, setCityName] = useState("");
   const [propertyType, setPropertyType] = useState(aiParsed?.property_type_guess === "commercial" ? "commercial" : "");
   const [detailAnswers, setDetailAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: cities = [] } = useQuery({
-    queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
-  });
+  const { cities } = useCities();
 
   const questions = aiParsed?.key_questions || [];
 
@@ -111,22 +112,29 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
     };
 
     try {
-      // Fetch real permit type records from the database for this city
+      // Fetch real permit type records from Supabase for this city
       let permitTypeContext = "";
       try {
-        const permitTypes = cityId
-          ? await base44.entities.PermitType.filter({ city_id: cityId })
-          : await base44.entities.PermitType.list();
-        if (permitTypes.length > 0) {
-          permitTypeContext = `\n\nREAL PERMIT TYPE DATABASE (use these actual requirements):\n` +
-            permitTypes.map(pt => [
-              `PERMIT: ${pt.name} (${pt.category}) — City: ${pt.city_name}`,
-              pt.description ? `  Description: ${pt.description}` : "",
-              pt.documents_needed?.length ? `  Documents Required: ${pt.documents_needed.join("; ")}` : "",
-              pt.typical_requirements?.length ? `  Typical Requirements: ${pt.typical_requirements.join("; ")}` : "",
-              pt.inspections_required?.length ? `  Inspections: ${pt.inspections_required.join("; ")}` : "",
-              pt.typical_timeline ? `  Timeline: ${pt.typical_timeline}` : "",
-            ].filter(Boolean).join("\n")).join("\n\n");
+        if (cityName && cityName !== "Other / Unknown") {
+          const tableName = cityName.toLowerCase().replace(/ /g, "_") + "_permit_types";
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?select=*`, { headers: SB_HEADERS });
+          const permitTypes = await res.json();
+          if (Array.isArray(permitTypes) && permitTypes.length > 0) {
+            permitTypeContext = `\n\nREAL PERMIT TYPE DATABASE (use these actual requirements):\n` +
+              permitTypes.map(pt => {
+                const docs = typeof pt.documents_needed === "string" ? JSON.parse(pt.documents_needed || "[]") : (pt.documents_needed || []);
+                const reqs = typeof pt.typical_requirements === "string" ? JSON.parse(pt.typical_requirements || "[]") : (pt.typical_requirements || []);
+                const insps = typeof pt.inspections_required === "string" ? JSON.parse(pt.inspections_required || "[]") : (pt.inspections_required || []);
+                return [
+                  `PERMIT: ${pt.name} (${pt.category}) — City: ${cityName}`,
+                  pt.description ? `  Description: ${pt.description}` : "",
+                  docs.length ? `  Documents Required: ${docs.join("; ")}` : "",
+                  reqs.length ? `  Typical Requirements: ${reqs.join("; ")}` : "",
+                  insps.length ? `  Inspections: ${insps.join("; ")}` : "",
+                  pt.typical_timeline ? `  Timeline: ${pt.typical_timeline}` : "",
+                ].filter(Boolean).join("\n");
+              }).join("\n\n");
+          }
         }
       } catch {}
 
@@ -210,10 +218,10 @@ Be specific, practical, and jurisdiction-aware. Prioritize real database data ov
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
             {cities.map(c => (
               <button
-                key={c.id}
-                onClick={() => { setCityId(c.id); setCityName(c.name); }}
+                key={c.name}
+                onClick={() => { setCityId(c.name); setCityName(c.name); }}
                 className={`px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${
-                  cityId === c.id ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700 hover:border-blue-300"
+                  cityName === c.name ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700 hover:border-blue-300"
                 }`}
               >
                 {c.name}
