@@ -30,45 +30,6 @@ export const CITY_PORTAL_URLS = {
   "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
 };
 
-// ── Supabase admin helpers (use anon key — RLS policies handle auth) ──────────
-
-export async function sbGet(table, params = "") {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: SB_HEADERS });
-  return res.json();
-}
-
-export async function sbInsert(table, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: "POST",
-    headers: { ...SB_HEADERS, Prefer: "return=representation" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function sbUpdate(table, id, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: "PATCH",
-    headers: { ...SB_HEADERS, Prefer: "return=representation" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function sbDelete(table, id) {
-  await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: "DELETE",
-    headers: SB_HEADERS,
-  });
-}
-
-export async function sbDeleteWhere(table, field, value) {
-  await fetch(`${SUPABASE_URL}/rest/v1/${table}?${field}=eq.${encodeURIComponent(value)}`, {
-    method: "DELETE",
-    headers: SB_HEADERS,
-  });
-}
-
 export const CITY_DEPT_INFO = {
   "Weston":          { phone: "(954) 385-2600", hours: "Mon–Fri 8:00AM–4:30PM", noc_threshold: "$2,500" },
   "Coral Springs":   { phone: "(954) 344-1025", hours: "Mon–Thu 7:30AM–5:00PM, Fri 7:30AM–2:30PM", noc_threshold: "$5,000" },

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen, ExternalLink } from "lucide-react";
-import { SUPABASE_URL, SB_HEADERS, sbInsert, sbUpdate } from "@/lib/supabase";
 
 const FIELDS = [
   { key: "name", label: "City Name", required: true },
@@ -35,7 +35,10 @@ const SERVICES = [
 
 export default function CityFormModal({ city, onClose, onSaved }) {
   const defaults = city?.name ? (CITY_ORDINANCE_DEFAULTS[city.name] || {}) : {};
-  const [form, setForm] = useState({ ...defaults, ...city });
+  const [form, setForm] = useState({
+    ...defaults,
+    ...city,
+  });
   const [saving, setSaving] = useState(false);
 
   const toggleService = (key) => {
@@ -46,12 +49,13 @@ export default function CityFormModal({ city, onClose, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
+    // Auto-generate slug from name if not set
     const slug = form.slug || form.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const data = { ...form, slug };
     if (city?.id) {
-      await sbUpdate("cities", city.id, data);
+      await base44.entities.City.update(city.id, data);
     } else {
-      await sbInsert("cities", data);
+      await base44.entities.City.create(data);
     }
     setSaving(false);
     onSaved();
@@ -117,7 +121,7 @@ export default function CityFormModal({ city, onClose, onSaved }) {
           {/* Services */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-2">Enabled Services (Portal)</label>
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-3">
               {SERVICES.map(s => {
                 const active = (form.enabled_services || []).includes(s.key);
                 return (

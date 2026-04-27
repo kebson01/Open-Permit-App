@@ -1,26 +1,11 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, X } from "lucide-react";
-import { SUPABASE_URL, SB_HEADERS, sbInsert, sbUpdate, sbDelete } from "@/lib/supabase";
 
 const CATEGORIES = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
-
-async function fetchPermitTypes(cityName) {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/permit_types?city_name=eq.${encodeURIComponent(cityName)}&order=category,name`,
-    { headers: SB_HEADERS }
-  );
-  const data = await res.json();
-  // Parse JSON arrays if stored as strings
-  return (Array.isArray(data) ? data : []).map(p => ({
-    ...p,
-    typical_requirements: typeof p.typical_requirements === "string" ? JSON.parse(p.typical_requirements || "[]") : (p.typical_requirements || []),
-    documents_needed:     typeof p.documents_needed === "string"     ? JSON.parse(p.documents_needed || "[]")     : (p.documents_needed || []),
-    inspections_required: typeof p.inspections_required === "string" ? JSON.parse(p.inspections_required || "[]") : (p.inspections_required || []),
-  }));
-}
 
 function TagsInput({ label, value = [], onChange, placeholder }) {
   const [input, setInput] = useState("");
@@ -70,9 +55,9 @@ function PermitTypeForm({ permit, cityId, cityName, onSaved, onCancel }) {
   const handleSave = async () => {
     setSaving(true);
     if (permit?.id) {
-      await sbUpdate("permit_types", permit.id, form);
+      await base44.entities.PermitType.update(permit.id, form);
     } else {
-      await sbInsert("permit_types", form);
+      await base44.entities.PermitType.create(form);
     }
     setSaving(false);
     onSaved();
@@ -81,6 +66,7 @@ function PermitTypeForm({ permit, cityId, cityName, onSaved, onCancel }) {
   return (
     <div className="bg-white border border-blue-200 rounded-xl p-5 mt-2 space-y-4">
       <h4 className="font-semibold text-gray-800 text-sm">{permit ? "Edit Permit Type" : "Add Permit Type"}</h4>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Permit Name *</label>
@@ -110,9 +96,11 @@ function PermitTypeForm({ permit, cityId, cityName, onSaved, onCancel }) {
           <Input value={form.map_zone} onChange={e => set("map_zone", e.target.value)} placeholder="e.g. Roof, Interior" />
         </div>
       </div>
+
       <TagsInput label="Requirements" value={form.typical_requirements} onChange={v => set("typical_requirements", v)} placeholder="Add a requirement and press Enter" />
       <TagsInput label="Documents Needed" value={form.documents_needed} onChange={v => set("documents_needed", v)} placeholder="Add a document and press Enter" />
       <TagsInput label="Inspections Required" value={form.inspections_required} onChange={v => set("inspections_required", v)} placeholder="Add an inspection and press Enter" />
+
       <div className="flex justify-end gap-2 pt-1">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
         <Button size="sm" onClick={handleSave} disabled={saving || !form.name} className="gradient-primary text-white">
@@ -153,19 +141,25 @@ function PermitTypeRow({ permit, onEdit, onDelete }) {
           {permit.typical_requirements?.length > 0 && (
             <div>
               <p className="font-semibold text-gray-600 mb-1.5">Requirements</p>
-              <ul className="space-y-1">{permit.typical_requirements.map((r, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-blue-400">•</span>{r}</li>)}</ul>
+              <ul className="space-y-1">
+                {permit.typical_requirements.map((r, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-blue-400">•</span>{r}</li>)}
+              </ul>
             </div>
           )}
           {permit.documents_needed?.length > 0 && (
             <div>
               <p className="font-semibold text-gray-600 mb-1.5">Documents Needed</p>
-              <ul className="space-y-1">{permit.documents_needed.map((d, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-green-400">•</span>{d}</li>)}</ul>
+              <ul className="space-y-1">
+                {permit.documents_needed.map((d, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-green-400">•</span>{d}</li>)}
+              </ul>
             </div>
           )}
           {permit.inspections_required?.length > 0 && (
             <div>
               <p className="font-semibold text-gray-600 mb-1.5">Inspections Required</p>
-              <ul className="space-y-1">{permit.inspections_required.map((p, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-orange-400">•</span>{p}</li>)}</ul>
+              <ul className="space-y-1">
+                {permit.inspections_required.map((p, i) => <li key={i} className="text-gray-600 flex gap-1.5"><span className="text-orange-400">•</span>{p}</li>)}
+              </ul>
             </div>
           )}
           {!permit.typical_requirements?.length && !permit.documents_needed?.length && !permit.inspections_required?.length && (
@@ -183,17 +177,17 @@ export default function CityPermitTypesPanel({ city }) {
   const queryClient = useQueryClient();
 
   const { data: permits = [] } = useQuery({
-    queryKey: ["permitTypes", city.name],
-    queryFn: () => fetchPermitTypes(city.name),
+    queryKey: ["permitTypes", city.id],
+    queryFn: () => base44.entities.PermitType.filter({ city_id: city.id }),
   });
 
   const deletePermit = useMutation({
-    mutationFn: (id) => sbDelete("permit_types", id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["permitTypes", city.name] }),
+    mutationFn: (id) => base44.entities.PermitType.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["permitTypes", city.id] }),
   });
 
   const onSaved = () => {
-    queryClient.invalidateQueries({ queryKey: ["permitTypes", city.name] });
+    queryClient.invalidateQueries({ queryKey: ["permitTypes", city.id] });
     setEditingPermit(null);
     setShowAddForm(false);
   };

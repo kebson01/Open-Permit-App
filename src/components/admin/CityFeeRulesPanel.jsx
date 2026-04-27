@@ -1,43 +1,21 @@
 import React, { useState, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Download, Upload, FileJson, CheckCircle2, AlertCircle,
+  Download, Upload, FileJson, Trash2, CheckCircle2, AlertCircle,
   Settings2, ChevronDown, ChevronUp, Plus, Pencil
 } from "lucide-react";
-import { SUPABASE_URL, SB_HEADERS, sbInsert, sbUpdate, sbDeleteWhere } from "@/lib/supabase";
-
-const SB_WRITE_HEADERS = { ...SB_HEADERS, Prefer: "return=representation" };
-
-// ── Supabase fetch helpers ────────────────────────────────────────────────────
-async function fetchFeeRules(cityName) {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encodeURIComponent(cityName)}&order=sort_order.asc`,
-    { headers: SB_HEADERS }
-  );
-  return res.json();
-}
-
-async function fetchSurcharge(cityName) {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encodeURIComponent(cityName)}&limit=1`,
-    { headers: SB_HEADERS }
-  );
-  const data = await res.json();
-  return Array.isArray(data) && data.length > 0 ? data[0] : null;
-}
-
-async function upsertSurcharge(surcharge, cityName, cityId) {
-  const data = { ...surcharge, city_id: cityId, city_name: cityName };
-  if (surcharge?.id) {
-    return sbUpdate("city_surcharges", surcharge.id, data);
-  }
-  return sbInsert("city_surcharges", data);
-}
 
 // ── Surcharge Panel ─────────────────────────────────────────────────────────
-function SurchargePanel({ city, surcharge, onSaved }) {
+function SurchargePanel({ city }) {
+  const queryClient = useQueryClient();
+  const { data: surcharges = [] } = useQuery({
+    queryKey: ["citySurcharges", city.id],
+    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
+  });
+  const surcharge = surcharges[0];
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -53,10 +31,11 @@ function SurchargePanel({ city, surcharge, onSaved }) {
     const data = { ...form };
     ["technology_admin", "board_of_rules_rate", "educational_rate", "dca_rate", "dbpr_rate"]
       .forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
-    await upsertSurcharge(data, city.name, city.id);
+    if (surcharge?.id) await base44.entities.CitySurcharge.update(surcharge.id, data);
+    else await base44.entities.CitySurcharge.create(data);
+    queryClient.invalidateQueries({ queryKey: ["citySurcharges", city.id] });
     setSaving(false);
     setEditing(false);
-    onSaved();
   };
 
   return (
@@ -122,8 +101,39 @@ function SurchargePanel({ city, surcharge, onSaved }) {
 function ImportExportPanel({ city, rules, onImported }) {
   const fileRef = useRef();
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState(null);
+  const [importResult, setImportResult] = useState(null); // { success, count, error }
   const [previewData, setPreviewData] = useState(null);
+
+  const WESTON_TEMPLATE = {
+    city: "Weston",
+    resolution: "2024-128",
+    effective_date: "October 1, 2024",
+    surcharges: {
+      technology_admin: 127.00,
+      board_of_rules_rate: 0.52,
+      educational_rate: 0.0003,
+      dca_rate: 0.01,
+      dbpr_rate: 0.015
+    },
+    fee_rules: [
+      {
+        permit_id: "new_construction",
+        permit_name: "New Construction / Addition",
+        category: "building",
+        description: "New residential or commercial structure, or addition to existing structure",
+        calc_type: "tiered_cost",
+        base_fee: 115.79,
+        cost_threshold: 1000,
+        tiers_config: JSON.stringify([
+          { min: 1000, max: 1250000, base: 0, rate: 0.0155 },
+          { min: 1250000, max: 3000000, base: 19359.50, rate: 0.0135 },
+          { min: 3000000, max: null, base: 42954.50, rate: 0.0120 }
+        ]),
+        include_city_surcharges: true,
+        sort_order: 1
+      },
+    ]
+  };
 
   const handleExport = () => {
     const exportData = {
@@ -131,7 +141,7 @@ function ImportExportPanel({ city, rules, onImported }) {
       city_id: city.id,
       exported_at: new Date().toISOString(),
       fee_rules: rules.map(r => {
-        const { id, created_at, updated_at, city_id, city_name, ...rest } = r;
+        const { id, created_date, updated_date, created_by, city_id, city_name, ...rest } = r;
         return rest;
       })
     };
@@ -140,6 +150,22 @@ function ImportExportPanel({ city, rules, onImported }) {
     const a = document.createElement("a");
     a.href = url;
     a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = {
+      ...WESTON_TEMPLATE,
+      city: city.name,
+      city_id: city.id,
+      _instructions: "Edit the fee_rules array to match this city's schedule. Upload this file to replace all existing rules."
+    };
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${city.name.toLowerCase().replace(/\s+/g, "_")}_fee_rules_template.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -169,14 +195,18 @@ function ImportExportPanel({ city, rules, onImported }) {
     setImporting(true);
     try {
       // Delete all existing rules for this city
-      await sbDeleteWhere("fee_rules", "city_name", city.name);
-      // Bulk insert new rules
-      const newRules = previewData.map(({ id, ...r }) => ({
-        ...r,
-        city_id: city.id,
-        city_name: city.name,
-      }));
-      await sbInsert("fee_rules", newRules);
+      for (const rule of rules) {
+        await base44.entities.FeeRule.delete(rule.id);
+      }
+      // Create all new rules from the JSON
+      for (const rule of previewData) {
+        const { id, ...ruleData } = rule;
+        await base44.entities.FeeRule.create({
+          ...ruleData,
+          city_id: city.id,
+          city_name: city.name,
+        });
+      }
       setImportResult({ success: true, count: previewData.length });
       setPreviewData(null);
       onImported();
@@ -192,13 +222,18 @@ function ImportExportPanel({ city, rules, onImported }) {
         <FileJson className="w-4 h-4 text-blue-600" />
         <span className="text-sm font-semibold text-blue-800">JSON Fee Schedule Management</span>
       </div>
+
       <p className="text-xs text-blue-700 mb-3">
         Export the current fee schedule as JSON, edit it externally, then re-upload to update all fees at once.
       </p>
+
       <div className="flex flex-wrap gap-2 mb-3">
         <Button size="sm" variant="outline" className="text-blue-700 border-blue-300 bg-white" onClick={handleExport} disabled={rules.length === 0}>
           <Download className="w-3.5 h-3.5 mr-1" />
           {rules.length > 0 ? `Export ${rules.length} Rules` : "Export (empty)"}
+        </Button>
+        <Button size="sm" variant="outline" className="text-gray-600 border-gray-300 bg-white" onClick={handleDownloadTemplate}>
+          <Download className="w-3.5 h-3.5 mr-1" /> Download Template
         </Button>
         <Button size="sm" className="gradient-primary text-white" onClick={() => fileRef.current?.click()}>
           <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON
@@ -243,9 +278,10 @@ function ImportExportPanel({ city, rules, onImported }) {
   );
 }
 
-// ── Rule List ────────────────────────────────────────────────────────────────
+// ── Rule List (read-only view) ───────────────────────────────────────────────
 function RulesList({ rules }) {
   const [expanded, setExpanded] = useState(null);
+
   const grouped = rules
     .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     .reduce((acc, r) => {
@@ -302,21 +338,15 @@ export default function CityFeeRulesPanel({ city }) {
   const queryClient = useQueryClient();
 
   const { data: rules = [] } = useQuery({
-    queryKey: ["feeRules", city.name],
-    queryFn: () => fetchFeeRules(city.name),
+    queryKey: ["feeRules", city.id],
+    queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
   });
 
-  const { data: surcharge, refetch: refetchSurcharge } = useQuery({
-    queryKey: ["citySurcharge", city.name],
-    queryFn: () => fetchSurcharge(city.name),
-  });
-
-  const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.name] });
-  const onSurchargeSaved = () => refetchSurcharge();
+  const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });
 
   return (
     <div>
-      <SurchargePanel city={city} surcharge={surcharge} onSaved={onSurchargeSaved} />
+      <SurchargePanel city={city} />
       <ImportExportPanel city={city} rules={rules} onImported={onImported} />
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm text-gray-500">{rules.length} fee rule{rules.length !== 1 ? "s" : ""} currently loaded</p>
