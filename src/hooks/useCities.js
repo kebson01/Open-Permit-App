@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
-import { getCities } from "@/utils/supabaseData";
 
-export { getCities };
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 export function useCities() {
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCities().then(data => {
-      setCities(data);
-      setLoading(false);
-    });
+    fetch(
+      `${SUPABASE_URL}/rest/v1/cities?select=name,slug,building_department_phone,portal_url,fee_source,enabled_services,building_department_address&order=name.asc`,
+      { headers: SB_HEADERS }
+    )
+      .then(r => r.json())
+      .then(data => {
+        setCities(Array.isArray(data) ? data : []);
+        setLoading(false);
+      });
   }, []);
 
   return { cities, loading };

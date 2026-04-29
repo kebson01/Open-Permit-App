@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2 } from "lucide-react";
 import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
-import { getFeeRules, getCitySurcharge } from "@/utils/supabaseData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+
+const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 
 
@@ -223,12 +226,15 @@ export default function FeeCalculator() {
       return;
     }
     setLoadingRules(true);
-    const [rules, surcharge] = await Promise.all([
-      getFeeRules(cityName),
-      getCitySurcharge(cityName),
+    const encoded = encodeURIComponent(cityName);
+    const [rulesRes, surchargeRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encoded}&order=sort_order.asc`, { headers: SB_HEADERS }),
+      fetch(`${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encoded}&limit=1`, { headers: SB_HEADERS }),
     ]);
-    setFeeRules(rules);
-    setSurcharge(surcharge);
+    const rules = await rulesRes.json();
+    const surcharges = await surchargeRes.json();
+    setFeeRules(Array.isArray(rules) ? rules : []);
+    setSurcharge(Array.isArray(surcharges) && surcharges.length > 0 ? surcharges[0] : null);
     setLoadingRules(false);
   };
 
@@ -343,40 +349,18 @@ export default function FeeCalculator() {
             {/* City accent badge + NOC note */}
             {(() => {
               const accent = CITY_ACCENT[city] || CITY_ACCENT["Weston"];
-              const isStale = cityObj?.fee_schedule_status === "stale";
               return (
                 <div className="mb-4 space-y-2">
-                  {/* City badge */}
                   <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${accent.bg} ${accent.border} ${accent.text}`}>
                     <span className={`w-2 h-2 rounded-full ${accent.dot}`} />
                     {city} Fee Schedule
                   </div>
-                  {/* Stale fee schedule warning */}
-                  {isStale && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                      <span className="text-amber-500 text-sm shrink-0">⚠️</span>
-                      <div>
-                        <p className="text-xs font-semibold text-amber-800">Unverified Fee Schedule</p>
-                        <p className="text-xs text-amber-700 mt-0.5">
-                          The fee schedule for {city}{cityObj?.fee_schedule_year ? ` is from ${cityObj.fee_schedule_year} and` : ""} may be outdated.
-                          We recommend calling the building department to confirm current rates before applying.
-                        </p>
-                        {cityObj?.building_department_phone && (
-                          <a href={`tel:${cityObj.building_department_phone.replace(/\D/g, "")}`} className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-amber-800 hover:underline">
-                            📞 {cityObj.building_department_phone}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {/* NOC banner */}
                   {CITY_NOTES[city] && (
                     <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
                     </div>
                   )}
-                  {/* Fee structure summary */}
                   {CITY_FEE_SUMMARY[city] && (
                     <div className={`flex items-start gap-2 p-3 rounded-xl border ${accent.bg} ${accent.border}`}>
                       <Calculator className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${accent.text}`} />
@@ -643,10 +627,6 @@ export default function FeeCalculator() {
                           </a>
                         </Button>
                       )}
-                      <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                        <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Fee Estimate Notice</p>
-                        <p className="text-xs text-amber-700 leading-relaxed">Permit fees shown are estimates based on official municipal fee schedules and may not reflect the most current rates. Fees can change without notice. Always verify current fees directly with the city building department before submitting a permit application. OpenPermit is not responsible for discrepancies between estimated and actual permit fees.</p>
-                      </div>
                     </>
                   )}
 

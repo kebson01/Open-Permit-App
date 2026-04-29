@@ -3,8 +3,6 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { useEffect } from 'react';
-import { getCities } from '@/utils/supabaseData';
 import PageNotFound from './lib/PageNotFound';
 import Home from './pages/Home';
 import PropertyGuide from './pages/PropertyGuide';
@@ -20,9 +18,6 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 function App() {
-  // Preload cities into cache immediately on app mount
-  useEffect(() => { getCities(); }, []);
-
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>

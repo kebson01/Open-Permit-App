@@ -1,9 +1,20 @@
 import { useState, useEffect } from "react";
 import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
-import { searchProperties } from "@/utils/supabaseData";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+
+const PROPERTY_SEARCH_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
+
+async function searchProperties(rawQuery, city = "All Cities", type = "address") {
+  const q = rawQuery?.trim();
+  if (!q || q.length < 3) return [];
+  const params = new URLSearchParams({ q, city, type });
+  const res = await fetch(`${PROPERTY_SEARCH_URL}?${params}`);
+  if (!res.ok) return [];
+  const { data } = await res.json();
+  return data ?? [];
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
