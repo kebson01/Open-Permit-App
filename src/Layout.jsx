@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown } from "lucide-react";
+import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
 import FloatingAIButton from "@/components/ai/FloatingAIButton";
 import { supabase } from "@/lib/supabaseClient";
@@ -158,6 +158,18 @@ export default function Layout({ children, currentPageName }) {
 
             {/* RIGHT — User actions (desktop) */}
             <div className="hidden md:flex items-center gap-4">
+              {(isAdmin || isCityAdmin) && (
+                <Link
+                  to="/admin"
+                  className={`text-sm font-medium transition-colors pb-0.5 flex items-center gap-1.5 ${
+                    currentPageName === "AdminPanel"
+                      ? "text-white border-b-2 border-blue-400"
+                      : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                </Link>
+              )}
               {currentUser && (
                 <Link
                   to={createPageUrl("ProjectDashboard")}
