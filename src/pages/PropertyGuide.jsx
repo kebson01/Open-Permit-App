@@ -258,17 +258,28 @@ export default function PropertyGuide() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState(null);
 
-  const doSearch = async () => {
-    if (!query.trim()) return;
+  const doSearch = async (searchQuery = query) => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 3) return;
     setLoading(true);
     setSearched(true);
     setSelected(null);
     setError(null);
     setResults([]);
-    const data = await searchProperties(query, selectedCity);
-    setResults(Array.isArray(data) ? data : []);
+    try {
+      const data = await searchProperties(searchQuery, selectedCity);
+      setResults(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || "Search failed. Please try again.");
+    }
     setLoading(false);
   };
+
+  // Auto-search after user stops typing for 600ms
+  useEffect(() => {
+    if (query.trim().length < 3) return;
+    const timer = setTimeout(() => doSearch(query), 600);
+    return () => clearTimeout(timer);
+  }, [query, selectedCity]);
 
   return (
     <div className="min-h-screen bg-gray-50">
