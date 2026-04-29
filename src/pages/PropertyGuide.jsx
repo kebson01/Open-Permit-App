@@ -3,6 +3,7 @@ import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, Clip
 import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -29,8 +30,6 @@ const STATUS_STYLES = {
   "Cancelled": { bg: "#FEF2F2", color: "#991B1B" },
 };
 
-const PROPERTY_SEARCH_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
-
 function isFolioSearch(term) {
   return /^[0-9A-Za-z]{8,15}$/.test(term.trim()) && !/\s/.test(term.trim());
 }
@@ -39,10 +38,8 @@ async function searchProperties(query, city = "All Cities") {
   if (!query || query.trim().length < 3) return [];
 
   const type = isFolioSearch(query) ? "folio" : "address";
-  const params = new URLSearchParams({ q: query.trim(), city, type });
-
-  const res = await fetch(`${PROPERTY_SEARCH_URL}?${params}`);
-  const { data, error } = await res.json();
+  const res = await base44.functions.invoke("propertySearch", { q: query.trim(), city, type });
+  const { data, error } = res.data;
   if (error) console.error("Property search error:", error);
   return data ?? [];
 }
