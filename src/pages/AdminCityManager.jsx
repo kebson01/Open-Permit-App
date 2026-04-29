@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,15 +26,9 @@ export default function AdminCityManager() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setCurrentUser({
-        ...user,
-        email: user.email,
-        full_name: user.user_metadata?.full_name,
-        role: user.user_metadata?.role,
-        assigned_city_id: user.user_metadata?.assigned_city_id,
-      });
-    });
+    base44.auth.me().then(user => {
+      if (user) setCurrentUser(user);
+    }).catch(() => {});
   }, []);
 
   const { data: cities = [], isLoading } = useQuery({
