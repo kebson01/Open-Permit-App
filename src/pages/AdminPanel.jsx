@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import AdminCities from "@/components/admin/panel/AdminCities";
 import AdminFeeRules from "@/components/admin/panel/AdminFeeRules";
 import AdminDataStatus from "@/components/admin/panel/AdminDataStatus";
@@ -17,27 +17,16 @@ const NAV_ITEMS = [
 export default function AdminPanel() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("cities");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) { navigate("/"); return; }
-      const role = session.user.user_metadata?.role;
-      if (role !== "admin" && role !== "city_admin") { navigate("/"); return; }
-      setCurrentUser({ ...session.user, role });
-      setLoading(false);
-    });
+    base44.auth.me().then(user => {
+      if (!user) { navigate("/"); return; }
+      if (user.role !== "admin" && user.role !== "city_admin") { navigate("/"); return; }
+      setCurrentUser(user);
+    }).catch(() => navigate("/"));
   }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   const SectionContent = () => {
     switch (activeSection) {
