@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2 } from "lucide-react";
 import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
+import { getFeeRules, getCitySurcharge } from "@/utils/supabaseData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
-const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
 
 
@@ -219,7 +216,6 @@ export default function FeeCalculator() {
   }, [city]);
 
   const loadCityData = async (cityName, cityRecord) => {
-    // Skip DB fetch for cities without fee data
     if (cityRecord && !cityHasFeeData(cityRecord)) {
       setFeeRules([]);
       setSurcharge(null);
@@ -227,15 +223,12 @@ export default function FeeCalculator() {
       return;
     }
     setLoadingRules(true);
-    const encoded = encodeURIComponent(cityName);
-    const [rulesRes, surchargeRes] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encoded}&order=sort_order.asc`, { headers: SB_HEADERS }),
-      fetch(`${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encoded}&limit=1`, { headers: SB_HEADERS }),
+    const [rules, surcharge] = await Promise.all([
+      getFeeRules(cityName),
+      getCitySurcharge(cityName),
     ]);
-    const rules = await rulesRes.json();
-    const surcharges = await surchargeRes.json();
-    setFeeRules(Array.isArray(rules) ? rules : []);
-    setSurcharge(Array.isArray(surcharges) && surcharges.length > 0 ? surcharges[0] : null);
+    setFeeRules(rules);
+    setSurcharge(surcharge);
     setLoadingRules(false);
   };
 
