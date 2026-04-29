@@ -350,6 +350,7 @@ export default function FeeCalculator() {
             {/* City accent badge + NOC note */}
             {(() => {
               const accent = CITY_ACCENT[city] || CITY_ACCENT["Weston"];
+              const isStale = cityObj?.fee_schedule_status === "stale";
               return (
                 <div className="mb-4 space-y-2">
                   {/* City badge */}
@@ -357,6 +358,24 @@ export default function FeeCalculator() {
                     <span className={`w-2 h-2 rounded-full ${accent.dot}`} />
                     {city} Fee Schedule
                   </div>
+                  {/* Stale fee schedule warning */}
+                  {isStale && (
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                      <span className="text-amber-500 text-sm shrink-0">⚠️</span>
+                      <div>
+                        <p className="text-xs font-semibold text-amber-800">Unverified Fee Schedule</p>
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          The fee schedule for {city}{cityObj?.fee_schedule_year ? ` is from ${cityObj.fee_schedule_year} and` : ""} may be outdated.
+                          We recommend calling the building department to confirm current rates before applying.
+                        </p>
+                        {cityObj?.building_department_phone && (
+                          <a href={`tel:${cityObj.building_department_phone.replace(/\D/g, "")}`} className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-amber-800 hover:underline">
+                            📞 {cityObj.building_department_phone}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {/* NOC banner */}
                   {CITY_NOTES[city] && (
                     <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
@@ -631,7 +650,10 @@ export default function FeeCalculator() {
                           </a>
                         </Button>
                       )}
-                      <p className="text-xs text-gray-400 text-center leading-snug">Fees are estimates only and subject to departmental verification.</p>
+                      <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                        <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Fee Estimate Notice</p>
+                        <p className="text-xs text-amber-700 leading-relaxed">Permit fees shown are estimates based on official municipal fee schedules and may not reflect the most current rates. Fees can change without notice. Always verify current fees directly with the city building department before submitting a permit application. OpenPermit is not responsible for discrepancies between estimated and actual permit fees.</p>
+                      </div>
                     </>
                   )}
 

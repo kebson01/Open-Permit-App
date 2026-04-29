@@ -35,15 +35,13 @@ function isFolioSearch(term) {
   return /^[0-9A-Za-z]{8,15}$/.test(term.trim()) && !/\s/.test(term.trim());
 }
 
-async function searchProperties(query, city = "All Cities") {
-  if (!query || query.trim().length < 3) return [];
-
-  const type = isFolioSearch(query) ? "folio" : "address";
-  const params = new URLSearchParams({ q: query.trim(), city, type });
-
+async function searchProperties(rawQuery, city = "All Cities", type = "address") {
+  const q = rawQuery?.trim();
+  if (!q || q.length < 3) return [];
+  const params = new URLSearchParams({ q, city, type });
   const res = await fetch(`${PROPERTY_SEARCH_URL}?${params}`);
-  const { data, error } = await res.json();
-  if (error) console.error("Property search error:", error);
+  if (!res.ok) return [];
+  const { data } = await res.json();
   return data ?? [];
 }
 
@@ -259,13 +257,14 @@ export default function PropertyGuide() {
   const [error, setError] = useState(null);
 
   const doSearch = async () => {
-    if (!query.trim()) return;
+    if (!query.trim() || query.trim().length < 3) return;
+    const type = isFolioSearch(query) ? "folio" : "address";
     setLoading(true);
     setSearched(true);
     setSelected(null);
     setError(null);
     setResults([]);
-    const data = await searchProperties(query, selectedCity);
+    const data = await searchProperties(query, selectedCity, type);
     setResults(Array.isArray(data) ? data : []);
     setLoading(false);
   };
