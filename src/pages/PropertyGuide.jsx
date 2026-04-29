@@ -4,18 +4,6 @@ import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 
-const PROPERTY_SEARCH_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
-
-async function searchProperties(rawQuery, city = "All Cities", type = "address") {
-  const q = rawQuery?.trim();
-  if (!q || q.length < 3) return [];
-  const params = new URLSearchParams({ q, city, type });
-  const res = await fetch(`${PROPERTY_SEARCH_URL}?${params}`);
-  if (!res.ok) return [];
-  const { data } = await res.json();
-  return data ?? [];
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
@@ -41,8 +29,22 @@ const STATUS_STYLES = {
   "Cancelled": { bg: "#FEF2F2", color: "#991B1B" },
 };
 
+const PROPERTY_SEARCH_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/property-search";
+
 function isFolioSearch(term) {
   return /^[0-9A-Za-z]{8,15}$/.test(term.trim()) && !/\s/.test(term.trim());
+}
+
+async function searchProperties(query, city = "All Cities") {
+  if (!query || query.trim().length < 3) return [];
+
+  const type = isFolioSearch(query) ? "folio" : "address";
+  const params = new URLSearchParams({ q: query.trim(), city, type });
+
+  const res = await fetch(`${PROPERTY_SEARCH_URL}?${params}`);
+  const { data, error } = await res.json();
+  if (error) console.error("Property search error:", error);
+  return data ?? [];
 }
 
 async function getPermitHistory(folioNumber) {
@@ -257,14 +259,13 @@ export default function PropertyGuide() {
   const [error, setError] = useState(null);
 
   const doSearch = async () => {
-    if (!query.trim() || query.trim().length < 3) return;
-    const type = isFolioSearch(query) ? "folio" : "address";
+    if (!query.trim()) return;
     setLoading(true);
     setSearched(true);
     setSelected(null);
     setError(null);
     setResults([]);
-    const data = await searchProperties(query, selectedCity, type);
+    const data = await searchProperties(query, selectedCity);
     setResults(Array.isArray(data) ? data : []);
     setLoading(false);
   };

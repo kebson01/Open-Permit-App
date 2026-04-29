@@ -219,6 +219,7 @@ export default function FeeCalculator() {
   }, [city]);
 
   const loadCityData = async (cityName, cityRecord) => {
+    // Skip DB fetch for cities without fee data
     if (cityRecord && !cityHasFeeData(cityRecord)) {
       setFeeRules([]);
       setSurcharge(null);
@@ -351,16 +352,19 @@ export default function FeeCalculator() {
               const accent = CITY_ACCENT[city] || CITY_ACCENT["Weston"];
               return (
                 <div className="mb-4 space-y-2">
+                  {/* City badge */}
                   <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${accent.bg} ${accent.border} ${accent.text}`}>
                     <span className={`w-2 h-2 rounded-full ${accent.dot}`} />
                     {city} Fee Schedule
                   </div>
+                  {/* NOC banner */}
                   {CITY_NOTES[city] && (
                     <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
                     </div>
                   )}
+                  {/* Fee structure summary */}
                   {CITY_FEE_SUMMARY[city] && (
                     <div className={`flex items-start gap-2 p-3 rounded-xl border ${accent.bg} ${accent.border}`}>
                       <Calculator className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${accent.text}`} />
@@ -627,6 +631,7 @@ export default function FeeCalculator() {
                           </a>
                         </Button>
                       )}
+                      <p className="text-xs text-gray-400 text-center leading-snug">Fees are estimates only and subject to departmental verification.</p>
                     </>
                   )}
 
