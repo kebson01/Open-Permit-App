@@ -79,17 +79,22 @@ const SB_HEADERS = {
   Range: "0-999",
 };
 
-// Fetch permit_table_name dynamically from cities table
+// Fetch permit_table_name from cached cities edge function
 const _cityTableCache = {};
 async function getPermitTable(cityName) {
   if (_cityTableCache[cityName]) return _cityTableCache[cityName];
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/cities?name=eq.${encodeURIComponent(cityName)}&select=permit_table_name&limit=1`,
-    { headers: SB_HEADERS }
-  );
-  const data = await res.json();
-  const table = (Array.isArray(data) && data[0]?.permit_table_name) || `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
-  _cityTableCache[cityName] = table;
+  const res = await fetch('https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/cities');
+  const { data } = await res.json();
+  const city = Array.isArray(data) ? data.find(c => c.name === cityName) : null;
+  const table = city?.permit_table_name || `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
+  // Cache all cities at once to avoid repeated calls
+  if (Array.isArray(data)) {
+    data.forEach(c => {
+      _cityTableCache[c.name] = c.permit_table_name || `${c.name.toLowerCase().replace(/ /g, "_")}_permit_types`;
+    });
+  } else {
+    _cityTableCache[cityName] = table;
+  }
   return table;
 }
 

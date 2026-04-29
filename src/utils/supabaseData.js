@@ -10,12 +10,9 @@ export async function getCities() {
   if (_citiesCache) return _citiesCache;
   if (_citiesPromise) return _citiesPromise;
 
-  _citiesPromise = fetch(
-    `${SUPABASE_URL}/rest/v1/cities?select=name,slug,building_department_phone,portal_url,fee_source,fee_schedule_status,fee_schedule_year,enabled_services,building_department_address&order=name.asc`,
-    { headers: HEADERS }
-  )
+  _citiesPromise = fetch('https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/cities')
     .then(r => r.json())
-    .then(data => {
+    .then(({ data }) => {
       _citiesCache = Array.isArray(data) ? data : [];
       _citiesPromise = null;
       return _citiesCache;
