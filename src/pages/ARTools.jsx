@@ -243,35 +243,14 @@ export default function ARTools() {
     }
   }, [lat, lng, hasLoadedZoning]);
 
-  // BUG 1 FIX: Proper camera start
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      });
-
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "");
-        videoRef.current.setAttribute("muted", "");
-        try {
-          await videoRef.current.play();
-        } catch (e) {
-          console.log("Play error:", e);
-        }
-      }
-    } catch (err) {
-      console.error("Camera error:", err);
-      setCameraError(true);
-    }
-  };
+  // Attach stream to video element once permitted (video element now exists in DOM)
+  useEffect(() => {
+    if (!permitted || !streamRef.current) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = streamRef.current;
+    video.play().catch(e => console.log("Play error:", e));
+  }, [permitted]);
 
   // BUG 2 FIX: GPS watcher runs only once on mount (after permitted)
   const startGPS = () => {
@@ -287,9 +266,23 @@ export default function ARTools() {
   };
 
   const handleEnable = async () => {
-    await startCamera();
+    // Get the stream first, store it, then show the camera view
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+    } catch (err) {
+      console.error("Camera error:", err);
+      setCameraError(true);
+    }
     startGPS();
-    setPermitted(true);
+    setPermitted(true); // render the video element first
   };
 
   const captureAndAnalyze = async () => {
