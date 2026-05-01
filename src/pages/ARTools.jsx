@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Camera, MapPin, Ruler, Search, ScanLine } from "lucide-react";
+import { X, Camera, MapPin, Ruler } from "lucide-react";
 
 const AR_TOOLS_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/ar-tools";
 
@@ -40,22 +40,19 @@ function SetbackOverlay({ zoning }) {
   return (
     <>
       {/* Setback lines */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Front setback line */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3 }}>
         <div className="absolute left-0 right-0" style={{ top: "28%" }}>
           <div className="w-full h-0.5 bg-blue-400 opacity-80" />
           <div className="absolute left-3 -top-6 bg-black/70 text-blue-300 text-xs px-2 py-1 rounded-lg font-medium">
             Front Setback: {frontFt} ft
           </div>
         </div>
-        {/* Rear setback line */}
         <div className="absolute left-0 right-0" style={{ top: "65%" }}>
           <div className="w-full h-0.5 bg-blue-400 opacity-80" />
           <div className="absolute right-3 -top-6 bg-black/70 text-blue-300 text-xs px-2 py-1 rounded-lg font-medium">
             Rear Setback: {rearFt} ft
           </div>
         </div>
-        {/* Side markers */}
         <div className="absolute top-1/2 left-0 -translate-y-1/2 w-1 h-24 bg-blue-400 opacity-60 rounded-r" />
         <div className="absolute top-1/2 left-2 -translate-y-1/2 bg-black/70 text-blue-300 text-[10px] px-1.5 py-1 rounded-lg" style={{ writingMode: "vertical-rl" }}>
           Side {sideFt} ft
@@ -66,7 +63,7 @@ function SetbackOverlay({ zoning }) {
       {/* Bottom panel */}
       <div
         className="absolute bottom-0 left-0 right-0 transition-transform duration-300"
-        style={{ transform: panelOpen ? "translateY(0)" : "translateY(calc(100% - 56px))" }}
+        style={{ zIndex: 4, transform: panelOpen ? "translateY(0)" : "translateY(calc(100% - 56px))" }}
       >
         <button
           onClick={() => setPanelOpen(p => !p)}
@@ -91,7 +88,10 @@ function SetbackOverlay({ zoning }) {
               { label: "Max Fence", value: maxFence },
             ].map(item => (
               <div key={item.label} className="bg-white/10 rounded-xl p-3 text-center">
-                <p className="text-white font-bold text-lg">{item.value}<span className="text-gray-400 text-xs ml-0.5">{item.value !== "—" ? " ft" : ""}</span></p>
+                <p className="text-white font-bold text-lg">
+                  {item.value}
+                  <span className="text-gray-400 text-xs ml-0.5">{item.value !== "—" ? " ft" : ""}</span>
+                </p>
                 <p className="text-gray-400 text-[10px] mt-0.5">{item.label}</p>
               </div>
             ))}
@@ -107,9 +107,8 @@ function SetbackOverlay({ zoning }) {
 function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, capturedImage, onCloseResults }) {
   return (
     <>
-      {/* Scanning animation */}
       {!showResults && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 3 }}>
           <div
             className="absolute left-0 right-0 h-0.5"
             style={{
@@ -120,23 +119,21 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
         </div>
       )}
 
-      {/* Capture button */}
       {!showResults && (
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+        <div className="absolute bottom-10 left-0 right-0 flex justify-center" style={{ zIndex: 4 }}>
           <button
             onClick={onCapture}
-            className="w-18 h-18 rounded-full bg-white flex items-center justify-center shadow-2xl active:scale-95 transition-transform"
+            className="rounded-full bg-white flex items-center justify-center shadow-2xl active:scale-95 transition-transform"
             style={{ width: 72, height: 72, border: "4px solid rgba(255,255,255,0.5)" }}
           >
-            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-2xl">📸</div>
+            <span className="text-2xl">📸</span>
           </button>
         </div>
       )}
 
-      {/* Results overlay */}
       {showResults && (
-        <div className="absolute inset-0 overflow-y-auto" style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(8px)" }}>
-          <div className="min-h-full px-5 pt-12 pb-10">
+        <div className="absolute inset-0 overflow-y-auto" style={{ zIndex: 5, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(8px)" }}>
+          <div className="min-h-full px-5 pb-10" style={{ paddingTop: "calc(env(safe-area-inset-top) + 48px)" }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-white font-bold text-lg">Permit Analysis</h2>
               <button onClick={onCloseResults} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
@@ -144,7 +141,6 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               </button>
             </div>
 
-            {/* Captured image preview */}
             {capturedImage && (
               <img src={capturedImage} alt="Captured" className="w-full rounded-2xl mb-5 max-h-48 object-cover" />
             )}
@@ -156,7 +152,6 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               </div>
             ) : analysis ? (
               <div className="space-y-4">
-                {/* Structures */}
                 {Array.isArray(analysis.structures) && analysis.structures.map((s, i) => (
                   <div key={i} className="bg-white/10 rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-2">
@@ -169,19 +164,14 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {s.hvhz_concern && (
-                        <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">⚠ HVHZ Concern</span>
-                      )}
-                      {s.may_be_unpermitted && (
-                        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">🚨 May Be Unpermitted</span>
-                      )}
+                      {s.hvhz_concern && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">⚠ HVHZ Concern</span>}
+                      {s.may_be_unpermitted && <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">🚨 May Be Unpermitted</span>}
                     </div>
                     {s.notes && <p className="text-gray-400 text-xs mb-1">{s.notes}</p>}
                     {s.recommended_action && <p className="text-blue-300 text-xs font-medium">→ {s.recommended_action}</p>}
                   </div>
                 ))}
 
-                {/* Red flags */}
                 {Array.isArray(analysis.red_flags) && analysis.red_flags.length > 0 && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
                     <p className="text-red-400 font-semibold text-sm mb-2">🚩 Red Flags</p>
@@ -209,44 +199,91 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
 export default function ARTools() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const watchIdRef = useRef(null);
 
   const [permitted, setPermitted] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
   const [tab, setTab] = useState("setback");
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
   const [zoning, setZoning] = useState(null);
+  const [hasLoadedZoning, setHasLoadedZoning] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
 
-  // Stop camera on unmount
+  // BUG 3 FIX: Stop camera on unmount
   useEffect(() => {
     return () => {
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-      if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
   }, []);
 
-  const startCamera = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false,
-    });
-    streamRef.current = stream;
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
+  // BUG 2 FIX: Load zoning only ONCE when lat/lng first become available
+  const loadZoning = async (latitude, longitude) => {
+    try {
+      const res = await fetch(AR_TOOLS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getZoning", lat: latitude, lng: longitude }),
+      });
+      const data = await res.json();
+      if (data.success) setZoning(data);
+    } catch (e) {
+      console.log("Zoning error:", e);
     }
   };
 
+  useEffect(() => {
+    if (lat && lng && !hasLoadedZoning) {
+      setHasLoadedZoning(true);
+      loadZoning(lat, lng);
+    }
+  }, [lat, lng, hasLoadedZoning]);
+
+  // BUG 1 FIX: Proper camera start
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "");
+        videoRef.current.setAttribute("muted", "");
+        try {
+          await videoRef.current.play();
+        } catch (e) {
+          console.log("Play error:", e);
+        }
+      }
+    } catch (err) {
+      console.error("Camera error:", err);
+      setCameraError(true);
+    }
+  };
+
+  // BUG 2 FIX: GPS watcher runs only once on mount (after permitted)
   const startGPS = () => {
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      pos => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); },
+    const watchId = navigator.geolocation.watchPosition(
+      pos => {
+        setLat(pos.coords.latitude);
+        setLng(pos.coords.longitude);
+      },
       err => console.log("GPS error", err),
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
+    return watchId;
   };
 
   const handleEnable = async () => {
@@ -254,25 +291,6 @@ export default function ARTools() {
     startGPS();
     setPermitted(true);
   };
-
-  // Load zoning when GPS available
-  useEffect(() => {
-    if (!lat || !lng) return;
-    const load = async () => {
-      try {
-        const res = await fetch(AR_TOOLS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "getZoning", lat, lng }),
-        });
-        const data = await res.json();
-        if (data.success) setZoning(data);
-      } catch (e) {
-        console.log("Zoning load failed", e);
-      }
-    };
-    load();
-  }, [lat, lng]);
 
   const captureAndAnalyze = async () => {
     const video = videoRef.current;
@@ -308,7 +326,7 @@ export default function ARTools() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden" style={{ zIndex: 40 }}>
+    <div style={{ position: "fixed", inset: 0, background: "#000", overflow: "hidden", zIndex: 40 }}>
       <style>{`
         @keyframes scanline {
           0% { top: 0%; }
@@ -316,42 +334,84 @@ export default function ARTools() {
         }
       `}</style>
 
-      {/* Camera feed */}
+      {/* BUG 1 FIX: Video with correct props and inline styles */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
         playsInline
         muted
-        autoPlay
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 1,
+          backgroundColor: "#000",
+        }}
       />
+
+      {/* Camera error message */}
+      {cameraError && (
+        <div className="absolute inset-0 flex items-center justify-center px-8 text-center" style={{ zIndex: 2 }}>
+          <div className="bg-white/10 rounded-2xl p-6">
+            <Camera className="w-10 h-10 text-red-400 mx-auto mb-3" />
+            <p className="text-white font-semibold mb-1">Camera Unavailable</p>
+            <p className="text-gray-400 text-sm">Could not access camera. Please allow camera permission in your browser settings.</p>
+          </div>
+        </div>
+      )}
 
       {/* Top bar */}
       <div
-        className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pb-3"
         style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 5,
           paddingTop: "calc(env(safe-area-inset-top) + 12px)",
+          paddingBottom: 12,
+          paddingLeft: 16,
+          paddingRight: 16,
           background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         {/* GPS indicator */}
-        <div className="flex items-center gap-1.5 bg-black/50 rounded-full px-3 py-1.5">
-          <MapPin className={`w-3.5 h-3.5 ${lat ? "text-green-400" : "text-gray-500"}`} />
-          <span className="text-xs text-white font-medium">
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.5)", borderRadius: 999, padding: "6px 12px" }}>
+          <MapPin style={{ width: 14, height: 14, color: lat ? "#4ade80" : "#6b7280" }} />
+          <span style={{ fontSize: 12, color: "#fff", fontWeight: 500 }}>
             {lat ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : "Locating..."}
           </span>
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-black/60 rounded-full p-1" style={{ backdropFilter: "blur(8px)" }}>
+        <div style={{ display: "flex", background: "rgba(0,0,0,0.6)", borderRadius: 999, padding: 4, backdropFilter: "blur(8px)" }}>
           <button
             onClick={() => setTab("setback")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === "setback" ? "bg-blue-600 text-white" : "text-gray-300"}`}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+              background: tab === "setback" ? "#2563eb" : "transparent",
+              color: tab === "setback" ? "#fff" : "#d1d5db",
+              border: "none", cursor: "pointer",
+            }}
           >
             📐 Setback
           </button>
           <button
             onClick={() => { setTab("permit"); setShowResults(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === "permit" ? "bg-blue-600 text-white" : "text-gray-300"}`}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+              background: tab === "permit" ? "#2563eb" : "transparent",
+              color: tab === "permit" ? "#fff" : "#d1d5db",
+              border: "none", cursor: "pointer",
+            }}
           >
             🔍 Permit
           </button>
@@ -359,9 +419,7 @@ export default function ARTools() {
       </div>
 
       {/* Mode overlays */}
-      {tab === "setback" && (
-        <SetbackOverlay zoning={zoning} />
-      )}
+      {tab === "setback" && <SetbackOverlay zoning={zoning} />}
       {tab === "permit" && (
         <PermitCheckOverlay
           onCapture={captureAndAnalyze}
