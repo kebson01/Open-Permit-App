@@ -185,14 +185,18 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               </button>
             </div>
 
-            {/* FIX 1: Full image, not cropped */}
+            {/* FIX 1: GPS coordinates always at top */}
+            <div style={{fontSize:'12px', color:'#60a5fa', fontFamily:'monospace', marginBottom:'12px'}}>
+              📍 GPS: {lat?.toFixed(6)}, {lng?.toFixed(6)}
+            </div>
+
+            {/* FIX 2: Full image, not cropped */}
             {capturedImage && (
               <img
                 src={capturedImage}
-                alt="Captured"
+                alt="Captured photo"
                 style={{
                   width: '100%',
-                  maxWidth: '100%',
                   height: 'auto',
                   borderRadius: '12px',
                   marginBottom: '16px',
@@ -201,46 +205,48 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               />
             )}
 
-            {/* FIX 2: GPS + property info always shown, reading from analysis response */}
-            <div style={{
-              background: 'rgba(59,130,246,0.15)',
-              border: '1px solid rgba(96,165,250,0.3)',
-              borderRadius: '12px',
-              padding: '14px',
-              marginBottom: '16px'
-            }}>
-              {lat && lng && (
-                <div style={{fontSize: '12px', color: '#60a5fa', marginBottom: '6px'}}>
-                  📍 {lat.toFixed(4)}, {lng.toFixed(4)}
+            {/* FIX 3: Google address + property info */}
+            {analysis?.google_address && (
+              <div style={{
+                background:'rgba(59,130,246,0.12)',
+                border:'1px solid rgba(96,165,250,0.25)',
+                borderRadius:'10px', padding:'12px', marginBottom:'14px'
+              }}>
+                <div style={{fontSize:'11px', color:'#60a5fa', fontWeight:'700', marginBottom:'6px', textTransform:'uppercase', letterSpacing:'0.5px'}}>
+                  📍 Location Identified
                 </div>
-              )}
-              {analysis?.google_address && (
-                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '4px'}}>
+                <div style={{fontSize:'13px', color:'rgba(255,255,255,0.8)', marginBottom:'6px'}}>
                   {analysis.google_address}
                 </div>
-              )}
-              {analysis?.property ? (
-                <div>
-                  <div style={{fontSize: '14px', fontWeight: '700', color: 'white'}}>
-                    {analysis.property.full_address}
+                {analysis.property ? (
+                  <div>
+                    <div style={{fontSize:'14px', fontWeight:'700', color:'white'}}>
+                      {analysis.property.full_address}
+                    </div>
+                    <div style={{fontSize:'12px', color:'rgba(255,255,255,0.5)', marginTop:'4px', display:'flex', flexWrap:'wrap', gap:'8px'}}>
+                      <span>Folio: {analysis.property.folio_number}</span>
+                      <span>{analysis.property.city_name}</span>
+                      {analysis.property.year_built && <span>Built {analysis.property.year_built}</span>}
+                      {analysis.property.total_sqft && <span>{Number(analysis.property.total_sqft).toLocaleString()} sqft</span>}
+                    </div>
+                    {analysis.permit_history?.length > 0 && (
+                      <div style={{marginTop:'8px', fontSize:'12px', color:'#4ade80'}}>
+                        ✅ {analysis.permit_history.length} permit{analysis.permit_history.length !== 1 ? 's' : ''} on file for this property
+                      </div>
+                    )}
+                    {analysis.permit_history?.length === 0 && (
+                      <div style={{marginTop:'8px', fontSize:'12px', color:'rgba(255,255,255,0.4)'}}>
+                        No permit history found
+                      </div>
+                    )}
                   </div>
-                  <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px'}}>
-                    Folio: {analysis.property.folio_number} • {analysis.property.city_name}
-                    {analysis.property.year_built ? ` • Built ${analysis.property.year_built}` : ''}
-                    {analysis.property.total_sqft ? ` • ${Number(analysis.property.total_sqft).toLocaleString()} sqft` : ''}
+                ) : (
+                  <div style={{fontSize:'12px', color:'rgba(255,255,255,0.4)'}}>
+                    Property not matched in BCPA database
                   </div>
-                </div>
-              ) : (
-                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.5)'}}>
-                  Property not matched in BCPA database
-                </div>
-              )}
-              {analysis?.city && (
-                <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px'}}>
-                  City: {analysis.city}{analysis.city_phone ? ` • 📞 ${analysis.city_phone}` : ''}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {analyzing ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4">
@@ -248,135 +254,150 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                 <p className="text-gray-300 text-sm">AI is analyzing structures... (5–10 seconds)</p>
               </div>
             ) : analysis?.error ? (
-              /* BUG 3: Error state */
               <div className="flex flex-col items-center justify-center py-12 gap-4">
                 <p className="text-red-400 text-center">{analysis.error}</p>
-                <button
-                  onClick={onCloseResults}
-                  className="px-5 py-2 rounded-xl bg-white/10 text-white text-sm font-medium"
-                >
+                <button onClick={onCloseResults} className="px-5 py-2 rounded-xl bg-white/10 text-white text-sm font-medium">
                   Try Again
                 </button>
               </div>
             ) : analysis ? (
-              /* Handle full API response shape — analysis lives at data.analysis */
               <div className="space-y-4">
-                {/* FIX 3: AI error banner */}
+                {/* FIX 5: AI error banner */}
                 {analysis.analysis?.ai_error && (
-                  <div style={{
-                    background: 'rgba(234,179,8,0.1)',
-                    border: '1px solid rgba(234,179,8,0.3)',
-                    borderRadius: '10px',
-                    padding: '14px',
-                  }}>
-                    <div style={{fontSize: '13px', color: '#facc15', fontWeight: '600', marginBottom: '6px'}}>
-                      ⚠️ AI Analysis Temporarily Unavailable
+                  <div style={{background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.3)', borderRadius:'10px', padding:'14px', marginBottom:'14px'}}>
+                    <div style={{fontSize:'13px', color:'#facc15', fontWeight:'700', marginBottom:'6px'}}>⚠️ AI Analysis Temporarily Unavailable</div>
+                    <div style={{fontSize:'12px', color:'rgba(255,255,255,0.6)'}}>
+                      Property identification worked. For permit requirements, contact the building department directly.
                     </div>
-                    <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.6)'}}>
-                      The photo was captured successfully. For permit requirements at this location, contact the building department directly.
-                    </div>
-                    {analysis.city_phone && (
-                      <div style={{marginTop: '8px'}}>
-                        <a href={`tel:${analysis.city_phone}`} style={{color: '#60a5fa', fontSize: '13px', fontWeight: '600'}}>
-                          📞 {analysis.city} Building Dept: {analysis.city_phone}
-                        </a>
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* What the AI sees */}
-                {analysis.analysis?.what_i_see && (
-                  <p className="text-gray-300 text-sm italic">{analysis.analysis.what_i_see}</p>
-                )}
-
-                {/* Structures — supports both old shape (s.name) and new shape (s.visual_label) */}
-                {Array.isArray(analysis.analysis?.structures) && analysis.analysis.structures.map((s, i) => (
-                  <div key={i} className="bg-white/10 rounded-2xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-white font-semibold">{s.visual_label || s.name}</p>
-                        {s.type && <p className="text-gray-400 text-xs">{s.type}</p>}
-                      </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${s.permit_required ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}>
-                        {s.permit_required ? "🔴 Permit Required" : "🟢 No Permit Needed"}
-                      </span>
-                    </div>
-                    {s.permit_required && (
-                      <div className="mb-2 space-y-1">
-                        {s.permit_name && <p className="text-white text-xs font-semibold">{s.permit_name}</p>}
-                        {s.fee_explanation && <p className="text-gray-400 text-xs">{s.fee_explanation}</p>}
-                        {s.hvhz_requirement && <p className="text-yellow-400 text-xs">⚡ {s.hvhz_requirement}</p>}
-                        {s.noc_required && <p className="text-blue-300 text-xs">📋 NOC required if over {s.noc_threshold}</p>}
+                {/* FIX 4: AI analysis structures */}
+                {analysis.analysis?.structures?.length > 0 && (
+                  <div>
+                    {analysis.analysis.what_i_see && (
+                      <div style={{fontSize:'14px', fontWeight:'700', color:'white', marginBottom:'12px'}}>
+                        🔍 {analysis.analysis.what_i_see}
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-2 mb-1">
-                      {(s.hvhz_concern) && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">⚠ HVHZ Concern</span>}
-                      {s.may_be_unpermitted && <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">🚨 May Be Unpermitted</span>}
-                    </div>
-                    {s.notes && <p className="text-gray-400 text-xs mb-1">{s.notes}</p>}
-                    {s.recommended_action && <p className="text-blue-300 text-xs font-medium">→ {s.recommended_action}</p>}
+                    {analysis.analysis.structures.map((s, i) => (
+                      <div key={i} style={{
+                        background:'rgba(255,255,255,0.06)',
+                        border:`1px solid ${s.permit_required ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+                        borderRadius:'12px', padding:'14px', marginBottom:'10px'
+                      }}>
+                        <div style={{fontSize:'15px', fontWeight:'700', color:'white', marginBottom:'8px'}}>
+                          {s.visual_label || s.name}
+                        </div>
+                        <div style={{marginBottom:'8px'}}>
+                          <span style={{
+                            display:'inline-block', padding:'3px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700',
+                            background: s.permit_required ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
+                            color: s.permit_required ? '#f87171' : '#4ade80',
+                            border: `1px solid ${s.permit_required ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`
+                          }}>
+                            {s.permit_required ? '🔴 Permit Required' : '🟢 No Permit Needed'}
+                          </span>
+                          {s.hvhz_requirement && (
+                            <span style={{display:'inline-block', marginLeft:'6px', padding:'3px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'rgba(234,179,8,0.2)', color:'#facc15', border:'1px solid rgba(234,179,8,0.4)'}}>
+                              ⚡ HVHZ
+                            </span>
+                          )}
+                        </div>
+                        {s.permit_required && s.permit_name && (
+                          <div style={{fontSize:'13px', color:'rgba(255,255,255,0.8)', marginBottom:'6px'}}>
+                            <strong>{s.permit_name}</strong>
+                          </div>
+                        )}
+                        {s.fee_explanation && (
+                          <div style={{fontSize:'13px', color:'rgba(255,255,255,0.6)', marginBottom:'6px'}}>
+                            💰 {s.fee_explanation}
+                          </div>
+                        )}
+                        {s.noc_required && (
+                          <div style={{fontSize:'12px', color:'rgba(255,255,255,0.5)', marginBottom:'4px'}}>
+                            📋 NOC required if over {s.noc_threshold || '$2,500'}
+                          </div>
+                        )}
+                        {s.hvhz_requirement && (
+                          <div style={{fontSize:'12px', color:'#facc15', marginBottom:'4px'}}>
+                            ⚡ {s.hvhz_requirement}
+                          </div>
+                        )}
+                        {s.already_permitted && (
+                          <div style={{fontSize:'12px', color:'#4ade80'}}>
+                            ✅ {s.permit_history_note || 'This work appears to already have a permit on file'}
+                          </div>
+                        )}
+                        {s.notes && (
+                          <div style={{fontSize:'12px', color:'rgba(255,255,255,0.4)', marginTop:'6px'}}>
+                            {s.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
 
-                {/* No permit needed list */}
-                {Array.isArray(analysis.analysis?.no_permit_needed) && analysis.analysis.no_permit_needed.length > 0 && (
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
-                    <p className="text-green-400 font-semibold text-sm mb-2">✅ No Permit Needed For:</p>
+                {/* No permit needed items */}
+                {analysis.analysis?.no_permit_needed?.length > 0 && (
+                  <div style={{background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:'10px', padding:'12px', marginBottom:'12px'}}>
+                    <div style={{fontSize:'13px', fontWeight:'700', color:'#4ade80', marginBottom:'8px'}}>✅ No Permit Needed For:</div>
                     {analysis.analysis.no_permit_needed.map((item, i) => (
-                      <p key={i} className="text-green-300 text-xs mb-1">• {item}</p>
+                      <div key={i} style={{fontSize:'13px', color:'rgba(255,255,255,0.6)', padding:'3px 0'}}>• {item}</div>
                     ))}
                   </div>
                 )}
 
                 {/* Red flags */}
-                {Array.isArray(analysis.analysis?.red_flags) && analysis.analysis.red_flags.length > 0 && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
-                    <p className="text-red-400 font-semibold text-sm mb-2">🚩 Concerns</p>
+                {analysis.analysis?.red_flags?.length > 0 && (
+                  <div style={{background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:'10px', padding:'12px', marginBottom:'12px'}}>
+                    <div style={{fontSize:'13px', fontWeight:'700', color:'#f87171', marginBottom:'8px'}}>⚠️ Concerns Found:</div>
                     {analysis.analysis.red_flags.map((flag, i) => (
-                      <p key={i} className="text-red-300 text-xs mb-1">• {flag}</p>
+                      <div key={i} style={{fontSize:'13px', color:'rgba(255,255,255,0.6)', padding:'3px 0'}}>• {flag}</div>
                     ))}
                   </div>
                 )}
 
                 {/* Next steps */}
                 {analysis.analysis?.next_steps && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                    <p className="text-blue-400 font-semibold text-sm mb-1">📋 Next Steps</p>
-                    <p className="text-blue-200 text-xs">{analysis.analysis.next_steps}</p>
+                  <div style={{background:'rgba(255,255,255,0.05)', borderRadius:'10px', padding:'12px', marginBottom:'12px'}}>
+                    <div style={{fontSize:'13px', fontWeight:'700', color:'white', marginBottom:'6px'}}>📋 Next Steps:</div>
+                    <div style={{fontSize:'13px', color:'rgba(255,255,255,0.7)'}}>{analysis.analysis.next_steps}</div>
                   </div>
                 )}
 
                 {/* City contact */}
                 {analysis.city_phone && (
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center gap-2">
-                    <span className="text-gray-400 text-xs">📞 {analysis.city} Building Dept:</span>
-                    <a href={`tel:${analysis.city_phone}`} className="text-blue-400 text-xs font-semibold">{analysis.city_phone}</a>
-                  </div>
+                  <a href={`tel:${analysis.city_phone}`} style={{display:'block', background:'rgba(59,130,246,0.15)', border:'1px solid rgba(96,165,250,0.3)', borderRadius:'10px', padding:'12px', textDecoration:'none', textAlign:'center', marginBottom:'12px'}}>
+                    <div style={{fontSize:'14px', fontWeight:'700', color:'#60a5fa'}}>
+                      📞 {analysis.city} Building Dept
+                    </div>
+                    <div style={{fontSize:'13px', color:'rgba(255,255,255,0.6)', marginTop:'4px'}}>
+                      {analysis.city_phone} — Tap to call
+                    </div>
+                  </a>
                 )}
 
                 {/* Permit History */}
                 {permitHistory && permitHistory.length > 0 && (
-                  <div style={{marginTop: '8px'}}>
-                    <div style={{fontSize: '14px', fontWeight: '700', color: '#60a5fa', marginBottom: '12px'}}>
+                  <div style={{marginTop:'8px'}}>
+                    <div style={{fontSize:'14px', fontWeight:'700', color:'#60a5fa', marginBottom:'12px'}}>
                       📋 Permit History ({permitHistory.length} permit{permitHistory.length !== 1 ? 's' : ''} on file)
                     </div>
                     {permitHistory.map((p, i) => (
                       <div key={i} style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        borderRadius: '10px',
-                        padding: '12px',
-                        marginBottom: '8px',
+                        background:'rgba(255,255,255,0.05)', borderRadius:'10px', padding:'12px', marginBottom:'8px',
                         borderLeft: `3px solid ${p.status === 'finaled' ? '#22c55e' : p.status === 'expired' ? '#ef4444' : '#f59e0b'}`
                       }}>
-                        <div style={{fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '4px'}}>
+                        <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'4px'}}>
                           {p.permit_type?.replace(/_/g, ' ').toUpperCase()}
                         </div>
-                        <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px'}}>
+                        <div style={{fontSize:'12px', color:'rgba(255,255,255,0.5)', marginBottom:'4px'}}>
                           {p.permit_description}
                         </div>
-                        <div style={{display: 'flex', gap: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.4)'}}>
-                          <span style={{color: p.status === 'finaled' ? '#4ade80' : '#f87171', fontWeight: '600'}}>
+                        <div style={{display:'flex', gap:'12px', fontSize:'11px', color:'rgba(255,255,255,0.4)'}}>
+                          <span style={{color: p.status === 'finaled' ? '#4ade80' : '#f87171', fontWeight:'600'}}>
                             {p.status?.toUpperCase()}
                           </span>
                           {p.issued_date && <span>Issued: {p.issued_date}</span>}
@@ -388,20 +409,13 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                 )}
 
                 {permitHistory && permitHistory.length === 0 && property?.city_name === 'Weston' && (
-                  <div style={{
-                    padding: '12px',
-                    background: 'rgba(234,179,8,0.1)',
-                    border: '1px solid rgba(234,179,8,0.3)',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    color: '#facc15'
-                  }}>
+                  <div style={{padding:'12px', background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.3)', borderRadius:'10px', fontSize:'13px', color:'#facc15'}}>
                     ⚠️ No permits found in records for this property. Verify with Weston Building Department.
                   </div>
                 )}
 
-                <div className="bg-white/5 rounded-xl p-3 mt-2">
-                  <p className="text-gray-500 text-[10px] text-center">AI estimates only — always verify with your local building department before starting work.</p>
+                <div style={{background:'rgba(255,255,255,0.05)', borderRadius:'10px', padding:'10px', marginTop:'8px'}}>
+                  <p style={{fontSize:'10px', color:'rgba(255,255,255,0.3)', textAlign:'center'}}>AI estimates only — always verify with your local building department before starting work.</p>
                 </div>
               </div>
             ) : (
