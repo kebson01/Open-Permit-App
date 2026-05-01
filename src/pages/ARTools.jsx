@@ -148,7 +148,7 @@ function SetbackOverlay({ zoning, property, propertyFound, permitHistory, zoning
 }
 
 // ── Permit Check Overlay ──────────────────────────────────────────────────────
-function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, capturedImage, onCloseResults, property, permitHistory }) {
+function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, capturedImage, onCloseResults, property, permitHistory, lat, lng }) {
   return (
     <>
       {!showResults && (
@@ -185,36 +185,62 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               </button>
             </div>
 
+            {/* FIX 1: Full image, not cropped */}
             {capturedImage && (
-              <img src={capturedImage} alt="Captured" className="w-full rounded-2xl mb-5 max-h-48 object-cover" />
+              <img
+                src={capturedImage}
+                alt="Captured"
+                style={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  height: 'auto',
+                  borderRadius: '12px',
+                  marginBottom: '16px',
+                  display: 'block',
+                }}
+              />
             )}
 
-            {/* Property Card */}
-            {property && (
-              <div style={{
-                background: 'rgba(59,130,246,0.15)',
-                border: '1px solid rgba(96,165,250,0.3)',
-                borderRadius: '12px',
-                padding: '14px',
-                marginBottom: '20px'
-              }}>
-                <div style={{fontSize: '11px', color: '#60a5fa', fontWeight: '700', marginBottom: '8px'}}>
-                  📍 PROPERTY IDENTIFIED FROM GPS
+            {/* FIX 2: GPS + property info always shown, reading from analysis response */}
+            <div style={{
+              background: 'rgba(59,130,246,0.15)',
+              border: '1px solid rgba(96,165,250,0.3)',
+              borderRadius: '12px',
+              padding: '14px',
+              marginBottom: '16px'
+            }}>
+              {lat && lng && (
+                <div style={{fontSize: '12px', color: '#60a5fa', marginBottom: '6px'}}>
+                  📍 {lat.toFixed(4)}, {lng.toFixed(4)}
                 </div>
-                <div style={{fontSize: '16px', fontWeight: '800', color: 'white', marginBottom: '4px'}}>
-                  {property.full_address}
+              )}
+              {analysis?.google_address && (
+                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '4px'}}>
+                  {analysis.google_address}
                 </div>
-                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px'}}>
-                  Parcel/Folio: <span style={{color: '#60a5fa', fontFamily: 'monospace'}}>{property.folio_number}</span>
+              )}
+              {analysis?.property ? (
+                <div>
+                  <div style={{fontSize: '14px', fontWeight: '700', color: 'white'}}>
+                    {analysis.property.full_address}
+                  </div>
+                  <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px'}}>
+                    Folio: {analysis.property.folio_number} • {analysis.property.city_name}
+                    {analysis.property.year_built ? ` • Built ${analysis.property.year_built}` : ''}
+                    {analysis.property.total_sqft ? ` • ${Number(analysis.property.total_sqft).toLocaleString()} sqft` : ''}
+                  </div>
                 </div>
-                <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '12px', color: 'rgba(255,255,255,0.5)'}}>
-                  {property.use_type && <span>🏠 {property.use_type}</span>}
-                  {property.year_built && <span>📅 Built {property.year_built}</span>}
-                  {property.total_sqft && <span>📐 {Number(property.total_sqft).toLocaleString()} sqft</span>}
-                  {property.beds && <span>🛏 {property.beds}bd/{property.baths}ba</span>}
+              ) : (
+                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.5)'}}>
+                  Property not matched in BCPA database
                 </div>
-              </div>
-            )}
+              )}
+              {analysis?.city && (
+                <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px'}}>
+                  City: {analysis.city}{analysis.city_phone ? ` • 📞 ${analysis.city_phone}` : ''}
+                </div>
+              )}
+            </div>
 
             {analyzing ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4">
@@ -233,8 +259,32 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                 </button>
               </div>
             ) : analysis ? (
-              /* BUG 3: Handle full API response shape — analysis lives at data.analysis */
+              /* Handle full API response shape — analysis lives at data.analysis */
               <div className="space-y-4">
+                {/* FIX 3: AI error banner */}
+                {analysis.analysis?.ai_error && (
+                  <div style={{
+                    background: 'rgba(234,179,8,0.1)',
+                    border: '1px solid rgba(234,179,8,0.3)',
+                    borderRadius: '10px',
+                    padding: '14px',
+                  }}>
+                    <div style={{fontSize: '13px', color: '#facc15', fontWeight: '600', marginBottom: '6px'}}>
+                      ⚠️ AI Analysis Temporarily Unavailable
+                    </div>
+                    <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.6)'}}>
+                      The photo was captured successfully. For permit requirements at this location, contact the building department directly.
+                    </div>
+                    {analysis.city_phone && (
+                      <div style={{marginTop: '8px'}}>
+                        <a href={`tel:${analysis.city_phone}`} style={{color: '#60a5fa', fontSize: '13px', fontWeight: '600'}}>
+                          📞 {analysis.city} Building Dept: {analysis.city_phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* What the AI sees */}
                 {analysis.analysis?.what_i_see && (
                   <p className="text-gray-300 text-sm italic">{analysis.analysis.what_i_see}</p>
@@ -645,6 +695,8 @@ export default function ARTools() {
           onCloseResults={() => { setShowResults(false); setAnalysis(null); setCapturedImage(null); }}
           property={property}
           permitHistory={permitHistory}
+          lat={lat}
+          lng={lng}
         />
       )}
     </div>
