@@ -26,7 +26,7 @@ function PermissionScreen({ onEnable }) {
 }
 
 // ── Setback Overlay ───────────────────────────────────────────────────────────
-function SetbackOverlay({ zoning }) {
+function SetbackOverlay({ zoning, property, propertyFound, permitHistory, zoningLoaded }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const z = zoning || {};
 
@@ -78,6 +78,50 @@ function SetbackOverlay({ zoning }) {
         </button>
 
         <div style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }} className="px-5 pb-8 pt-1">
+
+          {/* Property Card */}
+          {propertyFound && property && (
+            <div style={{
+              background: 'rgba(59,130,246,0.15)',
+              border: '1px solid rgba(96,165,250,0.3)',
+              borderRadius: '10px',
+              padding: '12px',
+              marginBottom: '14px'
+            }}>
+              <div style={{fontSize: '11px', color: '#60a5fa', fontWeight: '700', marginBottom: '6px'}}>
+                📍 PROPERTY IDENTIFIED
+              </div>
+              <div style={{fontSize: '14px', fontWeight: '700', color: 'white', marginBottom: '4px'}}>
+                {property.full_address}
+              </div>
+              <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px'}}>
+                Folio: {property.folio_number}
+              </div>
+              <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+                {property.use_type && <span>🏠 {property.use_type}</span>}
+                {property.year_built && <span>📅 Built {property.year_built}</span>}
+                {property.beds && <span>🛏 {property.beds}bd/{property.baths}ba</span>}
+                {property.total_sqft && <span>📐 {property.total_sqft?.toLocaleString()} sqft</span>}
+              </div>
+              {permitHistory && permitHistory.length > 0 && (
+                <div style={{marginTop: '8px', fontSize: '12px', color: '#4ade80'}}>
+                  ✅ {permitHistory.length} permit{permitHistory.length !== 1 ? 's' : ''} on file
+                </div>
+              )}
+              {permitHistory && permitHistory.length === 0 && property.city_name === 'Weston' && (
+                <div style={{marginTop: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.4)'}}>
+                  No permits on file
+                </div>
+              )}
+            </div>
+          )}
+
+          {!propertyFound && zoningLoaded && (
+            <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginBottom: '10px', textAlign: 'center'}}>
+              📍 Property not matched in BCPA database
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-3 mb-3">
             {[
               { label: "Front", value: frontFt },
@@ -104,7 +148,7 @@ function SetbackOverlay({ zoning }) {
 }
 
 // ── Permit Check Overlay ──────────────────────────────────────────────────────
-function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, capturedImage, onCloseResults }) {
+function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, capturedImage, onCloseResults, property, permitHistory }) {
   return (
     <>
       {!showResults && (
@@ -145,6 +189,33 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
               <img src={capturedImage} alt="Captured" className="w-full rounded-2xl mb-5 max-h-48 object-cover" />
             )}
 
+            {/* Property Card */}
+            {property && (
+              <div style={{
+                background: 'rgba(59,130,246,0.15)',
+                border: '1px solid rgba(96,165,250,0.3)',
+                borderRadius: '12px',
+                padding: '14px',
+                marginBottom: '20px'
+              }}>
+                <div style={{fontSize: '11px', color: '#60a5fa', fontWeight: '700', marginBottom: '8px'}}>
+                  📍 PROPERTY IDENTIFIED FROM GPS
+                </div>
+                <div style={{fontSize: '16px', fontWeight: '800', color: 'white', marginBottom: '4px'}}>
+                  {property.full_address}
+                </div>
+                <div style={{fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px'}}>
+                  Parcel/Folio: <span style={{color: '#60a5fa', fontFamily: 'monospace'}}>{property.folio_number}</span>
+                </div>
+                <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '12px', color: 'rgba(255,255,255,0.5)'}}>
+                  {property.use_type && <span>🏠 {property.use_type}</span>}
+                  {property.year_built && <span>📅 Built {property.year_built}</span>}
+                  {property.total_sqft && <span>📐 {Number(property.total_sqft).toLocaleString()} sqft</span>}
+                  {property.beds && <span>🛏 {property.beds}bd/{property.baths}ba</span>}
+                </div>
+              </div>
+            )}
+
             {analyzing ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -181,7 +252,53 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                   </div>
                 )}
 
-                <div className="bg-white/5 rounded-xl p-3">
+                {/* Permit History */}
+                {permitHistory && permitHistory.length > 0 && (
+                  <div style={{marginTop: '20px'}}>
+                    <div style={{fontSize: '14px', fontWeight: '700', color: '#60a5fa', marginBottom: '12px'}}>
+                      📋 Permit History ({permitHistory.length} permit{permitHistory.length !== 1 ? 's' : ''} on file)
+                    </div>
+                    {permitHistory.map((p, i) => (
+                      <div key={i} style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '10px',
+                        padding: '12px',
+                        marginBottom: '8px',
+                        borderLeft: `3px solid ${p.status === 'finaled' ? '#22c55e' : p.status === 'expired' ? '#ef4444' : '#f59e0b'}`
+                      }}>
+                        <div style={{fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '4px'}}>
+                          {p.permit_type?.replace(/_/g, ' ').toUpperCase()}
+                        </div>
+                        <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px'}}>
+                          {p.permit_description}
+                        </div>
+                        <div style={{display: 'flex', gap: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.4)'}}>
+                          <span style={{color: p.status === 'finaled' ? '#4ade80' : '#f87171', fontWeight: '600'}}>
+                            {p.status?.toUpperCase()}
+                          </span>
+                          {p.issued_date && <span>Issued: {p.issued_date}</span>}
+                          {p.job_value && <span>Value: ${Number(p.job_value).toLocaleString()}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {permitHistory && permitHistory.length === 0 && property?.city_name === 'Weston' && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '12px',
+                    background: 'rgba(234,179,8,0.1)',
+                    border: '1px solid rgba(234,179,8,0.3)',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    color: '#facc15'
+                  }}>
+                    ⚠️ No permits found in records for this property. Verify with Weston Building Department.
+                  </div>
+                )}
+
+                <div className="bg-white/5 rounded-xl p-3 mt-4">
                   <p className="text-gray-500 text-[10px] text-center">AI estimates only — always verify with your local building department before starting work.</p>
                 </div>
               </div>
@@ -211,6 +328,10 @@ export default function ARTools() {
   const [showResults, setShowResults] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [property, setProperty] = useState(null);
+  const [propertyFound, setPropertyFound] = useState(false);
+  const [permitHistory, setPermitHistory] = useState([]);
+  const [zoningLoaded, setZoningLoaded] = useState(false);
 
   // BUG 3 FIX: Stop camera on unmount
   useEffect(() => {
@@ -230,7 +351,13 @@ export default function ARTools() {
         body: JSON.stringify({ action: "getZoning", lat: latitude, lng: longitude }),
       });
       const data = await res.json();
-      if (data.success) setZoning(data);
+      if (data.success) {
+        setZoning(data);
+        setProperty(data.property || null);
+        setPropertyFound(data.property_found || false);
+        setPermitHistory(data.permit_history || []);
+        setZoningLoaded(true);
+      }
     } catch (e) {
       console.log("Zoning error:", e);
     }
@@ -308,6 +435,8 @@ export default function ARTools() {
       });
       const data = await res.json();
       setAnalysis(data.analysis);
+      setProperty(prev => data.property || prev);
+      setPermitHistory(data.permit_history || []);
     } catch (e) {
       setAnalysis({ structures: [], red_flags: ["Analysis failed — please try again."] });
     }
@@ -412,7 +541,7 @@ export default function ARTools() {
       </div>
 
       {/* Mode overlays */}
-      {tab === "setback" && <SetbackOverlay zoning={zoning} />}
+      {tab === "setback" && <SetbackOverlay zoning={zoning} property={property} propertyFound={propertyFound} permitHistory={permitHistory} zoningLoaded={zoningLoaded} />}
       {tab === "permit" && (
         <PermitCheckOverlay
           onCapture={captureAndAnalyze}
@@ -421,6 +550,8 @@ export default function ARTools() {
           analysis={analysis}
           capturedImage={capturedImage}
           onCloseResults={() => { setShowResults(false); setAnalysis(null); setCapturedImage(null); }}
+          property={property}
+          permitHistory={permitHistory}
         />
       )}
     </div>
