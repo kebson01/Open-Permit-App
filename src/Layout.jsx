@@ -243,7 +243,8 @@ export default function Layout({ children, currentPageName }) {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10"
+              className="md:hidden text-white p-3 rounded-lg hover:bg-white/10"
+              style={{ minWidth: 48, minHeight: 48 }}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
