@@ -219,23 +219,49 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
             {analyzing ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-300 text-sm">AI is analyzing structures...</p>
+                <p className="text-gray-300 text-sm">AI is analyzing structures... (5–10 seconds)</p>
+              </div>
+            ) : analysis?.error ? (
+              /* BUG 3: Error state */
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <p className="text-red-400 text-center">{analysis.error}</p>
+                <button
+                  onClick={onCloseResults}
+                  className="px-5 py-2 rounded-xl bg-white/10 text-white text-sm font-medium"
+                >
+                  Try Again
+                </button>
               </div>
             ) : analysis ? (
+              /* BUG 3: Handle full API response shape — analysis lives at data.analysis */
               <div className="space-y-4">
-                {Array.isArray(analysis.structures) && analysis.structures.map((s, i) => (
+                {/* What the AI sees */}
+                {analysis.analysis?.what_i_see && (
+                  <p className="text-gray-300 text-sm italic">{analysis.analysis.what_i_see}</p>
+                )}
+
+                {/* Structures — supports both old shape (s.name) and new shape (s.visual_label) */}
+                {Array.isArray(analysis.analysis?.structures) && analysis.analysis.structures.map((s, i) => (
                   <div key={i} className="bg-white/10 rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <p className="text-white font-semibold">{s.name}</p>
-                        <p className="text-gray-400 text-xs">{s.type}</p>
+                        <p className="text-white font-semibold">{s.visual_label || s.name}</p>
+                        {s.type && <p className="text-gray-400 text-xs">{s.type}</p>}
                       </div>
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${s.permit_required ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}>
-                        {s.permit_required ? "Permit Required" : "No Permit Needed"}
+                        {s.permit_required ? "🔴 Permit Required" : "🟢 No Permit Needed"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {s.hvhz_concern && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">⚠ HVHZ Concern</span>}
+                    {s.permit_required && (
+                      <div className="mb-2 space-y-1">
+                        {s.permit_name && <p className="text-white text-xs font-semibold">{s.permit_name}</p>}
+                        {s.fee_explanation && <p className="text-gray-400 text-xs">{s.fee_explanation}</p>}
+                        {s.hvhz_requirement && <p className="text-yellow-400 text-xs">⚡ {s.hvhz_requirement}</p>}
+                        {s.noc_required && <p className="text-blue-300 text-xs">📋 NOC required if over {s.noc_threshold}</p>}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2 mb-1">
+                      {(s.hvhz_concern) && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">⚠ HVHZ Concern</span>}
                       {s.may_be_unpermitted && <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">🚨 May Be Unpermitted</span>}
                     </div>
                     {s.notes && <p className="text-gray-400 text-xs mb-1">{s.notes}</p>}
@@ -243,18 +269,45 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                   </div>
                 ))}
 
-                {Array.isArray(analysis.red_flags) && analysis.red_flags.length > 0 && (
+                {/* No permit needed list */}
+                {Array.isArray(analysis.analysis?.no_permit_needed) && analysis.analysis.no_permit_needed.length > 0 && (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
+                    <p className="text-green-400 font-semibold text-sm mb-2">✅ No Permit Needed For:</p>
+                    {analysis.analysis.no_permit_needed.map((item, i) => (
+                      <p key={i} className="text-green-300 text-xs mb-1">• {item}</p>
+                    ))}
+                  </div>
+                )}
+
+                {/* Red flags */}
+                {Array.isArray(analysis.analysis?.red_flags) && analysis.analysis.red_flags.length > 0 && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
-                    <p className="text-red-400 font-semibold text-sm mb-2">🚩 Red Flags</p>
-                    {analysis.red_flags.map((flag, i) => (
+                    <p className="text-red-400 font-semibold text-sm mb-2">🚩 Concerns</p>
+                    {analysis.analysis.red_flags.map((flag, i) => (
                       <p key={i} className="text-red-300 text-xs mb-1">• {flag}</p>
                     ))}
                   </div>
                 )}
 
+                {/* Next steps */}
+                {analysis.analysis?.next_steps && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                    <p className="text-blue-400 font-semibold text-sm mb-1">📋 Next Steps</p>
+                    <p className="text-blue-200 text-xs">{analysis.analysis.next_steps}</p>
+                  </div>
+                )}
+
+                {/* City contact */}
+                {analysis.city_phone && (
+                  <div className="bg-white/5 rounded-xl p-3 flex items-center gap-2">
+                    <span className="text-gray-400 text-xs">📞 {analysis.city} Building Dept:</span>
+                    <a href={`tel:${analysis.city_phone}`} className="text-blue-400 text-xs font-semibold">{analysis.city_phone}</a>
+                  </div>
+                )}
+
                 {/* Permit History */}
                 {permitHistory && permitHistory.length > 0 && (
-                  <div style={{marginTop: '20px'}}>
+                  <div style={{marginTop: '8px'}}>
                     <div style={{fontSize: '14px', fontWeight: '700', color: '#60a5fa', marginBottom: '12px'}}>
                       📋 Permit History ({permitHistory.length} permit{permitHistory.length !== 1 ? 's' : ''} on file)
                     </div>
@@ -286,7 +339,6 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
 
                 {permitHistory && permitHistory.length === 0 && property?.city_name === 'Weston' && (
                   <div style={{
-                    marginTop: '16px',
                     padding: '12px',
                     background: 'rgba(234,179,8,0.1)',
                     border: '1px solid rgba(234,179,8,0.3)',
@@ -298,7 +350,7 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
                   </div>
                 )}
 
-                <div className="bg-white/5 rounded-xl p-3 mt-4">
+                <div className="bg-white/5 rounded-xl p-3 mt-2">
                   <p className="text-gray-500 text-[10px] text-center">AI estimates only — always verify with your local building department before starting work.</p>
                 </div>
               </div>
@@ -414,32 +466,73 @@ export default function ARTools() {
 
   const captureAndAnalyze = async () => {
     const video = videoRef.current;
-    if (!video) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    setCapturedImage(dataUrl);
-    const base64 = dataUrl.replace("data:image/jpeg;base64,", "");
 
+    // BUG 2: Check video is actually ready with real frames
+    if (!video) {
+      alert("Camera not ready. Please wait a moment.");
+      return;
+    }
+    if (video.readyState < 2) {
+      alert("Camera still loading. Please wait.");
+      return;
+    }
+    if (video.videoWidth === 0) {
+      alert("No camera feed detected. Please allow camera access.");
+      return;
+    }
+
+    // BUG 1: Show loading state BEFORE any async work
     setAnalyzing(true);
     setShowResults(true);
     setAnalysis(null);
+    setCapturedImage(null);
 
     try {
+      // BUG 1: Capture image synchronously FIRST, before any API call
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const base64 = dataUrl.replace("data:image/jpeg;base64,", "");
+
+      // BUG 1: Guard — don't call API if capture failed
+      if (!base64 || base64.length < 100) {
+        console.error("Image capture failed — base64 too small:", base64?.length);
+        setAnalysis({ error: "Could not capture image. Please try again." });
+        setAnalyzing(false);
+        return;
+      }
+
+      // Set preview now that we have valid image data
+      setCapturedImage(dataUrl);
+
+      // BUG 1: NOW call API with confirmed base64
       const res = await fetch(AR_TOOLS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkPermit", image_base64: base64, lat, lng }),
       });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("AR tools API error:", res.status, errText);
+        setAnalysis({ error: "Analysis failed. Please try again." });
+        setAnalyzing(false);
+        return;
+      }
+
+      // BUG 3: Store full data object so results overlay can read data.analysis, data.property, etc.
       const data = await res.json();
-      setAnalysis(data.analysis);
+      setAnalysis(data);
       setProperty(prev => data.property || prev);
       setPermitHistory(data.permit_history || []);
-    } catch (e) {
-      setAnalysis({ structures: [], red_flags: ["Analysis failed — please try again."] });
+    } catch (err) {
+      console.error("Capture/analyze error:", err);
+      setAnalysis({ error: "Something went wrong. Please try again." });
     }
+
     setAnalyzing(false);
   };
 
