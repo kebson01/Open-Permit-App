@@ -11,6 +11,7 @@ import ProjectDashboard from './pages/ProjectDashboard.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
 import PermitWizard from './pages/PermitWizard.jsx';
 import AdminPanel from './pages/AdminPanel.jsx';
+import ARTools from './pages/ARTools.jsx';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -47,6 +48,7 @@ function App() {
           <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
           <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </Router>

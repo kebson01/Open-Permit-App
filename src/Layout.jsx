@@ -106,6 +106,7 @@ export default function Layout({ children, currentPageName }) {
     : [];
 
   const mobileLinks = [
+    { name: "🔭 AR Tools", page: "ARTools", path: "/ar-tools" },
     ...centerNavLinks,
     ...(currentUser ? [{ name: "My Projects", page: "ProjectDashboard" }] : []),
     ...adminDropdownLinks,
@@ -138,6 +139,16 @@ export default function Layout({ children, currentPageName }) {
 
             {/* CENTER — Primary nav (desktop) */}
             <div className="hidden md:flex items-center gap-8">
+              <Link
+                to="/ar-tools"
+                className={`text-sm font-medium transition-colors pb-0.5 ${
+                  currentPageName === "ARTools"
+                    ? "text-white border-b-2 border-blue-400"
+                    : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
+                }`}
+              >
+                🔭 AR Tools
+              </Link>
               {centerNavLinks.map(link => {
                 const isActive = currentPageName === link.page;
                 return (
@@ -245,7 +256,7 @@ export default function Layout({ children, currentPageName }) {
             {mobileLinks.map(link => (
               <Link
                 key={link.page}
-                to={createPageUrl(link.page)}
+                to={link.path || createPageUrl(link.page)}
                 onClick={() => setMobileOpen(false)}
                 className={`block px-5 py-3.5 text-sm font-medium border-b border-white/5 transition-colors ${
                   currentPageName === link.page ? "text-white bg-white/10" : "text-blue-100 hover:text-white hover:bg-white/5"
