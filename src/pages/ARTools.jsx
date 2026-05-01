@@ -67,8 +67,8 @@ function SetbackOverlay({ zoning }) {
       >
         <button
           onClick={() => setPanelOpen(p => !p)}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-t-2xl"
-          style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}
+          className="w-full flex items-center justify-between px-5 rounded-t-2xl"
+          style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", minHeight: 64, paddingTop: 16, paddingBottom: 16 }}
         >
           <div className="text-left">
             <p className="text-white font-semibold text-sm">{z.zone_name || "Zoning Data"}</p>
@@ -120,13 +120,13 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
       )}
 
       {!showResults && (
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center" style={{ zIndex: 4 }}>
+        <div className="absolute bottom-16 left-0 right-0 flex justify-center" style={{ zIndex: 4 }}>
           <button
             onClick={onCapture}
             className="rounded-full bg-white flex items-center justify-center shadow-2xl active:scale-95 transition-transform"
-            style={{ width: 72, height: 72, border: "4px solid rgba(255,255,255,0.5)" }}
+            style={{ width: 96, height: 96, border: "5px solid rgba(255,255,255,0.5)" }}
           >
-            <span className="text-2xl">📸</span>
+            <span className="text-4xl">📸</span>
           </button>
         </div>
       )}
@@ -136,8 +136,8 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
           <div className="min-h-full px-5 pb-10" style={{ paddingTop: "calc(env(safe-area-inset-top) + 48px)" }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-white font-bold text-lg">Permit Analysis</h2>
-              <button onClick={onCloseResults} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-                <X className="w-5 h-5 text-white" />
+              <button onClick={onCloseResults} className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+                <X className="w-6 h-6 text-white" />
               </button>
             </div>
 
@@ -388,10 +388,10 @@ export default function ARTools() {
             onClick={() => setTab("setback")}
             style={{
               display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+              padding: "12px 18px", borderRadius: 999, fontSize: 15, fontWeight: 600,
               background: tab === "setback" ? "#2563eb" : "transparent",
               color: tab === "setback" ? "#fff" : "#d1d5db",
-              border: "none", cursor: "pointer",
+              border: "none", cursor: "pointer", minHeight: 48,
             }}
           >
             📐 Setback
@@ -400,10 +400,10 @@ export default function ARTools() {
             onClick={() => { setTab("permit"); setShowResults(false); }}
             style={{
               display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+              padding: "12px 18px", borderRadius: 999, fontSize: 15, fontWeight: 600,
               background: tab === "permit" ? "#2563eb" : "transparent",
               color: tab === "permit" ? "#fff" : "#d1d5db",
-              border: "none", cursor: "pointer",
+              border: "none", cursor: "pointer", minHeight: 48,
             }}
           >
             🔍 Permit
