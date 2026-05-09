@@ -4,7 +4,12 @@ const SUPABASE_URL = 'https://gbknnjidqpmjrwlooluw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68';
 
 // Auth client (used for sign-in/sign-out)
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    detectSessionInUrl: false,
+    flowType: 'implicit',
+  },
+});
 
 // ── Low-level REST helper ────────────────────────────────────────────────────
 async function supabaseQuery(table, { filters, select, order, limit, offset, userToken } = {}) {
