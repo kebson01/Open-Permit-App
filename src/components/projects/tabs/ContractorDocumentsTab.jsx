@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { CheckSquare, Square, Download, UserCheck } from "lucide-react";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
+
+const CITY_PERMIT_TABLES = {
+  "Weston": "weston_permit_types",
+  "Coral Springs": "coral_springs_permit_types",
+  "Fort Lauderdale": "fort_lauderdale_permit_types",
+  "Hollywood": "hollywood_permit_types",
+  "Cooper City": "cooper_city_permit_types",
+};
 
 const PERMIT_CATEGORY_COLORS = {
   building:    "bg-blue-100 text-blue-700",
@@ -20,16 +28,16 @@ function isOwnerDoc(docName) {
 }
 
 export default function ContractorDocumentsTab({ project, onUpdate }) {
-  const [permitDocs, setPermitDocs] = useState([]); // [{permitName, docs: [{label, checked, assignedToClient}]}]
+  const [permitDocs, setPermitDocs] = useState([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`${SUPABASE_URL}/rest/v1/weston_permit_types?select=name,documents_needed,category`, {
+    const table = CITY_PERMIT_TABLES[project.city_name] || "weston_permit_types";
+    fetch(`${SUPABASE_URL}/rest/v1/${table}?select=name,documents_needed,category`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     })
       .then(r => r.json())
       .then(data => {
-        // Load saved state
         let savedMap = {};
         if (project.permit_checklist) {
           try {
@@ -57,20 +65,18 @@ export default function ContractorDocumentsTab({ project, onUpdate }) {
   }, [project.id]);
 
   const toggleDoc = (gIdx, dIdx, field) => {
-    setPermitDocs(prev => {
-      const updated = prev.map((g, gi) => gi !== gIdx ? g : {
-        ...g,
-        docs: g.docs.map((d, di) => di !== dIdx ? d : { ...d, [field]: !d[field] }),
-      });
-      return updated;
-    });
+    setPermitDocs(prev => prev.map((g, gi) => gi !== gIdx ? g : {
+      ...g,
+      docs: g.docs.map((d, di) => di !== dIdx ? d : { ...d, [field]: !d[field] }),
+    }));
   };
 
   const saveProgress = async () => {
     setSaving(true);
     const flat = [];
     permitDocs.forEach(g => g.docs.forEach(d => flat.push({ label: d.label, checked: d.checked, assignedToClient: d.assignedToClient })));
-    await supabase.from("projects").update({ permit_checklist: JSON.stringify(flat) }).eq("id", project.id);
+    // Save permit_checklist to Base44 Project entity
+    await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(flat) });
     onUpdate && onUpdate(prev => ({ ...prev, permit_checklist: JSON.stringify(flat) }));
     setSaving(false);
   };

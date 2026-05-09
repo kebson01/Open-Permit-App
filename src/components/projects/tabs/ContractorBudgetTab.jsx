@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, DollarSign, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,10 +18,7 @@ export default function ContractorBudgetTab({ project }) {
 
   const { data: items = [] } = useQuery({
     queryKey: ["budget", project.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("project_budget_items").select("*").eq("project_id", project.id);
-      return data || [];
-    },
+    queryFn: () => base44.entities.ProjectBudgetItem.filter({ project_id: project.id }),
   });
 
   const totalEst = items.reduce((s, i) => s + (parseFloat(i.estimated_amount) || 0), 0);
@@ -32,7 +29,7 @@ export default function ContractorBudgetTab({ project }) {
   const addItem = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("project_budget_items").insert({
+    await base44.entities.ProjectBudgetItem.create({
       ...form,
       project_id: project.id,
       estimated_amount: parseFloat(form.estimated_amount) || 0,
@@ -45,12 +42,12 @@ export default function ContractorBudgetTab({ project }) {
   };
 
   const deleteItem = async (id) => {
-    await supabase.from("project_budget_items").delete().eq("id", id);
+    await base44.entities.ProjectBudgetItem.delete(id);
     queryClient.invalidateQueries({ queryKey: ["budget", project.id] });
   };
 
   const markPaid = async (item) => {
-    await supabase.from("project_budget_items").update({ status: "paid" }).eq("id", item.id);
+    await base44.entities.ProjectBudgetItem.update(item.id, { status: "paid" });
     queryClient.invalidateQueries({ queryKey: ["budget", project.id] });
   };
 
@@ -58,7 +55,6 @@ export default function ContractorBudgetTab({ project }) {
 
   return (
     <div>
-      {/* Summary row */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="text-center p-3 bg-gray-50 rounded-xl border border-gray-200">
           <p className="text-xs text-gray-400 mb-1">Estimated</p>

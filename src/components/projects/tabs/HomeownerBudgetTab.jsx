@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { DollarSign, Calculator, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -21,7 +21,7 @@ export default function HomeownerBudgetTab({ project, onUpdate }) {
     const payload = {};
     if (contractorQuote !== "") payload.contractor_quote = parseFloat(contractorQuote) || 0;
     if (materialsEst !== "") payload.materials_estimate = parseFloat(materialsEst) || 0;
-    await supabase.from("projects").update(payload).eq("id", project.id);
+    await base44.entities.Project.update(project.id, payload);
     onUpdate && onUpdate(prev => ({ ...prev, ...payload }));
     setSaving(false);
   };
@@ -47,7 +47,6 @@ export default function HomeownerBudgetTab({ project, onUpdate }) {
         </div>
       )}
 
-      {/* Line items */}
       <div className="space-y-3 mb-5">
         <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
           <div>

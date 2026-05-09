@@ -1,17 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { CheckSquare, Square, MessageCircle, ExternalLink, Map } from "lucide-react";
-
-function getPermitGuideUrl(project) {
-  const commercialTypes = ["commercial"];
-  const propertyType = commercialTypes.includes(project.project_type) ? "commercial" : "residential";
-  const zoneMap = { roofing: "roof", pool: "pool", electrical: "electrical", plumbing: "plumbing", fence: "fence" };
-  const zone = zoneMap[project.project_type] || "";
-  let url = `/PermitGuide?propertyType=${propertyType}`;
-  if (project.city_name) url += `&city=${encodeURIComponent(project.city_name)}`;
-  if (zone) url += `&zone=${encodeURIComponent(zone)}`;
-  return url;
-}
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -29,11 +18,21 @@ const DOCUMENT_INFO = {
   "Site Plan / Survey": { explanation: "A to-scale drawing showing your property boundaries and where the work will be done.", where: "Your licensed surveyor or contractor can provide this." },
   "Construction Plans": { explanation: "Detailed drawings showing exactly what will be built — required for most building permits.", where: "Your architect or contractor prepares these." },
   "Contractor License": { explanation: "Proof that your contractor is licensed to do this type of work in Florida.", where: "Ask your contractor for a copy of their license." },
-  "Product Approval": { explanation: "Florida approval certificate showing the materials (windows, roofing, etc.) meet hurricane standards.", where: "Your supplier or contractor will have this." },
-  "NOA (Notice of Acceptance)": { explanation: "Florida Building Commission approval for specific products. Required for impact windows/doors.", where: "Your window/door supplier provides this." },
+  "Product Approval": { explanation: "Florida approval certificate showing the materials meet hurricane standards.", where: "Your supplier or contractor will have this." },
+  "NOA (Notice of Acceptance)": { explanation: "Florida Building Commission approval for specific products.", where: "Your window/door supplier provides this." },
   "Owner Authorization Letter": { explanation: "A letter from the property owner authorizing the permit application.", where: "You write and sign this yourself." },
   "Scope of Work": { explanation: "A written description of exactly what work will be done.", where: "Your contractor prepares this." },
 };
+
+function getPermitGuideUrl(project) {
+  const propertyType = project.project_type === "commercial" ? "commercial" : "residential";
+  const zoneMap = { roofing: "roof", pool: "pool", electrical: "electrical", plumbing: "plumbing", fence: "fence" };
+  const zone = zoneMap[project.project_type] || "";
+  let url = `/PermitGuide?propertyType=${propertyType}`;
+  if (project.city_name) url += `&city=${encodeURIComponent(project.city_name)}`;
+  if (zone) url += `&zone=${encodeURIComponent(zone)}`;
+  return url;
+}
 
 function getDocInfo(docName, cityName) {
   for (const key of Object.keys(DOCUMENT_INFO)) {
@@ -50,7 +49,6 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Load saved checklist state
     if (project.permit_checklist) {
       try {
         const saved = JSON.parse(project.permit_checklist);
@@ -60,7 +58,7 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
       } catch {}
     }
 
-    // Fetch docs from Supabase based on project type and city
+    // Fetch docs from Supabase permit types (reference data — OK to use Supabase here)
     const mapProjectTypeToZone = {
       roofing: "roof", pool: "pool", fence: "fence",
       electrical: "electrical", plumbing: "interior",
@@ -97,7 +95,8 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
   const saveProgress = async () => {
     setSaving(true);
     const checklist = docs.map(d => ({ label: d, checked: !!checked[d] }));
-    await supabase.from("projects").update({ permit_checklist: JSON.stringify(checklist) }).eq("id", project.id);
+    // Save permit_checklist to Base44 Project entity
+    await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(checklist) });
     onUpdate && onUpdate(prev => ({ ...prev, permit_checklist: JSON.stringify(checklist) }));
     setSaving(false);
   };
@@ -121,7 +120,6 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
         </a>
       </div>
 
-      {/* Progress bar */}
       {docs.length > 0 && (
         <div className="mb-5 p-4 bg-blue-50 rounded-xl border border-blue-100">
           <div className="flex items-center justify-between mb-2">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Mail, Phone, Building2, CheckCircle, Clock, Trash2, Loader2 } from "lucide-react";
 
@@ -17,21 +17,18 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["collaborators", project.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("project_collaborators").select("*").eq("project_id", project.id);
-      return data || [];
-    },
+    queryFn: () => base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
   });
 
   const handleInvite = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("project_collaborators").insert({
+    await base44.entities.ProjectCollaborator.create({
       project_id: project.id,
       name: form.name,
       email: form.email,
-      phone: form.phone || null,
-      company: form.company || null,
+      phone: form.phone || undefined,
+      company: form.company || undefined,
       role: form.role,
       status: "invited",
       invited_by: currentUser?.email,
@@ -43,7 +40,7 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
   };
 
   const removeCollaborator = async (id) => {
-    await supabase.from("project_collaborators").delete().eq("id", id);
+    await base44.entities.ProjectCollaborator.delete(id);
     queryClient.invalidateQueries({ queryKey: ["collaborators", project.id] });
   };
 
@@ -60,7 +57,6 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
         </button>
       </div>
 
-      {/* Client info from project */}
       {(project.client_name || project.client_email) && (
         <div className="mb-4 p-4 bg-orange-50 rounded-xl border border-orange-100">
           <p className="text-xs font-semibold text-orange-700 mb-2">Primary Client</p>

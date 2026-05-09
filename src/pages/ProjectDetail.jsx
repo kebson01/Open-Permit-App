@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat, MessageSquare } from "lucide-react";
 import ProjectAIAssistant from "@/components/projects/tabs/ProjectAIAssistant";
 import HomeownerDocumentsTab from "@/components/projects/tabs/HomeownerDocumentsTab";
@@ -53,20 +53,20 @@ export default function ProjectDetail() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setCurrentUser({ ...user, email: user.email, full_name: user.user_metadata?.full_name, role: user.user_metadata?.role });
-    });
+    base44.auth.me().then(user => {
+      if (user) setCurrentUser(user);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!projectId) return;
-    supabase.from("projects").select("*").eq("id", projectId).single()
-      .then(({ data }) => { if (data) setProject(data); })
+    if (!projectId) { setLoading(false); return; }
+    base44.entities.Project.get(projectId)
+      .then(data => { if (data) setProject(data); })
       .finally(() => setLoading(false));
   }, [projectId]);
 
   const saveStatus = async (newStatus) => {
-    await supabase.from("projects").update({ status: newStatus }).eq("id", project.id);
+    await base44.entities.Project.update(project.id, { status: newStatus });
     setProject(prev => ({ ...prev, status: newStatus }));
   };
 
@@ -87,7 +87,7 @@ export default function ProjectDetail() {
       estimated_cost: editForm.estimated_cost ? parseFloat(editForm.estimated_cost) : null,
     };
     Object.keys(payload).forEach(k => { if (payload[k] === "") delete payload[k]; });
-    await supabase.from("projects").update(payload).eq("id", project.id);
+    await base44.entities.Project.update(project.id, payload);
     setProject(prev => ({ ...prev, ...payload }));
     setEditing(false);
     setSaving(false);
