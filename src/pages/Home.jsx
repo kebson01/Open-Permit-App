@@ -2,44 +2,27 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
-import { ArrowRight, Sparkles, MousePointerClick, DollarSign, Building2, MapPin, ChevronDown, Home as HomeIcon, ClipboardList } from "lucide-react";
+import { ArrowRight, ChevronRight, BookOpen, Calculator, Search, ClipboardList, Sparkles, MapPin, ChevronDown } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
 
-
-
 const AI_CHIPS = [
-  "What permits do I need to add a room?",
-  "How much does a pool permit cost?",
-  "Do I need a fence permit?",
-  "Check my property zoning",
-  "Solar panel requirements",
-];
-
-const HOW_IT_WORKS = [
-  {
-    num: "1",
-    title: "Identify your permit",
-    body: "Enter your address and project details. We automatically scan municipal databases to determine exactly which permits and codes apply to your property.",
-  },
-  {
-    num: "2",
-    title: "Estimate your costs",
-    body: "No more guessing. Get a detailed breakdown of application fees, impact fees, and processing costs before you spend a single dollar.",
-  },
-  {
-    num: "3",
-    title: "Gather your documents",
-    body: "We generate a custom checklist of required site plans, surveys, and certifications. Upload them directly or share the list with your architect.",
-  },
+  { label: "Do I need a fence permit?", icon: "🏗️" },
+  { label: "Check my zoning", icon: "📍" },
+  { label: "What permits for a pool?", icon: "🏊" },
+  { label: "Solar panel requirements", icon: "☀️" },
 ];
 
 const TOOLKIT = [
-  { icon: MousePointerClick, title: "Identify the permit you need", body: "AI-driven search through 500+ permit types based on your specific project description and location.", page: "PermitGuide" },
-  { icon: DollarSign,        title: "Estimate costs in advance",    body: "Accurate fee calculation including city, county, and state surcharges to help budget your construction project.", page: "FeeCalculator" },
-  { icon: Building2,         title: "Search any property",          body: "View building details, permit history, and zoning info for any of 758,000+ Broward County properties.", page: "PropertyGuide" },
-  { icon: HomeIcon,          title: "Visual Permit Guide",          body: "Tap zones on an interactive home diagram to identify exactly which permits apply to your project.", page: "PermitGuide" },
-  { icon: Sparkles,          title: "AI Permit Assistant",          body: "Ask plain-English questions about permits, codes, and requirements. Trained on Broward municipal codes.", page: "PermitGuide" },
-  { icon: ClipboardList,     title: "Weston Permit History",        body: "Search 115,000+ historical permit records for any Weston property by address or folio number.", page: "PropertyGuide" },
+  { icon: BookOpen,     title: "Visual Permit Guide",  sub: "Browse residential requirements",    page: "PermitGuide" },
+  { icon: Calculator,  title: "Fee Calculator",        sub: "Estimate municipal filing costs",    page: "FeeCalculator" },
+  { icon: Search,      title: "Property Search",       sub: "Check zoning & permit history",      page: "PropertyGuide" },
+  { icon: ClipboardList, title: "Document Checklist",  sub: "Generate required file list",        page: "PermitGuide" },
+];
+
+const STEPS = [
+  { num: "1", color: "#00020c", title: "Identify",  body: "Enter your address and project details to see required filings." },
+  { num: "2", color: "#0058be", title: "Calculate", body: "Get a detailed breakdown of fees before you spend a dollar." },
+  { num: "3", color: "#2170e4", title: "Compile",   body: "Generate custom checklists of required contractor licenses and plans." },
 ];
 
 export default function Home() {
@@ -55,287 +38,200 @@ export default function Home() {
     setAiOpen(true);
   };
 
-  const handleCustomAsk = (e) => {
-    e.preventDefault();
-    if (customQuestion.trim()) handleAsk(customQuestion.trim());
-  };
-
   return (
-    <div className="pb-20 md:pb-0" style={{ backgroundColor: "#f9f9fc" }}>
+    <div style={{ backgroundColor: "#f9f9fc", fontFamily: "'Public Sans', 'Segoe UI', system-ui, sans-serif" }} className="pb-20 md:pb-0">
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #001a48 0%, #002d72 60%, #005db6 100%)", minHeight: 420 }}>
-        {/* Background image overlay */}
-        <div className="absolute inset-0 opacity-15" style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=80')",
-          backgroundSize: "cover", backgroundPosition: "center"
-        }} />
+      <section className="relative min-h-[520px] flex items-end overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80"
+            alt="South Florida Architecture"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,2,12,0.55) 0%, rgba(0,2,12,0.80) 60%, rgba(0,2,12,0.92) 100%)" }} />
+        </div>
 
-        <div className="relative max-w-6xl mx-auto px-5 py-14 md:py-20">
-          <div className="md:grid md:grid-cols-2 md:gap-16 md:items-center">
+        <div className="relative z-10 w-full px-5 pt-14 pb-8 max-w-lg mx-auto md:max-w-2xl">
+          <h1 className="font-bold leading-[1.1] mb-4" style={{ color: "#ffffff", fontSize: "clamp(28px, 6vw, 42px)" }}>
+            Permits made simple<br />for South Florida
+          </h1>
+          <p className="mb-8 max-w-sm" style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, lineHeight: 1.65 }}>
+            Navigate zoning codes and building requirements with our intelligent assistant. Fast, transparent, and built for residents.
+          </p>
 
-            {/* Left */}
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-5"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#b1c5ff", border: "1px solid rgba(177,197,255,0.3)" }}>
-                📍 All 31 Broward County Cities
-              </div>
+          {/* Selector card */}
+          <div className="rounded-2xl p-5 shadow-2xl" style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}>
+            <Link
+              to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
+              className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white mb-4 hover:opacity-90 transition-opacity"
+              style={{ background: "#00020c" }}
+            >
+              View Required Permits
+              <ArrowRight className="w-4 h-4" />
+            </Link>
 
-              <h1 className="font-bold leading-tight mb-4" style={{ color: "#ffffff", fontSize: "clamp(28px, 4vw, 46px)", letterSpacing: "-0.5px" }}>
-                Permits made simple for{" "}
-                <span style={{ color: "#63a1ff" }}>South Florida</span>
-              </h1>
-
-              <p className="mb-8" style={{ color: "rgba(255,255,255,0.7)", fontSize: 16, lineHeight: 1.7, maxWidth: 460 }}>
-                Navigate complex zoning codes and building requirements with our intelligent permit assistant. Fast, transparent, and built for residents.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <Link to={createPageUrl("PermitGuide")}
-                  className="inline-flex items-center gap-2 font-semibold transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "12px 24px", borderRadius: 8, fontSize: 14 }}>
-                  Start Planning Your Permit
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link to={createPageUrl("FeeCalculator")}
-                  className="inline-flex items-center gap-2 font-semibold transition-all hover:bg-white/10"
-                  style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.3)", padding: "12px 24px", borderRadius: 8, fontSize: 14 }}>
-                  Estimate Costs
-                </Link>
-              </div>
-            </div>
-
-            {/* Right — jurisdiction card */}
-            <div className="hidden md:block mt-10 md:mt-0">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm ml-auto">
-                {/* Tabs */}
-                <div className="flex bg-gray-100 rounded-xl p-1 gap-1 mb-5">
-                  <button className="flex-1 py-2 rounded-lg text-xs font-semibold bg-white text-blue-700 shadow-sm">Florida</button>
-                  <button className="flex-1 py-2 rounded-lg text-xs font-semibold text-gray-500">Broward County</button>
-                </div>
-
-                <div className="mb-4">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Select Your Jurisdiction</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <select
-                      value={jurisdiction}
-                      onChange={e => setJurisdiction(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/30"
-                    >
-                      {citiesLoading
-                        ? <option>Loading...</option>
-                        : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)
-                      }
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div className="mb-5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Project Type</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setPropertyType("residential")}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                        propertyType === "residential" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      <HomeIcon className="w-5 h-5" />
-                      Residential
-                    </button>
-                    <button
-                      onClick={() => setPropertyType("commercial")}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                        propertyType === "commercial" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      <Building2 className="w-5 h-5" />
-                      Commercial
-                    </button>
-                  </div>
-                </div>
-
-                <Link
-                  to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
-                  className="block w-full text-center font-semibold py-3 rounded-xl text-white transition-opacity hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg, #001a48 0%, #005db6 100%)" }}
-                >
-                  Find Permit Requirements
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile card */}
-          <div className="md:hidden mt-8 bg-white rounded-2xl p-5 shadow-xl">
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Select Jurisdiction</label>
+            <div className="mb-4">
+              <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>City / Municipality</label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select
                   value={jurisdiction}
                   onChange={e => setJurisdiction(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white appearance-none focus:outline-none"
+                  className="w-full h-12 px-4 rounded-xl border appearance-none text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: "#c5c6d0", background: "#f3f3f6", color: "#1a1c1e", focusRingColor: "#0058be" }}
                 >
-                  {citiesLoading
-                    ? <option>Loading...</option>
-                    : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)
-                  }
+                  {citiesLoading ? <option>Loading...</option> : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 pointer-events-none" style={{ color: "#44464f" }} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {["residential", "commercial"].map(t => (
-                <button key={t} onClick={() => setPropertyType(t)}
-                  className={`py-2.5 rounded-xl border-2 text-xs font-semibold capitalize transition-all ${
-                    propertyType === t ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600"
-                  }`}>{t}</button>
-              ))}
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>Property Type</label>
+              <div className="flex p-1 rounded-xl border" style={{ borderColor: "#c5c6d0", background: "#f3f3f6" }}>
+                <button
+                  onClick={() => setPropertyType("residential")}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    background: propertyType === "residential" ? "#ffffff" : "transparent",
+                    color: propertyType === "residential" ? "#0058be" : "#44464f",
+                    boxShadow: propertyType === "residential" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                  }}
+                >
+                  Residential
+                </button>
+                <button
+                  onClick={() => setPropertyType("commercial")}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    background: propertyType === "commercial" ? "#ffffff" : "transparent",
+                    color: propertyType === "commercial" ? "#0058be" : "#44464f",
+                    boxShadow: propertyType === "commercial" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                  }}
+                >
+                  Commercial
+                </button>
+              </div>
             </div>
-            <Link
-              to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
-              className="block w-full text-center font-semibold py-3 rounded-xl text-white"
-              style={{ background: "linear-gradient(135deg, #001a48 0%, #005db6 100%)" }}
-            >
-              Find Permit Requirements
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── AI SECTION ── */}
-      <section className="py-14 md:py-16 px-5 text-center" style={{ backgroundColor: "#ffffff" }}>
-        <div className="max-w-3xl mx-auto">
-          <p className="font-semibold uppercase tracking-widest text-xs mb-3" style={{ color: "#3B82F6" }}>SMART ASSISTANCE</p>
-          <h2 className="font-bold mb-2" style={{ color: "#1a1c1e", fontSize: "clamp(22px, 3vw, 30px)" }}>Not sure where to start? Just ask.</h2>
-          <p className="mb-8" style={{ color: "#444651", fontSize: 15, lineHeight: 1.65 }}>
-            Get instant clarity on complex requirements. Our AI assistant is trained on local municipal codes.
-          </p>
+      {/* ── AI ASSISTANT ── */}
+      <section className="px-5 mt-10 max-w-lg mx-auto md:max-w-2xl">
+        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "#001a48", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="absolute -right-4 -top-4 w-32 h-32 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.3)" }} />
+
+          <div className="flex items-center gap-3 mb-5 relative">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#0058be" }}>
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white" style={{ fontSize: 17 }}>Intelligent Permit Support</h3>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>Ask me anything about local requirements</p>
+            </div>
+          </div>
 
           {/* Chips */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-5 relative">
             {AI_CHIPS.map(chip => (
               <button
-                key={chip}
-                onClick={() => handleAsk(chip)}
-                className="px-4 py-2 rounded-full text-sm font-medium border transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"
-                style={{ borderColor: "#c4c6d2", color: "#444651", backgroundColor: "#f3f3f6" }}
+                key={chip.label}
+                onClick={() => handleAsk(chip.label)}
+                className="px-3 py-2 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all hover:bg-white/20"
+                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff" }}
               >
-                {chip}
+                <span>{chip.icon}</span>
+                {chip.label}
               </button>
             ))}
           </div>
 
-          {/* Custom question input */}
-          <form onSubmit={handleCustomAsk} className="flex items-center gap-2 max-w-xl mx-auto bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
-            <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
+          {/* Input */}
+          <div className="relative">
             <input
               type="text"
               value={customQuestion}
               onChange={e => setCustomQuestion(e.target.value)}
-              placeholder="Ask a custom question..."
-              className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder-gray-400"
+              onKeyDown={e => { if (e.key === "Enter" && customQuestion.trim()) { handleAsk(customQuestion.trim()); setCustomQuestion(""); } }}
+              placeholder="Type your question..."
+              className="w-full h-14 pl-4 pr-14 rounded-xl text-sm focus:outline-none"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff" }}
             />
             <button
-              type="submit"
-              disabled={!customQuestion.trim()}
-              className="px-4 py-1.5 rounded-xl text-xs font-semibold text-white disabled:opacity-40 transition-opacity"
-              style={{ background: "#3B82F6" }}
+              onClick={() => { if (customQuestion.trim()) { handleAsk(customQuestion.trim()); setCustomQuestion(""); } }}
+              className="absolute right-2 top-2 h-10 w-10 rounded-lg flex items-center justify-center transition-transform active:scale-90"
+              style={{ background: "#0058be" }}
             >
-              Ask
+              <Sparkles className="w-4 h-4 text-white" />
             </button>
-          </form>
+          </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section className="py-14 md:py-16 px-5" style={{ backgroundColor: "#f3f3f6" }}>
-        <div className="max-w-5xl mx-auto md:grid md:grid-cols-2 md:gap-16 md:items-start">
+      {/* ── PROFESSIONAL TOOLKIT ── */}
+      <section className="px-5 mt-14 max-w-lg mx-auto md:max-w-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#44464f" }}>Professional Toolkit</p>
+          <Link to={createPageUrl("PermitGuide")} className="text-sm font-semibold" style={{ color: "#0058be" }}>View All</Link>
+        </div>
 
-          {/* Left text */}
-          <div className="mb-10 md:mb-0">
-            <h2 className="font-bold mb-3" style={{ color: "#1a1c1e", fontSize: "clamp(22px, 3vw, 32px)", lineHeight: 1.2 }}>
-              Streamlined and<br />transparent.
-            </h2>
-            <p className="mb-5" style={{ color: "#444651", fontSize: 15, lineHeight: 1.7 }}>
-              We've broken down the bureaucratic process into three simple steps to get your project moving faster.
-            </p>
-            <Link to={createPageUrl("PermitGuide")} className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:underline">
-              Learn about our methodology <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* Steps */}
-          <div className="space-y-6">
-            {HOW_IT_WORKS.map(step => (
-              <div key={step.num} className="flex gap-5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 mt-0.5"
-                  style={{ backgroundColor: "#dae2ff", color: "#001a48" }}>
-                  {step.num}
-                </div>
-                <div>
-                  <p className="font-bold mb-1" style={{ color: "#1a1c1e", fontSize: 15 }}>{step.title}</p>
-                  <p style={{ color: "#444651", fontSize: 13, lineHeight: 1.65 }}>{step.body}</p>
-                </div>
+        <div className="space-y-3">
+          {TOOLKIT.map(item => (
+            <Link
+              key={item.title}
+              to={createPageUrl(item.page)}
+              className="flex items-center gap-4 p-5 rounded-2xl border shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+              style={{ background: "#ffffff", borderColor: "#c5c6d0", textDecoration: "none" }}
+            >
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,88,190,0.1)" }}>
+                <item.icon className="w-5 h-5" style={{ color: "#0058be" }} />
               </div>
-            ))}
-          </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#44464f" }}>{item.sub}</p>
+              </div>
+              <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#757780" }} />
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* ── TOOLKIT ── */}
-      <section className="py-14 md:py-16 px-5" style={{ backgroundColor: "#ffffff" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="font-bold mb-2" style={{ color: "#1a1c1e", fontSize: "clamp(22px, 3vw, 30px)" }}>The complete permit toolkit.</h2>
-            <p style={{ color: "#444651", fontSize: 15 }}>Everything you need to navigate local government services from one unified dashboard.</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {TOOLKIT.map(item => (
-              <Link
-                key={item.title}
-                to={createPageUrl(item.page)}
-                className="block p-5 rounded-2xl border transition-all hover:shadow-md hover:border-blue-200 group"
-                style={{ borderColor: "#e8e8ea", backgroundColor: "#f9f9fc", textDecoration: "none" }}
+      {/* ── PROCESS WORKFLOW ── */}
+      <section className="px-5 mt-16 max-w-lg mx-auto md:max-w-2xl">
+        <h2 className="font-bold text-center mb-10" style={{ color: "#00020c", fontSize: 24 }}>Process Workflow</h2>
+        <div className="space-y-12">
+          {STEPS.map(step => (
+            <div key={step.num} className="flex flex-col items-center text-center">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white mb-4 shadow-lg"
+                style={{ background: step.color }}
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                  style={{ backgroundColor: "#eeeef0" }}>
-                  <item.icon className="w-5 h-5 group-hover:text-blue-600 transition-colors" style={{ color: "#444651" }} />
-                </div>
-                <p className="font-bold mb-1 leading-snug" style={{ color: "#1a1c1e", fontSize: 13 }}>{item.title}</p>
-                <p style={{ color: "#747782", fontSize: 11, lineHeight: 1.6 }}>{item.body}</p>
-              </Link>
-            ))}
-          </div>
+                {step.num}
+              </div>
+              <h3 className="font-bold mb-2" style={{ color: "#1a1c1e", fontSize: 20 }}>{step.title}</h3>
+              <p className="max-w-[280px] text-sm leading-relaxed" style={{ color: "#44464f" }}>{step.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section className="py-14 px-5" style={{ background: "linear-gradient(135deg, #001a48 0%, #002d72 100%)" }}>
-        <div className="max-w-4xl mx-auto md:flex md:items-center md:justify-between gap-8">
-          <div className="mb-6 md:mb-0">
-            <h2 className="font-bold mb-2" style={{ color: "#ffffff", fontSize: "clamp(20px, 3vw, 28px)" }}>
-              Ready to start your project?
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14 }}>
-              Built for Broward County homeowners and contractors.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 shrink-0">
-            <Link to={createPageUrl("PermitGuide")}
-              className="inline-flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#3B82F6", color: "#fff", padding: "12px 24px", borderRadius: 8, fontSize: 14 }}>
-              Get Started Now
-            </Link>
-            <Link to={createPageUrl("FeeCalculator")}
-              className="inline-flex items-center gap-2 font-semibold transition-all hover:bg-white/10"
-              style={{ backgroundColor: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.3)", padding: "12px 24px", borderRadius: 8, fontSize: 14 }}>
-              View All Services
-            </Link>
-          </div>
+      <section className="px-5 mt-16 mb-12 max-w-lg mx-auto md:max-w-2xl">
+        <div className="rounded-3xl p-8 text-center shadow-xl relative overflow-hidden" style={{ background: "#00020c" }}>
+          <div className="absolute -left-10 -bottom-10 w-40 h-40 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.2)" }} />
+          <h3 className="font-bold text-white mb-3 relative" style={{ fontSize: 22 }}>Ready to start?</h3>
+          <p className="mb-8 relative text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
+            Streamlining permits for Broward and Miami-Dade counties.
+          </p>
+          <Link
+            to={createPageUrl("PermitGuide")}
+            className="block w-full h-14 rounded-xl flex items-center justify-center font-bold text-sm transition-transform active:scale-95 shadow-md relative"
+            style={{ background: "#ffffff", color: "#00020c" }}
+          >
+            Get Started Now
+          </Link>
         </div>
       </section>
 
