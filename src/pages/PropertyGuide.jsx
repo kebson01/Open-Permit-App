@@ -281,10 +281,11 @@ export default function PropertyGuide() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="px-4 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+      <div className="px-5 pt-8 pb-7" style={{ background: "#00020c" }}>
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold text-white mb-1">Property Search</h1>
-          <p className="text-blue-200 text-sm mb-5">
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Property Search</p>
+          <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Search Any Property</h1>
+          <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
             Find public records and assessment details for any Broward County property.
           </p>
 

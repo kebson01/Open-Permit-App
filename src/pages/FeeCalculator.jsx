@@ -288,27 +288,28 @@ export default function FeeCalculator() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: "#f9f9fc" }}>
       {/* Hero Header */}
-      <div className="px-4 md:px-8 pt-8 pb-6" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+      <div className="px-5 pt-8 pb-7" style={{ background: "#00020c" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="md:flex md:items-end md:justify-between gap-6">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Permit Fee Calculator</h1>
-              <p className="text-blue-200 text-sm">Estimate your project costs by adding permit types based on your scope of work.</p>
+              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Fee Calculator</p>
+              <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Estimate Permit Costs</h1>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Select a permit type to get a detailed fee breakdown before you spend a dollar.</p>
             </div>
-            <div className="hidden md:block w-64 shrink-0">
+            <div className="shrink-0 mt-1">
               {singleCity ? (
-                <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 h-11">
-                  <MapPin className="w-4 h-4 text-blue-300" />
+                <div className="flex items-center gap-2 rounded-xl px-4 h-11" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  <MapPin className="w-4 h-4" style={{ color: "rgba(255,255,255,0.5)" }} />
                   <span className="text-white text-sm font-medium">{city}</span>
                 </div>
               ) : (
                 <Select value={city} onValueChange={setCity}>
-                  <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-0 shadow-md">
+                  <SelectTrigger className="w-52 h-11 rounded-xl text-sm bg-white border-0 shadow-md">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-blue-600" />
-                      {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select Jurisdiction..." />}
+                      {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select city..." />}
                     </div>
                   </SelectTrigger>
                   <SelectContent>
@@ -322,16 +323,11 @@ export default function FeeCalculator() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-8">
-        {/* Mobile city selector */}
+        {/* Mobile city selector — hidden on desktop since header has it */}
         <div className="md:hidden mb-4">
-          {singleCity ? (
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 h-11 shadow-sm">
-              <MapPin className="w-4 h-4 text-blue-600" />
-              <span className="text-gray-800 text-sm font-medium">{city}</span>
-            </div>
-          ) : (
+          {!singleCity && (
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white">
+              <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-gray-200">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600" />
                   {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select city..." />}

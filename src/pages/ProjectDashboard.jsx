@@ -128,37 +128,41 @@ export default function ProjectDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div className="min-h-screen" style={{ backgroundColor: "#f9f9fc" }}>
+      {/* Hero Header */}
+      <div className="px-5 pt-8 pb-7" style={{ background: "#00020c" }}>
+        <div className="max-w-5xl mx-auto flex items-start justify-between gap-4 flex-wrap">
           <div>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
+              {viewRole === "contractor" ? "Contractor Portal" : "My Projects"}
+            </p>
             {viewRole === "homeowner" ? (
               <>
-                <h1 className="text-2xl font-bold text-gray-900">My Permit Projects</h1>
-                <p className="text-gray-500 text-sm mt-0.5">Track your permits, documents, and next steps</p>
+                <h1 className="font-bold text-white leading-tight mb-1" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>My Permit Projects</h1>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>Track your permits, documents, and next steps</p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-bold text-gray-900">Project Portfolio</h1>
-                <p className="text-gray-500 text-sm mt-0.5">
-                  Managing {activeProjects} active project{activeProjects !== 1 ? "s" : ""}
-                  {activeClients > 0 ? ` across ${activeClients} client${activeClients !== 1 ? "s" : ""}` : ""}
+                <h1 className="font-bold text-white leading-tight mb-1" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Project Portfolio</h1>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  {activeProjects} active project{activeProjects !== 1 ? "s" : ""}
+                  {activeClients > 0 ? ` · ${activeClients} client${activeClients !== 1 ? "s" : ""}` : ""}
                 </p>
               </>
             )}
           </div>
           <button
             onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{ background: "#3B82F6" }}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white mt-1"
+            style={{ background: "#0058be" }}
           >
             <Plus className="w-4 h-4" />
-            {viewRole === "contractor" ? "New Project" : "Start New Project"}
+            {viewRole === "contractor" ? "New Project" : "New Project"}
           </button>
         </div>
+      </div>
 
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Contractor: Attention Banner */}
         {viewRole === "contractor" && projects.length > 0 && (
           <AttentionBanner projects={projects} onProjectClick={goToProject} />

@@ -275,30 +275,33 @@ export default function PermitGuide() {
   })();
 
   return (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-20 md:pb-8" style={{ backgroundColor: "#f9f9fc" }}>
       {/* Hero Header */}
-      <div className="px-4 md:px-8 pt-7 pb-5" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-        <div className="max-w-7xl mx-auto flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Visual Permit Guide</h1>
-            <p className="text-blue-200 text-sm">Tap the icons on the property to identify required permits or upload a photo for AI analysis.</p>
-          </div>
-          {!singleCity && (
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
-              <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
-                <SelectTrigger className="w-44 rounded-xl h-9 text-sm bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Choose city..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {citiesLoading
-                ? <SelectItem value="_loading" disabled>Loading cities...</SelectItem>
-                : CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
-              }
-                </SelectContent>
-              </Select>
+      <div className="px-5 pt-8 pb-7" style={{ background: "#00020c" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Visual Permit Guide</p>
+              <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Identify Required Permits</h1>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Tap zones on the property diagram or upload a photo for AI analysis.</p>
             </div>
-          )}
+            {!singleCity && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.4)" }} />
+                <Select value={city} onValueChange={(val) => { setCity(val); if (val) sessionStorage.setItem("selectedCity", val); }}>
+                  <SelectTrigger className="w-44 rounded-xl h-9 text-sm bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Choose city..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {citiesLoading
+                      ? <SelectItem value="_loading" disabled>Loading cities...</SelectItem>
+                      : CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
