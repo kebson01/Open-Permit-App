@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Home, ArrowLeft, LayoutGrid, Building2, Eye, EyeOff, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,8 @@ export default function PermitGuideEmbed({ city }) {
   const [selectedPermit, setSelectedPermit] = useState(null);
 
   const { data: permits = [] } = useQuery({
-    queryKey: ["permits"],
-    queryFn: () => base44.entities.PermitType.list(),
+    queryKey: ["permitTypes", city.name],
+    queryFn: () => db.getPermitTypes(city.name),
   });
 
   const handleZoneClick = (permitName, permitDesc) => {

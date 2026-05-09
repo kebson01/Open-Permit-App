@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,7 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
 
   const { data: cities = [] } = useQuery({
     queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: () => db.getCities(),
   });
 
   const questions = aiParsed?.key_questions || [];
@@ -114,9 +115,7 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
       // Fetch real permit type records from the database for this city
       let permitTypeContext = "";
       try {
-        const permitTypes = cityId
-          ? await base44.entities.PermitType.filter({ city_id: cityId })
-          : await base44.entities.PermitType.list();
+        const permitTypes = await db.getPermitTypes(cityName || "Weston");
         if (permitTypes.length > 0) {
           permitTypeContext = `\n\nREAL PERMIT TYPE DATABASE (use these actual requirements):\n` +
             permitTypes.map(pt => [
@@ -210,10 +209,10 @@ Be specific, practical, and jurisdiction-aware. Prioritize real database data ov
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
             {cities.map(c => (
               <button
-                key={c.id}
-                onClick={() => { setCityId(c.id); setCityName(c.name); }}
+                key={c.name}
+                onClick={() => { setCityId(c.id || c.name); setCityName(c.name); }}
                 className={`px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${
-                  cityId === c.id ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700 hover:border-blue-300"
+                  cityName === c.name ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700 hover:border-blue-300"
                 }`}
               >
                 {c.name}

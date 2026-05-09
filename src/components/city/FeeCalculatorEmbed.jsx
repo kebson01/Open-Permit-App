@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Calculator } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/supabaseClient";
 import PermitSelectorV2 from "@/components/calculator/PermitSelectorV2";
 import ProjectDetailsV2 from "@/components/calculator/ProjectDetailsV2";
 import FeeResultsV2 from "@/components/calculator/FeeResultsV2";
@@ -14,17 +14,17 @@ export default function FeeCalculatorEmbed({ city }) {
   const [results, setResults] = useState(null);
 
   const { data: dbRules = [] } = useQuery({
-    queryKey: ["feeRules", city.id],
-    queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
+    queryKey: ["feeRules", city.name],
+    queryFn: () => db.getFeeRules(city.name),
   });
-  const { data: surcharges = [] } = useQuery({
-    queryKey: ["citySurcharges", city.id],
-    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
+  const { data: surcharge = null } = useQuery({
+    queryKey: ["citySurcharge", city.name],
+    queryFn: () => db.getCitySurcharge(city.name),
   });
 
   // Use DB rules if available, fallback to hardcoded config
   const cityConfig = dbRules.length > 0
-    ? buildCityConfigFromDB(city, dbRules, surcharges[0])
+    ? buildCityConfigFromDB(city, dbRules, surcharge)
     : (CITY_FEE_CONFIGS[city.name] || null);
 
   const selectedPermit = cityConfig?.permits.find(p => p.id === selectedPermitId) || null;
