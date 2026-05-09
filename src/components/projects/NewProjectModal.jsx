@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClient";
 import { X, Loader2, Home, Briefcase, ArrowRight } from "lucide-react";
 
 const PROJECT_TYPES = [
@@ -25,7 +24,7 @@ function RoleStep({ onSelect }) {
 
   const handleContinue = async () => {
     setSaving(true);
-    await supabase.auth.updateUser({ data: { role: selected } });
+    await base44.auth.updateMe({ role: selected });
     onSelect(selected);
   };
 
@@ -114,8 +113,7 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
       payload.client_email = form.client_email || undefined;
       payload.client_name = form.client_name || undefined;
     }
-    const { data: created, error } = await supabase.from("projects").insert(payload).select().single();
-    if (error) throw error;
+    const created = await base44.entities.Project.create(payload);
 
     // Invite client if contractor checked the box and provided an email
     if (isContractor && form.invite_client && form.client_email) {

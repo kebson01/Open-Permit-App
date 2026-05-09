@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
 import FloatingAIButton from "@/components/ai/FloatingAIButton";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import AuthModal from "@/components/auth/AuthModal";
 
 const centerNavLinks = [
@@ -24,41 +24,9 @@ export default function Layout({ children, currentPageName }) {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      // Give up waiting after 2s — show app as unauthenticated
-    }, 2000);
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(timeout);
-      if (session?.user) {
-        setCurrentUser({
-          ...session.user,
-          email: session.user.email,
-          full_name: session.user.user_metadata?.full_name,
-          role: session.user.user_metadata?.role,
-        });
-      }
-    }).catch(() => {
-      clearTimeout(timeout);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setCurrentUser({
-          ...session.user,
-          email: session.user.email,
-          full_name: session.user.user_metadata?.full_name,
-          role: session.user.user_metadata?.role,
-        });
-      } else {
-        setCurrentUser(null);
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+    base44.auth.me().then(user => {
+      if (user) setCurrentUser(user);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -222,7 +190,7 @@ export default function Layout({ children, currentPageName }) {
                         </Link>
                       ))}
                       <button
-                        onClick={async () => { await supabase.auth.signOut(); setAccountDropdownOpen(false); }}
+                        onClick={() => { base44.auth.logout("/"); setAccountDropdownOpen(false); }}
                         className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 mt-0.5"
                       >
                         Sign Out
@@ -276,7 +244,7 @@ export default function Layout({ children, currentPageName }) {
             )}
             {currentUser && (
               <button
-                onClick={async () => { await supabase.auth.signOut(); setMobileOpen(false); }}
+                onClick={() => { base44.auth.logout("/"); setMobileOpen(false); }}
                 className="block w-full text-left px-5 py-3.5 text-sm font-medium text-blue-100 hover:text-white hover:bg-white/5"
               >
                 Sign Out

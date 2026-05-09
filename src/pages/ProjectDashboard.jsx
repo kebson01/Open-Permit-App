@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { base44 } from "@/api/base44Client";
 import AuthModal from "@/components/auth/AuthModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, FolderOpen, Search, Loader2, Home, Briefcase } from "lucide-react";
@@ -65,15 +65,15 @@ export default function ProjectDashboard() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setCurrentUser({ ...user, email: user.email, full_name: user.user_metadata?.full_name, role: user.user_metadata?.role });
+    base44.auth.me().then(user => {
+      if (user) setCurrentUser(user);
       else setCurrentUser(null);
-    }).finally(() => setAuthLoading(false));
+    }).catch(() => setCurrentUser(null)).finally(() => setAuthLoading(false));
   }, []);
 
   const handleRoleSelect = async (role) => {
     setRoleSelecting(true);
-    await supabase.auth.updateUser({ data: { role } });
+    await base44.auth.updateMe({ role });
     setCurrentUser(prev => ({ ...prev, role }));
     setRoleSelecting(false);
   };
@@ -83,11 +83,7 @@ export default function ProjectDashboard() {
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects", currentUser?.email],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("projects").select("*").eq("owner_email", currentUser.email).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: () => base44.entities.Project.filter({ owner_email: currentUser.email }, "-created_date"),
     enabled: !!currentUser,
   });
 
