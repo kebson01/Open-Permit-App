@@ -276,6 +276,18 @@ export default function FeeCalculator() {
     }
   }, [selectedRule, isSunriseFlat]);
 
+  // Real-time calculation for standard (non-Sunrise) permits as user types
+  useEffect(() => {
+    if (!isSunrise && selectedRule) {
+      if (selectedRule.rate_percentage > 0 && (!constructionCost || parseFloat(constructionCost) <= 0)) {
+        setResults(null);
+        return;
+      }
+      const result = calculateStandardFee(selectedRule, constructionCost, surcharge);
+      setResults(result);
+    }
+  }, [constructionCost, selectedRule, surcharge, isSunrise]);
+
   const filtered = feeRules.filter(r =>
     !search || r.permit_name?.toLowerCase().includes(search.toLowerCase()) ||
     r.description?.toLowerCase().includes(search.toLowerCase())
@@ -566,13 +578,28 @@ export default function FeeCalculator() {
                   {/* Construction cost input */}
                   {needsCost && (
                     <div className="mb-4">
-                      <Label className="text-xs font-medium text-gray-700 mb-1 block">Construction Value ($)</Label>
+                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">Enter Job / Construction Value ($)</Label>
                       <Input
-                        type="number" min="0" placeholder="e.g. 50000"
+                        type="number" min="0" placeholder="e.g. 25000"
                         value={constructionCost}
                         onChange={e => setConstructionCost(e.target.value)}
                         className="rounded-xl text-sm"
+                        autoFocus
                       />
+                      {constructionCost && parseFloat(constructionCost) > 0 && selectedRule?.rate_percentage > 0 && (() => {
+                        const jobVal = parseFloat(constructionCost);
+                        const baseFee = parseFloat(selectedRule.base_fee) || 150;
+                        const rate = parseFloat(selectedRule.rate_percentage) || 1.5;
+                        const pctFee = jobVal * rate / 100;
+                        if (pctFee < baseFee) {
+                          return (
+                            <p className="text-xs text-amber-600 mt-1.5 font-medium">
+                              Minimum permit fee of ${baseFee.toFixed(2)} applies.
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   )}
 
@@ -591,9 +618,9 @@ export default function FeeCalculator() {
                   )}
 
                   {results && (
-                    <div className="mb-4 divide-y divide-gray-100">
+                    <div className="mb-4 divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
                       {results.breakdown.filter(i => i.amount > 0 || i.label.startsWith("  ")).map((item, i) => (
-                        <div key={i} className={`flex justify-between py-2 ${item.label.startsWith("  ") ? "opacity-50" : ""}`}>
+                        <div key={i} className={`flex justify-between px-3 py-2 ${item.label.startsWith("  ") ? "opacity-50 bg-gray-50" : "bg-white"}`}>
                           <span className="text-xs text-gray-600">{item.label}</span>
                           {item.amount > 0 && <span className="text-xs font-semibold text-gray-800">${item.amount.toFixed(2)}</span>}
                         </div>
@@ -601,8 +628,8 @@ export default function FeeCalculator() {
                     </div>
                   )}
 
-                  {/* Show calculate button only when needed */}
-                  {(!isSunriseFlat || isRoofPermit) && (
+                  {/* Show calculate button only for Sunrise (non-real-time) */}
+                  {isSunrise && (!isSunriseFlat || isRoofPermit) && (
                     <Button
                       onClick={handleCalculate}
                       disabled={!canCalculate}
@@ -627,7 +654,7 @@ export default function FeeCalculator() {
                           </a>
                         </Button>
                       )}
-                      <p className="text-xs text-gray-400 text-center leading-snug">Fees are estimates only and subject to departmental verification.</p>
+                      <p className="text-xs text-gray-400 text-center leading-snug">This is an estimate only. Final fees determined at permit issuance.</p>
                     </>
                   )}
 
