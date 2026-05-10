@@ -63,14 +63,18 @@ export default function Home() {
 
           {/* Selector card */}
           <div className="rounded-2xl p-5 shadow-2xl" style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}>
-            <Link
-              to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
-              className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white mb-4 hover:opacity-90 transition-opacity"
-              style={{ background: "#00020c" }}
-            >
-              View Required Permits
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "#44464f" }}>Not sure what you need?</p>
+              <Link
+                to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white hover:opacity-90 transition-opacity"
+                style={{ background: "#00020c" }}
+              >
+                Find Your Permit Requirements
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <p className="text-[12px] mt-2 leading-snug" style={{ color: "#757780" }}>See which permits apply to your project and what documents to prepare.</p>
+            </div>
 
             <div className="mb-4">
               <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>City / Municipality</label>
