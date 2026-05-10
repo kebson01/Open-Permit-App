@@ -70,10 +70,24 @@ export default function Home() {
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white hover:opacity-90 transition-opacity"
                 style={{ background: "#00020c" }}
               >
-                Find Your Permit Requirements
+                Find Permits for Your Project
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <p className="text-[12px] mt-2 leading-snug" style={{ color: "#757780" }}>See which permits apply to your project and what documents to prepare.</p>
+              <p className="text-[12px] mt-2 leading-snug" style={{ color: "#757780" }}>Answer a few questions to see which permits your project needs, what documents to prepare, and estimated costs.</p>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: "#e8e8ec" }}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">📋</span>
+                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Permit Checklist</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">📄</span>
+                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Required Documents</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">💰</span>
+                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Fee Estimate</span>
+                </div>
+              </div>
             </div>
 
             <div className="mb-4">

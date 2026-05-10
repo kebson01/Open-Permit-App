@@ -282,8 +282,8 @@ export default function PermitGuide() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Visual Permit Guide</p>
-              <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Identify Required Permits</h1>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Tap zones on the property diagram or upload a photo for AI analysis.</p>
+              <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Find the Right Permits</h1>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 480 }}>Select your city, property type, and project type to see the permits required, a document checklist, and an estimated fee — before you visit the building department.</p>
             </div>
             {!singleCity && (
               <div className="flex items-center gap-1.5 mt-1">
