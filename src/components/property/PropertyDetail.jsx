@@ -58,41 +58,53 @@ function PermitHistoryTable({ permitData, loading }) {
           <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">No permitted work on file, or records may predate our database.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                {["Record ID", "Type", "Status", "Opened"].map(h => (
-                  <th key={h} className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {records.map((p, i) => (
-                <tr key={p.RECORD_ID || i} className="hover:bg-blue-50/30">
-                  <td className="px-4 py-2.5 font-mono text-xs text-blue-700 whitespace-nowrap">{p.RECORD_ID || "—"}</td>
-                  <td className="px-4 py-2.5 text-gray-700 max-w-xs">
-                    <span className="line-clamp-1">{p.PERMIT_TYPE || "—"}</span>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {p.STATUS_NORMALIZED ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
-                        style={{
-                          backgroundColor: STATUS_STYLES[p.STATUS_NORMALIZED]?.bg || "#F1F5F9",
-                          color: STATUS_STYLES[p.STATUS_NORMALIZED]?.color || "#475569",
-                        }}>
-                        {p.STATUS_NORMALIZED}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">{p.PERMIT_STATUS || "—"}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{p.OPEN_DATE || "—"}</td>
+        <>
+          {/* Open code violation warning */}
+          {records.some(p => p.HAS_OPEN_CODE_CASE) && (
+            <div className="mx-4 mb-3 px-3 py-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+              <span className="text-sm flex-shrink-0">⚠️</span>
+              <p className="text-xs font-semibold text-red-800">Open code violation on this property. Resolve before applying for new permits.</p>
+            </div>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  {["Record ID", "Type", "Status", "Opened"].map(h => (
+                    <th key={h} className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {records.map((p, i) => (
+                  <tr key={p.RECORD_ID || i} className="hover:bg-blue-50/30">
+                    <td className="px-4 py-2.5 font-mono text-xs text-blue-700 whitespace-nowrap">
+                      {p.RECORD_ID || "—"}
+                      {p.HAS_OPEN_CODE_CASE && <span className="ml-1 text-red-500" title="Open code violation">⚠</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-700 max-w-xs">
+                      <span className="line-clamp-1">{p.PERMIT_TYPE || p.RECORD_NAME || "—"}</span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {p.STATUS_NORMALIZED ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                          style={{
+                            backgroundColor: STATUS_STYLES[p.STATUS_NORMALIZED]?.bg || "#F1F5F9",
+                            color: STATUS_STYLES[p.STATUS_NORMALIZED]?.color || "#475569",
+                          }}>
+                          {p.STATUS_NORMALIZED}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">{p.PERMIT_STATUS || "—"}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{p.OPEN_DATE || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

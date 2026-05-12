@@ -73,37 +73,49 @@ function calculateStandardFee(rule, constructionCost, surcharge) {
   const cost = parseFloat(constructionCost) || 0;
   const breakdown = [];
 
+  // Use correct DB column names: base_fee, rate_percentage
+  const baseFee = parseFloat(rule.base_fee) || 0;
+  const rate = parseFloat(rule.rate_percentage) || 0;
+
   let permitFee = 0;
-  if (rule.rate_percentage > 0) {
-    // base_fee is the minimum; if pct of job value exceeds it, use that
-    const pctFee = cost * (rule.rate_percentage / 100);
-    permitFee = Math.max(rule.base_fee || 0, pctFee);
+  if (rate > 0) {
+    const pctFee = cost * (rate / 100);
+    permitFee = Math.max(baseFee, pctFee);
   } else {
-    // flat fee — base_fee is the full fee
-    permitFee = rule.base_fee || 0;
+    permitFee = baseFee;
   }
   breakdown.push({ label: "Base Permit Fee", amount: permitFee });
 
-  const techFee = rule.technology_admin_fee || 0;
+  // DB column is 'technology_admin' on city_surcharges; per-rule override uses 'technology_admin_fee'
+  const techFee = parseFloat(rule.technology_admin_fee) || (surcharge ? parseFloat(surcharge.technology_admin) || 0 : 0);
   if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
 
-  let dcaFee = 0, dbprFee = 0, eduFee = 0;
+  let dcaFee = 0, dbprFee = 0, eduFee = 0, borFee = 0;
   if (surcharge) {
-    if (surcharge.dca_rate) {
-      dcaFee = permitFee * surcharge.dca_rate;
-      breakdown.push({ label: `State DCA Surcharge (${(surcharge.dca_rate * 100).toFixed(1)}%)`, amount: dcaFee });
+    const dcaRate = parseFloat(surcharge.dca_rate) || 0;
+    const dbprRate = parseFloat(surcharge.dbpr_rate) || 0;
+    const eduRate = parseFloat(surcharge.educational_rate) || 0;
+    const borRate = parseFloat(surcharge.board_of_rules_rate) || 0;
+
+    if (dcaRate > 0) {
+      dcaFee = permitFee * dcaRate;
+      breakdown.push({ label: `State DCA Surcharge (${(dcaRate * 100).toFixed(1)}%)`, amount: dcaFee });
     }
-    if (surcharge.dbpr_rate) {
-      dbprFee = permitFee * surcharge.dbpr_rate;
-      breakdown.push({ label: `State DBPR Surcharge (${(surcharge.dbpr_rate * 100).toFixed(1)}%)`, amount: dbprFee });
+    if (dbprRate > 0) {
+      dbprFee = permitFee * dbprRate;
+      breakdown.push({ label: `State DBPR Surcharge (${(dbprRate * 100).toFixed(1)}%)`, amount: dbprFee });
     }
-    if (surcharge.educational_rate && cost > 0) {
-      eduFee = cost * surcharge.educational_rate;
+    if (eduRate > 0) {
+      eduFee = permitFee * eduRate;
       breakdown.push({ label: "Educational & Training Fee", amount: eduFee });
+    }
+    if (borRate > 0) {
+      borFee = permitFee * borRate;
+      breakdown.push({ label: `Board of Rules Surcharge (${(borRate * 100).toFixed(2)}%)`, amount: borFee });
     }
   }
 
-  const total = permitFee + techFee + dcaFee + dbprFee + eduFee;
+  const total = permitFee + techFee + dcaFee + dbprFee + eduFee + borFee;
   return { total, breakdown };
 }
 
@@ -138,7 +150,8 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
     }
   }
 
-  const techFee = rule.technology_admin_fee || 0;
+  // For Sunrise: per-rule tech fee stored as technology_admin_fee
+  const techFee = parseFloat(rule.technology_admin_fee) || 0;
   if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
 
   // BRA: use constructionValue for percentage permits, base_fee for flat permits

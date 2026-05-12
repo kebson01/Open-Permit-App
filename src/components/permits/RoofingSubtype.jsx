@@ -1,29 +1,33 @@
 import React, { useState } from "react";
-import { Info, AlertTriangle } from "lucide-react";
+import { Info, AlertTriangle, DollarSign } from "lucide-react";
 
-const PARTIAL_CHECKLIST = [
-  "Building permit (partial repair)",
-  "Contractor's license & insurance",
-  "Photos of damaged area before and after",
-  "Proof remaining roof meets 2007 FBC or newer",
-  "Manufacturer's product approval documentation",
-  "Notice of Commencement (NOC) if job value exceeds $2,500",
-];
-
-const FULL_CHECKLIST = [
-  "Building permit (full replacement)",
-  "Contractor's license & insurance",
+// Documents from weston_permit_types "Re-Roof / Roofing Permit" documents_needed
+// Full list — shown for full replacement
+const FULL_REPLACEMENT_DOCS = [
+  "Building permit application",
+  "Contractor's license & insurance certificate",
   "Permit drawings / roofing plans",
   "Manufacturer's product approval documentation",
-  "Two layers of underlayment (required per current FBC)",
-  "Nail penetration must meet current hurricane resilience standards (min. 6d nails, 6\" spacing)",
   "Wind mitigation form (Miami-Dade Product Control or FL approval)",
-  "Notice of Commencement (NOC) if job value exceeds $2,500",
+  "HVHZ Uniform Roof Permit Application",
+  "Lightweight Concrete Installation Packet (if applicable)",
   "Final inspection by building department",
 ];
 
-export default function RoofingSubtype({ onSelect }) {
+// Additional items required for full replacement per 2025 hurricane code update
+const FULL_REPLACEMENT_EXTRAS = [
+  "✓ Two layers of underlayment required (current FBC)",
+  "✓ Nail penetration must meet current hurricane resilience standards (2025 update)",
+];
+
+// Partial repair — omit full-replacement-only items
+const PARTIAL_DOCS = FULL_REPLACEMENT_DOCS.filter(
+  d => !d.includes("HVHZ Uniform Roof Permit") && !d.includes("Lightweight Concrete")
+).map(d => d === "Building permit application" ? "Building permit (partial repair)" : d);
+
+export default function RoofingSubtype({ onSelect, jobValue }) {
   const [selected, setSelected] = useState(null);
+  const showNOC = parseFloat(jobValue) > 2500 || (!jobValue && true); // show if value unknown or >$2500
 
   const choose = (type) => {
     setSelected(type);
@@ -69,18 +73,24 @@ export default function RoofingSubtype({ onSelect }) {
             <div>
               <p className="text-xs font-bold text-blue-900 mb-1">Florida Law — Partial Repair Pathway</p>
               <p className="text-xs text-blue-800 leading-relaxed">
-                Under updated Florida Building Code, only the damaged section may need repair if the remaining roof meets 2007 Florida Building Code or newer. A partial repair permit — rather than a full re-roof permit — may apply.
+                Under updated Florida Building Code, only the damaged section may need repair if the remaining roof meets 2007 FBC or newer. A partial repair permit — rather than a full re-roof permit — may apply.
               </p>
             </div>
           </div>
-          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2">
+          {showNOC && (
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2">
+              <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 font-medium">⚠️ If job value &gt; $2,500 — Notice of Commencement (NOC) required before work begins.</p>
+            </div>
+          )}
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800">Verify with your building department whether a partial repair permit applies to your specific project.</p>
+            <p className="text-xs text-gray-700">Verify with your building department whether a partial repair permit applies to your specific project.</p>
           </div>
           <div>
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Partial Repair Checklist</p>
             <ul className="space-y-1.5">
-              {PARTIAL_CHECKLIST.map((item, i) => (
+              {PARTIAL_DOCS.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
                   <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
                   {item}
@@ -93,23 +103,31 @@ export default function RoofingSubtype({ onSelect }) {
 
       {selected === "full" && (
         <div className="space-y-3">
+          {showNOC && (
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2">
+              <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 font-medium">⚠️ If job value &gt; $2,500 — Notice of Commencement (NOC) required before work begins.</p>
+            </div>
+          )}
           <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
             <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Replacement Checklist</p>
             <ul className="space-y-1.5">
-              {FULL_CHECKLIST.map((item, i) => (
-                <li key={i} className={`flex items-start gap-2 text-xs ${
-                  item.startsWith("Two layers") || item.startsWith("Nail penetration")
-                    ? "text-blue-800 font-medium"
-                    : "text-gray-700"
-                }`}>
+              {FULL_REPLACEMENT_DOCS.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
                   <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
+                  {item}
+                </li>
+              ))}
+              {FULL_REPLACEMENT_EXTRAS.map((item, i) => (
+                <li key={`extra-${i}`} className="flex items-start gap-2 text-xs text-blue-800 font-semibold">
+                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">★</span>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
           <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-            <p className="text-xs text-blue-700 font-medium">⚡ Current FBC Requirements: Two layers of underlayment required. Nail penetration must meet 170mph hurricane wind resistance standards per HVHZ (Broward County).</p>
+            <p className="text-xs text-blue-700 font-medium">⚡ HVHZ (Broward County): Two layers of underlayment required. Nail penetration must meet 170mph hurricane wind resistance per current FBC.</p>
           </div>
         </div>
       )}
