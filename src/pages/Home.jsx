@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
-import { ArrowRight, ChevronRight, BookOpen, Calculator, Search, ClipboardList, Sparkles, MapPin, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronRight, BookOpen, Calculator, Search, ClipboardList, Sparkles, MapPin, ChevronDown, ShieldCheck } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
+import WhatsNewBanner from "@/components/home/WhatsNewBanner";
 
 const AI_CHIPS = [
   { label: "Do I need a fence permit?", icon: "🏗️" },
@@ -13,10 +14,10 @@ const AI_CHIPS = [
 ];
 
 const TOOLKIT = [
+  { icon: ShieldCheck,  title: "Exemption Checker",    sub: "See if your project needs a permit", page: "ExemptionChecker", badge: "New — HB 803" },
   { icon: BookOpen,     title: "Visual Permit Guide",  sub: "Browse residential requirements",    page: "PermitGuide" },
   { icon: Calculator,  title: "Fee Calculator",        sub: "Estimate municipal filing costs",    page: "FeeCalculator" },
   { icon: Search,      title: "Property Search",       sub: "Check zoning & permit history",      page: "PropertyGuide" },
-  { icon: ClipboardList, title: "Document Checklist",  sub: "Generate required file list",        page: "PermitGuide" },
 ];
 
 const STEPS = [
@@ -58,7 +59,7 @@ export default function Home() {
             Permits made simple<br />for South Florida
           </h1>
           <p className="mb-8 max-w-sm" style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, lineHeight: 1.65 }}>
-            Navigate zoning codes and building requirements with our intelligent assistant. Fast, transparent, and built for residents.
+            Navigate permits, estimate costs, and stay current with Florida's latest building laws.
           </p>
 
           {/* Selector card */}
@@ -108,33 +109,38 @@ export default function Home() {
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>Property Type</label>
               <div className="flex p-1 rounded-xl border" style={{ borderColor: "#c5c6d0", background: "#f3f3f6" }}>
-                <button
-                  onClick={() => setPropertyType("residential")}
-                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{
-                    background: propertyType === "residential" ? "#ffffff" : "transparent",
-                    color: propertyType === "residential" ? "#0058be" : "#44464f",
-                    boxShadow: propertyType === "residential" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                  }}
-                >
-                  Residential
-                </button>
-                <button
-                  onClick={() => setPropertyType("commercial")}
-                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                  style={{
-                    background: propertyType === "commercial" ? "#ffffff" : "transparent",
-                    color: propertyType === "commercial" ? "#0058be" : "#44464f",
-                    boxShadow: propertyType === "commercial" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                  }}
-                >
-                  Commercial
-                </button>
+                {[
+                  { val: "residential", label: "Residential" },
+                  { val: "condo", label: "Condo / HOA" },
+                  { val: "commercial", label: "Commercial" },
+                ].map(opt => (
+                  <button
+                    key={opt.val}
+                    onClick={() => setPropertyType(opt.val)}
+                    className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all"
+                    style={{
+                      background: propertyType === opt.val ? "#ffffff" : "transparent",
+                      color: propertyType === opt.val ? "#0058be" : "#44464f",
+                      boxShadow: propertyType === opt.val ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
+              {propertyType === "condo" && (
+                <div className="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <p className="text-xs text-amber-800 leading-snug">
+                    🏢 <strong>Condo/HOA:</strong> Florida condo safety laws (post-Surfside) require additional structural documentation for buildings 3+ stories. HOA approval letter required before permit submission.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+
+      <WhatsNewBanner />
 
       {/* ── AI ASSISTANT ── */}
       <section className="px-5 mt-10 max-w-lg mx-auto md:max-w-2xl">
@@ -201,13 +207,18 @@ export default function Home() {
               key={item.title}
               to={createPageUrl(item.page)}
               className="flex items-center gap-4 p-5 rounded-2xl border shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
-              style={{ background: "#ffffff", borderColor: "#c5c6d0", textDecoration: "none" }}
+              style={{ background: "#ffffff", borderColor: item.badge ? "#dbeafe" : "#c5c6d0", textDecoration: "none" }}
             >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,88,190,0.1)" }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: item.badge ? "rgba(0,88,190,0.12)" : "rgba(0,88,190,0.1)" }}>
                 <item.icon className="w-5 h-5" style={{ color: "#0058be" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
+                  {item.badge && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "#dbeafe", color: "#1d4ed8" }}>{item.badge}</span>
+                  )}
+                </div>
                 <p className="text-xs mt-0.5" style={{ color: "#44464f" }}>{item.sub}</p>
               </div>
               <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#757780" }} />

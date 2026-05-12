@@ -12,6 +12,7 @@ import ProjectDetail from './pages/ProjectDetail.jsx';
 import PermitWizard from './pages/PermitWizard.jsx';
 import AdminPanel from './pages/AdminPanel.jsx';
 import ARTools from './pages/ARTools.jsx';
+import ExemptionChecker from './pages/ExemptionChecker';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -49,6 +50,7 @@ function App() {
           <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
+          <Route path="/ExemptionChecker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </Router>

@@ -12,6 +12,7 @@ import ContractorTimelineTab from "@/components/projects/tabs/ContractorTimeline
 import ContractorBudgetTab from "@/components/projects/tabs/ContractorBudgetTab";
 import ContractorClientTab from "@/components/projects/tabs/ContractorClientTab";
 import MessagesTab from "@/components/projects/tabs/MessagesTab";
+import PermitExpirationWidget from "@/components/projects/PermitExpirationWidget";
 
 const STATUS_OPTIONS = ["planning", "permitting", "in_progress", "completed", "on_hold"];
 const STATUS_STYLES = {
@@ -178,6 +179,11 @@ export default function ProjectDetail() {
                 {project.property_address && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{project.property_address}</span>}
                 {project.estimated_cost && <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" />Est. ${Number(project.estimated_cost).toLocaleString()}</span>}
               </div>
+              {project.start_date && (
+                <div className="mt-4">
+                  <PermitExpirationWidget issuedDate={project.start_date} label={project.name} />
+                </div>
+              )}
               {viewRole === "contractor" && (project.client_name || project.contractor_license) && (
                 <div className="mt-3 flex flex-wrap gap-3 bg-orange-50 rounded-xl px-3 py-2 text-xs text-orange-700 border border-orange-100">
                   {project.client_name && <span><strong>Client:</strong> {project.client_name}</span>}

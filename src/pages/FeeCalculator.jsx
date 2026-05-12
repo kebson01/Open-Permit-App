@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2 } from "lucide-react";
+import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2, Printer, ClipboardCopy, Check } from "lucide-react";
 import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -205,6 +205,7 @@ export default function FeeCalculator() {
   const [roofSqFt, setRoofSqFt] = useState("");
   const [results, setResults] = useState(null);
   const [search, setSearch] = useState("");
+  const [feeCopied, setFeeCopied] = useState(false);
 
   const isSunrise = city === "Sunrise";
 
@@ -307,7 +308,10 @@ export default function FeeCalculator() {
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Fee Calculator</p>
-              <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Estimate Permit Costs</h1>
+              <div className="flex items-center gap-3 flex-wrap mb-2">
+                <h1 className="font-bold text-white leading-tight" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Estimate Permit Costs</h1>
+                <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(59,130,246,0.25)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }}>Fee transparency required by FL HB 683</span>
+              </div>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Select a permit type to get a detailed fee breakdown before you spend a dollar.</p>
             </div>
             <div className="shrink-0 mt-1">
@@ -646,6 +650,48 @@ export default function FeeCalculator() {
                       <div className="rounded-xl p-3 text-center mb-3" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
                         <p className="text-blue-200 text-xs mb-0.5">Estimated Total</p>
                         <p className="text-2xl font-extrabold text-white">${results.total.toFixed(2)}</p>
+                      </div>
+                      <div className="flex gap-2 mb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 rounded-xl text-xs h-8"
+                          onClick={() => {
+                            const lines = [
+                              `OpenPermit Fee Estimate`,
+                              `City: ${city}  |  Permit: ${selectedRule?.permit_name || ""}`,
+                              ``,
+                              ...results.breakdown.map(i => `  ${i.label}: $${i.amount.toFixed(2)}`),
+                              ``,
+                              `Total: $${results.total.toFixed(2)}`,
+                              ``,
+                              `Estimate only. Final fees per ${city} Building Dept.`,
+                            ].join("\n");
+                            const win = window.open("", "_blank");
+                            win.document.write(`<html><head><title>Fee Estimate — ${city}</title><style>body{font-family:monospace;white-space:pre;padding:40px;font-size:13px}</style></head><body>${lines.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</body></html>`);
+                            win.document.close(); win.focus(); win.print();
+                          }}
+                        >
+                          <Printer className="w-3 h-3 mr-1" /> Print
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 rounded-xl text-xs h-8"
+                          onClick={() => {
+                            const lines = [
+                              `OpenPermit Fee Estimate`,
+                              `City: ${city}  |  Permit: ${selectedRule?.permit_name || ""}`,
+                              ...results.breakdown.map(i => `${i.label}: $${i.amount.toFixed(2)}`),
+                              `Total: $${results.total.toFixed(2)}`,
+                              `Estimate only.`,
+                            ].join("\n");
+                            navigator.clipboard.writeText(lines).then(() => { setFeeCopied(true); setTimeout(() => setFeeCopied(false), 2000); });
+                          }}
+                        >
+                          {feeCopied ? <Check className="w-3 h-3 mr-1 text-green-600" /> : <ClipboardCopy className="w-3 h-3 mr-1" />}
+                          {feeCopied ? "Copied" : "Copy"}
+                        </Button>
                       </div>
                       {CITY_PORTAL_URLS[city] && (
                         <Button asChild className="w-full text-white rounded-xl h-10 text-sm mb-2" style={{ background: "#1E4D99" }}>

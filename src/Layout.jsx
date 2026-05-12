@@ -9,6 +9,7 @@ import AuthModal from "@/components/auth/AuthModal";
 
 const centerNavLinks = [
   { name: "Plan a Permit", page: "PermitGuide" },
+  { name: "Exemption Checker", page: "ExemptionChecker" },
   { name: "Estimate Costs", page: "FeeCalculator" },
   { name: "Search Property", page: "PropertyGuide" },
 ];

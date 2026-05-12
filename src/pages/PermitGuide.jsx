@@ -33,6 +33,8 @@ import PermitsPanel from "../components/map/PermitsPanel";
 import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 import OrdinancesPanel from "../components/map/OrdinancesPanel";
 import AIDrawer from "../components/ai/AIDrawer";
+import RoofingSubtype from "../components/permits/RoofingSubtype";
+import PrivateProviderStep from "../components/permits/PrivateProviderStep";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -218,6 +220,10 @@ export default function PermitGuide() {
   const [ordinancesPanelOpen, setOrdinancesPanelOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
+  const [roofingSubtype, setRoofingSubtype] = useState(null); // 'partial' | 'full'
+  const [privateProvider, setPrivateProvider] = useState(null); // 'yes' | 'no'
+  const [showRoofingStep, setShowRoofingStep] = useState(false);
+  const [showPrivateProviderStep, setShowPrivateProviderStep] = useState(false);
 
   const { data: allPermits = [] } = useQuery({
     queryKey: ["supabase-permit-types", city],
@@ -225,8 +231,8 @@ export default function PermitGuide() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const activeView = propertyType === "residential" ? residentialView : commercialView;
-  const activeViews = propertyType === "residential" ? RESIDENTIAL_VIEWS : COMMERCIAL_VIEWS;
+  const activeView = (propertyType === "residential" || propertyType === "condo") ? residentialView : commercialView;
+  const activeViews = (propertyType === "residential" || propertyType === "condo") ? RESIDENTIAL_VIEWS : COMMERCIAL_VIEWS;
 
   const setActiveView = (v) => {
     if (propertyType === "residential") setResidentialView(v);
@@ -236,6 +242,11 @@ export default function PermitGuide() {
   const handlePropertyTypeChange = (type) => {
     setPropertyType(type);
     if (type === "commercial") setCommercialSubtype(null); // reset to show selector
+    // Reset wizard steps
+    setShowRoofingStep(false);
+    setShowPrivateProviderStep(false);
+    setRoofingSubtype(null);
+    setPrivateProvider(null);
   };
 
   const handleCommercialSubtypeSelect = (sub) => {
@@ -246,6 +257,13 @@ export default function PermitGuide() {
   const [zoneInfoPanel, setZoneInfoPanel] = useState(null);
 
   const handleZoneClick = (zoneLabel, zoneDesc) => {
+    // Show roofing subtype step if this is a roofing item
+    const isRoofing = zoneLabel.toLowerCase().includes("roof");
+    setShowRoofingStep(isRoofing);
+    setShowPrivateProviderStep(true);
+    setRoofingSubtype(null);
+    setPrivateProvider(null);
+
     const mapZone = LABEL_TO_MAP_ZONE[zoneLabel];
     const matching = mapZone ? allPermits.filter(p => p.map_zone === mapZone) : [];
     const zoneDescription = ZONE_INFO[zoneLabel] || zoneDesc || "";
@@ -314,28 +332,38 @@ export default function PermitGuide() {
 
             {/* Property type + view controls */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 space-y-3">
-              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+              <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-col">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handlePropertyTypeChange("residential")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                      propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    Single-Family
+                  </button>
+                  <button
+                    onClick={() => handlePropertyTypeChange("commercial")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                      propertyType === "commercial" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    Commercial
+                  </button>
+                </div>
                 <button
-                  onClick={() => handlePropertyTypeChange("residential")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                    propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                  onClick={() => handlePropertyTypeChange("condo")}
+                  className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                    propertyType === "condo" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
-                  <Home className="w-3.5 h-3.5" />
-                  Single-Family
-                </button>
-                <button
-                  onClick={() => handlePropertyTypeChange("commercial")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                    propertyType === "commercial" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
-                  }`}
-                >
-                  <Building2 className="w-3.5 h-3.5" />
-                  Commercial
+                  🏢 Condo / HOA
                 </button>
               </div>
 
-              {(propertyType === "residential" || commercialSubtype) && (
+              {(propertyType === "residential" || propertyType === "condo" || commercialSubtype) && (
                 <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-col">
                   {activeViews.map(v => (
                     <button
@@ -404,6 +432,30 @@ export default function PermitGuide() {
           <div className="flex-1 min-w-0 mt-4 md:mt-0">
             <CityBanner city={city} />
 
+            {/* Condo/HOA banner */}
+            {propertyType === "condo" && (
+              <div className="mb-3 p-4 bg-amber-50 border border-amber-300 rounded-2xl">
+                <p className="text-xs font-bold text-amber-900 mb-1">🏢 Condo / HOA — Additional Requirements Apply</p>
+                <ul className="text-xs text-amber-800 space-y-1 leading-relaxed">
+                  <li>• <strong>HOA approval letter required</strong> before permit submission</li>
+                  <li>• <strong>Milestone inspection</strong> may be required — verify with your condo association</li>
+                  <li>• <strong>Structural recertification:</strong> confirm building is current on 40-year or milestone inspection requirements</li>
+                  <li>• <strong>Reserve study:</strong> confirm association has adequate reserves for this work type</li>
+                </ul>
+                <p className="text-xs text-amber-700 mt-2 font-medium">Florida condo safety laws (post-Surfside) require additional structural documentation for buildings 3+ stories. Verify your building's milestone inspection status before starting work.</p>
+              </div>
+            )}
+
+            {/* Roofing subtype selector — shown when user clicked a roof zone */}
+            {showRoofingStep && (
+              <RoofingSubtype onSelect={setRoofingSubtype} />
+            )}
+
+            {/* Private provider step — shown after any permit zone click */}
+            {showPrivateProviderStep && (
+              <PrivateProviderStep onAnswer={setPrivateProvider} />
+            )}
+
             {propertyType === "commercial" && !commercialSubtype && (
               <CommercialSubtypeSelector onSelect={handleCommercialSubtypeSelect} />
             )}
@@ -420,7 +472,7 @@ export default function PermitGuide() {
               </div>
             )}
 
-            {(propertyType === "residential" || commercialSubtype) && (
+            {(propertyType === "residential" || propertyType === "condo" || commercialSubtype) && (
               <>
                 <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
 
