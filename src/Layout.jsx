@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck } from "lucide-react";
+import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck, Map, Calculator, Search, CheckSquare } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
 import FloatingAIButton from "@/components/ai/FloatingAIButton";
 import { base44 } from "@/api/base44Client";
 import AuthModal from "@/components/auth/AuthModal";
 
 const centerNavLinks = [
-  { name: "Plan a Permit", page: "PermitGuide" },
-  { name: "Exemption Checker", page: "ExemptionChecker" },
-  { name: "Estimate Costs", page: "FeeCalculator" },
-  { name: "Search Property", page: "PropertyGuide" },
+  { name: "Plan a Permit", page: "PermitGuide", shortLabel: "Permits", icon: Map },
+  { name: "Exemption Checker", page: "ExemptionChecker", shortLabel: "Exempt?", icon: CheckSquare },
+  { name: "Estimate Costs", page: "FeeCalculator", shortLabel: "Fees", icon: Calculator },
+  { name: "Search Property", page: "PropertyGuide", shortLabel: "Property", icon: Search },
 ];
 
 
@@ -260,17 +260,22 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Bottom nav for mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex">
-        {centerNavLinks.map(link => (
-          <Link
-            key={link.page}
-            to={createPageUrl(link.page)}
-            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-xs font-medium transition-colors ${
-              currentPageName === link.page ? "text-blue-600" : "text-gray-500"
-            }`}
-          >
-            <span className="truncate text-[11px]">{link.name}</span>
-          </Link>
-        ))}
+        {centerNavLinks.map(link => {
+          const Icon = link.icon;
+          const isActive = currentPageName === link.page;
+          return (
+            <Link
+              key={link.page}
+              to={createPageUrl(link.page)}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
+                isActive ? "text-blue-600" : "text-gray-400"
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
+              <span className="text-[10px] font-medium">{link.shortLabel}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer */}
