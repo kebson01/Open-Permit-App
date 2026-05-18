@@ -1,12 +1,22 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Camera, MapPin, Ruler } from "lucide-react";
 
 const AR_TOOLS_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/ar-tools";
 
 // ── Permission Screen ─────────────────────────────────────────────────────────
-function PermissionScreen({ onEnable }) {
+function PermissionScreen({ onEnable, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-950 px-8 text-center">
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center"
+        style={{ background: "rgba(255,255,255,0.1)" }}
+      >
+        <X className="w-5 h-5 text-white" />
+      </button>
+
       <div className="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center mb-6">
         <Camera className="w-10 h-10 text-blue-400" />
       </div>
@@ -420,6 +430,7 @@ function PermitCheckOverlay({ onCapture, analyzing, showResults, analysis, captu
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ARTools() {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -590,8 +601,15 @@ export default function ARTools() {
     setAnalyzing(false);
   };
 
+  const handleClose = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    navigate(-1);
+  };
+
   if (!permitted) {
-    return <PermissionScreen onEnable={handleEnable} />;
+    return <PermissionScreen onEnable={handleEnable} onClose={() => navigate(-1)} />;
   }
 
   return (
@@ -650,6 +668,14 @@ export default function ARTools() {
           justifyContent: "space-between",
         }}
       >
+        {/* Close button */}
+        <button
+          onClick={handleClose}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 999, background: "rgba(0,0,0,0.55)", border: "none", cursor: "pointer" }}
+        >
+          <X style={{ width: 18, height: 18, color: "#fff" }} />
+        </button>
+
         {/* GPS indicator */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.5)", borderRadius: 999, padding: "6px 12px" }}>
           <MapPin style={{ width: 14, height: 14, color: lat ? "#4ade80" : "#6b7280" }} />
