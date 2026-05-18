@@ -42,28 +42,28 @@ export default function Home() {
     <div className="pb-24 md:pb-0" style={{ backgroundColor: "#f5f5f5", fontFamily: "'Public Sans', 'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[360px] flex items-end overflow-hidden">
+      <section className="relative flex items-end overflow-hidden" style={{ minHeight: "340px" }}>
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80"
+            src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80"
             alt="South Florida"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,2,30,0.55) 0%, rgba(0,2,30,0.82) 60%, rgba(0,2,30,0.96) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,21,77,0.65) 0%, rgba(0,21,77,0.75) 50%, rgba(0,21,77,0.97) 88%, #f5f5f5 100%)" }} />
         </div>
 
-        <div className="relative z-10 w-full px-5 pt-16 pb-8 max-w-lg mx-auto md:max-w-2xl">
-          <h1 className="font-bold leading-tight mb-3 text-white" style={{ fontSize: "clamp(26px, 7vw, 40px)" }}>
+        <div className="relative z-10 w-full px-5 pt-20 pb-10 max-w-lg mx-auto md:max-w-2xl">
+          <h1 className="font-extrabold leading-tight mb-3 text-white" style={{ fontSize: "clamp(28px, 8vw, 44px)", letterSpacing: "-0.01em" }}>
             Permits made simple for<br />South Florida
           </h1>
-          <p className="text-sm leading-relaxed mb-0" style={{ color: "rgba(255,255,255,0.7)" }}>
-            Navigate permits, estimate costs, and stay<br className="hidden sm:block" /> current with Florida's latest building laws.
+          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.72)" }}>
+            Navigate permits, estimate costs, and stay current with Florida's latest building laws.
           </p>
         </div>
       </section>
 
       {/* ── PROJECT LAUNCHPAD CARD ── */}
-      <section className="px-5 max-w-lg mx-auto md:max-w-2xl -mt-1">
+      <section className="px-5 max-w-lg mx-auto md:max-w-2xl -mt-4">
         <div className="rounded-2xl bg-white shadow-lg overflow-hidden border border-gray-100">
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
