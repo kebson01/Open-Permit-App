@@ -2,9 +2,22 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
-import { ArrowRight, ChevronRight, BookOpen, Calculator, Search, ClipboardList, Sparkles, MapPin, ChevronDown, ShieldCheck } from "lucide-react";
+import { Plus, MapPin, ChevronRight, ShieldCheck, BookOpen, Calculator, Search, Sparkles } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
 import WhatsNewBanner from "@/components/home/WhatsNewBanner";
+
+const TOOLKIT = [
+  { icon: ShieldCheck, title: "Exception Checker",   sub: "See if your project qualifies for a waiver", page: "ExemptionChecker" },
+  { icon: BookOpen,    title: "Visual Permit Guide",  sub: "Interactive step-by-step documentation",    page: "PermitGuide" },
+  { icon: Calculator,  title: "Fee Calculator",        sub: "Estimate city and county permit costs",     page: "FeeCalculator" },
+  { icon: Search,      title: "Property Search",       sub: "Check historical permits by address",       page: "PropertyGuide" },
+];
+
+const STEPS = [
+  { num: "1", title: "Identify",  body: "Enter your address and project details to see required filings.", dark: true },
+  { num: "2", title: "Calculate", body: "Get a detailed breakdown of fees before you spend a dollar.", dark: false },
+  { num: "3", title: "Compile",   body: "Generate custom checklists of required contractor licenses and plans.", dark: false },
+];
 
 const AI_CHIPS = [
   { label: "Do I need a fence permit?", icon: "🏗️" },
@@ -13,25 +26,11 @@ const AI_CHIPS = [
   { label: "Solar panel requirements", icon: "☀️" },
 ];
 
-const TOOLKIT = [
-  { icon: ShieldCheck,  title: "Exemption Checker",    sub: "See if your project needs a permit", page: "ExemptionChecker", badge: "New — HB 803" },
-  { icon: BookOpen,     title: "Visual Permit Guide",  sub: "Browse residential requirements",    page: "PermitGuide" },
-  { icon: Calculator,  title: "Fee Calculator",        sub: "Estimate municipal filing costs",    page: "FeeCalculator" },
-  { icon: Search,      title: "Property Search",       sub: "Check zoning & permit history",      page: "PropertyGuide" },
-];
-
-const STEPS = [
-  { num: "1", color: "#00020c", title: "Identify",  body: "Enter your address and project details to see required filings." },
-  { num: "2", color: "#0058be", title: "Calculate", body: "Get a detailed breakdown of fees before you spend a dollar." },
-  { num: "3", color: "#2170e4", title: "Compile",   body: "Generate custom checklists of required contractor licenses and plans." },
-];
-
 export default function Home() {
   const { cities, loading: citiesLoading } = useCities();
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
   const [jurisdiction, setJurisdiction] = useState("Fort Lauderdale");
-  const [propertyType, setPropertyType] = useState("residential");
   const [customQuestion, setCustomQuestion] = useState("");
 
   const handleAsk = (msg) => {
@@ -40,101 +39,63 @@ export default function Home() {
   };
 
   return (
-    <div style={{ backgroundColor: "#f9f9fc", fontFamily: "'Public Sans', 'Segoe UI', system-ui, sans-serif" }} className="pb-20 md:pb-0">
+    <div className="pb-24 md:pb-0" style={{ backgroundColor: "#f5f5f5", fontFamily: "'Public Sans', 'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[520px] flex items-end overflow-hidden">
-        {/* Background image */}
+      <section className="relative min-h-[360px] flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80"
-            alt="South Florida Architecture"
+            alt="South Florida"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,2,12,0.55) 0%, rgba(0,2,12,0.80) 60%, rgba(0,2,12,0.92) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,2,30,0.55) 0%, rgba(0,2,30,0.82) 60%, rgba(0,2,30,0.96) 100%)" }} />
         </div>
 
-        <div className="relative z-10 w-full px-5 pt-14 pb-8 max-w-lg mx-auto md:max-w-2xl">
-          <h1 className="font-bold leading-[1.1] mb-4" style={{ color: "#ffffff", fontSize: "clamp(28px, 6vw, 42px)" }}>
-            Permits made simple<br />for South Florida
+        <div className="relative z-10 w-full px-5 pt-16 pb-8 max-w-lg mx-auto md:max-w-2xl">
+          <h1 className="font-bold leading-tight mb-3 text-white" style={{ fontSize: "clamp(26px, 7vw, 40px)" }}>
+            Permits made simple for<br />South Florida
           </h1>
-          <p className="mb-8 max-w-sm" style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, lineHeight: 1.65 }}>
-            Navigate permits, estimate costs, and stay current with Florida's latest building laws.
+          <p className="text-sm leading-relaxed mb-0" style={{ color: "rgba(255,255,255,0.7)" }}>
+            Navigate permits, estimate costs, and stay<br className="hidden sm:block" /> current with Florida's latest building laws.
           </p>
+        </div>
+      </section>
 
-          {/* Selector card */}
-          <div className="rounded-2xl p-5 shadow-2xl" style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)" }}>
-            <div className="mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "#44464f" }}>Not sure what you need?</p>
-              <Link
-                to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}&propertyType=${propertyType}`}
-                className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white hover:opacity-90 transition-opacity"
-                style={{ background: "#00020c" }}
+      {/* ── PROJECT LAUNCHPAD CARD ── */}
+      <section className="px-5 max-w-lg mx-auto md:max-w-2xl -mt-1">
+        <div className="rounded-2xl bg-white shadow-lg overflow-hidden border border-gray-100">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
+            <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#44464f" }}>Project Launchpad</span>
+            <span className="text-lg">🚀</span>
+          </div>
+
+          {/* CTA button */}
+          <div className="px-5 pt-4 pb-3">
+            <Link
+              to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}`}
+              className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-bold text-sm text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "#001a48" }}
+            >
+              Find Permits for Your Project
+              <Plus className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* City selector */}
+          <div className="px-5 pb-5">
+            <div className="flex items-center gap-2 px-4 h-12 rounded-xl border" style={{ borderColor: "#e0e0e0", background: "#f7f7f7" }}>
+              <MapPin className="w-4 h-4 shrink-0" style={{ color: "#0058be" }} />
+              <span className="text-xs font-medium mr-1" style={{ color: "#666" }}>City / Municipality</span>
+              <select
+                value={jurisdiction}
+                onChange={e => setJurisdiction(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-semibold focus:outline-none appearance-none"
+                style={{ color: "#1a1c1e" }}
               >
-                Find Permits for Your Project
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <p className="text-[12px] mt-2 leading-snug" style={{ color: "#757780" }}>Answer a few questions to see which permits your project needs, what documents to prepare, and estimated costs.</p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: "#e8e8ec" }}>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">📋</span>
-                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Permit Checklist</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">📄</span>
-                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Required Documents</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base">💰</span>
-                  <span className="text-[11px] font-medium" style={{ color: "#44464f" }}>Fee Estimate</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>City / Municipality</label>
-              <div className="relative">
-                <select
-                  value={jurisdiction}
-                  onChange={e => setJurisdiction(e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border appearance-none text-sm focus:outline-none focus:ring-2"
-                  style={{ borderColor: "#c5c6d0", background: "#f3f3f6", color: "#1a1c1e", focusRingColor: "#0058be" }}
-                >
-                  {citiesLoading ? <option>Loading...</option> : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 pointer-events-none" style={{ color: "#44464f" }} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#44464f" }}>Property Type</label>
-              <div className="flex p-1 rounded-xl border" style={{ borderColor: "#c5c6d0", background: "#f3f3f6" }}>
-                {[
-                  { val: "residential", label: "Residential" },
-                  { val: "condo", label: "Condo / HOA" },
-                  { val: "commercial", label: "Commercial" },
-                ].map(opt => (
-                  <button
-                    key={opt.val}
-                    onClick={() => setPropertyType(opt.val)}
-                    className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all"
-                    style={{
-                      background: propertyType === opt.val ? "#ffffff" : "transparent",
-                      color: propertyType === opt.val ? "#0058be" : "#44464f",
-                      boxShadow: propertyType === opt.val ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              {propertyType === "condo" && (
-                <div className="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-xs text-amber-800 leading-snug">
-                    🏢 <strong>Condo/HOA:</strong> Florida condo safety laws (post-Surfside) require additional structural documentation for buildings 3+ stories. HOA approval letter required before permit submission.
-                  </p>
-                </div>
-              )}
+                {citiesLoading ? <option>Loading...</option> : cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
             </div>
           </div>
         </div>
@@ -142,37 +103,76 @@ export default function Home() {
 
       <WhatsNewBanner />
 
-      {/* ── AI ASSISTANT ── */}
-      <section className="px-5 mt-10 max-w-lg mx-auto md:max-w-2xl">
-        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "#001a48", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="absolute -right-4 -top-4 w-32 h-32 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.3)" }} />
+      {/* ── TOOLKIT LIST ── */}
+      <section className="px-5 mt-8 max-w-lg mx-auto md:max-w-2xl">
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+          {TOOLKIT.map((item) => (
+            <Link
+              key={item.title}
+              to={createPageUrl(item.page)}
+              className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors active:bg-gray-100"
+              style={{ textDecoration: "none" }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,88,190,0.1)" }}>
+                <item.icon className="w-5 h-5" style={{ color: "#0058be" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#757780" }}>{item.sub}</p>
+              </div>
+              <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#b0b0b0" }} />
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          <div className="flex items-center gap-3 mb-5 relative">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#0058be" }}>
-              <Sparkles className="w-5 h-5 text-white" />
+      {/* ── PROCESS WORKFLOW ── */}
+      <section className="px-5 mt-14 max-w-lg mx-auto md:max-w-2xl">
+        <h2 className="font-bold text-center mb-10" style={{ color: "#1a1c1e", fontSize: 22 }}>Process Workflow</h2>
+        <div className="relative">
+          {/* Connector line */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-7 bottom-7 w-px" style={{ background: "#d0d4dc" }} />
+          <div className="space-y-10 relative">
+            {STEPS.map((step) => (
+              <div key={step.num} className="flex flex-col items-center text-center relative">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white mb-4 shadow-md relative z-10"
+                  style={{ background: step.dark ? "#001a48" : "#0058be" }}
+                >
+                  {step.num}
+                </div>
+                <h3 className="font-bold text-lg mb-1" style={{ color: "#1a1c1e" }}>{step.title}</h3>
+                <p className="text-sm leading-relaxed max-w-[260px]" style={{ color: "#757780" }}>{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI ASSISTANT ── */}
+      <section className="px-5 mt-14 max-w-lg mx-auto md:max-w-2xl">
+        <div className="rounded-2xl p-5 relative overflow-hidden" style={{ background: "#001a48" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#0058be" }}>
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-white" style={{ fontSize: 17 }}>Intelligent Permit Support</h3>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>Ask me anything about local requirements</p>
+              <p className="font-bold text-white text-sm">Intelligent Permit Support</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Ask me anything about local requirements</p>
             </div>
           </div>
-
-          {/* Chips */}
-          <div className="flex flex-wrap gap-2 mb-5 relative">
+          <div className="flex flex-wrap gap-2 mb-4">
             {AI_CHIPS.map(chip => (
               <button
                 key={chip.label}
                 onClick={() => handleAsk(chip.label)}
-                className="px-3 py-2 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all hover:bg-white/20"
+                className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all hover:bg-white/20 active:scale-95"
                 style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff" }}
               >
-                <span>{chip.icon}</span>
-                {chip.label}
+                <span>{chip.icon}</span>{chip.label}
               </button>
             ))}
           </div>
-
-          {/* Input */}
           <div className="relative">
             <input
               type="text"
@@ -180,12 +180,12 @@ export default function Home() {
               onChange={e => setCustomQuestion(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && customQuestion.trim()) { handleAsk(customQuestion.trim()); setCustomQuestion(""); } }}
               placeholder="Type your question..."
-              className="w-full h-14 pl-4 pr-14 rounded-xl text-sm focus:outline-none"
+              className="w-full h-12 pl-4 pr-12 rounded-xl text-sm focus:outline-none"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff" }}
             />
             <button
               onClick={() => { if (customQuestion.trim()) { handleAsk(customQuestion.trim()); setCustomQuestion(""); } }}
-              className="absolute right-2 top-2 h-10 w-10 rounded-lg flex items-center justify-center transition-transform active:scale-90"
+              className="absolute right-2 top-1.5 h-9 w-9 rounded-lg flex items-center justify-center"
               style={{ background: "#0058be" }}
             >
               <Sparkles className="w-4 h-4 text-white" />
@@ -194,77 +194,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PROFESSIONAL TOOLKIT ── */}
-      <section className="px-5 mt-14 max-w-lg mx-auto md:max-w-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#44464f" }}>Professional Toolkit</p>
-          <Link to={createPageUrl("PermitGuide")} className="text-sm font-semibold" style={{ color: "#0058be" }}>View All</Link>
-        </div>
-
-        <div className="space-y-3">
-          {TOOLKIT.map(item => (
-            <Link
-              key={item.title}
-              to={createPageUrl(item.page)}
-              className="flex items-center gap-4 p-5 rounded-2xl border shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
-              style={{ background: "#ffffff", borderColor: item.badge ? "#dbeafe" : "#c5c6d0", textDecoration: "none" }}
-            >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: item.badge ? "rgba(0,88,190,0.12)" : "rgba(0,88,190,0.1)" }}>
-                <item.icon className="w-5 h-5" style={{ color: "#0058be" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
-                  {item.badge && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "#dbeafe", color: "#1d4ed8" }}>{item.badge}</span>
-                  )}
-                </div>
-                <p className="text-xs mt-0.5" style={{ color: "#44464f" }}>{item.sub}</p>
-              </div>
-              <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#757780" }} />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── PROCESS WORKFLOW ── */}
-      <section className="px-5 mt-16 max-w-lg mx-auto md:max-w-2xl">
-        <h2 className="font-bold text-center mb-10" style={{ color: "#00020c", fontSize: 24 }}>Process Workflow</h2>
-        <div className="space-y-12">
-          {STEPS.map(step => (
-            <div key={step.num} className="flex flex-col items-center text-center">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white mb-4 shadow-lg"
-                style={{ background: step.color }}
-              >
-                {step.num}
-              </div>
-              <h3 className="font-bold mb-2" style={{ color: "#1a1c1e", fontSize: 20 }}>{step.title}</h3>
-              <p className="max-w-[280px] text-sm leading-relaxed" style={{ color: "#44464f" }}>{step.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── CTA BANNER ── */}
-      <section className="px-5 mt-16 mb-12 max-w-lg mx-auto md:max-w-2xl">
-        <div className="rounded-3xl p-8 text-center shadow-xl relative overflow-hidden" style={{ background: "#00020c" }}>
-          <div className="absolute -left-10 -bottom-10 w-40 h-40 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.2)" }} />
-          <h3 className="font-bold text-white mb-3 relative" style={{ fontSize: 22 }}>Ready to start?</h3>
-          <p className="mb-8 relative text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-            Streamlining permits for Broward and Miami-Dade counties.
+      <section className="px-5 mt-10 mb-10 max-w-lg mx-auto md:max-w-2xl">
+        <div className="rounded-2xl p-7 text-center shadow-lg relative overflow-hidden" style={{ background: "#001a48" }}>
+          <div className="absolute -left-8 -bottom-8 w-36 h-36 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.25)" }} />
+          <h3 className="font-bold text-white mb-2 relative" style={{ fontSize: 20 }}>Ready to start?</h3>
+          <p className="mb-6 relative text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Simplifying permits for Broward and Miami-Dade counties.
           </p>
           <Link
             to={createPageUrl("PermitGuide")}
-            className="block w-full h-14 rounded-xl flex items-center justify-center font-bold text-sm transition-transform active:scale-95 shadow-md relative"
-            style={{ background: "#ffffff", color: "#00020c" }}
+            className="block w-full h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all active:scale-95 relative"
+            style={{ background: "#ffffff", color: "#001a48" }}
           >
             Get Started Now
           </Link>
         </div>
       </section>
 
-      {/* AI Drawer */}
       <AIDrawer
         open={aiOpen}
         onClose={() => setAiOpen(false)}
