@@ -100,7 +100,7 @@ export default function Layout({ children, currentPageName }) {
             {/* LEFT — Brand */}
             <Link to="/" className="flex items-center flex-shrink-0">
               <img
-                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
+                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/a83719bba_OpenPermit_blue_background.png"
                 alt="OpenPermit"
                 className="h-9 w-auto"
               />
@@ -284,9 +284,9 @@ export default function Layout({ children, currentPageName }) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <img
-                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
+                src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/a83719bba_OpenPermit_blue_background.png"
                 alt="OpenPermit"
-                className="h-10 w-auto brightness-0 invert"
+                className="h-10 w-auto"
                 onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "block"; }}
               />
               <span style={{ display: "none", color: "#ffffff", fontWeight: 700, fontSize: 20 }}>OpenPermit</span>
