@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator } from "lucide-react";
+import { Search, Building2, Loader2, MapPin, ArrowLeft, Home, ChevronRight, ClipboardList, ExternalLink, Calculator, Info } from "lucide-react";
+import { HintBanner } from "@/components/ui/HintTooltip";
 import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -153,6 +154,12 @@ function PropertyDetail({ property: p, onBack }) {
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-blue-600" />
           <h3 className="font-semibold text-gray-800 text-sm">Permit History</h3>
+          <span className="ml-1 group relative">
+            <Info className="w-3.5 h-3.5 text-blue-300 cursor-pointer" />
+            <span className="hidden group-hover:block absolute left-4 top-0 z-50 w-56 bg-white border border-blue-100 rounded-xl shadow-xl p-3 text-xs text-gray-700 leading-relaxed">
+              Showing permits on record for this property from the City of Weston's permit database. Records from other cities will be added as they become available.
+            </span>
+          </span>
           {permits && permits.length > 0 && (
             <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
               {permits.length} record{permits.length !== 1 ? "s" : ""}
@@ -286,7 +293,7 @@ export default function PropertyGuide() {
           <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Property Search</p>
           <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Search Any Property</h1>
           <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Find public records and assessment details for any Broward County property.
+            Search Broward County's property database to find property details, ownership information, building characteristics, and permit history — all in one place.
           </p>
 
           {/* Search bar */}
@@ -294,7 +301,7 @@ export default function PropertyGuide() {
             <Search className="w-5 h-5 text-gray-400 shrink-0" />
             <input
               className="flex-1 border-0 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent"
-              placeholder="Enter address or folio number..."
+              placeholder="Enter an address, owner name, or folio number..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === "Enter" && doSearch()}
@@ -327,10 +334,13 @@ export default function PropertyGuide() {
             </button>
           </div>
 
-          {/* Info notice */}
-          <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-blue-900/40 border border-blue-400/20">
-            <Search className="w-3.5 h-3.5 text-blue-300 mt-0.5 shrink-0" />
-            <p className="text-blue-200 text-xs">Look up historical permits, zoning classifications, and building details for any registered property.</p>
+          {/* Search tips */}
+          <div className="mt-3 px-3 py-3 rounded-xl bg-blue-900/40 border border-blue-400/20 text-blue-200 text-xs space-y-1">
+            <p className="font-semibold flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Tips for better results:</p>
+            <p>• Search by street address: <span className="font-mono">'2600 Glades'</span> or <span className="font-mono">'123 Main St Weston'</span></p>
+            <p>• Search by folio number: <span className="font-mono">'514016150070'</span></p>
+            <p>• Partial addresses work — try just the street name</p>
+            <p>• Data sourced from the Broward County Property Appraiser (BCPA)</p>
           </div>
         </div>
       </div>

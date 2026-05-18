@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowRight, CheckCircle2, XCircle, AlertTriangle, Info, ChevronLeft } from "lucide-react";
+import HintTooltip, { HintBanner } from "@/components/ui/HintTooltip";
 
 const WORK_TYPES = [
   { value: "electrical",   label: "Electrical",        alwaysRequired: true,  reason: "Electrical work always requires a permit regardless of project value, per Florida Electrical Code." },
@@ -86,6 +87,13 @@ export default function ExemptionChecker() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Page hint banner */}
+        <div className="mb-5">
+          <HintBanner>
+            Not sure if your project needs a permit? Answer 4 quick questions and we'll tell you instantly — including whether Florida's new $7,500 exemption applies to your project.
+          </HintBanner>
+        </div>
+
         {/* New Law Banner */}
         <div className="mb-6 p-4 rounded-2xl flex items-start gap-3" style={{ background: "#EBF5FF", border: "1px solid #60A9DE" }}>
           <span className="text-xl flex-shrink-0 mt-0.5">🆕</span>
@@ -117,6 +125,7 @@ export default function ExemptionChecker() {
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-3">
               1. What type of work are you doing?
+              <HintTooltip text="Select the primary type of work being done. If your project involves multiple trades (e.g. a remodel with electrical and plumbing), select the one that best describes the main scope." />
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {WORK_TYPES.map(type => (
@@ -146,6 +155,7 @@ export default function ExemptionChecker() {
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-2">
               2. Estimated project cost?
+              <HintTooltip text="Enter the total estimated value of all labor and materials. This is used to determine if the $7,500 exemption threshold applies under Florida HB 803 (effective July 1, 2026)." />
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
@@ -167,6 +177,7 @@ export default function ExemptionChecker() {
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-2">
               3. Is the property in a flood hazard area?
+              <HintTooltip text="Properties in FEMA-designated Special Flood Hazard Areas (SFHA) are excluded from the HB 803 permit exemption regardless of project cost. Check at msc.fema.gov. If unsure, select 'Not Sure' and we'll recommend you verify." />
             </label>
             <div className="flex gap-2 flex-wrap">
               {[
@@ -194,6 +205,7 @@ export default function ExemptionChecker() {
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-2">
               4. Is this a single-family home?
+              <HintTooltip text="The HB 803 exemption only applies to owner-occupied single-family residential properties. Condos, townhomes, duplexes, and commercial properties do not qualify." />
             </label>
             <div className="flex gap-2">
               {[
@@ -229,6 +241,10 @@ export default function ExemptionChecker() {
         {/* Result Card */}
         {result && (
           <div id="result-card" className="mt-6">
+            <div className="mb-3 flex items-start gap-2 px-4 py-3 rounded-xl border text-xs leading-relaxed" style={{ background: "#fffbeb", borderColor: "#f59e0b", color: "#92400e" }}>
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
+              ⚠️ This tool provides general guidance based on Florida state law. Local city ordinances may impose additional requirements. Always confirm with your local building department before starting work.
+            </div>
             {result.status === "exempt" && (
               <div className="rounded-2xl border-2 p-6" style={{ borderColor: "#60A9DE", background: "#EBF5FF" }}>
                 <div className="flex items-start gap-3 mb-4">

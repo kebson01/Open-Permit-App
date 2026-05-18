@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2, Printer, ClipboardCopy, Check } from "lucide-react";
+import HintTooltip, { HintBanner, HintCard } from "@/components/ui/HintTooltip";
 import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -325,7 +326,7 @@ export default function FeeCalculator() {
                 <h1 className="font-bold text-white leading-tight" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Estimate Permit Costs</h1>
                 <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(59,130,246,0.25)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }}>Fee transparency required by FL HB 683</span>
               </div>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Select a permit type to get a detailed fee breakdown before you spend a dollar.</p>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Get an instant permit fee estimate before visiting the building department. Select your city, choose your permit type, and enter your project value to see a full fee breakdown including state surcharges.</p>
             </div>
             <div className="shrink-0 mt-1">
               {singleCity ? (
@@ -352,6 +353,11 @@ export default function FeeCalculator() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-8">
+        <div className="mb-4">
+          <HintBanner>
+            Select your city, choose your permit type, and enter your project value to see a full fee breakdown including state surcharges. Fees are estimates — final amounts are set at permit issuance.
+          </HintBanner>
+        </div>
         {/* Mobile city selector — hidden on desktop since header has it */}
         <div className="md:hidden mb-4">
           {!singleCity && (
@@ -568,7 +574,9 @@ export default function FeeCalculator() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden sticky top-4">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-blue-600" />
-                <h3 className="font-bold text-gray-800 text-sm">Estimate</h3>
+                <h3 className="font-bold text-gray-800 text-sm">Estimate
+                <HintTooltip text="Select a permit type from the list on the left. For permits with a percentage rate, enter your total construction value to calculate the fee." />
+              </h3>
               </div>
 
               {!selectedRule ? (
@@ -595,7 +603,9 @@ export default function FeeCalculator() {
                   {/* Construction cost input */}
                   {needsCost && (
                     <div className="mb-4">
-                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">Enter Job / Construction Value ($)</Label>
+                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">Enter Job / Construction Value ($)
+                      <HintTooltip text="Enter the total estimated construction value including all labor and materials. For roofing, use the total contract price. For remodels, use the total cost of the project." />
+                    </Label>
                       <Input
                         type="number" min="0" placeholder="e.g. 25000"
                         value={constructionCost}
@@ -713,7 +723,18 @@ export default function FeeCalculator() {
                           </a>
                         </Button>
                       )}
-                      <p className="text-xs text-gray-400 text-center leading-snug">This is an estimate only. Final fees determined at permit issuance.</p>
+                      <HintCard
+                        title="What do these fees mean?"
+                        items={[
+                          { label: "Permit Fee", desc: "The base fee charged by the city building department to process and issue your permit." },
+                          { label: "Technology / Admin Fee", desc: "A flat fee charged by the city to cover permit processing systems and administrative costs." },
+                          { label: "State DCA Surcharge", desc: "Florida Department of Community Affairs surcharge — required by state law on all building permits. Currently 1.5% of the permit fee." },
+                          { label: "State DBPR Surcharge", desc: "Florida Department of Business & Professional Regulation surcharge — required by state law. Currently 1.5% of the permit fee." },
+                          { label: "Educational & Training Fee", desc: "A small state-mandated surcharge that funds construction industry education programs." },
+                          { label: "Total Estimated", desc: "This is an estimate only. Final fees are determined at permit issuance and may include additional fees based on plan review complexity." },
+                        ]}
+                      />
+                      <p className="text-xs text-gray-400 text-center leading-snug mt-2">This is an estimate only. Final fees determined at permit issuance.</p>
                     </>
                   )}
 

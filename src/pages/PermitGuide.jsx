@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { HintBanner } from "@/components/ui/HintTooltip";
 import { useQuery } from "@tanstack/react-query";
 import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat, Layers, BookOpen, X, ArrowRight } from "lucide-react";
 
@@ -301,7 +302,7 @@ export default function PermitGuide() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Visual Permit Guide</p>
               <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Find the Right Permits</h1>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 480 }}>Select your city, property type, and project type to see the permits required, a document checklist, and an estimated fee — before you visit the building department.</p>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 480 }}>Not sure which permit you need or what documents to bring? Select your city and project type to get a step-by-step permit guide — including required documents, typical timelines, and estimated fees.</p>
             </div>
             {!singleCity && (
               <div className="flex items-center gap-1.5 mt-1">
@@ -324,6 +325,11 @@ export default function PermitGuide() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 pt-4">
+        <div className="mb-4">
+          <HintBanner>
+            💡 <strong>How to use:</strong> Select your property type (Single-Family, Commercial, or Condo), then tap any highlighted zone on the diagram to see the permits, documents, and fees required for that area of your property.
+          </HintBanner>
+        </div>
         {/* Desktop two-column layout */}
         <div className="md:flex md:gap-6 md:items-start">
 
@@ -332,10 +338,12 @@ export default function PermitGuide() {
 
             {/* Property type + view controls */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 space-y-3">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Property Type</p>
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1 flex-col">
                 <div className="flex gap-1">
                   <button
                     onClick={() => handlePropertyTypeChange("residential")}
+                    title="Your property type determines which permits apply and what documentation is required. Condo and HOA projects have additional requirements."
                     className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                       propertyType === "residential" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
                     }`}
@@ -403,6 +411,28 @@ export default function PermitGuide() {
                   Code of Ordinances
                 </button>
               </div>
+            </div>
+
+            {/* Step guide */}
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 text-xs space-y-2">
+              <p className="font-bold text-gray-700 text-xs uppercase tracking-wider mb-2">How It Works</p>
+              {[
+                { n: "1", t: "📋 Review checklist", d: "Gather all required documents before visiting" },
+                { n: "2", t: "📝 Complete application", d: "Download and fill out the Uniform Building Permit Application" },
+                { n: "3", t: "🏗️ Submit & pay", d: "Submit in person or online and pay the estimated fee" },
+                { n: "4", t: "⏱️ Plan review", d: "3–20 business days depending on permit type" },
+                { n: "5", t: "🔨 Begin work", d: "Only after the permit is issued and posted at job site" },
+                { n: "6", t: "✅ Schedule inspections", d: "Call for required inspections at each phase" },
+                { n: "7", t: "🏁 Final inspection", d: "Get final approval and close out the permit" },
+              ].map(s => (
+                <div key={s.n} className="flex gap-2 items-start">
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 mt-0.5" style={{ background: "#025799" }}>{s.n}</span>
+                  <div>
+                    <p className="font-semibold text-gray-700">{s.t}</p>
+                    <p className="text-gray-400 leading-snug">{s.d}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* AI Smart Check panel (desktop sidebar) */}
