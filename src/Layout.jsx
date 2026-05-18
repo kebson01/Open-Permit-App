@@ -92,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Navbar */}
       <nav
         className="sticky top-0 z-40 shadow-md transition-transform duration-300"
-        style={{ backgroundColor: "#0D2B5E", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
+        style={{ backgroundColor: "#022A5B", transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
@@ -112,7 +112,7 @@ export default function Layout({ children, currentPageName }) {
                 to="/ar-tools"
                 className={`text-sm font-medium transition-colors pb-0.5 ${
                   currentPageName === "ARTools"
-                    ? "text-white border-b-2 border-blue-400"
+                    ? "text-white border-b-2 border-[#60A9DE]"
                     : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
                 }`}
               >
@@ -126,7 +126,7 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl(link.page)}
                     className={`text-sm font-medium transition-colors pb-0.5 ${
                       isActive
-                        ? "text-white border-b-2 border-blue-400"
+                        ? "text-white border-b-2 border-[#60A9DE]"
                         : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
                     }`}
                   >
@@ -143,7 +143,7 @@ export default function Layout({ children, currentPageName }) {
                   to="/admin"
                   className={`text-sm font-medium transition-colors pb-0.5 flex items-center gap-1.5 ${
                     currentPageName === "AdminPanel"
-                      ? "text-white border-b-2 border-blue-400"
+                      ? "text-white border-b-2 border-[#60A9DE]"
                       : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
                   }`}
                 >
@@ -155,7 +155,7 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl("ProjectDashboard")}
                   className={`text-sm font-medium transition-colors pb-0.5 ${
                     currentPageName === "ProjectDashboard"
-                      ? "text-white border-b-2 border-blue-400"
+                      ? "text-white border-b-2 border-[#60A9DE]"
                       : "text-blue-100/80 hover:text-white border-b-2 border-transparent"
                   }`}
                 >
@@ -222,7 +222,7 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: "rgba(13,43,94,0.98)" }}>
+          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: "rgba(2,42,91,0.98)" }}>
             {mobileLinks.map(link => (
               <Link
                 key={link.page}
@@ -268,10 +268,10 @@ export default function Layout({ children, currentPageName }) {
               key={link.page}
               to={createPageUrl(link.page)}
               className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
-                isActive ? "text-blue-600" : "text-gray-400"
+                isActive ? "text-[#025799]" : "text-gray-400"
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
+              <Icon className={`w-5 h-5 ${isActive ? "text-[#025799]" : "text-gray-400"}`} />
               <span className="text-[10px] font-medium">{link.shortLabel}</span>
             </Link>
           );
@@ -279,7 +279,7 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Footer */}
-      <footer className="py-8 pb-20 md:pb-8" style={{ backgroundColor: "#0D2B5E", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+      <footer className="py-8 pb-20 md:pb-8" style={{ backgroundColor: "#022A5B", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">

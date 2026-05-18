@@ -76,7 +76,7 @@ export default function Home() {
             <Link
               to={`${createPageUrl("PermitGuide")}?city=${encodeURIComponent(jurisdiction)}`}
               className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-bold text-sm text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "#001a48" }}
+              style={{ background: "linear-gradient(135deg, #025799 0%, #60A9DE 100%)" }}
             >
               Find Permits for Your Project
               <Plus className="w-4 h-4" />
@@ -86,7 +86,7 @@ export default function Home() {
           {/* City selector */}
           <div className="px-5 pb-5">
             <div className="flex items-center gap-2 px-4 h-12 rounded-xl border" style={{ borderColor: "#e0e0e0", background: "#f7f7f7" }}>
-              <MapPin className="w-4 h-4 shrink-0" style={{ color: "#0058be" }} />
+              <MapPin className="w-4 h-4 shrink-0" style={{ color: "#60A9DE" }} />
               <span className="text-xs font-medium mr-1" style={{ color: "#666" }}>City / Municipality</span>
               <select
                 value={jurisdiction}
@@ -113,8 +113,8 @@ export default function Home() {
               className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors active:bg-gray-100"
               style={{ textDecoration: "none" }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,88,190,0.1)" }}>
-                <item.icon className="w-5 h-5" style={{ color: "#0058be" }} />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#EBF5FF" }}>
+                <item.icon className="w-5 h-5" style={{ color: "#025799" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm" style={{ color: "#1a1c1e" }}>{item.title}</p>
@@ -137,7 +137,7 @@ export default function Home() {
               <div key={step.num} className="flex flex-col items-center text-center relative">
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white mb-4 shadow-md relative z-10"
-                  style={{ background: step.dark ? "#001a48" : "#0058be" }}
+                  style={{ background: step.dark ? "#022A5B" : "#025799" }}
                 >
                   {step.num}
                 </div>
@@ -151,9 +151,9 @@ export default function Home() {
 
       {/* ── AI ASSISTANT ── */}
       <section className="px-5 mt-14 max-w-lg mx-auto md:max-w-2xl">
-        <div className="rounded-2xl p-5 relative overflow-hidden" style={{ background: "#001a48" }}>
+        <div className="rounded-2xl p-5 relative overflow-hidden" style={{ background: "#022A5B" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#0058be" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#025799" }}>
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -186,7 +186,7 @@ export default function Home() {
             <button
               onClick={() => { if (customQuestion.trim()) { handleAsk(customQuestion.trim()); setCustomQuestion(""); } }}
               className="absolute right-2 top-1.5 h-9 w-9 rounded-lg flex items-center justify-center"
-              style={{ background: "#0058be" }}
+              style={{ background: "#025799" }}
             >
               <Sparkles className="w-4 h-4 text-white" />
             </button>
@@ -196,7 +196,7 @@ export default function Home() {
 
       {/* ── CTA BANNER ── */}
       <section className="px-5 mt-10 mb-10 max-w-lg mx-auto md:max-w-2xl">
-        <div className="rounded-2xl p-7 text-center shadow-lg relative overflow-hidden" style={{ background: "#001a48" }}>
+        <div className="rounded-2xl p-7 text-center shadow-lg relative overflow-hidden" style={{ background: "#022A5B" }}>
           <div className="absolute -left-8 -bottom-8 w-36 h-36 rounded-full blur-3xl" style={{ background: "rgba(0,88,190,0.25)" }} />
           <h3 className="font-bold text-white mb-2 relative" style={{ fontSize: 20 }}>Ready to start?</h3>
           <p className="mb-6 relative text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
@@ -205,7 +205,7 @@ export default function Home() {
           <Link
             to={createPageUrl("PermitGuide")}
             className="block w-full h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all active:scale-95 relative"
-            style={{ background: "#ffffff", color: "#001a48" }}
+            style={{ background: "#ffffff", color: "#022A5B" }}
           >
             Get Started Now
           </Link>

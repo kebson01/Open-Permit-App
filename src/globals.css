@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --navy-dark: #0D2B5E;
-  --navy-mid: #0F3575;
-  --blue-primary: #3B82F6;
-  --blue-accent: #3B82F6;
-  --gold: #3B82F6;
-  --gold-dark: #2563EB;
+  --navy-dark: #022A5B;
+  --navy-mid: #025799;
+  --blue-primary: #025799;
+  --blue-accent: #60A9DE;
+  --gold: #60A9DE;
+  --gold-dark: #025799;
 }
 
 @layer base {
@@ -19,13 +19,13 @@
     --card-foreground: 0 0% 7%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 7%;
-    --primary: 221 83% 53%;
+    --primary: 211 97% 18%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
+    --secondary: 211 97% 30%;
     --secondary-foreground: 0 0% 100%;
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
-    --accent: 221 83% 53%;
+    --accent: 207 62% 62%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
