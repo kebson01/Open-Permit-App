@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck, Map, Calculator, Search, CheckSquare } from "lucide-react";
+import { Building2, Menu, X, Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck, Map, Calculator, Search, CheckSquare, Send } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
 import FloatingAIButton from "@/components/ai/FloatingAIButton";
 import { base44 } from "@/api/base44Client";
@@ -12,6 +12,7 @@ const centerNavLinks = [
   { name: "Exemption Checker", page: "ExemptionChecker", shortLabel: "Exempt?", icon: CheckSquare },
   { name: "Estimate Costs", page: "FeeCalculator", shortLabel: "Fees", icon: Calculator },
   { name: "Search Property", page: "PropertyGuide", shortLabel: "Property", icon: Search },
+  { name: "Submit Application", page: "SubmissionGuide", shortLabel: "Submit", icon: Send },
 ];
 
 

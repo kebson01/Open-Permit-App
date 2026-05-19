@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat, MessageSquare } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, DollarSign, Edit2, Save, X, Loader2, Sparkles, FileText, Calendar, Users, BarChart2, HardHat, MessageSquare, Send } from "lucide-react";
 import ProjectAIAssistant from "@/components/projects/tabs/ProjectAIAssistant";
 import HomeownerDocumentsTab from "@/components/projects/tabs/HomeownerDocumentsTab";
 import HomeownerTimelineTab from "@/components/projects/tabs/HomeownerTimelineTab";
@@ -190,6 +190,19 @@ export default function ProjectDetail() {
                   {project.contractor_license && <span><strong>License:</strong> {project.contractor_license}</span>}
                 </div>
               )}
+
+              {/* Submission Guide CTA */}
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <Link
+                  to={`/SubmissionGuide`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ background: "#022A5B" }}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Start Permit Application
+                </Link>
+                <p className="text-xs text-gray-400 mt-1.5">Guided step-by-step permit submission for City of Weston</p>
+              </div>
             </div>
           )}
         </div>
