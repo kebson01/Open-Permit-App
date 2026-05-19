@@ -1,0 +1,159 @@
+{
+  "name": "SubmissionGuide",
+  "type": "object",
+  "properties": {
+    "city_id": {
+      "type": "string",
+      "description": "Reference to City entity"
+    },
+    "city_name": {
+      "type": "string",
+      "description": "City name for display"
+    },
+    "city_portal_url": {
+      "type": "string",
+      "description": "Direct URL to the city permit portal"
+    },
+    "confirmation_number": {
+      "type": "string",
+      "description": "City-issued confirmation number after submission"
+    },
+    "estimated_fee": {
+      "type": "number",
+      "description": "Estimated permit fee in dollars"
+    },
+    "fee_breakdown": {
+      "type": "string",
+      "description": "JSON breakdown of fee components"
+    },
+    "field_mapping_snapshot": {
+      "type": "string",
+      "description": "JSON of final mapped field values ready for portal entry"
+    },
+    "folio_number": {
+      "type": "string",
+      "description": "BCPA folio number linking to Property entity"
+    },
+    "is_guest": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if submitted without a logged-in account (web/guest mode)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes or user comments"
+    },
+    "overall_status": {
+      "type": "string",
+      "default": "not_started",
+      "description": "Overall submission status",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "ready_to_submit",
+        "submitted",
+        "approved",
+        "rejected"
+      ]
+    },
+    "permit_type_id": {
+      "type": "string",
+      "description": "Reference to PermitType entity"
+    },
+    "permit_type_name": {
+      "type": "string",
+      "description": "Permit type name for display"
+    },
+    "phase": {
+      "type": "string",
+      "default": "application",
+      "description": "Current phase of the submission journey",
+      "enum": [
+        "application",
+        "preparation",
+        "guided_submission",
+        "completed"
+      ]
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Reference to Project entity"
+    },
+    "questions_answered": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of questions answered so far"
+    },
+    "questions_flagged": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of answers flagged for review"
+    },
+    "questions_prefilled": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of questions auto-filled by Open Permit"
+    },
+    "questions_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of questions for this city and permit type"
+    },
+    "ready_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date preparation was completed and guide was ready to submit"
+    },
+    "started_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the submission guide was started"
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date user confirmed they submitted to the city"
+    },
+    "target_system": {
+      "type": "string",
+      "description": "City permit management system",
+      "enum": [
+        "accela",
+        "tyler_energov",
+        "tyler_munis",
+        "oracle",
+        "easy_permit",
+        "manual",
+        "other"
+      ]
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the applicant"
+    },
+    "user_role": {
+      "type": "string",
+      "description": "Role of the applicant",
+      "enum": [
+        "homeowner",
+        "contractor",
+        "private_provider"
+      ]
+    },
+    "validation_flags": {
+      "type": "string",
+      "description": "JSON array of issues to resolve before submission"
+    },
+    "wizard_session_id": {
+      "type": "string",
+      "description": "Reference to PermitWizardSession entity"
+    }
+  },
+  "required": [
+    "user_email",
+    "user_role",
+    "city_name",
+    "permit_type_name",
+    "target_system"
+  ]
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { CheckCircle2, AlertTriangle, FileText, Upload, Loader2, ExternalLink, Zap } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, Loader2, ExternalLink, Zap } from "lucide-react";
+import ModeIndicator from "./ModeIndicator";
 import { useGuideQuestions } from "./useGuideQuestions";
 
 // Document checklist per permit type
@@ -37,8 +38,8 @@ function getDefaultDocuments() {
   ];
 }
 
-export default function PreparationPhase({ guide, currentUser, onComplete, onUpdate }) {
-  const { questions, answers, loading } = useGuideQuestions(guide, currentUser);
+export default function PreparationPhase({ guide, currentUser, mode = "app", onComplete, onUpdate }) {
+  const { questions, answers, loading } = useGuideQuestions(guide, currentUser, mode);
   const [documents, setDocuments] = useState([]);
   const [docStatuses, setDocStatuses] = useState({}); // { [label]: 'not_started' | 'ready' }
   const [proceeding, setProceeding] = useState(false);
@@ -110,6 +111,7 @@ export default function PreparationPhase({ guide, currentUser, onComplete, onUpd
 
   return (
     <div className="space-y-5">
+      <ModeIndicator mode={mode} />
       {/* Missing required fields warning */}
       {missingRequired.length > 0 && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">

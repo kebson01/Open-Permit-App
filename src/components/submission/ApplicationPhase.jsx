@@ -3,9 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, ChevronRight, ChevronLeft, AlertTriangle } from "lucide-react";
 import { useGuideQuestions } from "./useGuideQuestions";
 import QuestionField from "./QuestionField";
+import ModeIndicator from "./ModeIndicator";
 
-export default function ApplicationPhase({ guide, currentUser, onComplete, onUpdate }) {
-  const { questions, answers, setAnswers, loading } = useGuideQuestions(guide, currentUser);
+export default function ApplicationPhase({ guide, currentUser, mode = "app", onComplete, onUpdate }) {
+  const { questions, answers, setAnswers, loading } = useGuideQuestions(guide, currentUser, mode);
   const [saving, setSaving] = useState(false);
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
 
@@ -98,9 +99,20 @@ export default function ApplicationPhase({ guide, currentUser, onComplete, onUpd
   );
 
   const progress = sections.length > 0 ? Math.round(((currentSectionIdx) / sections.length) * 100) : 0;
+  const isWebMode = mode === "web";
 
   return (
     <div>
+      {/* Mode banner */}
+      <div className="mb-4">
+        <ModeIndicator mode={mode} />
+        {isWebMode && (
+          <p className="text-xs text-gray-500 mt-2">
+            Take your time — every question has an explanation. You can always go back and edit your answers.
+          </p>
+        )}
+      </div>
+
       {/* Progress */}
       <div className="mb-5">
         <div className="flex justify-between text-xs text-gray-500 mb-1.5">
@@ -127,7 +139,8 @@ export default function ApplicationPhase({ guide, currentUser, onComplete, onUpd
             question={q}
             value={answers[q.question_key]?.answer_value || ""}
             onChange={val => handleAnswer(q, val)}
-            prefilled={answers[q.question_key]?.was_prefilled && !answers[q.question_key]?.was_edited}
+            prefilled={mode === "app" && answers[q.question_key]?.was_prefilled && !answers[q.question_key]?.was_edited}
+            mode={mode}
           />
         ))}
       </div>

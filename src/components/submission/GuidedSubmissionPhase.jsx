@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Copy, Check, CheckCircle2, ExternalLink, Loader2, AlertCircle } from "lucide-react";
+import { Copy, Check, CheckCircle2, ExternalLink, Loader2, AlertCircle, UserPlus, Globe } from "lucide-react";
+import ModeIndicator from "./ModeIndicator";
 
-export default function GuidedSubmissionPhase({ guide, currentUser, onComplete, onUpdate }) {
+export default function GuidedSubmissionPhase({ guide, currentUser, mode = "app", onComplete, onUpdate }) {
   const [fieldMap, setFieldMap] = useState({});
   const [checked, setChecked] = useState({}); // { [fieldKey]: boolean }
   const [copied, setCopied] = useState({});
@@ -82,8 +83,11 @@ export default function GuidedSubmissionPhase({ guide, currentUser, onComplete, 
 
   const progress = totalFields > 0 ? Math.round((checkedCount / totalFields) * 100) : 0;
 
+  const isWebMode = mode === "web";
+
   return (
     <div className="space-y-5">
+      <ModeIndicator mode={mode} />
       {/* Instructions banner */}
       <div className="p-4 rounded-2xl border" style={{ background: "#EBF5FF", borderColor: "#60A9DE" }}>
         <p className="font-bold text-sm mb-1" style={{ color: "#022A5B" }}>📋 How to use this guide</p>
@@ -178,6 +182,34 @@ export default function GuidedSubmissionPhase({ guide, currentUser, onComplete, 
         <div className="text-center py-8 text-gray-400 bg-white rounded-2xl border border-gray-200">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
           <p>No field mapping available. Go back to the Application phase and complete your answers.</p>
+        </div>
+      )}
+
+      {/* Web mode signup CTA */}
+      {isWebMode && (
+        <div className="bg-gradient-to-br from-[#022A5B] to-[#025799] rounded-2xl p-5 text-white">
+          <div className="flex items-start gap-3">
+            <UserPlus className="w-6 h-6 shrink-0 mt-0.5 text-blue-200" />
+            <div>
+              <h3 className="font-bold text-base mb-1">Save your info for next time</h3>
+              <p className="text-sm text-blue-100 mb-3">
+                Create a free Open Permit account to auto-fill your property and contractor details on every future application — no more re-entering the same information.
+              </p>
+              <ul className="text-xs text-blue-200 space-y-1 mb-4">
+                <li>✓ Auto-fill from your property & contractor profile</li>
+                <li>✓ Save progress across multiple applications</li>
+                <li>✓ Track permit status in one dashboard</li>
+                <li>✓ Free to use — always</li>
+              </ul>
+              <button
+                onClick={() => window.open("/?signup=true", "_blank")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-[#022A5B] bg-white hover:bg-blue-50 transition-colors"
+              >
+                <UserPlus className="w-4 h-4" />
+                Create Free Account →
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
