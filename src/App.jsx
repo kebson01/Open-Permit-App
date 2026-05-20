@@ -18,6 +18,7 @@ import FeeCalculator from './pages/FeeCalculator';
 import ExemptionChecker from './pages/ExemptionChecker';
 import BuildingCodes from './pages/BuildingCodes';
 import PropertyGuide from './pages/PropertyGuide';
+import PermitGuide from './pages/PermitGuide';
 
 // Admin
 import AdminPanel from './pages/AdminPanel.jsx';
@@ -52,6 +53,7 @@ function App() {
           <Route path="/ExemptionChecker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
           <Route path="/BuildingCodes" element={<LayoutWrapper currentPageName="BuildingCodes"><BuildingCodes /></LayoutWrapper>} />
           <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
+          <Route path="/PermitGuide" element={<LayoutWrapper currentPageName="PermitGuide"><PermitGuide /></LayoutWrapper>} />
 
           {/* ── ADMIN ── */}
           <Route path="/admin" element={<AdminPanel />} />
