@@ -91,29 +91,8 @@ export default function Layout({ children, currentPageName }) {
             />
           </Link>
 
-          {/* CENTER — Nav links (desktop) */}
-          <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
-            {NAV_LINKS.map(link => {
-              const active = currentPageName === link.page;
-              return (
-                <Link
-                  key={link.page}
-                  to={createPageUrl(link.page)}
-                  className="px-3 py-1.5 rounded-md text-sm font-semibold transition-all whitespace-nowrap"
-                  style={{
-                    fontFamily: FONTS.nav,
-                    color: active ? "#fff" : "rgba(255,255,255,0.82)",
-                    borderBottom: active ? "2px solid #fff" : "2px solid transparent",
-                    background: active ? "rgba(255,255,255,0.1)" : "transparent",
-                  }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.82)"; }}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-          </div>
+          {/* Spacer */}
+          <div className="flex-1" />
 
           {/* RIGHT — Actions (desktop) */}
           <div className="hidden lg:flex items-center gap-5 shrink-0">
