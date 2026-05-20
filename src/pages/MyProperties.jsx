@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Search, Building2, MapPin, Calendar, FileText, ArrowRight, Loader2, ChevronRight } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -63,8 +64,8 @@ function PropertyDetail({ property, onBack }) {
   useEffect(() => {
     setLoadingPermits(true);
     Promise.all([
-      base44.entities.PermitRecord.filter({ folio_number: property.FOLIO_NUMBER }, "-issued_date", 20),
-      base44.entities.SubmissionGuide.filter({ folio_number: property.FOLIO_NUMBER }, "-updated_date", 10),
+      db.PermitRecord.getByFolio(property.FOLIO_NUMBER, property.SITUS_CITY || 'Weston'),
+      db.SubmissionGuide.filter({ folio_number: property.FOLIO_NUMBER }),
     ]).then(([p, g]) => {
       setPermits(Array.isArray(p) ? p : []);
       setGuides(Array.isArray(g) ? g : []);
@@ -218,7 +219,7 @@ export default function MyProperties() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q") || "";
     if (q) { setQuery(q); doSearch(q); }
-    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+    base44.auth.me().then(u => setCurrentUser(u || null)).catch(() => {});
   }, []);
 
   const doSearch = async (q) => {

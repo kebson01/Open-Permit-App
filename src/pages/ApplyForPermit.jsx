@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, MapPin, FileText,
   Loader2, Search, AlertTriangle, ExternalLink, ChevronRight, Play
@@ -69,7 +70,7 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
   const [loading, setLoading]         = useState(true);
 
   useEffect(() => {
-    base44.entities.City.list().then(all => {
+    db.City.list().then(all => {
       const filtered = CITY_ORDER.map(n => all.find(c => c.name === n)).filter(Boolean);
       setCities(filtered);
       if (!selectedCity && filtered.length > 0) setSelectedCity(filtered[0]);
@@ -205,7 +206,7 @@ function Step2PermitType({ cityId, cityName, onNext, onBack }) {
 
   useEffect(() => {
     if (!cityId) { setLoading(false); return; }
-    base44.entities.PermitType.filter({ city_id: cityId }).then(pts => {
+    db.PermitType.filter({ city_id: cityId }).then(pts => {
       setPermitTypes(Array.isArray(pts) ? pts : []);
       setLoading(false);
     });
@@ -308,15 +309,13 @@ export default function ApplyForPermit() {
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      setCurrentUser(u);
+      setCurrentUser(u || null);
       if (u) {
-        // Load guides to offer resume
-        base44.entities.SubmissionGuide.filter({ user_email: u.email }, "-updated_date", 5).then(g => {
+        db.SubmissionGuide.filter({ user_email: u.email }).then(g => {
           const active = Array.isArray(g) ? g.filter(x => ["in_progress","ready_to_submit"].includes(x.overall_status)) : [];
           setResumeGuides(active);
-          // Auto-resume if id in URL
           if (resumeId) {
-            const found = active.find(x => x.id === resumeId) || g.find(x => x.id === resumeId);
+            const found = active.find(x => x.id === resumeId) || (Array.isArray(g) && g.find(x => x.id === resumeId));
             if (found) setActiveGuide(found);
           }
         });
@@ -333,9 +332,9 @@ export default function ApplyForPermit() {
   const handleStep2 = async (data) => {
     const merged = { ...stepData, ...data };
     setStepData(merged);
-    // Create or find SubmissionGuide
+    // Create SubmissionGuide in Supabase
     const email = currentUser?.email || "";
-    const guide = await base44.entities.SubmissionGuide.create({
+    const guide = await db.SubmissionGuide.create({
       user_email:       email,
       user_role:        merged.role || "homeowner",
       city_name:        merged.city?.name || "",

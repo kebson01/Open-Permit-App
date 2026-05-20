@@ -2,7 +2,7 @@
  * Prefill helper — resolves prefill_from fields to actual values
  * from Property, ContractorProfile, Project, and User entities.
  */
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 
 export async function buildPrefillMap(guide, currentUser) {
   const map = {};
@@ -11,7 +11,7 @@ export async function buildPrefillMap(guide, currentUser) {
   let project = null;
   if (guide.project_id) {
     try {
-      const projects = await base44.entities.Project.filter({ id: guide.project_id });
+      const projects = await db.Project.filter({ id: guide.project_id });
       project = projects?.[0] || null;
     } catch {}
   }
@@ -21,8 +21,8 @@ export async function buildPrefillMap(guide, currentUser) {
   const folio = guide.folio_number || project?.folio_number;
   if (folio) {
     try {
-      const props = await base44.entities.Property.filter({ FOLIO_NUMBER: folio });
-      property = props?.[0] || null;
+      const property_row = await db.Property.getByFolio(folio);
+      property = property_row || null;
     } catch {}
   }
 
@@ -30,7 +30,7 @@ export async function buildPrefillMap(guide, currentUser) {
   let contractor = null;
   if (guide.user_role === "contractor" && currentUser?.email) {
     try {
-      const profiles = await base44.entities.ContractorProfile.filter({ user_email: currentUser.email });
+      const profiles = await db.ContractorProfile.filter({ user_email: currentUser.email });
       contractor = profiles?.[0] || null;
     } catch {}
   }

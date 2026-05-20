@@ -4,7 +4,7 @@
  * and applies prefill logic (App Mode only).
  */
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { buildPrefillMap } from "./usePrefill";
 
 const WESTON_QUESTION_BANK = {
@@ -96,10 +96,10 @@ export function useGuideQuestions(guide, currentUser, mode = "app") {
     // 1. Load questions
     let dbQuestions = [];
     try {
-      dbQuestions = await base44.entities.CityApplicationQuestion.filter({
+      dbQuestions = await db.CityApplicationQuestion.filter({
         city_name: guide.city_name,
         permit_type_name: guide.permit_type_name,
-      }, "display_order");
+      });
     } catch {}
 
     let qs = dbQuestions.length > 0
@@ -118,7 +118,7 @@ export function useGuideQuestions(guide, currentUser, mode = "app") {
     // 3. Load existing answers
     let existingAnswers = [];
     try {
-      existingAnswers = await base44.entities.SubmissionAnswer.filter({ guide_id: guide.id });
+      existingAnswers = await db.SubmissionAnswer.filter({ guide_id: guide.id });
     } catch {}
     const aMap = {};
     existingAnswers.forEach(a => { aMap[a.question_key] = a; });

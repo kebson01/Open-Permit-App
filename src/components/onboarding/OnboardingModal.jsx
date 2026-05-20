@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { X, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -19,10 +20,8 @@ export default function OnboardingModal({ currentUser, onComplete, onSkip }) {
   const handleRoleNext = async () => {
     if (!role) return;
     setSaving(true);
-    // Update user role
     await base44.auth.updateMe({ role });
-    // Create onboarding record
-    await base44.entities.UserOnboarding.create({
+    await db.UserOnboarding.create({
       user_email: currentUser.email,
       role,
       started_date: new Date().toISOString().slice(0, 10),
@@ -36,7 +35,7 @@ export default function OnboardingModal({ currentUser, onComplete, onSkip }) {
 
   const handleSkip = async () => {
     try {
-      await base44.entities.UserOnboarding.create({
+      await db.UserOnboarding.create({
         user_email: currentUser.email,
         role: "homeowner",
         is_skipped: true,

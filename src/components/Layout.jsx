@@ -6,6 +6,7 @@ import {
   User, LogOut, Settings, Bell, Wrench
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import AuthModal from "@/components/auth/AuthModal";
 
@@ -46,7 +47,7 @@ export default function Layout({ children, currentPageName }) {
 
   const checkOnboarding = async (user) => {
     try {
-      const records = await base44.entities.UserOnboarding.filter({ user_email: user.email });
+      const records = await db.UserOnboarding.filter({ user_email: user.email });
       if (!records || records.length === 0) {
         setShowOnboarding(true);
       } else {

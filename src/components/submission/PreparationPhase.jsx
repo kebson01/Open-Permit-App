@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { CheckCircle2, AlertTriangle, FileText, Loader2, ExternalLink, Zap } from "lucide-react";
 import ModeIndicator from "./ModeIndicator";
 import { useGuideQuestions } from "./useGuideQuestions";
@@ -48,7 +48,7 @@ export default function PreparationPhase({ guide, currentUser, mode = "app", onC
     const docList = DOCUMENT_CHECKLISTS[guide.permit_type_name] || getDefaultDocuments();
     setDocuments(docList);
     // Load existing doc records
-    base44.entities.SubmissionDocument.filter({ guide_id: guide.id }).then(existing => {
+    db.SubmissionDocument.filter({ guide_id: guide.id }).then(existing => {
       const statusMap = {};
       (existing || []).forEach(d => { statusMap[d.label] = d.status; });
       setDocStatuses(statusMap);
@@ -74,11 +74,12 @@ export default function PreparationPhase({ guide, currentUser, mode = "app", onC
     const next = docStatuses[doc.label] === "ready" ? "not_started" : "ready";
     setDocStatuses(prev => ({ ...prev, [doc.label]: next }));
     // Persist
-    const existing = await base44.entities.SubmissionDocument.filter({ guide_id: guide.id, label: doc.label });
-    if (existing?.length > 0) {
-      await base44.entities.SubmissionDocument.update(existing[0].id, { status: next });
+    const existing = await db.SubmissionDocument.filter({ guide_id: guide.id });
+    const match = existing?.find(d => d.label === doc.label);
+    if (match) {
+      await db.SubmissionDocument.update(match.id, { status: next });
     } else {
-      await base44.entities.SubmissionDocument.create({ ...doc, guide_id: guide.id, status: next });
+      await db.SubmissionDocument.create({ ...doc, guide_id: guide.id, status: next });
     }
   };
 
@@ -97,7 +98,7 @@ export default function PreparationPhase({ guide, currentUser, mode = "app", onC
         };
       }
     });
-    const updated = await base44.entities.SubmissionGuide.update(guide.id, {
+    const updated = await db.SubmissionGuide.update(guide.id, {
       phase: "guided_submission",
       overall_status: "ready_to_submit",
       ready_date: new Date().toISOString().slice(0, 10),

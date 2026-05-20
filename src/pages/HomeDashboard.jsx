@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import {
   Building2, FileText, FolderOpen, ArrowRight, AlertCircle,
   Clock, CheckCircle2, Plus, TrendingUp, Loader2, Play
@@ -64,9 +65,9 @@ function HomeownerDashboard({ user }) {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.SubmissionGuide.filter({ user_email: user.email }, "-updated_date", 5),
-      base44.entities.Project.filter({ owner_email: user.email }, "-updated_date", 5),
-      base44.entities.PermitRecord.list("-updated_date", 3),
+      db.SubmissionGuide.filter({ user_email: user.email }),
+      db.Project.filter({ owner_email: user.email }, 'updated_at.desc', 5),
+      db.PermitRecord.list('OPEN_DATE.desc', 3),
     ]).then(([g, p, pr]) => {
       setGuides(Array.isArray(g) ? g.filter(x => ["in_progress","ready_to_submit"].includes(x.overall_status)) : []);
       setProjects(Array.isArray(p) ? p : []);
@@ -186,9 +187,9 @@ function ContractorDashboard({ user }) {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Project.filter({ owner_email: user.email }, "-updated_date", 10),
-      base44.entities.SubmissionGuide.filter({ user_email: user.email }, "-updated_date", 5),
-      base44.entities.ContractorProfile.filter({ user_email: user.email }),
+      db.Project.filter({ owner_email: user.email }, 'updated_at.desc', 10),
+      db.SubmissionGuide.filter({ user_email: user.email }),
+      db.ContractorProfile.filter({ user_email: user.email }),
     ]).then(([p, g, cp]) => {
       setProjects(Array.isArray(p) ? p : []);
       setGuides(Array.isArray(g) ? g.filter(x => ["in_progress","ready_to_submit"].includes(x.overall_status)) : []);
@@ -285,13 +286,12 @@ function AdminDashboard({ user }) {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.City.list(),
-      base44.entities.PermitType.list(),
-      base44.entities.SubmissionGuide.list("-updated_date", 5),
-      base44.entities.User.list(),
-    ]).then(([cities, permits, guides, users]) => {
+      db.City.list(),
+      db.PermitType.list(),
+      db.SubmissionGuide.list('updated_at.desc', 5),
+    ]).then(([cities, permits, guides]) => {
       const statusCounts = guides.reduce((acc, g) => { acc[g.overall_status] = (acc[g.overall_status] || 0) + 1; return acc; }, {});
-      setStats({ cities: cities.length, permitTypes: permits.length, guides: guides.length, users: users.length, statusCounts });
+      setStats({ cities: cities.length, permitTypes: permits.length, guides: guides.length, users: 0, statusCounts });
       setRecentGuides(guides.slice(0, 5));
       setLoading(false);
     });
@@ -389,7 +389,7 @@ export default function HomeDashboard() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => { setCurrentUser(u); }).catch(() => {}).finally(() => setLoading(false));
+    base44.auth.me().then(u => { setCurrentUser(u || null); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -421,6 +421,7 @@ export default function HomeDashboard() {
       <div className="max-w-5xl mx-auto px-4 pt-6">
         {!currentUser ? (
           <GuestDashboard onSignIn={() => base44.auth.redirectToLogin(window.location.href)} />
+
         ) : role === "admin" || role === "city_admin" ? (
           <AdminDashboard user={currentUser} />
         ) : currentUser.role === "contractor" ? (

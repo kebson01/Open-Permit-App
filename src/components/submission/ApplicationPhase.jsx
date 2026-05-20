@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Loader2, ChevronRight, ChevronLeft, AlertTriangle } from "lucide-react";
 import { useGuideQuestions } from "./useGuideQuestions";
 import QuestionField from "./QuestionField";
@@ -61,9 +62,9 @@ export default function ApplicationPhase({ guide, currentUser, mode = "app", onC
     for (const a of pending) {
       const { _pending, ...data } = a;
       if (a.id) {
-        await base44.entities.SubmissionAnswer.update(a.id, data);
+        await db.SubmissionAnswer.update(a.id, data);
       } else {
-        const created = await base44.entities.SubmissionAnswer.create(data);
+        const created = await db.SubmissionAnswer.create(data);
         setAnswers(prev => ({ ...prev, [a.question_key]: { ...created } }));
       }
     }
@@ -79,7 +80,7 @@ export default function ApplicationPhase({ guide, currentUser, mode = "app", onC
       const totalQ = questions.length;
       const answeredQ = Object.values(answers).filter(a => a.answer_value).length;
       const prefilledQ = Object.values(answers).filter(a => a.was_prefilled && !a.was_edited).length;
-      const updated = await base44.entities.SubmissionGuide.update(guide.id, {
+      const updated = await db.SubmissionGuide.update(guide.id, {
         questions_total: totalQ,
         questions_answered: answeredQ,
         questions_prefilled: prefilledQ,

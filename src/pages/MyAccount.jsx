@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { User, Shield, AlertTriangle, Loader2, CheckCircle2, LogOut } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -42,10 +43,11 @@ export default function MyAccount() {
 
   useEffect(() => {
     base44.auth.me().then(async u => {
+      if (!u) { setLoading(false); return; }
       setCurrentUser(u);
       setProfile({ full_name: u.full_name || "", email: u.email || "" });
       try {
-        const records = await base44.entities.ContractorProfile.filter({ user_email: u.email });
+        const records = await db.ContractorProfile.filter({ user_email: u.email });
         if (records && records.length > 0) {
           setContractorProfile(records[0]);
           setCpId(records[0].id);
@@ -67,9 +69,9 @@ export default function MyAccount() {
   const saveContractor = async () => {
     setSavingCp(true);
     if (cpId) {
-      await base44.entities.ContractorProfile.update(cpId, { ...cp, user_email: currentUser.email });
+      await db.ContractorProfile.update(cpId, { ...cp, user_email: currentUser.email });
     } else {
-      const created = await base44.entities.ContractorProfile.create({ ...cp, user_email: currentUser.email });
+      const created = await db.ContractorProfile.create({ ...cp, user_email: currentUser.email });
       setCpId(created.id);
       setContractorProfile(created);
     }

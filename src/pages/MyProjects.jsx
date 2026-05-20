@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import {
   FolderOpen, Search, Plus, ArrowRight, Loader2, Filter,
   Calendar, MapPin, TrendingUp, Users, DollarSign, Clock,
@@ -85,11 +86,11 @@ function ProjectDetail({ project, currentUser, onBack }) {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      base44.entities.SubmissionGuide.filter({ project_id: project.id }, "-updated_date"),
-      base44.entities.PermitMilestone ? base44.entities.PermitMilestone.filter({ project_id: project.id }, "milestone_date") : Promise.resolve([]),
-      base44.entities.PermitStatusLog ? base44.entities.PermitStatusLog.filter({ project_id: project.id }, "-change_date", 20) : Promise.resolve([]),
-      base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
-      base44.entities.ProjectBudgetItem.filter({ project_id: project.id }),
+      db.SubmissionGuide.filter({ project_id: project.id }),
+      db.PermitMilestone.filter({ project_id: project.id }),
+      db.PermitStatusLog.filter({ project_id: project.id }),
+      db.ProjectCollaborator.filter({ project_id: project.id }),
+      db.ProjectBudgetItem.filter({ project_id: project.id }),
     ]).then(([g, m, sl, c, b]) => {
       setGuides(Array.isArray(g) ? g : []);
       setMilestones(Array.isArray(m) ? m : []);
@@ -102,7 +103,7 @@ function ProjectDetail({ project, currentUser, onBack }) {
 
   const saveEdit = async () => {
     setSaving(true);
-    await base44.entities.Project.update(project.id, editData);
+    await db.Project.update(project.id, editData);
     setSaving(false);
     setEditing(false);
     Object.assign(project, editData);
@@ -111,7 +112,7 @@ function ProjectDetail({ project, currentUser, onBack }) {
   const addCollaborator = async () => {
     if (!newCollab.email) return;
     setAddingCollab(true);
-    const c = await base44.entities.ProjectCollaborator.create({ ...newCollab, project_id: project.id, invited_by: currentUser?.email });
+    const c = await db.ProjectCollaborator.create({ ...newCollab, project_id: project.id, invited_by: currentUser?.email });
     setCollaborators(prev => [...prev, c]);
     setNewCollab({ email: "", role: "contractor", name: "" });
     setAddingCollab(false);
@@ -120,7 +121,7 @@ function ProjectDetail({ project, currentUser, onBack }) {
   const addBudgetItem = async () => {
     if (!newBudget.description) return;
     setAddingBudget(true);
-    const b = await base44.entities.ProjectBudgetItem.create({ ...newBudget, project_id: project.id, estimated_amount: parseFloat(newBudget.estimated_amount) || 0 });
+    const b = await db.ProjectBudgetItem.create({ ...newBudget, project_id: project.id, estimated_amount: parseFloat(newBudget.estimated_amount) || 0 });
     setBudgetItems(prev => [...prev, b]);
     setNewBudget({ description: "", category: "permit_fee", estimated_amount: "", actual_amount: "" });
     setAddingBudget(false);
@@ -419,14 +420,14 @@ export default function MyProjects() {
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      setCurrentUser(u);
+      setCurrentUser(u || null);
       if (u) loadProjects(u);
       else setLoading(false);
     }).catch(() => setLoading(false));
 
     const idParam = new URLSearchParams(window.location.search).get("id");
     if (idParam) {
-      base44.entities.Project.filter({ id: idParam }).then(p => {
+      db.Project.filter({ id: idParam }).then(p => {
         if (p && p.length > 0) setSelected(p[0]);
       });
     }
@@ -434,7 +435,7 @@ export default function MyProjects() {
 
   const loadProjects = async (user) => {
     setLoading(true);
-    const data = await base44.entities.Project.filter({ owner_email: user.email }, "-updated_date");
+    const data = await db.Project.filter({ owner_email: user.email });
     setProjects(Array.isArray(data) ? data : []);
     setLoading(false);
   };
@@ -442,7 +443,7 @@ export default function MyProjects() {
   const createProject = async () => {
     if (!newProject.name || !currentUser) return;
     setCreating(true);
-    const p = await base44.entities.Project.create({ ...newProject, owner_email: currentUser.email, status: "planning" });
+    const p = await db.Project.create({ ...newProject, owner_email: currentUser.email, status: "planning" });
     setProjects(prev => [p, ...prev]);
     setShowNewForm(false);
     setNewProject({ name: "", project_type: "remodel", city_name: "Weston", property_address: "" });

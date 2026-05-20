@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Copy, Check, CheckCircle2, ExternalLink, Loader2, AlertCircle, UserPlus, Globe } from "lucide-react";
 import ModeIndicator from "./ModeIndicator";
 
@@ -18,7 +18,7 @@ export default function GuidedSubmissionPhase({ guide, currentUser, mode = "app"
       } catch {}
     }
     // Restore any previously checked state
-    base44.entities.SubmissionGuideStep.filter({ guide_id: guide.id, phase: "guided_submission" })
+    db.SubmissionGuideStep.filter({ guide_id: guide.id })
       .then(steps => {
         const c = {};
         (steps || []).forEach(s => { if (s.status === "completed") c[s.step_key] = true; });
@@ -51,11 +51,12 @@ export default function GuidedSubmissionPhase({ guide, currentUser, mode = "app"
     setChecked(prev => ({ ...prev, [fieldLabel]: next }));
     // Persist as SubmissionGuideStep
     const stepKey = fieldLabel.replace(/\s+/g, "_").toLowerCase().slice(0, 50);
-    const existing = await base44.entities.SubmissionGuideStep.filter({ guide_id: guide.id, step_key: stepKey });
-    if (existing?.length > 0) {
-      await base44.entities.SubmissionGuideStep.update(existing[0].id, { status: next ? "completed" : "pending" });
+    const existing = await db.SubmissionGuideStep.filter({ guide_id: guide.id });
+    const match = existing?.find(s => s.step_key === stepKey);
+    if (match) {
+      await db.SubmissionGuideStep.update(match.id, { status: next ? "completed" : "pending" });
     } else {
-      await base44.entities.SubmissionGuideStep.create({
+      await db.SubmissionGuideStep.create({
         guide_id: guide.id,
         step_key: stepKey,
         title: fieldLabel,
@@ -71,7 +72,7 @@ export default function GuidedSubmissionPhase({ guide, currentUser, mode = "app"
 
   const handleMarkSubmitted = async () => {
     setSubmitting(true);
-    const updated = await base44.entities.SubmissionGuide.update(guide.id, {
+    const updated = await db.SubmissionGuide.update(guide.id, {
       phase: "completed",
       overall_status: "submitted",
       submitted_date: new Date().toISOString().slice(0, 10),
