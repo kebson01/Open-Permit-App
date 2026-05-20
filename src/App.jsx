@@ -26,12 +26,10 @@ import AdminHealth from './pages/AdminHealth.jsx';
 import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
 
 // Legacy / other
-import ProjectDashboard from './pages/ProjectDashboard.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
 import PermitWizard from './pages/PermitWizard.jsx';
 import ARTools from './pages/ARTools.jsx';
 import SubmissionGuide from './pages/SubmissionGuide';
-import CityPortalPublic from './pages/CityPortalPublic';
 
 const LayoutWrapper = ({ children, currentPageName }) =>
   <Layout currentPageName={currentPageName}>{children}</Layout>;
@@ -62,11 +60,9 @@ function App() {
 
           {/* ── LEGACY / KEEP ALIVE ── */}
           <Route path="/SubmissionGuide" element={<LayoutWrapper currentPageName="SubmissionGuide"><SubmissionGuide /></LayoutWrapper>} />
-          <Route path="/ProjectDashboard" element={<LayoutWrapper currentPageName="ProjectDashboard"><ProjectDashboard /></LayoutWrapper>} />
           <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
           <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
           <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
-          <Route path="/CityPortalPublic" element={<CityPortalPublic />} />
 
           {/* ── CATCH ALL ── */}
           <Route path="*" element={<PageNotFound />} />
