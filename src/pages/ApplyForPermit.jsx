@@ -172,10 +172,26 @@ function Step2PermitType({ cityId, cityName, onNext, onBack }) {
 
   useEffect(() => {
     if (!cityId) { setLoading(false); return; }
-    db.PermitType.filter({ city_id: cityId }).then(pts => {
-      setPermitTypes(Array.isArray(pts) ? pts : []);
+    
+    let timeout = setTimeout(() => {
+      setPermitTypes([]);
       setLoading(false);
-    });
+    }, 8000);
+
+    db.PermitType.filter({ city_id: cityId })
+      .then(pts => {
+        clearTimeout(timeout);
+        setPermitTypes(Array.isArray(pts) ? pts : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        clearTimeout(timeout);
+        console.error("Failed to load permit types:", err);
+        setPermitTypes([]);
+        setLoading(false);
+      });
+
+    return () => clearTimeout(timeout);
   }, [cityId]);
 
   const filtered = permitTypes.filter(pt =>
@@ -203,6 +219,10 @@ function Step2PermitType({ cityId, cityName, onNext, onBack }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+      ) : permitTypes.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-100">
+          <p className="text-gray-600" style={{ fontFamily: FONTS.b }}>No permit types available for this city</p>
+        </div>
       ) : (
         <div className="space-y-5">
           {Object.entries(grouped).map(([cat, types]) => {
