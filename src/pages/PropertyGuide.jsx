@@ -5,6 +5,7 @@ import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { base44 } from "@/api/base44Client";
+import PropertySearchBox from "@/components/property/PropertySearchBox";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -36,20 +37,6 @@ const STATUS_STYLES = {
   "Voided":    { bg: "#F1F5F9", color: "#475569" },
   "Cancelled": { bg: "#F1F5F9", color: "#475569" },
 };
-
-function isFolioSearch(term) {
-  return /^[0-9A-Za-z]{8,15}$/.test(term.trim()) && !/\s/.test(term.trim());
-}
-
-async function searchProperties(query, city = "All Cities") {
-  if (!query || query.trim().length < 3) return [];
-
-  const type = isFolioSearch(query) ? "folio" : "address";
-  const res = await base44.functions.invoke("propertySearch", { q: query.trim(), city, type });
-  const { data, error } = res.data;
-  if (error) console.error("Property search error:", error);
-  return data ?? [];
-}
 
 async function getPermitHistory(folioNumber) {
   const { data, error } = await supabase
@@ -260,36 +247,8 @@ export default function PropertyGuide() {
   const urlCity = urlParams.get("city") || "";
 
   const { cities, loading: citiesLoading } = useCities();
-  const [query, setQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState(urlCity || "All Cities");
-  const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [error, setError] = useState(null);
-
-  const doSearch = async (searchQuery = query) => {
-    if (!searchQuery.trim() || searchQuery.trim().length < 3) return;
-    setLoading(true);
-    setSearched(true);
-    setSelected(null);
-    setError(null);
-    setResults([]);
-    try {
-      const data = await searchProperties(searchQuery, selectedCity);
-      setResults(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err.message || "Search failed. Please try again.");
-    }
-    setLoading(false);
-  };
-
-  // Auto-search after user stops typing for 600ms
-  useEffect(() => {
-    if (query.trim().length < 3) return;
-    const timer = setTimeout(() => doSearch(query), 600);
-    return () => clearTimeout(timer);
-  }, [query, selectedCity]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -302,43 +261,27 @@ export default function PropertyGuide() {
             Search Broward County's property database to find property details, ownership information, building characteristics, and permit history — all in one place.
           </p>
 
-          {/* Search bar */}
-          <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 shadow-lg mb-3">
-            <Search className="w-5 h-5 text-gray-400 shrink-0" />
-            <input
-              className="flex-1 border-0 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent"
-              placeholder="Enter an address, owner name, or folio number..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && doSearch()}
-            />
+          {/* City filter row */}
+          <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-3 h-11 mb-3">
+            <MapPin className="w-4 h-4 text-blue-300 shrink-0" />
+            <select
+              value={selectedCity}
+              onChange={e => setSelectedCity(e.target.value)}
+              className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+            >
+              <option value="All Cities" className="text-gray-800">All Cities</option>
+              {!citiesLoading && cities.map(c => (
+                <option key={c.name} value={c.name} className="text-gray-800">{c.name}</option>
+              ))}
+            </select>
           </div>
 
-          {/* City filter + Search button row */}
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-3 h-11">
-              <MapPin className="w-4 h-4 text-blue-300 shrink-0" />
-              <select
-                value={selectedCity}
-                onChange={e => setSelectedCity(e.target.value)}
-                className="flex-1 bg-transparent text-white text-sm focus:outline-none"
-              >
-                <option value="All Cities" className="text-gray-800">All Cities</option>
-              {citiesLoading
-                ? null
-                : cities.map(c => <option key={c.name} value={c.name} className="text-gray-800">{c.name}</option>)
-              }
-              </select>
-            </div>
-            <button
-              onClick={doSearch}
-              disabled={loading}
-              className="px-5 h-11 rounded-xl text-white font-semibold text-sm shrink-0 disabled:opacity-60 transition-opacity hover:opacity-90"
-              style={{ background: "#3B82F6" }}
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
-            </button>
-          </div>
+          {/* Search box */}
+          <PropertySearchBox
+            onSelect={(p) => setSelected(p)}
+            cityFilter={selectedCity}
+            placeholder="Enter an address, owner name, or folio number..."
+          />
 
           {/* Search tips */}
           <div className="mt-3 px-3 py-3 rounded-xl bg-blue-900/40 border border-blue-400/20 text-blue-200 text-xs space-y-1">
@@ -351,26 +294,16 @@ export default function PropertyGuide() {
         </div>
       </div>
 
-      {/* Results — desktop has sidebar */}
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 pb-24 md:pb-8">
         <div className="md:flex md:gap-6 md:items-start">
 
           {/* Left sidebar (desktop only) */}
           {!selected && (
-            <div className="hidden md:block w-56 shrink-0 space-y-4">
-              {/* Transparency notice */}
+            <div className="hidden md:block w-56 shrink-0">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <p className="text-xs font-bold text-blue-800 mb-1">Public Access Records</p>
                 <p className="text-xs text-blue-700 leading-relaxed">Look up historical permits, zoning classifications, and building details for any registered property.</p>
               </div>
-
-              {/* Recent searches hint */}
-              {searched && results.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Results</p>
-                  <p className="text-sm font-bold text-gray-800">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
-                </div>
-              )}
             </div>
           )}
 
@@ -379,48 +312,15 @@ export default function PropertyGuide() {
             {selected ? (
               <PropertyDetail property={selected} onBack={() => setSelected(null)} />
             ) : (
-              <>
-                {loading && (
-                  <div className="flex items-center justify-center gap-2 text-blue-600 py-12">
-                    <Loader2 className="w-5 h-5 animate-spin" /> Searching properties...
-                  </div>
-                )}
-                {error && (
-                  <div className="text-center py-8 text-red-600 bg-red-50 rounded-xl border border-red-100">
-                    <p className="font-medium">Search error</p>
-                    <p className="text-sm mt-1">{error}</p>
-                  </div>
-                )}
-                {searched && !loading && !error && results.length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-                    <Search className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-                    <p className="font-semibold text-gray-700">No properties found</p>
-                    <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
-                      Try a shorter address or folio number. Only Broward County properties are available.
-                    </p>
-                  </div>
-                )}
-                {searched && !loading && results.length > 0 && (
-                  <p className="text-sm text-gray-500 mb-4 md:hidden">{results.length} propert{results.length === 1 ? "y" : "ies"} found</p>
-                )}
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {results.map((prop, i) => (
-                    <PropertyCard key={prop.folio_number || i} property={prop} onClick={() => setSelected(prop)} />
-                  ))}
-                </div>
-                {!searched && !loading && (
-                  <div className="text-center py-16 text-gray-400">
-                    <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-                    <p className="font-medium text-gray-700 text-lg">Search for a property</p>
-                    <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">
-                      Enter an address or folio number to look up any Broward County property and its permit history.
-                    </p>
-                  </div>
-                )}
-              </>
+              <div className="text-center py-16 text-gray-400">
+                <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                <p className="font-medium text-gray-700 text-lg">Search for a property</p>
+                <p className="text-sm mt-2 text-gray-500 max-w-sm mx-auto">
+                  Enter an address or folio number to look up any Broward County property and its permit history.
+                </p>
+              </div>
             )}
           </div>
-
         </div>
       </div>
     </div>

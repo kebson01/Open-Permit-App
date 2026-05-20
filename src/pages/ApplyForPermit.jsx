@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
+import PropertySearchBox from "@/components/property/PropertySearchBox";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, MapPin, FileText,
   Loader2, Search, AlertTriangle, ExternalLink, ChevronRight, Play
@@ -60,14 +61,11 @@ function StepIndicator({ currentStep }) {
 
 // ── STEP 1: Property & City ──
 function Step1PropertyCity({ currentUser, initial, onNext }) {
-  const [cities, setCities]           = useState([]);
+  const [cities, setCities]             = useState([]);
   const [selectedCity, setSelectedCity] = useState(initial?.city || null);
-  const [role, setRole]               = useState(initial?.role || "homeowner");
-  const [propertyQuery, setPropertyQuery] = useState(initial?.address || "");
-  const [searching, setSearching]     = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
+  const [role, setRole]                 = useState(initial?.role || "homeowner");
   const [selectedProperty, setSelectedProperty] = useState(initial?.property || null);
-  const [loading, setLoading]         = useState(true);
+  const [loading, setLoading]           = useState(true);
 
   useEffect(() => {
     db.City.list().then(all => {
@@ -78,17 +76,13 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
     });
   }, []);
 
-  const doSearch = async () => {
-    if (!propertyQuery.trim()) return;
-    setSearching(true);
-    try {
-      const resp = await base44.functions.invoke("propertySearch", { q: propertyQuery.trim() });
-      setSearchResults(Array.isArray(resp.data?.data) ? resp.data.data : []);
-    } catch { setSearchResults([]); }
-    setSearching(false);
+  const handleSelectProperty = (p) => {
+    setSelectedProperty(p);
+    if (p.city_name) {
+      const cityObj = cities.find(c => c.name === p.city_name);
+      if (cityObj) setSelectedCity(cityObj);
+    }
   };
-
-  const canContinue = selectedCity;
 
   return (
     <div className="space-y-5">
@@ -147,38 +141,11 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
               <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>{selectedProperty.full_address || selectedProperty.folio_number}</p>
               <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
             </div>
-            <button onClick={() => { setSelectedProperty(null); setSearchResults([]); }} className="text-xs text-green-700 underline">Change</button>
+            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-700 underline">Change</button>
           </div>
         ) : (
           <div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={propertyQuery}
-                onChange={e => setPropertyQuery(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && doSearch()}
-                placeholder="Search by address or folio number..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-gray-50"
-                style={{ fontFamily: FONTS.b }}
-              />
-              <button onClick={doSearch} disabled={searching}
-                className="px-4 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-                style={{ background: PRIMARY }}>
-                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              </button>
-            </div>
-            {searchResults.length > 0 && (
-              <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
-                {searchResults.map((p, i) => (
-                  <button key={i} onClick={() => { setSelectedProperty(p); setSearchResults([]); if (p.city_name) { const cityObj = cities.find(c => c.name === p.city_name); if (cityObj) setSelectedCity(cityObj); } }}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-blue-50 text-sm border border-gray-100 transition-colors"
-                    style={{ fontFamily: FONTS.b }}>
-                    <p className="font-semibold text-gray-800">{p.full_address || p.folio_number}</p>
-                    <p className="text-xs text-gray-400">{p.city_name} · <span className="font-mono">{p.folio_number}</span></p>
-                  </button>
-                ))}
-              </div>
-            )}
+            <PropertySearchBox onSelect={handleSelectProperty} placeholder="Search by address or folio number..." />
             <p className="text-xs text-gray-400 mt-2">Selecting a property will auto-fill your application.</p>
           </div>
         )}
@@ -186,7 +153,7 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
 
       <button
         onClick={() => onNext({ city: selectedCity, role, property: selectedProperty })}
-        disabled={!canContinue}
+        disabled={!selectedCity}
         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-bold text-sm disabled:opacity-50 transition-opacity hover:opacity-90"
         style={{ background: PRIMARY, fontFamily: FONTS.h }}
       >
