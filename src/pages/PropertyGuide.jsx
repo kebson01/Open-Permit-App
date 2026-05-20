@@ -53,10 +53,10 @@ async function searchProperties(query, city = "All Cities") {
 
 async function getPermitHistory(folioNumber) {
   const { data, error } = await supabase
-    .from("weston_permit_records")
-    .select("RECORD_ID, PERMIT_TYPE, PERMIT_STATUS, STATUS_NORMALIZED, OPEN_DATE, PARCEL_NBR")
-    .eq("PARCEL_NBR", folioNumber)
-    .order("OPEN_DATE", { ascending: false })
+    .from("weston_permits_view")
+    .select("permit_number, permit_name, permit_type, permit_status, status_normalized, open_date")
+    .eq("folio_number", folioNumber)
+    .order("open_date", { ascending: false })
     .limit(50);
 
   if (error) return [];
@@ -64,6 +64,7 @@ async function getPermitHistory(folioNumber) {
 }
 
 function PropertyCard({ property: p, onClick }) {
+  const zip = p.zip_code || "";
   return (
     <button
       onClick={onClick}
@@ -74,18 +75,17 @@ function PropertyCard({ property: p, onClick }) {
           <Home className="w-4 h-4 text-blue-600" />
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-gray-900 text-sm leading-snug truncate">{p.full_address || p.FOLIO_NUMBER}</p>
+          <p className="font-semibold text-gray-900 text-sm leading-snug truncate">{p.full_address || p.folio_number}</p>
           <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
             <MapPin className="w-3 h-3 shrink-0" />
-            {p.city_name}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : p.city_name ? ", FL" : ""}
+            {p.city_name}{zip ? `, FL ${zip}` : p.city_name ? ", FL" : ""}
           </p>
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {p.USE_TYPE && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{p.USE_TYPE}</span>}
-            {p.BLDG_YEAR_BUILT && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">Built {p.BLDG_YEAR_BUILT}</span>}
-            {p.BEDS && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{p.BEDS} bd / {p.BATHS || "?"} ba</span>}
-            {p.BLDG_TOT_SQ_FOOTAGE && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{Number(p.BLDG_TOT_SQ_FOOTAGE).toLocaleString()} sqft</span>}
+            {p.year_built && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">Built {p.year_built}</span>}
+            {p.beds && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{p.beds} bd / {p.baths || "?"} ba</span>}
+            {p.under_air_sqft && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{Number(p.under_air_sqft).toLocaleString()} sqft</span>}
           </div>
-          <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
+          <p className="text-xs text-gray-400 mt-1 font-mono">Folio: {p.folio_number}</p>
         </div>
       </div>
       <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 mt-1" />
@@ -104,12 +104,12 @@ function PropertyDetail({ property: p, onBack }) {
   useEffect(() => {
     if (isWeston) {
       setLoadingPermits(true);
-      getPermitHistory(p.FOLIO_NUMBER).then(data => {
+      getPermitHistory(p.folio_number).then(data => {
         setPermits(data);
         setLoadingPermits(false);
       });
     }
-  }, [p.FOLIO_NUMBER]);
+  }, [p.folio_number]);
 
   return (
     <div>
@@ -125,12 +125,12 @@ function PropertyDetail({ property: p, onBack }) {
         <div className="flex items-start gap-3">
           <Building2 className="w-6 h-6 text-blue-300 shrink-0 mt-0.5" />
           <div>
-            <h2 className="text-xl font-bold leading-tight">{p.full_address || p.FOLIO_NUMBER}</h2>
+            <h2 className="text-xl font-bold leading-tight">{p.full_address || p.folio_number}</h2>
             <p className="text-blue-200 text-sm mt-0.5 flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
-              {p.city_name}{p.SITUS_ZIP_CODE ? `, FL ${p.SITUS_ZIP_CODE}` : p.city_name ? ", FL" : ""}
+              {p.city_name}{p.zip_code ? `, FL ${p.zip_code}` : p.city_name ? ", FL" : ""}
             </p>
-            <p className="text-blue-300 text-xs mt-1 font-mono">Folio: {p.FOLIO_NUMBER}</p>
+            <p className="text-blue-300 text-xs mt-1 font-mono">Folio: {p.folio_number}</p>
           </div>
         </div>
       </div>
@@ -139,19 +139,19 @@ function PropertyDetail({ property: p, onBack }) {
       <div className="grid sm:grid-cols-2 gap-4 mb-5">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Property Type</h3>
-          {(p.use_type_label || p.USE_TYPE) && (
+          {p.use_type && (
             <div className="flex justify-between py-1.5">
               <span className="text-sm text-gray-500">Property Type</span>
-              <span className="text-sm font-medium text-gray-900">{p.use_type_label || p.USE_TYPE}</span>
+              <span className="text-sm font-medium text-gray-900">{p.use_type}</span>
             </div>
           )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Building Details</h3>
-          {p.BLDG_YEAR_BUILT && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Year Built</span><span className="text-sm font-medium text-gray-900">{p.BLDG_YEAR_BUILT}</span></div>}
-          {p.BLDG_TOT_SQ_FOOTAGE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Total Sq Ft</span><span className="text-sm font-medium text-gray-900">{Number(p.BLDG_TOT_SQ_FOOTAGE).toLocaleString()}</span></div>}
-          {p.BLDG_UNDER_AIR_SQ_FOOTAGE && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Under Air</span><span className="text-sm font-medium text-gray-900">{Number(p.BLDG_UNDER_AIR_SQ_FOOTAGE).toLocaleString()}</span></div>}
-          {(p.BEDS || p.BATHS) && <div className="flex justify-between py-1.5"><span className="text-sm text-gray-500">Beds / Baths</span><span className="text-sm font-medium text-gray-900">{p.BEDS || "—"} / {p.BATHS || "—"}</span></div>}
+          {p.year_built && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Year Built</span><span className="text-sm font-medium text-gray-900">{p.year_built}</span></div>}
+          {p.total_sqft && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Total Sq Ft</span><span className="text-sm font-medium text-gray-900">{Number(p.total_sqft).toLocaleString()}</span></div>}
+          {p.under_air_sqft && <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-sm text-gray-500">Under Air</span><span className="text-sm font-medium text-gray-900">{Number(p.under_air_sqft).toLocaleString()}</span></div>}
+          {(p.beds || p.baths) && <div className="flex justify-between py-1.5"><span className="text-sm text-gray-500">Beds / Baths</span><span className="text-sm font-medium text-gray-900">{p.beds || "—"} / {p.baths || "—"}</span></div>}
         </div>
       </div>
 
@@ -205,23 +205,23 @@ function PropertyDetail({ property: p, onBack }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {permits.map((r, i) => (
-                  <tr key={r.RECORD_ID || i} className="hover:bg-blue-50/30">
-                    <td className="px-4 py-2.5 font-mono text-xs text-blue-700 whitespace-nowrap">{r.RECORD_ID || "—"}</td>
-                    <td className="px-4 py-2.5 text-gray-700 max-w-xs"><span className="line-clamp-1">{r.PERMIT_TYPE || "—"}</span></td>
+                  <tr key={r.permit_number || i} className="hover:bg-blue-50/30">
+                    <td className="px-4 py-2.5 font-mono text-xs text-blue-700 whitespace-nowrap">{r.permit_number || "—"}</td>
+                    <td className="px-4 py-2.5 text-gray-700 max-w-xs"><span className="line-clamp-1">{r.permit_name || r.permit_type || "—"}</span></td>
                     <td className="px-4 py-2.5">
-                      {r.STATUS_NORMALIZED ? (
+                      {r.status_normalized ? (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
                           style={{
-                            backgroundColor: STATUS_STYLES[r.STATUS_NORMALIZED]?.bg || "#F1F5F9",
-                            color: STATUS_STYLES[r.STATUS_NORMALIZED]?.color || "#475569",
+                            backgroundColor: STATUS_STYLES[r.status_normalized]?.bg || "#F1F5F9",
+                            color: STATUS_STYLES[r.status_normalized]?.color || "#475569",
                           }}>
-                          {r.STATUS_NORMALIZED}
+                          {r.status_normalized}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">{r.PERMIT_STATUS || "—"}</span>
+                        <span className="text-xs text-gray-400">{r.permit_status || "—"}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{formatDate(r.OPEN_DATE)}</td>
+                    <td className="px-4 py-2.5 text-xs text-gray-400 whitespace-nowrap">{formatDate(r.open_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -232,7 +232,7 @@ function PropertyDetail({ property: p, onBack }) {
 
       <div className="flex flex-wrap justify-center gap-3 mt-5">
         <Link
-          to={`/PermitGuide?city=${encodeURIComponent(p.city_name || "")}`}
+          to={`/ApplyForPermit?city=${encodeURIComponent(p.city_name || "")}&folio=${encodeURIComponent(p.folio_number || "")}`}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
           style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}
         >
