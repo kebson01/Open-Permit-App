@@ -4,7 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import Layout from './layout.jsx';
+import Layout from './components/Layout';
 
 // Core pages
 import HomeDashboard from './pages/HomeDashboard';
