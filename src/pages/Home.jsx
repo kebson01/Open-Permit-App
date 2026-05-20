@@ -86,19 +86,21 @@ export default function Home() {
             Navigate building codes, estimate costs, and track your project with confidence and ease.
           </p>
           {/* Search bar */}
-          <div className="flex items-center gap-2 bg-white rounded-2xl shadow-xl px-4 py-2 max-w-md mx-auto">
-            <MapPin className="w-4 h-4 shrink-0 text-[#025799]" />
-            <select
-              value={jurisdiction}
-              onChange={e => setJurisdiction(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-gray-700 font-medium focus:outline-none appearance-none py-2 cursor-pointer"
-            >
-              <option value="">City / Municipality (e.g. Fort Lauderdale)</option>
-              {!citiesLoading && cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-            </select>
+          <div className="flex items-center bg-white rounded-full shadow-2xl overflow-hidden max-w-lg mx-auto border border-white/20">
+            <div className="flex items-center gap-2 flex-1 px-5 py-1 min-w-0">
+              <MapPin className="w-4 h-4 shrink-0 text-[#025799]" />
+              <select
+                value={jurisdiction}
+                onChange={e => setJurisdiction(e.target.value)}
+                className="flex-1 bg-transparent text-sm text-gray-600 focus:outline-none appearance-none cursor-pointer py-2 min-w-0"
+              >
+                <option value="">City / Municipality (e.g. Fort Lauderdale)</option>
+                {!citiesLoading && cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
             <button
               onClick={heroSearch}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold transition-opacity hover:opacity-90"
+              className="shrink-0 flex items-center gap-1.5 px-5 py-3.5 text-white text-sm font-bold transition-opacity hover:opacity-90 rounded-full m-1"
               style={{ background: "#025799" }}
             >
               Find Permits For Your Project
