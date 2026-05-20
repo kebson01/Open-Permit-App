@@ -1,47 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, MapPin, ClipboardList, Mail, Globe, UserCheck } from "lucide-react";
-
-const WESTON_PERMITS = [
-  "Roofing — Full Replacement",
-  "Roofing — Partial Repair",
-  "HVAC / A/C Replacement",
-  "Window Replacement",
-  "Door Replacement",
-  "Screen Enclosure",
-  "Fence / Gate",
-  "New Pool",
-  "Pool Renovation",
-  "Electrical — Panel Upgrade",
-  "Plumbing",
-  "Residential Remodel",
-  "Addition",
-  "Driveway / Paving",
-  "Generator",
-  "Solar Panels",
-  "Shed / Accessory Structure",
-  "New Construction",
-];
+import { Loader2, MapPin, ClipboardList, Mail, Globe, UserCheck, AlertTriangle, ExternalLink } from "lucide-react";
 
 const ROLES = [
-  { key: "homeowner", label: "🏠 Homeowner", desc: "Owner-builder or personal project" },
-  { key: "contractor", label: "🔧 Contractor", desc: "Licensed contractor pulling permit" },
+  { key: "homeowner",        label: "🏠 Homeowner",       desc: "Owner-builder or personal project" },
+  { key: "contractor",       label: "🔧 Contractor",       desc: "Licensed contractor pulling permit" },
   { key: "private_provider", label: "🏛 Private Provider", desc: "FL Statute 553.791 provider" },
 ];
 
+const CITY_ORDER = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
+
 export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
-  const [selectedCity] = useState("Weston");
-  const [permitType, setPermitType] = useState("");
-  const [userRole, setUserRole] = useState("homeowner");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [emailError, setEmailError] = useState("");
+  const [cities, setCities]           = useState([]);
+  const [selectedCityId, setSelectedCityId] = useState("");
+  const [selectedCityObj, setSelectedCityObj] = useState(null);
+  const [permitTypes, setPermitTypes] = useState([]);
+  const [permitType, setPermitType]   = useState("");
+  const [userRole, setUserRole]       = useState("homeowner");
+  const [guestEmail, setGuestEmail]   = useState("");
+  const [creating, setCreating]       = useState(false);
+  const [emailError, setEmailError]   = useState("");
+  const [loadingCities, setLoadingCities] = useState(true);
+  const [loadingPermits, setLoadingPermits] = useState(false);
 
   const isWebMode = mode === "web";
 
+  // Load cities
+  useEffect(() => {
+    base44.entities.City.list().then(all => {
+      // Filter to the 5 target cities, sorted
+      const filtered = CITY_ORDER
+        .map(name => all.find(c => c.name === name))
+        .filter(Boolean);
+      setCities(filtered);
+      if (filtered.length > 0) {
+        setSelectedCityId(filtered[0].id);
+        setSelectedCityObj(filtered[0]);
+      }
+      setLoadingCities(false);
+    });
+  }, []);
+
+  // Load permit types when city changes
+  useEffect(() => {
+    if (!selectedCityId) return;
+    setPermitTypes([]);
+    setPermitType("");
+    setLoadingPermits(true);
+    base44.entities.PermitType.filter({ city_id: selectedCityId }).then(pts => {
+      setPermitTypes(pts);
+      setLoadingPermits(false);
+    });
+  }, [selectedCityId]);
+
+  const handleCityChange = (cityId) => {
+    setSelectedCityId(cityId);
+    const obj = cities.find(c => c.id === cityId);
+    setSelectedCityObj(obj || null);
+    setPermitType("");
+  };
+
+  const isCooperCity   = selectedCityObj?.name === "Cooper City";
+  const isFortLaud     = selectedCityObj?.name === "Fort Lauderdale";
+  const targetSystem   = isFortLaud ? "accela" : "manual";
+
   const handleStart = async () => {
     if (!permitType) return;
-
     if (isWebMode) {
       if (!guestEmail || !guestEmail.includes("@")) {
         setEmailError("Please enter a valid email address.");
@@ -53,19 +77,20 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
     setCreating(true);
     const email = isWebMode ? guestEmail : currentUser.email;
     const guide = await base44.entities.SubmissionGuide.create({
-      user_email: email,
-      user_role: userRole,
-      city_name: selectedCity,
+      user_email:       email,
+      user_role:        userRole,
+      city_name:        selectedCityObj?.name || "",
+      city_id:          selectedCityId,
+      city_portal_url:  selectedCityObj?.portal_url || "",
       permit_type_name: permitType,
-      target_system: "manual",
-      city_portal_url: "https://www.westonfl.org/Permits",
-      phase: "application",
-      overall_status: "in_progress",
-      started_date: new Date().toISOString().slice(0, 10),
+      target_system:    targetSystem,
+      phase:            "application",
+      overall_status:   "in_progress",
+      started_date:     new Date().toISOString().slice(0, 10),
       questions_answered: 0,
       questions_prefilled: 0,
-      questions_total: 0,
-      is_guest: isWebMode,
+      questions_total:  0,
+      is_guest:         isWebMode,
     });
     setCreating(false);
     onCreated(guide, email);
@@ -81,20 +106,57 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
           : "bg-green-50 border-green-200 text-green-700"
       }`}>
         {isWebMode
-          ? <><Globe className="w-3.5 h-3.5 shrink-0" /> <span>Guest Mode — no account needed. We'll guide you every step of the way.</span></>
+          ? <><Globe className="w-3.5 h-3.5 shrink-0" /> <span>Guest Mode — no account needed.</span></>
           : <><UserCheck className="w-3.5 h-3.5 shrink-0" /> <span>App Mode — your profile data will be auto-filled where possible.</span></>
         }
       </div>
 
-      {/* City */}
+      {/* City selector */}
       <div>
         <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">
           <MapPin className="w-4 h-4 text-blue-500" /> City
         </label>
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800 font-medium">
-          City of Weston, FL
-          <span className="ml-auto text-xs text-blue-400">More cities coming soon</span>
-        </div>
+        {loadingCities ? (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading cities...
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {cities.map(c => (
+              <button
+                key={c.id}
+                onClick={() => handleCityChange(c.id)}
+                className={`text-left px-3 py-2.5 rounded-xl border-2 transition-all text-sm font-medium ${
+                  selectedCityId === c.id
+                    ? "border-blue-500 bg-blue-50 text-blue-800"
+                    : "border-gray-200 text-gray-700 hover:border-blue-200"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Fort Lauderdale note */}
+        {isFortLaud && (
+          <div className="mt-2 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-800">
+            <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Fort Lauderdale uses <strong>LauderBuild</strong> for permit submission. You'll be directed to{" "}
+              <a href="https://lauderbuild.fortlauderdale.gov" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+                lauderbuild.fortlauderdale.gov
+              </a>
+            </span>
+          </div>
+        )}
+
+        {/* Cooper City notarization warning (shown after permit type selected) */}
+        {isCooperCity && permitType && (
+          <div className="mt-2 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-800">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span><strong>Cooper City requires all permit applications to be notarized before submission.</strong> A Hold Harmless Agreement is also required.</span>
+          </div>
+        )}
       </div>
 
       {/* Guest email (web mode only) */}
@@ -141,19 +203,27 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
           <ClipboardList className="w-4 h-4 text-blue-500" /> Permit Type
         </label>
         {isWebMode && (
-          <p className="text-xs text-gray-500 mb-2">Select the type of work you're planning. Not sure? Choose the closest match — you can always contact the city.</p>
+          <p className="text-xs text-gray-500 mb-2">Select the type of work you're planning.</p>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
-          {WESTON_PERMITS.map(pt => (
-            <button key={pt} onClick={() => setPermitType(pt)}
-              className={`text-left px-3 py-2.5 rounded-xl border text-sm transition-all ${
-                permitType === pt
-                  ? "border-blue-500 bg-blue-50 text-blue-800 font-semibold"
-                  : "border-gray-200 hover:border-blue-200 text-gray-700"
-              }`}
-            >{pt}</button>
-          ))}
-        </div>
+        {loadingPermits ? (
+          <div className="flex items-center gap-2 text-sm text-gray-400 py-3">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading permit types...
+          </div>
+        ) : permitTypes.length === 0 ? (
+          <p className="text-sm text-gray-400 py-2">No permit types found for this city.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+            {permitTypes.map(pt => (
+              <button key={pt.id} onClick={() => setPermitType(pt.name)}
+                className={`text-left px-3 py-2.5 rounded-xl border text-sm transition-all ${
+                  permitType === pt.name
+                    ? "border-blue-500 bg-blue-50 text-blue-800 font-semibold"
+                    : "border-gray-200 hover:border-blue-200 text-gray-700"
+                }`}
+              >{pt.name}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       <button

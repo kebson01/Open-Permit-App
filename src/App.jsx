@@ -14,6 +14,7 @@ import AdminPanel from './pages/AdminPanel.jsx';
 import ARTools from './pages/ARTools.jsx';
 import ExemptionChecker from './pages/ExemptionChecker';
 import SubmissionGuide from './pages/SubmissionGuide';
+import AdminHealth from './pages/AdminHealth';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -50,6 +51,7 @@ function App() {
           <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
           <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><AdminHealth /></LayoutWrapper>} />
           <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
           <Route path="/ExemptionChecker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
           <Route path="/SubmissionGuide" element={<LayoutWrapper currentPageName="SubmissionGuide"><SubmissionGuide /></LayoutWrapper>} />

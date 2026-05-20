@@ -74,18 +74,44 @@ function calculateStandardFee(rule, constructionCost, surcharge) {
   const cost = parseFloat(constructionCost) || 0;
   const breakdown = [];
 
-  // Use correct DB column names: base_fee, rate_percentage
-  const baseFee = parseFloat(rule.base_fee) || 0;
-  const rate = parseFloat(rule.rate_percentage) || 0;
+  const flatFee  = parseFloat(rule.flat_fee)  || 0;
+  const baseFee  = parseFloat(rule.base_fee)  || 0;
+  const rate     = parseFloat(rule.rate_percentage) || 0;
+  const calcType = rule.calc_type || "flat";
 
   let permitFee = 0;
-  if (rate > 0) {
-    const pctFee = cost * (rate / 100);
-    permitFee = Math.max(baseFee, pctFee);
+
+  if (calcType === "flat") {
+    // Use flat_fee if set, otherwise fall back to base_fee
+    permitFee = flatFee > 0 ? flatFee : baseFee;
+    breakdown.push({ label: "Permit Fee (Flat)", amount: permitFee });
+
+  } else if (calcType === "flat_plus_pct") {
+    const pctAmount = (rate / 100) * cost;
+    permitFee = baseFee + pctAmount;
+    if (baseFee > 0) breakdown.push({ label: "Base Fee", amount: baseFee });
+    if (pctAmount > 0) breakdown.push({ label: `Percentage Fee (${rate}% of $${cost.toLocaleString()})`, amount: pctAmount });
+
+  } else if (calcType === "flat_plus_linear") {
+    const linearFeet = cost; // for linear permits, cost input is used as linear feet
+    const baseIncludes = parseFloat(rule.base_includes_ft) || 0;
+    const ratePerFt = parseFloat(rule.rate_per_linear_ft) || 0;
+    const overFt = Math.max(0, linearFeet - baseIncludes);
+    const linearExtra = overFt * ratePerFt;
+    permitFee = baseFee + linearExtra;
+    breakdown.push({ label: "Base Fee", amount: baseFee });
+    if (linearExtra > 0) breakdown.push({ label: `Linear Footage Add-on (${overFt} ft × $${ratePerFt}/ft)`, amount: linearExtra });
+
   } else {
-    permitFee = baseFee;
+    // Legacy: percentage-based (base or percent, whichever is higher)
+    if (rate > 0) {
+      const pctFee = cost * (rate / 100);
+      permitFee = Math.max(baseFee, pctFee);
+    } else {
+      permitFee = flatFee > 0 ? flatFee : baseFee;
+    }
+    breakdown.push({ label: "Base Permit Fee", amount: permitFee });
   }
-  breakdown.push({ label: "Base Permit Fee", amount: permitFee });
 
   // DB column is 'technology_admin' on city_surcharges; per-rule override uses 'technology_admin_fee'
   const techFee = parseFloat(rule.technology_admin_fee) || (surcharge ? parseFloat(surcharge.technology_admin) || 0 : 0);
@@ -294,9 +320,15 @@ export default function FeeCalculator() {
   // Real-time calculation for standard (non-Sunrise) permits as user types
   useEffect(() => {
     if (!isSunrise && selectedRule) {
-      if (selectedRule.rate_percentage > 0 && (!constructionCost || parseFloat(constructionCost) <= 0)) {
-        setResults(null);
-        return;
+      const calcType = selectedRule.calc_type || "flat";
+      const isFlat = calcType === "flat" || (selectedRule.rate_percentage <= 0 && !selectedRule.flat_fee === false);
+      const needsInput = selectedRule.rate_percentage > 0 || calcType === "flat_plus_pct" || calcType === "flat_plus_linear";
+      if (needsInput && (!constructionCost || parseFloat(constructionCost) <= 0)) {
+        // Only clear if not a pure flat fee
+        if (!(calcType === "flat" || (!selectedRule.rate_percentage && (selectedRule.flat_fee > 0 || selectedRule.base_fee > 0)))) {
+          setResults(null);
+          return;
+        }
       }
       const result = calculateStandardFee(selectedRule, constructionCost, surcharge);
       setResults(result);
@@ -538,7 +570,7 @@ export default function FeeCalculator() {
                                       ) : (
                                         <>
                                           <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
-                                          <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toLocaleString()}</p>
+                                          <p className="text-sm font-bold text-gray-900">${(rule.flat_fee > 0 ? rule.flat_fee : (rule.base_fee || 0)).toLocaleString()}</p>
                                         </>
                                       )}
                                     </>
