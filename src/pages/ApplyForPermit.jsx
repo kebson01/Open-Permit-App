@@ -66,25 +66,34 @@ function Step1Setup({ onNext, initialCity }) {
   const [searchError, setSearchError] = useState("");
 
   const handlePropertySearch = async () => {
-    if (!propertySearch.trim() || propertySearch.length < 3) {
-      setSearchError("Enter at least 3 characters");
+    if (!propertySearch.trim() || propertySearch.length < 2) {
+      setSearchError("Enter at least 2 characters");
       return;
     }
     setSearchLoading(true);
     setSearchError("");
     setPropertyResults([]);
     try {
-      const q = propertySearch.toLowerCase();
-      const { data, error } = await supabase
+      const q = propertySearch.trim();
+      let query = supabase
         .from("properties_search_view")
         .select("folio_number, full_address, owner_name, city_name, total_sqft, year_built, beds, baths")
-        .or(`folio_number.ilike.%${q}%,full_address.ilike.%${q}%,owner_name.ilike.%${q}%`)
         .limit(10);
+
+      // Prioritize folio number if it looks like one (all digits)
+      if (/^\d+$/.test(q)) {
+        query = query.ilike("folio_number", `${q}%`);
+      } else {
+        // Search address only to avoid timeout
+        query = query.ilike("full_address", `%${q}%`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setPropertyResults(data || []);
       if (!data || data.length === 0) setSearchError("No properties found");
     } catch (err) {
-      setSearchError(err.message || "Search failed");
+      setSearchError("Search failed—try a shorter query");
     } finally {
       setSearchLoading(false);
     }
