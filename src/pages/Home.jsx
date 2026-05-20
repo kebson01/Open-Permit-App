@@ -372,23 +372,6 @@ export default function Home() {
         </div>
       </FadeSection>
 
-      {/* ══ 8. FOOTER ═══════════════════════════════════════════════════════ */}
-      <footer style={{ background: "#eff4ff", borderTop: `1px solid ${C.outlineVariant}` }}>
-        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-bold" style={{ fontFamily: fonts.headline, fontSize: 16, color: C.primary }}>Open Permit</p>
-            <p className="text-xs mt-0.5" style={{ color: C.outline, fontFamily: fonts.body }}>
-              © 2024 Open Permit. Guiding you through every step.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-5">
-            {["Privacy Policy", "Terms of Service", "Accessibility", "Contact Support"].map(l => (
-              <a key={l} href="#" className="text-xs hover:underline transition-colors" style={{ color: C.onSurfaceVariant, fontFamily: fonts.body }}>{l}</a>
-            ))}
-          </div>
-        </div>
-      </footer>
-
       <AIDrawer
         open={aiOpen}
         onClose={() => setAiOpen(false)}
