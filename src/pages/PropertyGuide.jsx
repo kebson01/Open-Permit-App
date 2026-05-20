@@ -24,11 +24,17 @@ const CITY_PORTALS = {
 
 
 const STATUS_STYLES = {
+  "Closed":    { bg: "#DCFCE7", color: "#166534" },
+  "Finaled":   { bg: "#DCFCE7", color: "#166534" },
   "Completed": { bg: "#DCFCE7", color: "#166534" },
+  "Open":      { bg: "#EFF6FF", color: "#1D4ED8" },
+  "Issued":    { bg: "#EFF6FF", color: "#1D4ED8" },
   "Active":    { bg: "#EFF6FF", color: "#1D4ED8" },
   "In Review": { bg: "#FFFBEB", color: "#92400E" },
-  "Expired":   { bg: "#F1F5F9", color: "#475569" },
-  "Cancelled": { bg: "#FEF2F2", color: "#991B1B" },
+  "Expired":   { bg: "#FEE2E2", color: "#991B1B" },
+  "Void":      { bg: "#F1F5F9", color: "#475569" },
+  "Voided":    { bg: "#F1F5F9", color: "#475569" },
+  "Cancelled": { bg: "#F1F5F9", color: "#475569" },
 };
 
 function isFolioSearch(term) {

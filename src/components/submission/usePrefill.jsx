@@ -36,18 +36,23 @@ export async function buildPrefillMap(guide, currentUser) {
   }
 
   // Build map keyed by prefill_from value
-  // Property fields
+  // Property fields — columns from properties_search_view
   if (property) {
-    map["property.full_address"]           = property.full_address || "";
-    map["property.FOLIO_NUMBER"]           = property.FOLIO_NUMBER || "";
-    map["property.NAME_LINE_1"]            = property.NAME_LINE_1 || "";
-    map["property.HOMESTEAD_FLAG"]         = property.HOMESTEAD_FLAG || "";
-    map["property.BLDG_TOT_SQ_FOOTAGE"]    = property.BLDG_TOT_SQ_FOOTAGE?.toString() || "";
-    map["property.BLDG_UNDER_AIR_SQ_FOOTAGE"] = property.BLDG_UNDER_AIR_SQ_FOOTAGE?.toString() || "";
-    map["property.BLDG_YEAR_BUILT"]        = property.BLDG_YEAR_BUILT?.toString() || "";
-    map["property.SITUS_CITY"]             = property.SITUS_CITY || "";
-    map["property.SITUS_ZIP_CODE"]         = property.SITUS_ZIP_CODE || "";
-    map["property.USE_TYPE"]               = property.USE_TYPE || "";
+    map["property.full_address"]              = property.full_address || "";
+    map["property.folio_number"]              = property.folio_number || "";
+    // Legacy keys for WESTON_QUESTION_BANK compatibility
+    map["property.FOLIO_NUMBER"]              = property.folio_number || "";
+    map["property.NAME_LINE_1"]               = property.owner_name || "";
+    map["property.HOMESTEAD_FLAG"]            = property.homestead_flag || "";
+    map["property.BLDG_TOT_SQ_FOOTAGE"]       = property.total_sqft?.toString() || "";
+    map["property.BLDG_UNDER_AIR_SQ_FOOTAGE"] = property.under_air_sqft?.toString() || "";
+    map["property.BLDG_YEAR_BUILT"]           = property.year_built?.toString() || "";
+    map["property.SITUS_CITY"]                = property.city_name || "";
+    map["property.SITUS_ZIP_CODE"]            = property.zip_code || "";
+    map["property.owner_name"]                = property.owner_name || "";
+    map["property.homestead_flag"]            = property.homestead_flag || "";
+    map["property.city_name"]                 = property.city_name || "";
+    map["property.zip_code"]                  = property.zip_code || "";
   }
 
   // Project fields

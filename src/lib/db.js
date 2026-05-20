@@ -1,14 +1,13 @@
 /**
  * lib/db.js — Supabase data layer
- * Replaces all base44.entities.* calls throughout the app.
+ * All table/view names and column names match the actual Supabase schema.
  * Auth still uses base44.auth.* (unchanged).
  */
-import { supabase } from './supabaseClient';
-
-// ── Generic helpers ────────────────────────────────────────────────────────────
 
 const SUPABASE_URL = 'https://gbknnjidqpmjrwlooluw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68';
+
+// ── Generic REST helpers ───────────────────────────────────────────────────────
 
 async function rest(table, { filters = {}, select = '*', order, limit, offset } = {}) {
   const params = new URLSearchParams();
@@ -80,21 +79,12 @@ async function restDelete(table, id) {
 
 // ── Permit type table map ──────────────────────────────────────────────────────
 const PERMIT_TYPE_TABLE = {
-  'Weston': 'weston_permit_types',
-  'Coral Springs': 'coral_springs_permit_types',
+  'Weston':          'weston_permit_types',
+  'Coral Springs':   'coral_springs_permit_types',
   'Fort Lauderdale': 'fort_lauderdale_permit_types',
-  'Hollywood': 'hollywood_permit_types',
-  'Cooper City': 'cooper_city_permit_types',
-  'Sunrise': 'sunrise_permit_types',
-};
-
-// ── Permit record table map ────────────────────────────────────────────────────
-const PERMIT_RECORD_TABLE = {
-  'Weston': 'weston_permit_records',
-  'Coral Springs': 'coral_springs_permit_records',
-  'Fort Lauderdale': 'fort_lauderdale_permit_records',
-  'Hollywood': 'hollywood_permit_records',
-  'Cooper City': 'cooper_city_permit_records',
+  'Hollywood':       'hollywood_permit_types',
+  'Cooper City':     'cooper_city_permit_types',
+  'Sunrise':         'sunrise_permit_types',
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -110,12 +100,11 @@ export const City = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PERMIT TYPES
+// PERMIT TYPES (city-specific tables)
 // ══════════════════════════════════════════════════════════════════════════════
 export const PermitType = {
   filter: async (filters = {}) => {
     const cityName = filters.city_name;
-    // If we have a city_id, we need to look up the city name first
     if (filters.city_id && !cityName) {
       const cities = await rest('cities', { filters: { id: `eq.${filters.city_id}` }, limit: 1 });
       if (!cities || cities.length === 0) return [];
@@ -132,13 +121,18 @@ export const PermitType = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // FEE RULES
+// Columns: id, city_name, permit_id, permit_name, category, calc_type,
+//          input_field, base_fee, flat_fee, rate_percentage,
+//          technology_admin_fee, sort_order, description
+// All numeric columns are numeric — no casting needed.
 // ══════════════════════════════════════════════════════════════════════════════
 export const FeeRule = {
   filter: (filters = {}) => {
     const f = {};
-    if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
-    if (filters.category) f.category = `eq.${filters.category}`;
+    if (filters.city_name)  f.city_name  = `eq.${filters.city_name}`;
+    if (filters.category)   f.category   = `eq.${filters.category}`;
     if (filters.permit_name) f.permit_name = `eq.${filters.permit_name}`;
+    if (filters.permit_id)  f.permit_id  = `eq.${filters.permit_id}`;
     return rest('fee_rules', { filters: f, order: 'sort_order.asc' });
   },
   list: () => rest('fee_rules', { order: 'city_name.asc,sort_order.asc' }),
@@ -148,7 +142,7 @@ export const FeeRule = {
 // CITY SURCHARGES
 // ══════════════════════════════════════════════════════════════════════════════
 export const CitySurcharge = {
-  filter: async (filters = {}) => {
+  filter: (filters = {}) => {
     const f = {};
     if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
     return rest('city_surcharges', { filters: f });
@@ -160,46 +154,59 @@ export const CitySurcharge = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PROPERTIES (broward_properties — 758k rows, always filter/limit)
+// PROPERTIES — use properties_search_view
+// Columns: folio_number, full_address, owner_name, homestead_flag,
+//          total_sqft, under_air_sqft, year_built, beds, baths,
+//          city_code, city_name, zip_code, building_value, latitude, longitude
 // ══════════════════════════════════════════════════════════════════════════════
 export const Property = {
-  search: (q, limit = 10) => rest('broward_properties', {
-    filters: { full_address: `ilike.*${q}*` },
-    select: 'id,FOLIO_NUMBER,full_address,NAME_LINE_1,SITUS_CITY,SITUS_ZIP_CODE,USE_CODE,USE_TYPE,SITUS_STREET_NUMBER,SITUS_STREET_DIRECTION,SITUS_STREET_NAME,SITUS_STREET_TYPE,SITUS_UNIT_NUMBER,BLDG_YEAR_BUILT,BEDS,BATHS,BLDG_UNDER_AIR_SQ_FOOTAGE,BLDG_TOT_SQ_FOOTAGE,JUST_LAND_VALUE,JUST_BUILDING_VALUE,COUNTY_TAXABLE,HOMESTEAD_FLAG',
-    limit,
-  }),
+  search: (q, cityName = null, limit = 10) => {
+    const f = { 'or': `(full_address.ilike.*${q}*,folio_number.ilike.*${q}*,owner_name.ilike.*${q}*)` };
+    if (cityName && cityName !== 'All Cities') f.city_name = `eq.${cityName}`;
+    return rest('properties_search_view', {
+      filters: f,
+      select: 'folio_number,full_address,owner_name,homestead_flag,total_sqft,under_air_sqft,year_built,beds,baths,city_code,city_name,zip_code,building_value,latitude,longitude',
+      limit,
+    });
+  },
   getByFolio: async (folio) => {
-    const rows = await rest('broward_properties', { filters: { FOLIO_NUMBER: `eq.${folio}` }, limit: 1 });
+    const rows = await rest('properties_search_view', {
+      filters: { folio_number: `eq.${folio}` },
+      limit: 1,
+    });
     return rows[0] || null;
   },
-  filter: (filters = {}, order, limit = 10) => {
+  filter: (filters = {}, _order, limit = 10) => {
     const f = {};
-    if (filters.FOLIO_NUMBER) f.FOLIO_NUMBER = `eq.${filters.FOLIO_NUMBER}`;
-    if (filters.SITUS_CITY) f.SITUS_CITY = `eq.${filters.SITUS_CITY}`;
-    return rest('broward_properties', { filters: f, limit });
+    if (filters.folio_number) f.folio_number = `eq.${filters.folio_number}`;
+    if (filters.city_name)    f.city_name    = `eq.${filters.city_name}`;
+    return rest('properties_search_view', { filters: f, limit });
   },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PERMIT RECORDS (city-specific tables — always filter by folio)
+// PERMIT RECORDS — Weston uses weston_permits_view
+// Columns: folio_number, permit_number, permit_name, permit_type,
+//          permit_status, status_normalized, open_date, has_open_code_case
 // ══════════════════════════════════════════════════════════════════════════════
 export const PermitRecord = {
-  filter: (filters = {}, order = 'OPEN_DATE.desc', limit = 50) => {
-    const cityName = filters.city_name || 'Weston';
-    const table = PERMIT_RECORD_TABLE[cityName] || 'weston_permit_records';
-    const f = {};
-    if (filters.folio_number || filters.PARCEL_NBR) {
-      const folio = filters.folio_number || filters.PARCEL_NBR;
-      f.PARCEL_NBR = `eq.${folio}`;
-    }
-    return rest(table, { filters: f, order, limit });
-  },
-  list: (order = 'OPEN_DATE.desc', limit = 20) =>
-    rest('weston_permit_records', { order, limit }),
   getByFolio: (folio, cityName = 'Weston') => {
-    const table = PERMIT_RECORD_TABLE[cityName] || 'weston_permit_records';
-    return rest(table, { filters: { PARCEL_NBR: `eq.${folio}` }, order: 'OPEN_DATE.desc', limit: 100 });
+    // Only Weston has a view currently; extend map as other cities are added
+    const VIEW_MAP = { 'Weston': 'weston_permits_view' };
+    const table = VIEW_MAP[cityName] || 'weston_permits_view';
+    return rest(table, {
+      filters: { folio_number: `eq.${folio}` },
+      order: 'open_date.desc',
+      limit: 200,
+    });
   },
+  filter: (filters = {}, _order, limit = 50) => {
+    const table = 'weston_permits_view';
+    const f = {};
+    if (filters.folio_number) f.folio_number = `eq.${filters.folio_number}`;
+    return rest(table, { filters: f, limit });
+  },
+  list: (limit = 20) => rest('weston_permits_view', { order: 'open_date.desc', limit }),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -221,7 +228,7 @@ export const CodeOfOrdinance = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
-    if (filters.category) f.category = `eq.${filters.category}`;
+    if (filters.category)  f.category  = `eq.${filters.category}`;
     return rest('weston_code_of_ordinances', { filters: f, order: 'chapter_number.asc' });
   },
   search: (cityName, q) => rest('weston_code_of_ordinances', {
@@ -232,17 +239,20 @@ export const CodeOfOrdinance = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PROJECTS
+// Columns: id, name, description, project_type, status, city_name,
+//          folio_number, property_address, estimated_cost, square_footage,
+//          owner_email, progress_pct, start_date, target_completion_date, created_at
 // ══════════════════════════════════════════════════════════════════════════════
 export const Project = {
-  filter: (filters = {}, order = 'updated_at.desc', limit = 50) => {
+  filter: (filters = {}, order = 'created_at.desc', limit = 50) => {
     const f = {};
     if (filters.owner_email) f.owner_email = `eq.${filters.owner_email}`;
-    if (filters.id) f.id = `eq.${filters.id}`;
+    if (filters.id)          f.id          = `eq.${filters.id}`;
     return rest('projects', { filters: f, order, limit });
   },
-  list: (order = 'updated_at.desc', limit = 50) => rest('projects', { order, limit }),
-  create: (data) => restInsert('projects', { ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
-  update: (id, data) => restUpdate('projects', id, { ...data, updated_at: new Date().toISOString() }),
+  list: (order = 'created_at.desc', limit = 50) => rest('projects', { order, limit }),
+  create: (data) => restInsert('projects', { ...data, created_at: new Date().toISOString() }),
+  update: (id, data) => restUpdate('projects', id, data),
   delete: (id) => restDelete('projects', id),
 };
 
@@ -307,7 +317,7 @@ export const PermitWizardSession = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.owner_email) f.owner_email = `eq.${filters.owner_email}`;
-    if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
+    if (filters.project_id)  f.project_id  = `eq.${filters.project_id}`;
     return rest('permit_wizard_sessions', { filters: f, order: 'created_at.desc' });
   },
   create: (data) => restInsert('permit_wizard_sessions', data),
@@ -316,11 +326,15 @@ export const PermitWizardSession = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONTRACTOR PROFILES
+// Columns: id, user_id, user_email, company_name, license_number,
+//          license_type, license_expiration, insurance_expiration,
+//          phone, address, status, verified
 // ══════════════════════════════════════════════════════════════════════════════
 export const ContractorProfile = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.user_email) f.user_email = `eq.${filters.user_email}`;
+    if (filters.user_id)    f.user_id    = `eq.${filters.user_id}`;
     return rest('contractor_profiles', { filters: f });
   },
   create: (data) => restInsert('contractor_profiles', data),
@@ -329,29 +343,38 @@ export const ContractorProfile = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SUBMISSION GUIDES
+// Columns: user_email, user_role, city_name, city_portal_url, permit_type_name,
+//          folio_number, target_system, phase, overall_status, questions_total,
+//          questions_answered, questions_prefilled, estimated_fee, fee_breakdown,
+//          field_mapping_snapshot, started_date, submitted_date, confirmation_number
+// Insert requires: user_email, user_role, city_name, permit_type_name, target_system
+// Guest users: is_guest = true, user_id = null
 // ══════════════════════════════════════════════════════════════════════════════
 export const SubmissionGuide = {
-  filter: (filters = {}, order = 'updated_at.desc', limit = 50) => {
+  filter: (filters = {}, order = 'created_at.desc', limit = 50) => {
     const f = {};
-    if (filters.user_email) f.user_email = `eq.${filters.user_email}`;
+    if (filters.user_email)  f.user_email  = `eq.${filters.user_email}`;
     if (filters.folio_number) f.folio_number = `eq.${filters.folio_number}`;
-    if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
-    if (filters.id) f.id = `eq.${filters.id}`;
+    if (filters.project_id)  f.project_id  = `eq.${filters.project_id}`;
+    if (filters.id)          f.id          = `eq.${filters.id}`;
     return rest('submission_guides', { filters: f, order, limit });
   },
-  list: (order = 'updated_at.desc', limit = 50) => rest('submission_guides', { order, limit }),
-  create: (data) => restInsert('submission_guides', { ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
-  update: (id, data) => restUpdate('submission_guides', id, { ...data, updated_at: new Date().toISOString() }),
+  list: (order = 'created_at.desc', limit = 50) => rest('submission_guides', { order, limit }),
+  create: (data) => restInsert('submission_guides', { ...data, created_at: new Date().toISOString() }),
+  update: (id, data) => restUpdate('submission_guides', id, data),
   delete: (id) => restDelete('submission_guides', id),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SUBMISSION ANSWERS
+// Columns: guide_id, question_id, question_key, question_text, answer_value,
+//          was_prefilled, prefill_source, was_edited, answered_by,
+//          answered_date, is_flagged
 // ══════════════════════════════════════════════════════════════════════════════
 export const SubmissionAnswer = {
   filter: (filters = {}) => {
     const f = {};
-    if (filters.guide_id) f.guide_id = `eq.${filters.guide_id}`;
+    if (filters.guide_id)          f.guide_id          = `eq.${filters.guide_id}`;
     if (filters.wizard_session_id) f.wizard_session_id = `eq.${filters.wizard_session_id}`;
     return rest('submission_answers', { filters: f });
   },
@@ -374,14 +397,18 @@ export const SubmissionDocument = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CITY APPLICATION QUESTIONS
+// Table: city_application_questions
+// Filter: city_name, permit_type_name, is_active = true
+// Order: display_order ASC
+// options column is JSONB — already parsed, no JSON.parse needed
 // ══════════════════════════════════════════════════════════════════════════════
 export const CityApplicationQuestion = {
   filter: (filters = {}) => {
     const f = {};
-    if (filters.city_id) f.city_id = `eq.${filters.city_id}`;
-    if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
+    if (filters.city_name)       f.city_name       = `eq.${filters.city_name}`;
     if (filters.permit_type_name) f.permit_type_name = `eq.${filters.permit_type_name}`;
-    return rest('city_application_questions', { filters: f, order: 'sort_order.asc' });
+    f.is_active = 'eq.true';
+    return rest('city_application_questions', { filters: f, order: 'display_order.asc' });
   },
 };
 
@@ -391,7 +418,7 @@ export const CityApplicationQuestion = {
 export const PermitMilestone = {
   filter: (filters = {}) => {
     const f = {};
-    if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
+    if (filters.project_id)   f.project_id   = `eq.${filters.project_id}`;
     if (filters.permit_number) f.permit_number = `eq.${filters.permit_number}`;
     return rest('permit_milestones', { filters: f, order: 'milestone_date.asc' });
   },
@@ -405,7 +432,7 @@ export const PermitMilestone = {
 export const PermitStatusLog = {
   filter: (filters = {}, order = 'change_date.desc', limit = 20) => {
     const f = {};
-    if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
+    if (filters.project_id)   f.project_id   = `eq.${filters.project_id}`;
     if (filters.permit_number) f.permit_number = `eq.${filters.permit_number}`;
     return rest('permit_status_logs', { filters: f, order, limit });
   },
@@ -445,7 +472,7 @@ export const PrivateProviderFirm = {
 export const InspectionReport = {
   filter: (filters = {}) => {
     const f = {};
-    if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
+    if (filters.project_id)  f.project_id  = `eq.${filters.project_id}`;
     if (filters.folio_number) f.folio_number = `eq.${filters.folio_number}`;
     return rest('inspection_reports', { filters: f, order: 'inspection_date.desc' });
   },

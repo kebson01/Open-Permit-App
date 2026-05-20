@@ -22,12 +22,12 @@ const PERMIT_ICONS = {
 };
 
 const STATUS_COLORS = {
-  issued: "bg-blue-100 text-blue-700",
   finaled: "bg-green-100 text-green-700",
-  expired: "bg-gray-100 text-gray-600",
-  voided: "bg-red-100 text-red-600",
+  issued:  "bg-blue-100 text-blue-700",
   in_review: "bg-yellow-100 text-yellow-700",
   pending: "bg-orange-100 text-orange-700",
+  expired: "bg-red-100 text-red-600",
+  voided:  "bg-gray-100 text-gray-500",
 };
 
 const TYPE_COLORS = {
@@ -65,8 +65,8 @@ function PermitCard({ permit }) {
               <span className="font-medium text-gray-900 text-sm">
                 {permit.permit_description || permit.permit_type?.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
               </span>
-              <Badge className={`text-xs ${STATUS_COLORS[permit.status] || "bg-gray-100 text-gray-600"}`}>
-                {permit.status?.replace(/_/g, " ")}
+              <Badge className={`text-xs ${STATUS_COLORS[permit.status] || "bg-amber-100 text-amber-700"}`}>
+                {permit.status_label || permit.status?.replace(/_/g, " ")}
               </Badge>
               <Badge className={`text-xs ${TYPE_COLORS[permit.permit_type] || "bg-gray-100 text-gray-600"}`}>
                 {permit.permit_type?.replace(/_/g, " ")}
@@ -125,28 +125,26 @@ export default function PropertyPermitHistory({ folio_number, city_name }) {
     if (!folio_number) return;
     db.PermitRecord.getByFolio(folio_number, city_name || "Weston")
       .then(rows => {
-        // Normalize weston_permit_records columns to the expected shape
+        // Normalize weston_permits_view columns to the display shape
         const normalized = (rows || []).map(r => ({
-          id: r.id || r.RECORD_ID,
-          permit_number: r.RECORD_ID || r.permit_number,
-          permit_description: r.RECORD_NAME || r.permit_description,
-          permit_type: (r.RECORD_MODULE || r.permit_type || "other").toLowerCase().replace(/\s+/g, "_"),
+          id: r.permit_number || r.id,
+          permit_number: r.permit_number,
+          permit_description: r.permit_name,
+          permit_type: (r.permit_type || "other").toLowerCase().replace(/\s+/g, "_"),
           status: (() => {
-            const s = (r.STATUS_NORMALIZED || r.status || "").toLowerCase();
-            if (s === "completed") return "finaled";
-            if (s === "active") return "issued";
+            const s = (r.status_normalized || r.permit_status || "").toLowerCase();
+            if (s === "closed" || s === "finaled") return "finaled";
+            if (s === "open" || s === "issued" || s === "active") return "issued";
+            if (s === "expired") return "expired";
+            if (s === "void" || s === "voided" || s === "cancelled") return "voided";
             if (s === "in review") return "in_review";
-            if (s === "cancelled") return "voided";
             return s || "issued";
           })(),
-          issued_date: r.OPEN_DATE || r.issued_date,
-          finaled_date: r.CLOSE_DATE || r.finaled_date,
-          city_name: r.city_name || city_name || "Weston",
-          contractor_name: r.contractor_name,
-          contractor_license: r.contractor_license,
-          job_value: r.job_value,
-          square_footage: r.square_footage,
-          notes: r.PARCEL_NBR ? `Parcel: ${r.PARCEL_NBR}` : r.notes,
+          // Raw status label for display
+          status_label: r.permit_status || r.status_normalized,
+          issued_date: r.open_date,
+          city_name: city_name || "Weston",
+          has_open_code_case: r.has_open_code_case,
         }));
         setPermits(normalized);
       })

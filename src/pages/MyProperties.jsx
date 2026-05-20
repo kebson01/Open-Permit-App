@@ -8,12 +8,6 @@ const PRIMARY = "#004ac6";
 const FONTS = { h: "'Manrope', system-ui, sans-serif", b: "'Plus Jakarta Sans', system-ui, sans-serif" };
 
 function PropertyCard({ property, onClick }) {
-  const addr = property.full_address || [
-    property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION,
-    property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE,
-    property.SITUS_UNIT_NUMBER ? `#${property.SITUS_UNIT_NUMBER}` : "",
-  ].filter(Boolean).join(" ");
-
   return (
     <button
       onClick={() => onClick(property)}
@@ -24,21 +18,18 @@ function PropertyCard({ property, onClick }) {
           <Building2 className="w-5 h-5" style={{ color: PRIMARY }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900 text-sm leading-tight truncate" style={{ fontFamily: FONTS.h }}>{addr || "Address not available"}</p>
+          <p className="font-bold text-gray-900 text-sm leading-tight truncate" style={{ fontFamily: FONTS.h }}>{property.full_address || "Address not available"}</p>
           <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: FONTS.b }}>
-            {property.SITUS_CITY} · Folio: {property.FOLIO_NUMBER}
+            {property.city_name} · Folio: {property.folio_number}
           </p>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
-            {property.BLDG_YEAR_BUILT && (
+            {property.year_built && (
               <span className="text-xs text-gray-500 flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Built {property.BLDG_YEAR_BUILT}
+                <Calendar className="w-3 h-3" /> Built {property.year_built}
               </span>
             )}
-            {property.BLDG_TOT_SQ_FOOTAGE && (
-              <span className="text-xs text-gray-500">{property.BLDG_TOT_SQ_FOOTAGE.toLocaleString()} SF</span>
-            )}
-            {property.USE_TYPE && (
-              <span className="text-xs text-gray-500">{property.USE_TYPE}</span>
+            {property.total_sqft && (
+              <span className="text-xs text-gray-500">{Number(property.total_sqft).toLocaleString()} SF</span>
             )}
           </div>
         </div>
@@ -55,23 +46,19 @@ function PropertyDetail({ property, onBack }) {
   const [loadingPermits, setLoadingPermits] = useState(false);
   const navigate = useNavigate();
 
-  const addr = property.full_address || [
-    property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION,
-    property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE,
-    property.SITUS_UNIT_NUMBER ? `#${property.SITUS_UNIT_NUMBER}` : "",
-  ].filter(Boolean).join(" ");
+  const addr = property.full_address || property.folio_number;
 
   useEffect(() => {
     setLoadingPermits(true);
     Promise.all([
-      db.PermitRecord.getByFolio(property.FOLIO_NUMBER, property.SITUS_CITY || 'Weston'),
-      db.SubmissionGuide.filter({ folio_number: property.FOLIO_NUMBER }),
+      db.PermitRecord.getByFolio(property.folio_number, property.city_name || 'Weston'),
+      db.SubmissionGuide.filter({ folio_number: property.folio_number }),
     ]).then(([p, g]) => {
       setPermits(Array.isArray(p) ? p : []);
       setGuides(Array.isArray(g) ? g : []);
       setLoadingPermits(false);
     });
-  }, [property.FOLIO_NUMBER]);
+  }, [property.folio_number]);
 
   const STATUS_COLORS = {
     issued:   "bg-blue-100 text-blue-700",
@@ -98,10 +85,10 @@ function PropertyDetail({ property, onBack }) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 className="font-extrabold text-xl text-gray-900" style={{ fontFamily: FONTS.h }}>{addr}</h2>
-            <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: FONTS.b }}>{property.SITUS_CITY}, FL · Folio: {property.FOLIO_NUMBER}</p>
+            <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: FONTS.b }}>{property.city_name}, FL · Folio: {property.folio_number}</p>
           </div>
           <Link
-            to={`/ApplyForPermit?folio=${property.FOLIO_NUMBER}&city=${encodeURIComponent(property.SITUS_CITY || "")}`}
+            to={`/ApplyForPermit?folio=${property.folio_number}&city=${encodeURIComponent(property.city_name || "")}`}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-bold text-sm"
             style={{ background: PRIMARY, fontFamily: FONTS.h, textDecoration: "none" }}
           >
@@ -127,16 +114,14 @@ function PropertyDetail({ property, onBack }) {
         {tab === "overview" && (
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { label: "Owner", value: property.NAME_LINE_1 },
-              { label: "Use Type", value: property.USE_TYPE },
-              { label: "Year Built", value: property.BLDG_YEAR_BUILT },
-              { label: "Total SF", value: property.BLDG_TOT_SQ_FOOTAGE ? property.BLDG_TOT_SQ_FOOTAGE.toLocaleString() + " SF" : null },
-              { label: "Under-Air SF", value: property.BLDG_UNDER_AIR_SQ_FOOTAGE ? property.BLDG_UNDER_AIR_SQ_FOOTAGE.toLocaleString() + " SF" : null },
-              { label: "Beds / Baths", value: property.BEDS && property.BATHS ? `${property.BEDS} bed / ${property.BATHS} bath` : null },
-              { label: "Homestead", value: property.HOMESTEAD_FLAG === "Y" ? "Yes" : property.HOMESTEAD_FLAG === "N" ? "No" : null },
-              { label: "ZIP Code", value: property.SITUS_ZIP_CODE },
-              { label: "Just Land Value", value: property.JUST_LAND_VALUE ? `$${property.JUST_LAND_VALUE.toLocaleString()}` : null },
-              { label: "Just Building Value", value: property.JUST_BUILDING_VALUE ? `$${property.JUST_BUILDING_VALUE.toLocaleString()}` : null },
+              { label: "Owner", value: property.owner_name },
+              { label: "Year Built", value: property.year_built },
+              { label: "Total SF", value: property.total_sqft ? Number(property.total_sqft).toLocaleString() + " SF" : null },
+              { label: "Under-Air SF", value: property.under_air_sqft ? Number(property.under_air_sqft).toLocaleString() + " SF" : null },
+              { label: "Beds / Baths", value: property.beds && property.baths ? `${property.beds} bed / ${property.baths} bath` : null },
+              { label: "Homestead", value: property.homestead_flag === "Y" || property.homestead_flag === true ? "Yes" : property.homestead_flag === "N" || property.homestead_flag === false ? "No" : null },
+              { label: "ZIP Code", value: property.zip_code },
+              { label: "Building Value", value: property.building_value ? `$${Number(property.building_value).toLocaleString()}` : null },
             ].filter(f => f.value).map(field => (
               <div key={field.label} className="py-2 border-b border-gray-50 last:border-0">
                 <p className="text-xs text-gray-400 mb-0.5" style={{ fontFamily: FONTS.b }}>{field.label}</p>
@@ -153,22 +138,32 @@ function PropertyDetail({ property, onBack }) {
             <p className="text-center text-gray-400 py-8" style={{ fontFamily: FONTS.b }}>No permit records found for this property.</p>
           ) : (
             <div className="space-y-3">
-              {permits.map(p => (
-                <div key={p.id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-600"}`}>{p.status}</span>
-                      <span className="text-xs text-gray-400">{p.permit_number}</span>
+              {permits.map((p, i) => {
+                const statusKey = (() => {
+                  const s = (p.status_normalized || p.permit_status || "").toLowerCase();
+                  if (s === "closed" || s === "finaled") return "finaled";
+                  if (s === "open" || s === "issued" || s === "active") return "issued";
+                  if (s === "expired") return "expired";
+                  if (s === "void" || s === "voided" || s === "cancelled") return "voided";
+                  return "issued";
+                })();
+                return (
+                  <div key={p.permit_number || i} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[statusKey] || "bg-gray-100 text-gray-600"}`}>
+                          {p.permit_status || p.status_normalized || statusKey}
+                        </span>
+                        <span className="text-xs text-gray-400">{p.permit_number}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800" style={{ fontFamily: FONTS.b }}>{p.permit_name || p.permit_type}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800" style={{ fontFamily: FONTS.b }}>{p.permit_description || p.permit_type}</p>
-                    {p.contractor_name && <p className="text-xs text-gray-400 mt-0.5">{p.contractor_name}</p>}
+                    <div className="text-right shrink-0">
+                      <p className="text-xs text-gray-400">{p.open_date}</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-gray-400">{p.issued_date}</p>
-                    {p.job_value && <p className="text-xs font-semibold text-gray-600">${p.job_value.toLocaleString()}</p>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )
         )}
@@ -178,7 +173,7 @@ function PropertyDetail({ property, onBack }) {
             {guides.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: FONTS.b }}>No applications for this property yet.</p>
-                <Link to={`/ApplyForPermit?folio=${property.FOLIO_NUMBER}`}
+                <Link to={`/ApplyForPermit?folio=${property.folio_number}`}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold"
                   style={{ background: PRIMARY, textDecoration: "none" }}>
                   <FileText className="w-4 h-4" /> Start Application
@@ -226,8 +221,8 @@ export default function MyProperties() {
     if (!q.trim()) { setResults([]); return; }
     setSearching(true);
     try {
-      const resp = await base44.functions.invoke("propertySearch", { query: q });
-      setResults(Array.isArray(resp.data) ? resp.data : (resp.data?.results || []));
+      const resp = await base44.functions.invoke("propertySearch", { q });
+      setResults(Array.isArray(resp.data?.data) ? resp.data.data : (Array.isArray(resp.data) ? resp.data : []));
     } catch {
       setResults([]);
     }
@@ -311,7 +306,7 @@ export default function MyProperties() {
             <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: FONTS.b }}>{results.length} result{results.length !== 1 ? "s" : ""} found</p>
             <div className="space-y-3">
               {results.map((property, i) => (
-                <PropertyCard key={property.FOLIO_NUMBER || i} property={property} onClick={setSelectedProperty} />
+                <PropertyCard key={property.folio_number || i} property={property} onClick={setSelectedProperty} />
               ))}
             </div>
           </div>

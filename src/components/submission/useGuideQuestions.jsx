@@ -105,6 +105,8 @@ export function useGuideQuestions(guide, currentUser, mode = "app") {
     let qs = dbQuestions.length > 0
       ? dbQuestions
       : (WESTON_QUESTION_BANK[guide.permit_type_name] || getDefaultQuestions());
+
+    // options from Supabase JSONB is already an array — no JSON.parse needed
     qs = [...qs].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     setQuestions(qs);
 
