@@ -2,6 +2,16 @@ import React, { useState } from "react";
 import { HintBanner } from "@/components/ui/HintTooltip";
 import { useQuery } from "@tanstack/react-query";
 import { Home, Eye, EyeOff, List, MapPin, ArrowLeft, LayoutGrid, Building2, Sparkles, Camera, HardHat, Layers, BookOpen, X, ArrowRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCities } from "@/hooks/useCities";
+import HouseView from "../components/map/HouseView";
+import PermitPopup from "../components/map/PermitPopup";
+import PermitsPanel from "../components/map/PermitsPanel";
+import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
+import OrdinancesPanel from "../components/map/OrdinancesPanel";
+import AIDrawer from "../components/ai/AIDrawer";
+import RoofingSubtype from "../components/permits/RoofingSubtype";
+import PrivateProviderStep from "../components/permits/PrivateProviderStep";
 
 const ZONE_INFO = {
   "Roof / Re-Roof": "Required for any roof replacement or repair over 25% of roof area. In Broward County (HVHZ), all roofing must meet 170mph wind resistance standards.",
@@ -26,16 +36,6 @@ const ZONE_INFO = {
   "Pool Deck": "Permit required for pool deck construction or resurfacing.",
   "Irrigation System": "Permit required for new irrigation or sprinkler systems.",
 };
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCities, cityHasService } from "@/hooks/useCities";
-import HouseView from "../components/map/HouseView";
-import PermitPopup from "../components/map/PermitPopup";
-import PermitsPanel from "../components/map/PermitsPanel";
-import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
-import OrdinancesPanel from "../components/map/OrdinancesPanel";
-import AIDrawer from "../components/ai/AIDrawer";
-import RoofingSubtype from "../components/permits/RoofingSubtype";
-import PrivateProviderStep from "../components/permits/PrivateProviderStep";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
