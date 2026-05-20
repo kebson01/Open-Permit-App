@@ -1,43 +1,67 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck, Map, Calculator, Search, CheckSquare, Send, Bell, Clock, Menu, X, User } from "lucide-react";
-import NotificationBell from "@/components/projects/NotificationBell";
-import FloatingAIButton from "@/components/ai/FloatingAIButton";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Home, Building2, FileText, FolderOpen, ChevronDown,
+  Calculator, ShieldCheck, BookOpen, Search, Menu, X,
+  User, LogOut, Settings, Bell, Wrench
+} from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import AuthModal from "@/components/auth/AuthModal";
 
-const NAV_LINKS = [
-  { name: "Tools",            page: "PermitGuide",      shortLabel: "Tools",    icon: Map },
-  { name: "Project Planning", page: "ProjectDashboard", shortLabel: "Projects", icon: CheckSquare },
-  { name: "Guides",           page: "FeeCalculator",    shortLabel: "Guides",   icon: Calculator },
-  { name: "Recent Changes",   page: "ExemptionChecker", shortLabel: "Changes",  icon: Send },
-];
-
+const PRIMARY = "#004ac6";
 const FONTS = {
   logo: "'Manrope', system-ui, sans-serif",
-  nav:  "'Plus Jakarta Sans', system-ui, sans-serif",
+  nav: "'Plus Jakarta Sans', system-ui, sans-serif",
 };
-const PRIMARY = "#004ac6";
+
+const TOOLS_ITEMS = [
+  { label: "Fee Calculator",    path: "/FeeCalculator",    icon: Calculator },
+  { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
+  { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
+  { label: "Property Search",   path: "/PropertyGuide",    icon: Search },
+];
 
 export default function Layout({ children, currentPageName }) {
-  const [mobileOpen, setMobileOpen]       = useState(false);
-  const [accountOpen, setAccountOpen]     = useState(false);
   const [currentUser, setCurrentUser]     = useState(null);
-  const [navVisible, setNavVisible]       = useState(true);
+  const [mobileOpen, setMobileOpen]       = useState(false);
+  const [toolsOpen, setToolsOpen]         = useState(false);
+  const [accountOpen, setAccountOpen]     = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [navVisible, setNavVisible]       = useState(true);
   const lastScrollY = useRef(0);
-  const dropdownRef = useRef(null);
+  const toolsRef    = useRef(null);
+  const accountRef  = useRef(null);
+  const navigate    = useNavigate();
+  const location    = useLocation();
 
   useEffect(() => {
-    base44.auth.me().then(u => { if (u) setCurrentUser(u); }).catch(() => {});
+    base44.auth.me().then(u => {
+      if (u) {
+        setCurrentUser(u);
+        checkOnboarding(u);
+      }
+    }).catch(() => {});
   }, []);
+
+  const checkOnboarding = async (user) => {
+    try {
+      const records = await base44.entities.UserOnboarding.filter({ user_email: user.email });
+      if (!records || records.length === 0) {
+        setShowOnboarding(true);
+      } else {
+        const ob = records[0];
+        if (!ob.is_complete && !ob.is_skipped) setShowOnboarding(true);
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       if (y < 10) setNavVisible(true);
-      else if (y > lastScrollY.current) { setNavVisible(false); setMobileOpen(false); setAccountOpen(false); }
+      else if (y > lastScrollY.current) { setNavVisible(false); setMobileOpen(false); setToolsOpen(false); setAccountOpen(false); }
       else setNavVisible(true);
       lastScrollY.current = y;
     };
@@ -47,40 +71,36 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setAccountOpen(false);
+      if (toolsRef.current && !toolsRef.current.contains(e.target)) setToolsOpen(false);
+      if (accountRef.current && !accountRef.current.contains(e.target)) setAccountOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const navigate    = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const isAdmin     = currentUser?.role === "admin";
+  const isActive = (path) => location.pathname === path || currentPageName === path.replace("/", "");
+
+  const isAdmin = currentUser?.role === "admin";
   const isCityAdmin = currentUser?.role === "city_admin";
-
-  const handleNavSearch = (e) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (q) {
-      navigate(createPageUrl("PropertyGuide") + `?q=${encodeURIComponent(q)}`);
-      setSearchQuery("");
-    }
-  };
-
-  const adminDropdownLinks = isAdmin
-    ? [{ name: "City Manager",   page: "AdminCityManager",   icon: Settings },
-       { name: "Permit Records", page: "AdminPermitRecords",  icon: ClipboardList }]
-    : isCityAdmin
-    ? [{ name: "City Settings",  page: "AdminCityManager",   icon: Settings },
-       { name: "My City Portal", page: "CityPortal",         icon: LayoutDashboard }]
-    : [];
 
   if (currentPageName === "CityPortalPublic") return <>{children}</>;
 
+  const NavLink = ({ to, children: ch, className = "" }) => (
+    <Link
+      to={to}
+      onClick={() => setMobileOpen(false)}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${
+        isActive(to) ? "text-[#004ac6] bg-[#eff4ff]" : "text-[#434655] hover:bg-[#f4f6fb] hover:text-[#0d1c2e]"
+      } ${className}`}
+      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
+    >
+      {ch}
+    </Link>
+  );
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#f8f9ff" }}>
-
-      {/* ── NAV ─────────────────────────────────────────────────────── */}
+      {/* NAV */}
       <nav
         className="sticky top-0 z-50 transition-transform duration-300"
         style={{
@@ -90,120 +110,91 @@ export default function Layout({ children, currentPageName }) {
           transform: navVisible ? "translateY(0)" : "translateY(-100%)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-6">
-
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-1">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-1.5 shrink-0 mr-2">
+          <Link to="/" className="flex items-center gap-1.5 shrink-0 mr-4" style={{ textDecoration: "none" }}>
             <span className="font-extrabold text-base" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
-              PermitGuide
+              OpenPermit
             </span>
           </Link>
 
-          {/* Center nav links (desktop) */}
-          <div className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map(link => {
-              const active = currentPageName === link.page;
-              return (
-                <Link
-                  key={link.page}
-                  to={createPageUrl(link.page)}
-                  className="px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
-                  style={{
-                    fontFamily: FONTS.nav,
-                    color: active ? PRIMARY : "#434655",
-                    background: active ? "#eff4ff" : "transparent",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "#f4f6fb"; e.currentTarget.style.color = "#0d1c2e"; } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#434655"; } }}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
+          {/* Primary Nav (desktop) */}
+          <div className="hidden md:flex items-center gap-0.5 flex-1">
+            <NavLink to="/"><Home className="w-3.5 h-3.5" /> Home</NavLink>
+            <NavLink to="/MyProperties"><Building2 className="w-3.5 h-3.5" /> My Properties</NavLink>
+            <NavLink to="/ApplyForPermit"><FileText className="w-3.5 h-3.5" /> Apply for Permit</NavLink>
+            <NavLink to="/MyProjects"><FolderOpen className="w-3.5 h-3.5" /> My Projects</NavLink>
+
+            {/* Tools dropdown */}
+            <div className="relative" ref={toolsRef}>
+              <button
+                onClick={() => setToolsOpen(p => !p)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                  toolsOpen ? "text-[#004ac6] bg-[#eff4ff]" : "text-[#434655] hover:bg-[#f4f6fb]"
+                }`}
+                style={{ fontFamily: FONTS.nav }}
+              >
+                <Wrench className="w-3.5 h-3.5" /> Tools <ChevronDown className={`w-3 h-3 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
+              </button>
+              {toolsOpen && (
+                <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 z-50">
+                  {TOOLS_ITEMS.map(item => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setToolsOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
+                    >
+                      <item.icon className="w-4 h-4 text-gray-400" /> {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 hidden md:block" />
+
+          {/* Right side (desktop) */}
+          <div className="hidden md:flex items-center gap-2">
             {(isAdmin || isCityAdmin) && (
               <Link
                 to="/admin"
-                className="px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap flex items-center gap-1"
-                style={{ fontFamily: FONTS.nav, color: "#434655", textDecoration: "none" }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#434655] hover:bg-[#f4f6fb] transition-colors"
+                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
               >
                 <ShieldCheck className="w-3.5 h-3.5" /> Admin
               </Link>
             )}
-          </div>
 
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Right side */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Search */}
-            <form onSubmit={handleNavSearch} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "#f4f6fb", border: "1px solid #e8eaf0", width: 160 }}>
-              <Search className="w-3.5 h-3.5 shrink-0" style={{ color: "#9ca3af" }} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search permits..."
-                className="bg-transparent focus:outline-none text-sm w-full"
-                style={{ color: "#0d1c2e", fontFamily: FONTS.nav }}
-              />
-            </form>
-
-            {/* Bell */}
             {currentUser ? (
-              <NotificationBell currentUser={currentUser} />
-            ) : (
-              <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: "#6b7280" }}>
-                <Bell className="w-4.5 h-4.5 w-[18px] h-[18px]" />
-              </button>
-            )}
-
-            {/* Clock */}
-            <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: "#6b7280" }}>
-              <Clock className="w-[18px] h-[18px]" />
-            </button>
-
-            {/* Start Project / Log In */}
-            {currentUser ? (
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative" ref={accountRef}>
                 <button
                   onClick={() => setAccountOpen(p => !p)}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-bold text-sm transition-colors hover:opacity-90"
-                  style={{ background: PRIMARY, color: "#fff", fontFamily: FONTS.logo, borderRadius: 8 }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                  style={{ fontFamily: FONTS.nav }}
                 >
-                  Start Project
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: PRIMARY }}>
                     {currentUser.full_name?.[0]?.toUpperCase() || "U"}
                   </div>
+                  <span className="text-gray-700 max-w-[100px] truncate">{currentUser.full_name || currentUser.email}</span>
+                  <ChevronDown className="w-3 h-3 text-gray-400" />
                 </button>
                 {accountOpen && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 overflow-hidden z-50">
-                    <Link
-                      to={createPageUrl("ProjectDashboard")}
-                      onClick={() => setAccountOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      style={{ fontFamily: FONTS.nav }}
-                    >
-                      My Projects
+                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 z-50">
+                    <Link to="/MyAccount" onClick={() => setAccountOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                      <User className="w-4 h-4 text-gray-400" /> My Account
                     </Link>
-                    {adminDropdownLinks.map(link => (
-                      <Link
-                        key={link.page}
-                        to={createPageUrl(link.page)}
-                        onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        style={{ fontFamily: FONTS.nav }}
-                      >
-                        <link.icon className="w-4 h-4 text-gray-400" /> {link.name}
-                      </Link>
-                    ))}
+                    <div className="border-t border-gray-100 my-1" />
                     <button
                       onClick={() => { base44.auth.logout("/"); setAccountOpen(false); }}
-                      className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                       style={{ fontFamily: FONTS.nav }}
                     >
-                      Sign Out
+                      <LogOut className="w-4 h-4" /> Sign Out
                     </button>
                   </div>
                 )}
@@ -211,101 +202,115 @@ export default function Layout({ children, currentPageName }) {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-bold text-sm transition-colors hover:opacity-90"
-                style={{ background: PRIMARY, color: "#fff", fontFamily: FONTS.logo, borderRadius: 8 }}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-bold text-sm text-white transition-colors hover:opacity-90"
+                style={{ background: PRIMARY, fontFamily: FONTS.logo }}
               >
-                Start Project
+                Sign In
               </button>
             )}
           </div>
 
           {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(p => !p)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            style={{ color: "#6b7280" }}
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="md:hidden ml-auto">
+            <button
+              onClick={() => setMobileOpen(p => !p)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile dropdown */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white pb-2 shadow-lg">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.page}
-                to={createPageUrl(link.page)}
-                onClick={() => setMobileOpen(false)}
-                className="block px-5 py-3 text-sm font-semibold border-b border-gray-50 transition-colors hover:bg-gray-50"
-                style={{ fontFamily: FONTS.nav, color: currentPageName === link.page ? PRIMARY : "#434655" }}
-              >
-                {link.name}
+          <div className="md:hidden border-t border-gray-100 bg-white pb-3 shadow-lg">
+            {[
+              { to: "/", label: "Home", icon: Home },
+              { to: "/MyProperties", label: "My Properties", icon: Building2 },
+              { to: "/ApplyForPermit", label: "Apply for Permit", icon: FileText },
+              { to: "/MyProjects", label: "My Projects", icon: FolderOpen },
+            ].map(item => (
+              <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b border-gray-50 hover:bg-gray-50"
+                style={{ fontFamily: FONTS.nav, color: isActive(item.to) ? PRIMARY : "#434655", textDecoration: "none" }}>
+                <item.icon className="w-4 h-4" /> {item.label}
               </Link>
             ))}
-            {currentUser ? (
-              <>
-                <Link to={createPageUrl("ProjectDashboard")} onClick={() => setMobileOpen(false)}
-                  className="block px-5 py-3 text-sm font-semibold border-b border-gray-50"
-                  style={{ fontFamily: FONTS.nav, color: "#434655" }}>
-                  My Projects
-                </Link>
-                <button onClick={() => { base44.auth.logout("/"); setMobileOpen(false); }}
-                  className="block w-full text-left px-5 py-3 text-sm font-semibold"
-                  style={{ fontFamily: FONTS.nav, color: "#ef4444" }}>
-                  Sign Out
+            <div className="px-5 pt-2 pb-1">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tools</p>
+            </div>
+            {TOOLS_ITEMS.map(item => (
+              <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
+                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                <item.icon className="w-4 h-4" /> {item.label}
+              </Link>
+            ))}
+            <div className="border-t border-gray-100 mt-2 pt-2">
+              {currentUser ? (
+                <>
+                  <Link to="/MyAccount" onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                    <User className="w-4 h-4" /> My Account
+                  </Link>
+                  {(isAdmin || isCityAdmin) && (
+                    <Link to="/admin" onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                      <ShieldCheck className="w-4 h-4" /> Admin
+                    </Link>
+                  )}
+                  <button onClick={() => { base44.auth.logout("/"); setMobileOpen(false); }}
+                    className="w-full flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+                    style={{ fontFamily: FONTS.nav }}>
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => { setShowAuthModal(true); setMobileOpen(false); }}
+                  className="w-full text-left px-5 py-3 text-sm font-bold"
+                  style={{ fontFamily: FONTS.nav, color: PRIMARY }}>
+                  Sign In
                 </button>
-              </>
-            ) : (
-              <button onClick={() => { setShowAuthModal(true); setMobileOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm font-semibold"
-                style={{ fontFamily: FONTS.nav, color: PRIMARY }}>
-                Log In
-              </button>
-            )}
+              )}
+            </div>
           </div>
         )}
       </nav>
 
-      {/* ── MAIN ─────────────────────────────────────────────────────── */}
-      <main className="flex-1">{children}</main>
+      {/* MAIN */}
+      <main className="flex-1 pb-16 md:pb-0">{children}</main>
 
-      {/* ── MOBILE BOTTOM NAV ─────────────────────────────────────────── */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex">
-        {NAV_LINKS.map(link => {
-          const Icon = link.icon;
-          const active = currentPageName === link.page;
+        {[
+          { to: "/", label: "Home", icon: Home },
+          { to: "/MyProperties", label: "Properties", icon: Building2 },
+          { to: "/ApplyForPermit", label: "Apply", icon: FileText },
+          { to: "/MyProjects", label: "Projects", icon: FolderOpen },
+          { to: "/FeeCalculator", label: "Tools", icon: Wrench },
+        ].map(item => {
+          const active = isActive(item.to);
           return (
-            <Link key={link.page} to={createPageUrl(link.page)}
-              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
-              style={{ color: active ? PRIMARY : "#9ca3af" }}>
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-semibold" style={{ fontFamily: FONTS.nav }}>{link.shortLabel}</span>
+            <Link key={item.to} to={item.to}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5"
+              style={{ color: active ? PRIMARY : "#9ca3af", textDecoration: "none" }}>
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-semibold" style={{ fontFamily: FONTS.nav }}>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────── */}
-      <footer className="pb-20 md:pb-0" style={{ background: "#fff", borderTop: "1px solid #e8eaf0" }}>
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-extrabold" style={{ fontFamily: FONTS.logo, fontSize: 15, color: PRIMARY }}>PermitGuide</p>
-            <p className="text-xs mt-0.5" style={{ color: "#9ca3af", fontFamily: FONTS.nav }}>
-              © 2024 PermitGuide Assistance. Guiding you through every step.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-6">
-            {["Privacy Policy", "Terms of Service", "Accessibility", "Contact Support"].map(l => (
-              <a key={l} href="#" className="text-xs hover:underline transition-colors"
-                style={{ color: "#6b7280", fontFamily: FONTS.nav }}>{l}</a>
-            ))}
-          </div>
-        </div>
-      </footer>
-
-      <FloatingAIButton currentPageName={currentPageName} />
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {showOnboarding && currentUser && (
+        <OnboardingModal
+          currentUser={currentUser}
+          onComplete={() => setShowOnboarding(false)}
+          onSkip={() => setShowOnboarding(false)}
+        />
+      )}
     </div>
   );
 }
