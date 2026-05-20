@@ -214,6 +214,7 @@ function Step1Setup({ onNext, initialCity }) {
 // STEP 2: Permit Type
 function Step2PermitType({ city, onNext, onBack }) {
   const [permitTypes, setPermitTypes] = useState([]);
+  const [availableQuestionTypes, setAvailableQuestionTypes] = useState(new Set());
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [loadingPermits, setLoadingPermits] = useState(true);
   const [error, setError] = useState("");
@@ -230,6 +231,18 @@ function Step2PermitType({ city, onNext, onBack }) {
           .order("category");
         if (err) throw err;
         setPermitTypes(data || []);
+
+        // Load available questions to show availability badges
+        const { data: questionData } = await supabase
+          .from("city_application_questions")
+          .select("permit_type_name")
+          .eq("city_name", city)
+          .eq("is_active", true);
+        
+        if (questionData) {
+          const typeNames = new Set(questionData.map(q => q.permit_type_name?.toLowerCase() || ""));
+          setAvailableQuestionTypes(typeNames);
+        }
       } catch (err) {
         setError(err.message);
         setPermitTypes([]);
@@ -239,6 +252,12 @@ function Step2PermitType({ city, onNext, onBack }) {
     };
     loadPermits();
   }, [city]);
+
+  const hasQuestions = (permitName) => {
+    const name = permitName.toLowerCase();
+    const base = name.split("/")[0].trim();
+    return Array.from(availableQuestionTypes).some(qt => qt.includes(base) || base.includes(qt.split(" ")[0]));
+  };
 
   const grouped = {};
   permitTypes.forEach(pt => {
@@ -275,9 +294,20 @@ function Step2PermitType({ city, onNext, onBack }) {
                       selectedPermit?.id === pt.id ? "border-blue-500 bg-blue-50" : "border-gray-100 bg-white hover:border-blue-200"
                     }`}
                   >
-                    <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-blue-800" : "text-gray-800"}`}>
-                      {pt.name}
-                    </p>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-blue-800" : "text-gray-800"}`}>
+                        {pt.name}
+                      </p>
+                      {hasQuestions(pt.name) ? (
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold whitespace-nowrap">
+                          ✓ Ready
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
+                          Soon
+                        </span>
+                      )}
+                    </div>
                     {pt.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{pt.description}</p>}
                     {pt.typical_timeline && <p className="text-xs text-blue-600 mt-2">⏱ {pt.typical_timeline}</p>}
                   </button>
@@ -321,11 +351,12 @@ function Step3Questions({ city, permit, onNext, onBack }) {
       setLoadingQuestions(true);
       setError("");
       try {
+        const permitBase = permit.name.split("/")[0].trim();
         const { data, error: err } = await supabase
           .from("city_application_questions")
           .select("*")
           .eq("city_name", city)
-          .eq("permit_type_name", permit.name)
+          .ilike("permit_type_name", `%${permitBase}%`)
           .eq("is_active", true)
           .order("display_order");
         if (err) throw err;
@@ -365,9 +396,9 @@ function Step3Questions({ city, permit, onNext, onBack }) {
   if (questions.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-          <p className="text-blue-800" style={{ fontFamily: FONTS.b }}>
-            Questions for this permit type are coming soon. You can continue to review your application.
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <p className="text-blue-800 text-sm leading-relaxed" style={{ fontFamily: FONTS.b }}>
+            Guided questions are not yet available for <strong>{permit.name}</strong> in <strong>{city}</strong>. You can continue to review your application summary and we'll guide you through the city portal submission.
           </p>
         </div>
         <div className="flex gap-3">
@@ -379,10 +410,10 @@ function Step3Questions({ city, permit, onNext, onBack }) {
           </button>
           <button
             onClick={() => onNext({ questions, answers })}
-            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm"
             style={{ background: PRIMARY, fontFamily: FONTS.h }}
           >
-            Continue to Review
+            Continue to Review <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
