@@ -46,15 +46,29 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const checkOnboarding = async (user) => {
+    // If op_role is already in localStorage, never show the modal
+    if (localStorage.getItem("op_role")) return;
+
+    // Otherwise check Supabase with a 3s timeout
     try {
-      const records = await db.UserOnboarding.filter({ user_email: user.email });
+      const timeout = new Promise(resolve => setTimeout(resolve, 3000));
+      const check = db.UserOnboarding.filter({ user_email: user.email });
+      const records = await Promise.race([check, timeout]);
       if (!records || records.length === 0) {
         setShowOnboarding(true);
       } else {
         const ob = records[0];
-        if (!ob.is_complete && !ob.is_skipped) setShowOnboarding(true);
+        if (ob.is_complete || ob.is_skipped) {
+          // Cache in localStorage so we skip next time
+          localStorage.setItem("op_role", ob.role || "skipped");
+        } else {
+          setShowOnboarding(true);
+        }
       }
-    } catch {}
+    } catch {
+      // If Supabase fails, show the modal so the user can set their role
+      setShowOnboarding(true);
+    }
   };
 
   useEffect(() => {

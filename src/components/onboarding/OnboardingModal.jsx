@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
 import { X, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 
+
 const PRIMARY = "#004ac6";
 const FONTS = { h: "'Manrope', system-ui, sans-serif", b: "'Plus Jakarta Sans', system-ui, sans-serif" };
 
@@ -13,36 +14,39 @@ const ROLES = [
 ];
 
 export default function OnboardingModal({ currentUser, onComplete, onSkip }) {
-  const [step, setStep]         = useState(1);
-  const [role, setRole]         = useState("");
-  const [saving, setSaving]     = useState(false);
+  const [role, setRole]     = useState("");
+  const [saving, setSaving] = useState(false);
 
   const handleRoleNext = async () => {
-    if (!role) return;
+    if (!role || saving) return;
     setSaving(true);
-    await base44.auth.updateMe({ role });
-    await db.UserOnboarding.create({
-      user_email: currentUser.email,
-      role,
-      started_date: new Date().toISOString().slice(0, 10),
-      is_complete: true,
-      completed_date: new Date().toISOString().slice(0, 10),
-      current_step: "completed",
-    });
+
+    // 1. Save to localStorage immediately — survives Supabase failure
+    localStorage.setItem("op_role", role);
+
+    // 2. Fire-and-forget Supabase write with 3s timeout — never blocks the user
+    const timeout = new Promise(resolve => setTimeout(resolve, 3000));
+    const write = (async () => {
+      try {
+        await base44.auth.updateMe({ role });
+        await db.UserOnboarding.create({
+          user_email: currentUser.email,
+          role,
+          started_date: new Date().toISOString().slice(0, 10),
+          is_complete: true,
+          completed_date: new Date().toISOString().slice(0, 10),
+          current_step: "completed",
+        });
+      } catch {}
+    })();
+
+    await Promise.race([write, timeout]);
     setSaving(false);
     onComplete();
   };
 
-  const handleSkip = async () => {
-    try {
-      await db.UserOnboarding.create({
-        user_email: currentUser.email,
-        role: "homeowner",
-        is_skipped: true,
-        is_complete: false,
-        started_date: new Date().toISOString().slice(0, 10),
-      });
-    } catch {}
+  const handleSkip = () => {
+    localStorage.setItem("op_role", "skipped");
     onSkip();
   };
 
