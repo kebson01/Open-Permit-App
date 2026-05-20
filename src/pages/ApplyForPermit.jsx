@@ -397,39 +397,51 @@ function Step3Questions({ city, permit, onNext, onBack }) {
 
   return (
     <div className="space-y-5">
-      <h3 className="text-lg font-bold text-gray-800" style={{ fontFamily: FONTS.h }}>
-        {sectionName} ({currentSectionIdx + 1} of {sections.length})
-      </h3>
+      <div>
+        <h3 className="text-lg font-bold text-gray-800 mb-1" style={{ fontFamily: FONTS.h }}>
+          {sectionName}
+        </h3>
+        <p className="text-xs text-gray-500">Section {currentSectionIdx + 1} of {sections.length}</p>
+      </div>
 
       <div className="space-y-4">
         {sectionQuestions.map(q => (
           <div key={q.id} className="bg-white rounded-xl border border-gray-100 p-4">
-            <label className="block font-semibold text-gray-800 text-sm mb-2" style={{ fontFamily: FONTS.b }}>
-              {q.text}
+            <label className="block font-bold text-gray-800 text-sm mb-3" style={{ fontFamily: FONTS.b }}>
+              {q.question_text}
               {q.is_required && <span className="text-red-600 ml-1">*</span>}
             </label>
 
-            {q.field_type === "text" && (
+            {(q.input_type === "text" || q.input_type === "address") && (
               <input
                 type="text"
                 value={answers[q.question_key] || ""}
                 onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                placeholder={q.placeholder || "Enter text"}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+                placeholder="Enter your answer..."
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
               />
             )}
 
-            {q.field_type === "number" && (
+            {q.input_type === "number" && (
               <input
                 type="number"
                 value={answers[q.question_key] || ""}
                 onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                placeholder={q.placeholder || "Enter number"}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+                placeholder="0"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
               />
             )}
 
-            {q.field_type === "boolean" && (
+            {q.input_type === "date" && (
+              <input
+                type="date"
+                value={answers[q.question_key] || ""}
+                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
+              />
+            )}
+
+            {q.input_type === "boolean" && (
               <div className="flex gap-2">
                 {["Yes", "No"].map(opt => (
                   <button
@@ -447,29 +459,53 @@ function Step3Questions({ city, permit, onNext, onBack }) {
               </div>
             )}
 
-            {q.field_type === "select" && (
+            {q.input_type === "select" && (
               <select
                 value={answers[q.question_key] || ""}
                 onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
               >
                 <option value="">Select an option</option>
-                {(() => {
-                  try {
-                    const opts = JSON.parse(q.options || "[]");
-                    return opts.map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ));
-                  } catch {
-                    return null;
-                  }
-                })()}
+                {Array.isArray(q.options) && q.options.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
               </select>
             )}
 
-            {q.help_text && <p className="text-xs text-gray-500 mt-2">{q.help_text}</p>}
+            {q.input_type === "multi_select" && (
+              <div className="space-y-2">
+                {Array.isArray(q.options) && q.options.map(opt => (
+                  <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(answers[q.question_key] || []).includes(opt)}
+                      onChange={e => {
+                        const current = answers[q.question_key] || [];
+                        if (e.target.checked) {
+                          setAnswers({ ...answers, [q.question_key]: [...current, opt] });
+                        } else {
+                          setAnswers({ ...answers, [q.question_key]: current.filter(x => x !== opt) });
+                        }
+                      }}
+                      className="w-4 h-4 rounded accent-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{opt}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {q.input_type === "file" && (
+              <input
+                type="file"
+                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.files?.[0]?.name || "" })}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
+              />
+            )}
+
+            {q.help_text && <p className="text-xs text-gray-500 italic mt-2">{q.help_text}</p>}
           </div>
         ))}
       </div>
