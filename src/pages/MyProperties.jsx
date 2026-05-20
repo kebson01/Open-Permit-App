@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
+import { supabase } from "@/lib/supabaseClient";
 import { Search, Building2, MapPin, Calendar, FileText, ArrowRight, Loader2, ChevronRight } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -50,8 +51,16 @@ function PropertyDetail({ property, onBack }) {
 
   useEffect(() => {
     setLoadingPermits(true);
+    const isWeston = (property.city_name || "").toLowerCase() === "weston";
     Promise.all([
-      db.PermitRecord.getByFolio(property.folio_number, property.city_name || 'Weston'),
+      isWeston
+        ? supabase.from("weston_permits_view")
+            .select("permit_number, permit_name, permit_type, permit_status, open_date")
+            .eq("folio_number", property.folio_number)
+            .order("open_date", { ascending: false })
+            .limit(50)
+            .then(({ data }) => data || [])
+        : Promise.resolve([]),
       db.SubmissionGuide.filter({ folio_number: property.folio_number }),
     ]).then(([p, g]) => {
       setPermits(Array.isArray(p) ? p : []);
@@ -61,13 +70,12 @@ function PropertyDetail({ property, onBack }) {
   }, [property.folio_number]);
 
   const STATUS_COLORS = {
-    issued:   "bg-blue-100 text-blue-700",
-    finaled:  "bg-green-100 text-green-700",
-    expired:  "bg-gray-100 text-gray-600",
-    voided:   "bg-red-100 text-red-700",
-    in_review:"bg-amber-100 text-amber-700",
-    pending:  "bg-orange-100 text-orange-700",
+    "Closed":  "bg-green-100 text-green-700",
+    "Open":    "bg-blue-100 text-blue-700",
+    "Expired": "bg-red-100 text-red-700",
+    "Void":    "bg-gray-100 text-gray-600",
   };
+  const getStatusColor = (status) => STATUS_COLORS[status] || "bg-amber-100 text-amber-700";
 
   const TABS = [
     { key: "overview", label: "Overview" },
@@ -138,32 +146,22 @@ function PropertyDetail({ property, onBack }) {
             <p className="text-center text-gray-400 py-8" style={{ fontFamily: FONTS.b }}>No permit records found for this property.</p>
           ) : (
             <div className="space-y-3">
-              {permits.map((p, i) => {
-                const statusKey = (() => {
-                  const s = (p.status_normalized || p.permit_status || "").toLowerCase();
-                  if (s === "closed" || s === "finaled") return "finaled";
-                  if (s === "open" || s === "issued" || s === "active") return "issued";
-                  if (s === "expired") return "expired";
-                  if (s === "void" || s === "voided" || s === "cancelled") return "voided";
-                  return "issued";
-                })();
-                return (
-                  <div key={p.permit_number || i} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[statusKey] || "bg-gray-100 text-gray-600"}`}>
-                          {p.permit_status || p.status_normalized || statusKey}
-                        </span>
-                        <span className="text-xs text-gray-400">{p.permit_number}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-800" style={{ fontFamily: FONTS.b }}>{p.permit_name || p.permit_type}</p>
+              {permits.map((p, i) => (
+                <div key={p.permit_number || i} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${getStatusColor(p.permit_status)}`}>
+                        {p.permit_status || "—"}
+                      </span>
+                      <span className="text-xs text-gray-400 font-mono">{p.permit_number}</span>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-gray-400">{p.open_date}</p>
-                    </div>
+                    <p className="text-sm font-semibold text-gray-800" style={{ fontFamily: FONTS.b }}>{p.permit_name || p.permit_type}</p>
                   </div>
-                );
-              })}
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-gray-400">{p.open_date}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )
         )}
@@ -221,8 +219,8 @@ export default function MyProperties() {
     if (!q.trim()) { setResults([]); return; }
     setSearching(true);
     try {
-      const resp = await base44.functions.invoke("propertySearch", { q });
-      setResults(Array.isArray(resp.data?.data) ? resp.data.data : (Array.isArray(resp.data) ? resp.data : []));
+      const resp = await base44.functions.invoke("propertySearch", { q: q.trim() });
+      setResults(Array.isArray(resp.data?.data) ? resp.data.data : []);
     } catch {
       setResults([]);
     }

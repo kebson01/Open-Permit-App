@@ -82,9 +82,8 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
     if (!propertyQuery.trim()) return;
     setSearching(true);
     try {
-      const resp = await base44.functions.invoke("propertySearch", { query: propertyQuery });
-      const results = Array.isArray(resp.data) ? resp.data : (resp.data?.results || []);
-      setSearchResults(results);
+      const resp = await base44.functions.invoke("propertySearch", { q: propertyQuery.trim() });
+      setSearchResults(Array.isArray(resp.data?.data) ? resp.data.data : []);
     } catch { setSearchResults([]); }
     setSearching(false);
   };
@@ -145,8 +144,8 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
         {selectedProperty ? (
           <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
             <div>
-              <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>{selectedProperty.full_address || selectedProperty.FOLIO_NUMBER}</p>
-              <p className="text-xs text-green-600">Folio: {selectedProperty.FOLIO_NUMBER}</p>
+              <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>{selectedProperty.full_address || selectedProperty.folio_number}</p>
+              <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
             </div>
             <button onClick={() => { setSelectedProperty(null); setSearchResults([]); }} className="text-xs text-green-700 underline">Change</button>
           </div>
@@ -171,11 +170,11 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
             {searchResults.length > 0 && (
               <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
                 {searchResults.map((p, i) => (
-                  <button key={i} onClick={() => { setSelectedProperty(p); setSearchResults([]); if (p.SITUS_CITY) { const cityObj = cities.find(c => c.name === p.SITUS_CITY); if (cityObj) setSelectedCity(cityObj); } }}
+                  <button key={i} onClick={() => { setSelectedProperty(p); setSearchResults([]); if (p.city_name) { const cityObj = cities.find(c => c.name === p.city_name); if (cityObj) setSelectedCity(cityObj); } }}
                     className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-blue-50 text-sm border border-gray-100 transition-colors"
                     style={{ fontFamily: FONTS.b }}>
-                    <p className="font-semibold text-gray-800">{p.full_address || p.FOLIO_NUMBER}</p>
-                    <p className="text-xs text-gray-400">{p.SITUS_CITY} · {p.FOLIO_NUMBER}</p>
+                    <p className="font-semibold text-gray-800">{p.full_address || p.folio_number}</p>
+                    <p className="text-xs text-gray-400">{p.city_name} · <span className="font-mono">{p.folio_number}</span></p>
                   </button>
                 ))}
               </div>
@@ -342,7 +341,7 @@ export default function ApplyForPermit() {
       city_portal_url:  merged.city?.portal_url || "",
       permit_type_name: merged.permitType?.name || "",
       permit_type_id:   merged.permitType?.id || "",
-      folio_number:     merged.property?.FOLIO_NUMBER || "",
+      folio_number:     merged.property?.folio_number || "",
       target_system:    merged.city?.name === "Fort Lauderdale" ? "accela" : "manual",
       phase:            "application",
       overall_status:   "in_progress",

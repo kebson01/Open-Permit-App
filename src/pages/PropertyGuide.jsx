@@ -405,7 +405,7 @@ export default function PropertyGuide() {
                 )}
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {results.map((prop, i) => (
-                    <PropertyCard key={prop.FOLIO_NUMBER || i} property={prop} onClick={() => setSelected(prop)} />
+                    <PropertyCard key={prop.folio_number || i} property={prop} onClick={() => setSelected(prop)} />
                   ))}
                 </div>
                 {!searched && !loading && (
