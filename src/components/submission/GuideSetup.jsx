@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Loader2, MapPin, ClipboardList, Mail, Globe, UserCheck, AlertTriangle, ExternalLink } from "lucide-react";
 
 const ROLES = [
@@ -27,7 +27,7 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
 
   // Load cities
   useEffect(() => {
-    base44.entities.City.list().then(all => {
+    db.City.list().then(all => {
       // Filter to the 5 target cities, sorted
       const filtered = CITY_ORDER
         .map(name => all.find(c => c.name === name))
@@ -47,7 +47,7 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
     setPermitTypes([]);
     setPermitType("");
     setLoadingPermits(true);
-    base44.entities.PermitType.filter({ city_id: selectedCityId }).then(pts => {
+    db.PermitType.filter({ city_id: selectedCityId, city_name: cities.find(c => c.id === selectedCityId)?.name }).then(pts => {
       setPermitTypes(pts);
       setLoadingPermits(false);
     });
@@ -76,7 +76,7 @@ export default function GuideSetup({ currentUser, mode = "app", onCreated }) {
 
     setCreating(true);
     const email = isWebMode ? guestEmail : currentUser.email;
-    const guide = await base44.entities.SubmissionGuide.create({
+    const guide = await db.SubmissionGuide.create({
       user_email:       email,
       user_role:        userRole,
       city_name:        selectedCityObj?.name || "",

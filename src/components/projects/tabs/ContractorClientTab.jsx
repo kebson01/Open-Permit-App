@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Mail, Phone, Building2, CheckCircle, Clock, Trash2, Loader2 } from "lucide-react";
 
@@ -17,13 +17,13 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["collaborators", project.id],
-    queryFn: () => base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
+    queryFn: () => db.ProjectCollaborator.filter({ project_id: project.id }),
   });
 
   const handleInvite = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await base44.entities.ProjectCollaborator.create({
+    await db.ProjectCollaborator.create({
       project_id: project.id,
       name: form.name,
       email: form.email,
@@ -40,7 +40,7 @@ export default function ContractorClientTab({ project, currentUser, onUpdate }) 
   };
 
   const removeCollaborator = async (id) => {
-    await base44.entities.ProjectCollaborator.delete(id);
+    await db.ProjectCollaborator.delete(id);
     queryClient.invalidateQueries({ queryKey: ["collaborators", project.id] });
   };
 

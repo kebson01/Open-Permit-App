@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { CheckSquare, Square, Download, UserCheck } from "lucide-react";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
@@ -76,7 +76,7 @@ export default function ContractorDocumentsTab({ project, onUpdate }) {
     const flat = [];
     permitDocs.forEach(g => g.docs.forEach(d => flat.push({ label: d.label, checked: d.checked, assignedToClient: d.assignedToClient })));
     // Save permit_checklist to Base44 Project entity
-    await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(flat) });
+    await db.Project.update(project.id, { permit_checklist: JSON.stringify(flat) });
     onUpdate && onUpdate(prev => ({ ...prev, permit_checklist: JSON.stringify(flat) }));
     setSaving(false);
   };

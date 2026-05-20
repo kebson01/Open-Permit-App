@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +32,7 @@ export default function FeasibilityChecker({ property: p, city }) {
 
   const { data: zoningRules = [] } = useQuery({
     queryKey: ["zoningRules", city.id],
-    queryFn: () => base44.entities.ZoningRule.filter({ city_id: city.id }),
+    queryFn: () => db.ZoningRule.filter({ city_name: city.name }),
   });
 
   // Find matching zoning rule by use code

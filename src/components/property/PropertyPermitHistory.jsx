@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { ClipboardList, Loader2, Plus, ChevronDown, ChevronUp, Wrench, Zap, Droplets, Flame, Home, RotateCcw, Trash2, Fence, Waves, Building2, FileCheck, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -123,8 +123,33 @@ export default function PropertyPermitHistory({ folio_number, city_name }) {
 
   useEffect(() => {
     if (!folio_number) return;
-    base44.entities.PermitRecord.filter({ folio_number }, "-issued_date", 100)
-      .then(setPermits)
+    db.PermitRecord.getByFolio(folio_number, city_name || "Weston")
+      .then(rows => {
+        // Normalize weston_permit_records columns to the expected shape
+        const normalized = (rows || []).map(r => ({
+          id: r.id || r.RECORD_ID,
+          permit_number: r.RECORD_ID || r.permit_number,
+          permit_description: r.RECORD_NAME || r.permit_description,
+          permit_type: (r.RECORD_MODULE || r.permit_type || "other").toLowerCase().replace(/\s+/g, "_"),
+          status: (() => {
+            const s = (r.STATUS_NORMALIZED || r.status || "").toLowerCase();
+            if (s === "completed") return "finaled";
+            if (s === "active") return "issued";
+            if (s === "in review") return "in_review";
+            if (s === "cancelled") return "voided";
+            return s || "issued";
+          })(),
+          issued_date: r.OPEN_DATE || r.issued_date,
+          finaled_date: r.CLOSE_DATE || r.finaled_date,
+          city_name: r.city_name || city_name || "Weston",
+          contractor_name: r.contractor_name,
+          contractor_license: r.contractor_license,
+          job_value: r.job_value,
+          square_footage: r.square_footage,
+          notes: r.PARCEL_NBR ? `Parcel: ${r.PARCEL_NBR}` : r.notes,
+        }));
+        setPermits(normalized);
+      })
       .finally(() => setLoading(false));
   }, [folio_number]);
 

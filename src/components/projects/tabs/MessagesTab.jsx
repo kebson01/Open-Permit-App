@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, Loader2, EyeOff } from "lucide-react";
 import { format } from "date-fns";
@@ -15,7 +16,7 @@ export default function MessagesTab({ project, currentUser, mode }) {
 
   const { data: messages = [] } = useQuery({
     queryKey: ["messages", project.id],
-    queryFn: () => base44.entities.ProjectMessage.filter({ project_id: project.id }, "created_date"),
+    queryFn: () => db.ProjectMessage.filter({ project_id: project.id }),
     refetchInterval: 10000,
   });
 
@@ -34,7 +35,7 @@ export default function MessagesTab({ project, currentUser, mode }) {
     if (!text.trim()) return;
     setSending(true);
     const content = isInternal ? `[INTERNAL] ${text}` : text;
-    await base44.entities.ProjectMessage.create({
+    await db.ProjectMessage.create({
       project_id: project.id,
       sender_email: currentUser?.email,
       sender_name: currentUser?.full_name || currentUser?.email,

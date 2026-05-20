@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Calculator, Map, CheckSquare, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FeeCalculatorEmbed from "@/components/city/FeeCalculatorEmbed";
@@ -21,7 +21,7 @@ export default function PropertyCityPanel({ property }) {
 
   const { data: cities = [] } = useQuery({
     queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: () => db.City.list(),
   });
 
   const city = cities.find(

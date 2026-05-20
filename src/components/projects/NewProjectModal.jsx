@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { X, Loader2, Home, Briefcase, ArrowRight } from "lucide-react";
 
 const PROJECT_TYPES = [
@@ -113,7 +114,7 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
       payload.client_email = form.client_email || undefined;
       payload.client_name = form.client_name || undefined;
     }
-    const created = await base44.entities.Project.create(payload);
+    const created = await db.Project.create(payload);
 
     // Invite client if contractor checked the box and provided an email
     if (isContractor && form.invite_client && form.client_email) {

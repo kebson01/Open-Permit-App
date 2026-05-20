@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { DollarSign, Calculator, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+
 
 export default function HomeownerBudgetTab({ project, onUpdate }) {
   const [contractorQuote, setContractorQuote] = useState(project.contractor_quote || "");
@@ -21,7 +21,7 @@ export default function HomeownerBudgetTab({ project, onUpdate }) {
     const payload = {};
     if (contractorQuote !== "") payload.contractor_quote = parseFloat(contractorQuote) || 0;
     if (materialsEst !== "") payload.materials_estimate = parseFloat(materialsEst) || 0;
-    await base44.entities.Project.update(project.id, payload);
+    await db.Project.update(project.id, payload);
     onUpdate && onUpdate(prev => ({ ...prev, ...payload }));
     setSaving(false);
   };
@@ -104,7 +104,7 @@ export default function HomeownerBudgetTab({ project, onUpdate }) {
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
         </button>
         <Link
-          to={createPageUrl("FeeCalculator") + `?city=${encodeURIComponent(project.city_name || "")}&permit=${encodeURIComponent(project.project_type || "")}`}
+          to={`/FeeCalculator?city=${encodeURIComponent(project.city_name || "")}&permit=${encodeURIComponent(project.project_type || "")}`}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
         >
           <Calculator className="w-4 h-4" /> Get fee estimate

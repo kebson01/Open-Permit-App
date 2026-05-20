@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 
 const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
@@ -24,24 +25,24 @@ export default function AdminHealth() {
 
   const loadData = async () => {
     setLoading(true);
-    const [questions, feeRules, permitTypes, guides] = await Promise.all([
-      base44.entities.CityApplicationQuestion.list(),
-      base44.entities.FeeRule.list(),
-      base44.entities.PermitType.list(),
-      base44.entities.SubmissionGuide.list(),
+    const [questions, feeRules, guides, ...permitTypesArrays] = await Promise.all([
+      db.CityApplicationQuestion.filter({}),
+      db.FeeRule.list(),
+      db.SubmissionGuide.list(),
+      ...CITIES.map(city => db.PermitType.filter({ city_name: city })),
     ]);
 
     // Per-city breakdown
-    const perCity = CITIES.map(city => {
-      const qs = questions.filter(q => q.city_name === city).length;
-      const fr = feeRules.filter(r => r.city_name === city).length;
-      const pt = permitTypes.filter(p => p.city_name === city).length;
+    const perCity = CITIES.map((city, i) => {
+      const qs = Array.isArray(questions) ? questions.filter(q => q.city_name === city).length : 0;
+      const fr = Array.isArray(feeRules) ? feeRules.filter(r => r.city_name === city).length : 0;
+      const pt = Array.isArray(permitTypesArrays[i]) ? permitTypesArrays[i].length : 0;
       return { city, questions: qs, feeRules: fr, permitTypes: pt };
     });
 
-    // Orphan checks
-    const orphanPermitTypes = permitTypes.filter(p => !p.city_id).length;
-    const orphanFeeRules = feeRules.filter(r => !r.city_id).length;
+    // Orphan checks — city_id not applicable for Supabase tables (use city_name)
+    const orphanPermitTypes = 0;
+    const orphanFeeRules = Array.isArray(feeRules) ? feeRules.filter(r => !r.city_name).length : 0;
 
     // Guide phase/status breakdown
     const phaseMap = {};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { BookOpen, Search, ChevronDown, ChevronRight, ExternalLink, Loader2, MapPin } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -79,16 +79,16 @@ export default function BuildingCodes() {
   const [catFilter, setCatFilter] = useState("all");
 
   useEffect(() => {
-    base44.entities.City.list().then(all => {
+    db.City.list().then(all => {
       const filtered = CITY_ORDER.map(n => all.find(c => c.name === n)).filter(Boolean);
       setCities(filtered);
-      if (filtered.length > 0) { setSelectedCity(filtered[0]); loadOrdinances(filtered[0].id); }
+      if (filtered.length > 0) { setSelectedCity(filtered[0]); loadOrdinances(filtered[0].name); }
     });
   }, []);
 
-  const loadOrdinances = async (cityId) => {
+  const loadOrdinances = async (cityName) => {
     setLoading(true);
-    const ords = await base44.entities.CodeOfOrdinance.filter({ city_id: cityId, is_active: true }, "chapter_number", 100);
+    const ords = await db.CodeOfOrdinance.filter({ city_name: cityName });
     setOrdinances(Array.isArray(ords) ? ords : []);
     setLoading(false);
   };
@@ -97,7 +97,7 @@ export default function BuildingCodes() {
     setSelectedCity(city);
     setSearch("");
     setCatFilter("all");
-    loadOrdinances(city.id);
+    loadOrdinances(city.name);
   };
 
   const filtered = ordinances.filter(o => {

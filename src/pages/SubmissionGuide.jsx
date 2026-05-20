@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, ClipboardList, CheckCircle2, Clock,
@@ -53,7 +54,7 @@ export default function SubmissionGuidePage() {
   const loadGuides = async (email) => {
     if (!email) return;
     setGuidesLoading(true);
-    const data = await base44.entities.SubmissionGuide.filter({ user_email: email }, "-updated_date");
+    const data = await db.SubmissionGuide.filter({ user_email: email });
     setGuides(Array.isArray(data) ? data : []);
     setGuidesLoading(false);
   };

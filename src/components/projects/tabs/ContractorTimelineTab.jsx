@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { CheckCircle2, Circle, AlertTriangle, Calendar, Send } from "lucide-react";
 
 const STAGES = [
@@ -29,7 +29,7 @@ export default function ContractorTimelineTab({ project, onUpdate }) {
 
   const saveDates = async () => {
     setSaving(true);
-    await base44.entities.Project.update(project.id, { notes: JSON.stringify({ timeline_dates: targetDates, prev_notes: project.notes }) });
+    await db.Project.update(project.id, { notes: JSON.stringify({ timeline_dates: targetDates, prev_notes: project.notes }) });
     setSaving(false);
   };
 
