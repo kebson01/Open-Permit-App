@@ -4,7 +4,7 @@ import * as db from "@/lib/db";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, ClipboardList, CheckCircle2, Clock,
-  ExternalLink, Globe, UserCheck, LogIn
+  ExternalLink, UserCheck, LogIn
 } from "lucide-react";
 import GuideSetup from "@/components/submission/GuideSetup";
 import ApplicationPhase from "@/components/submission/ApplicationPhase";
@@ -12,14 +12,19 @@ import PreparationPhase from "@/components/submission/PreparationPhase";
 import GuidedSubmissionPhase from "@/components/submission/GuidedSubmissionPhase";
 import PhaseProgressBar from "@/components/submission/PhaseProgressBar";
 import ModeIndicator from "@/components/submission/ModeIndicator";
+import PageHeader from "@/components/ui/PageHeader";
+import Btn from "@/components/ui/Btn";
+import Callout from "@/components/ui/Callout";
+import PanelCard from "@/components/ui/PanelCard";
+import SegmentedToggle from "@/components/ui/SegmentedToggle";
 
 const STATUS_STYLES = {
-  not_started:     { bg: "bg-gray-100",    text: "text-gray-600",    label: "Not Started" },
-  in_progress:     { bg: "bg-blue-100",    text: "text-blue-700",    label: "In Progress" },
-  ready_to_submit: { bg: "bg-amber-100",   text: "text-amber-700",   label: "Ready to Submit" },
-  submitted:       { bg: "bg-green-100",   text: "text-green-700",   label: "Submitted" },
-  approved:        { bg: "bg-emerald-100", text: "text-emerald-700", label: "Approved" },
-  rejected:        { bg: "bg-red-100",     text: "text-red-700",     label: "Rejected" },
+  not_started:     { bg: "bg-surface",    text: "text-muted",     label: "Not Started" },
+  in_progress:     { bg: "bg-action-50",  text: "text-action",    label: "In Progress" },
+  ready_to_submit: { bg: "bg-warning-50", text: "text-warning",   label: "Ready to Submit" },
+  submitted:       { bg: "bg-success-50", text: "text-success",   label: "Submitted" },
+  approved:        { bg: "bg-green-100",  text: "text-green-700", label: "Approved" },
+  rejected:        { bg: "bg-danger-50",  text: "text-danger",    label: "Rejected" },
 };
 
 const PHASE_LABELS = {
@@ -29,25 +34,24 @@ const PHASE_LABELS = {
   completed:         "Completed",
 };
 
+const MODE_OPTIONS = [
+  { value: "app", label: "App Mode",   icon: <UserCheck className="w-3.5 h-3.5" /> },
+  { value: "web", label: "Guest Mode", icon: "🌐" },
+];
+
 export default function SubmissionGuidePage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [mode, setMode] = useState("web"); // "app" | "web" — resolved after auth check
+  const [mode, setMode] = useState("web");
   const [guides, setGuides] = useState([]);
   const [guidesLoading, setGuidesLoading] = useState(false);
   const [activeGuide, setActiveGuide] = useState(null);
   const [showSetup, setShowSetup] = useState(false);
-  // For web mode, track guest email so we can load their guides
   const [guestEmail, setGuestEmail] = useState(null);
 
-  // Auth check — if logged in, default to app mode
   useEffect(() => {
     base44.auth.me().then(u => {
-      if (u) {
-        setCurrentUser(u);
-        setMode("app");
-        loadGuides(u.email);
-      }
+      if (u) { setCurrentUser(u); setMode("app"); loadGuides(u.email); }
     }).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
 
@@ -62,12 +66,8 @@ export default function SubmissionGuidePage() {
   const handleGuideCreated = (guide, email) => {
     setShowSetup(false);
     setActiveGuide(guide);
-    if (mode === "web" && email) {
-      setGuestEmail(email);
-      loadGuides(email);
-    } else if (currentUser) {
-      loadGuides(currentUser.email);
-    }
+    if (mode === "web" && email) { setGuestEmail(email); loadGuides(email); }
+    else if (currentUser) loadGuides(currentUser.email);
   };
 
   const handlePhaseComplete = (updatedGuide) => {
@@ -76,19 +76,20 @@ export default function SubmissionGuidePage() {
     if (email) loadGuides(email);
   };
 
-  const handleGuideUpdate = (updated) => {
-    setActiveGuide(updated);
+  const handleGuideUpdate = (updated) => setActiveGuide(updated);
+
+  const switchToAppMode = () => base44.auth.redirectToLogin(window.location.href);
+
+  const handleModeChange = (val) => {
+    if (val === "app" && !currentUser) { switchToAppMode(); return; }
+    setMode(val);
   };
 
-  const switchToAppMode = () => {
-    base44.auth.redirectToLogin(window.location.href);
-  };
-
-  // --- Active guide — show phase UI ---
+  // ── Active guide ──
   if (activeGuide) {
     return (
-      <div className="min-h-screen pb-24 md:pb-8" style={{ backgroundColor: "#f9f9fc" }}>
-        <div className="px-5 pt-6 pb-5" style={{ background: "#022A5B" }}>
+      <div className="min-h-screen bg-surface pb-24 md:pb-8">
+        <div className="bg-brand px-5 pt-6 pb-5">
           <div className="max-w-3xl mx-auto">
             <button onClick={() => setActiveGuide(null)}
               className="flex items-center gap-1.5 text-blue-200 hover:text-white text-sm mb-4 transition-colors">
@@ -101,65 +102,43 @@ export default function SubmissionGuidePage() {
               </div>
               <ModeIndicator mode={mode} onSwitch={mode === "web" && !currentUser ? switchToAppMode : null} />
             </div>
-            <div className="mt-4">
-              <PhaseProgressBar phase={activeGuide.phase} />
-            </div>
+            <div className="mt-4"><PhaseProgressBar phase={activeGuide.phase} /></div>
           </div>
         </div>
 
         <div className="max-w-3xl mx-auto px-4 py-5">
           {activeGuide.phase === "application" && (
-            <ApplicationPhase
-              guide={activeGuide}
-              currentUser={currentUser}
-              mode={mode}
-              onComplete={handlePhaseComplete}
-              onUpdate={handleGuideUpdate}
-            />
+            <ApplicationPhase guide={activeGuide} currentUser={currentUser} mode={mode} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
           )}
           {activeGuide.phase === "preparation" && (
-            <PreparationPhase
-              guide={activeGuide}
-              currentUser={currentUser}
-              mode={mode}
-              onComplete={handlePhaseComplete}
-              onUpdate={handleGuideUpdate}
-            />
+            <PreparationPhase guide={activeGuide} currentUser={currentUser} mode={mode} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
           )}
           {activeGuide.phase === "guided_submission" && (
-            <GuidedSubmissionPhase
-              guide={activeGuide}
-              currentUser={currentUser}
-              mode={mode}
-              onComplete={handlePhaseComplete}
-              onUpdate={handleGuideUpdate}
-            />
+            <GuidedSubmissionPhase guide={activeGuide} currentUser={currentUser} mode={mode} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
           )}
           {activeGuide.phase === "completed" && (
             <div className="text-center py-12">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-              <p className="text-gray-500 mb-2">
+              <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-ink mb-2">Application Submitted!</h2>
+              <p className="text-muted mb-2">
                 You've completed the guided submission for <strong>{activeGuide.permit_type_name}</strong>.
               </p>
               {activeGuide.confirmation_number && (
-                <p className="text-sm text-blue-700 font-medium mb-4">
-                  Confirmation #: {activeGuide.confirmation_number}
-                </p>
+                <p className="text-sm text-action font-medium mb-4">Confirmation #: {activeGuide.confirmation_number}</p>
               )}
-              <a href="https://www.westonfl.org/Permits" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
-                style={{ background: "#022A5B" }}>
+              <Btn variant="primary" size="md" as="a" href="https://www.westonfl.org/Permits" target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="w-4 h-4" /> Check Status at westonfl.org/Permits
-              </a>
+              </Btn>
               {mode === "web" && !currentUser && (
-                <div className="mt-6 p-5 bg-gradient-to-br from-[#022A5B] to-[#025799] rounded-2xl text-white text-left max-w-md mx-auto">
-                  <h3 className="font-bold mb-1.5">Save your info for next time</h3>
-                  <p className="text-sm text-blue-100 mb-3">Create a free account to auto-fill your next application instantly.</p>
-                  <button onClick={() => base44.auth.redirectToLogin(window.location.href)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#022A5B] text-sm font-bold hover:bg-blue-50 transition-colors">
-                    <LogIn className="w-4 h-4" /> Create Free Account →
-                  </button>
+                <div className="mt-6 max-w-md mx-auto">
+                  <Callout variant="info" title="Save your info for next time">
+                    Create a free account to auto-fill your next application instantly.
+                    <div className="mt-2">
+                      <Btn variant="secondary" size="sm" onClick={() => base44.auth.redirectToLogin(window.location.href)}>
+                        <LogIn className="w-3.5 h-3.5" /> Create Free Account →
+                      </Btn>
+                    </div>
+                  </Callout>
                 </div>
               )}
             </div>
@@ -169,11 +148,11 @@ export default function SubmissionGuidePage() {
     );
   }
 
-  // --- Setup wizard ---
+  // ── Setup wizard ──
   if (showSetup) {
     return (
-      <div className="min-h-screen pb-24 md:pb-8" style={{ backgroundColor: "#f9f9fc" }}>
-        <div className="px-5 pt-6 pb-5" style={{ background: "#022A5B" }}>
+      <div className="min-h-screen bg-surface pb-24 md:pb-8">
+        <div className="bg-brand px-5 pt-6 pb-5">
           <div className="max-w-3xl mx-auto">
             <button onClick={() => setShowSetup(false)}
               className="flex items-center gap-1.5 text-blue-200 hover:text-white text-sm mb-4 transition-colors">
@@ -199,121 +178,67 @@ export default function SubmissionGuidePage() {
     );
   }
 
-  // --- Dashboard ---
-  const email = currentUser?.email || guestEmail;
+  // ── Dashboard ──
   const isLoading = authLoading || guidesLoading;
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8" style={{ backgroundColor: "#f9f9fc" }}>
-      {/* Hero */}
-      <div className="px-5 pt-8 pb-7" style={{ background: "#022A5B" }}>
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Submission Guide
-              </p>
-              <h1 className="font-bold text-white text-2xl mb-1">Permit Application Guide</h1>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-                Prepare and submit permit applications to the City of Weston — step by step.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowSetup(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm mt-2"
-              style={{ background: "#025799" }}
-            >
-              <Plus className="w-4 h-4" /> New Application
-            </button>
-          </div>
+    <div className="min-h-screen bg-surface pb-24 md:pb-8">
+      <PageHeader
+        eyebrow="Submission Guide"
+        title="Permit Application Guide"
+        subtitle="Prepare and submit permit applications to the City of Weston — step by step."
+        actions={
+          <Btn variant="primary" size="md" onClick={() => setShowSetup(true)}>
+            <Plus className="w-4 h-4" /> New Application
+          </Btn>
+        }
+      />
 
-          {/* Mode toggle bar */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                if (!currentUser) { switchToAppMode(); return; }
-                setMode("app");
-              }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                mode === "app"
-                  ? "bg-green-500 border-green-500 text-white"
-                  : "bg-white/10 border-white/20 text-white/60 hover:bg-white/20"
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              {currentUser ? "App Mode" : "Sign in for App Mode"}
-            </button>
-            <button
-              onClick={() => setMode("web")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                mode === "web"
-                  ? "bg-orange-400 border-orange-400 text-white"
-                  : "bg-white/10 border-white/20 text-white/60 hover:bg-white/20"
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" /> Guest Mode
-            </button>
-            {mode === "app" && currentUser && (
-              <span className="text-xs text-green-300 ml-1">
-                Signed in as {currentUser.email}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <div className="max-w-4xl mx-auto px-4 pt-5 space-y-4">
+        {/* Mode toggle */}
+        <SegmentedToggle
+          options={MODE_OPTIONS}
+          value={mode}
+          onChange={handleModeChange}
+        />
 
-      {/* Mode explanation cards */}
-      <div className="max-w-4xl mx-auto px-4 pt-5">
+        {/* Mode callout */}
         {mode === "app" && currentUser ? (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-2xl mb-5 flex items-start gap-3">
-            <UserCheck className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-green-800 text-sm">App Mode — Profile Auto-Fill Active</p>
-              <p className="text-xs text-green-700 mt-0.5">
-                Your property data, contractor profile, and project details will be automatically filled in. You can review and edit everything before submitting.
-              </p>
-            </div>
-          </div>
+          <Callout variant="success" title="App Mode — Profile Auto-Fill Active">
+            Your property data, contractor profile, and project details will be automatically filled in. You can review and edit everything before submitting.
+            {currentUser && <span className="block mt-1 font-medium">Signed in as {currentUser.email}</span>}
+          </Callout>
         ) : mode === "web" ? (
-          <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl mb-5 flex items-start gap-3">
-            <Globe className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-bold text-orange-800 text-sm">Guest Mode — No Login Required</p>
-              <p className="text-xs text-orange-700 mt-0.5 mb-2">
-                You'll fill in all fields manually. Every question includes a plain-English explanation so you know exactly what's needed and why.
-              </p>
-              {!currentUser && (
-                <button onClick={switchToAppMode}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-orange-700 hover:text-orange-900 transition-colors underline">
-                  <LogIn className="w-3 h-3" /> Sign in to enable auto-fill
-                </button>
-              )}
-            </div>
-          </div>
+          <Callout variant="warning" title="Guest Mode — No Login Required">
+            You'll fill in all fields manually. Every question includes a plain-English explanation so you know exactly what's needed and why.
+            {!currentUser && (
+              <button onClick={switchToAppMode} className="mt-1 text-xs font-semibold underline flex items-center gap-1">
+                <LogIn className="w-3 h-3" /> Sign in to enable auto-fill
+              </button>
+            )}
+          </Callout>
         ) : null}
-      </div>
 
-      {/* Guide list */}
-      <div className="max-w-4xl mx-auto px-4 pb-6">
+        {/* Guide list */}
         {isLoading ? (
-          <div className="text-center py-16 text-gray-400">Loading...</div>
+          <div className="text-center py-16 text-muted">Loading...</div>
         ) : guides.length === 0 ? (
-          <div className="text-center py-16">
-            <ClipboardList className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-            <h2 className="text-lg font-bold text-gray-700 mb-2">No applications yet</h2>
-            <p className="text-sm text-gray-500 mb-5 max-w-sm mx-auto">
-              {mode === "web"
-                ? "Start a new application and we'll walk you through every question with plain-English explanations."
-                : "Start a new application — your profile data will be auto-filled to save you time."}
-            </p>
-            <button onClick={() => setShowSetup(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm"
-              style={{ background: "#022A5B" }}>
-              <Plus className="w-4 h-4" /> Start Your First Application
-            </button>
-          </div>
+          <PanelCard>
+            <div className="text-center py-12">
+              <ClipboardList className="w-12 h-12 text-line mx-auto mb-4" />
+              <h2 className="text-lg font-bold text-ink mb-2">No applications yet</h2>
+              <p className="text-sm text-muted mb-5 max-w-sm mx-auto">
+                {mode === "web"
+                  ? "Start a new application and we'll walk you through every question with plain-English explanations."
+                  : "Start a new application — your profile data will be auto-filled to save you time."}
+              </p>
+              <Btn variant="primary" size="md" onClick={() => setShowSetup(true)}>
+                <Plus className="w-4 h-4" /> Start Your First Application
+              </Btn>
+            </div>
+          </PanelCard>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {guides.map(guide => {
               const s = STATUS_STYLES[guide.overall_status] || STATUS_STYLES.not_started;
               const pctDone = guide.questions_total > 0
@@ -321,32 +246,32 @@ export default function SubmissionGuidePage() {
                 : 0;
               return (
                 <button key={guide.id} onClick={() => setActiveGuide(guide)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md hover:border-blue-200 transition-all">
+                  className="w-full text-left bg-white border border-line rounded-card p-5 hover:shadow-card hover:border-action-100 transition-all">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-bold text-gray-900">{guide.permit_type_name}</h3>
+                        <h3 className="font-bold text-ink">{guide.permit_type_name}</h3>
                         <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${s.bg} ${s.text}`}>{s.label}</span>
                         {guide.is_guest && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200 font-medium">Guest</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-warning-50 text-warning border border-amber-200 font-medium">Guest</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">{guide.city_name} · {PHASE_LABELS[guide.phase] || guide.phase}</p>
+                      <p className="text-sm text-muted">{guide.city_name} · {PHASE_LABELS[guide.phase] || guide.phase}</p>
                       {guide.questions_total > 0 && (
                         <div className="mt-3">
-                          <div className="flex justify-between text-xs text-gray-400 mb-1">
+                          <div className="flex justify-between text-xs text-muted mb-1">
                             <span>{guide.questions_answered} of {guide.questions_total} questions answered</span>
                             <span>{pctDone}%</span>
                           </div>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${pctDone}%`, background: "#025799" }} />
+                          <div className="h-1.5 bg-line rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-action" style={{ width: `${pctDone}%` }} />
                           </div>
                         </div>
                       )}
                     </div>
-                    <div className="shrink-0 text-xs text-gray-400">
+                    <div className="shrink-0 text-xs text-muted">
                       {guide.overall_status === "submitted" && guide.submitted_date
-                        ? <span className="flex items-center gap-1 text-green-600"><CheckCircle2 className="w-3.5 h-3.5" />Submitted</span>
+                        ? <span className="flex items-center gap-1 text-success"><CheckCircle2 className="w-3.5 h-3.5" />Submitted</span>
                         : <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Resume →</span>
                       }
                     </div>

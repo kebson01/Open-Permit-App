@@ -7,7 +7,9 @@ module.exports = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			card: '16px',
+  			control: '12px',
   		},
   		colors: {
   			background: 'hsl(var(--background))',
@@ -59,29 +61,49 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+  			// ── Design tokens ──────────────────────────────────────
+  			action: {
+  				DEFAULT: '#2563EB',
+  				hover:   '#1D4ED8',
+  				50:      '#EFF4FE',
+  				100:     '#DBEAFE',
+  			},
+  			brand:   '#0A2540',
+  			success: {
+  				DEFAULT: '#16A34A',
+  				50:      '#ECFDF5',
+  			},
+  			warning: {
+  				DEFAULT: '#D97706',
+  				50:      '#FFFBEB',
+  			},
+  			danger: {
+  				DEFAULT: '#DC2626',
+  				50:      '#FEF2F2',
+  			},
+  			ink:     '#0F172A',
+  			muted:   '#64748B',
+  			surface: '#F8FAFC',
+  			// "card" already exists from shadcn — we override the DEFAULT only
+  			line:    '#E2E8F0',
+  		},
+  		boxShadow: {
+  			card: '0 1px 4px 0 rgba(15,23,42,0.06), 0 4px 16px 0 rgba(15,23,42,0.04)',
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0' },
+  				to:   { height: 'var(--radix-accordion-content-height)' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  				from: { height: 'var(--radix-accordion-content-height)' },
+  				to:   { height: '0' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up':   'accordion-up 0.2s ease-out'
   		}
   	}
   },
