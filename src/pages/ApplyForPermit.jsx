@@ -1,88 +1,96 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import * as db from "@/lib/db";
-import PropertySearchBox from "@/components/property/PropertySearchBox";
-import {
-  ArrowLeft, ArrowRight, CheckCircle2, MapPin, FileText,
-  Loader2, Search, AlertTriangle, ExternalLink, ChevronRight, Play
-} from "lucide-react";
-import PhaseProgressBar from "@/components/submission/PhaseProgressBar";
-import ApplicationPhase from "@/components/submission/ApplicationPhase";
-import PreparationPhase from "@/components/submission/PreparationPhase";
-import GuidedSubmissionPhase from "@/components/submission/GuidedSubmissionPhase";
+import { supabase } from "@/lib/supabaseClient";
+import { ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2, MapPin, Search, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
+const FONTS = { b: "'Plus Jakarta Sans', system-ui, sans-serif", h: "'Plus Jakarta Sans', system-ui, sans-serif" };
 const PRIMARY = "#004ac6";
-const FONTS = { h: "'Manrope', system-ui, sans-serif", b: "'Plus Jakarta Sans', system-ui, sans-serif" };
-
-const CITY_ORDER = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
-
-const CATEGORY_META = {
-  building:    { label: "Building",    icon: "🏗️" },
-  electrical:  { label: "Electrical",  icon: "⚡" },
-  plumbing:    { label: "Plumbing",    icon: "🔧" },
-  fire:        { label: "Fire",        icon: "🔥" },
-  certificate: { label: "Certificate", icon: "📜" },
-  planning:    { label: "Planning",    icon: "📐" },
-  engineering: { label: "Engineering", icon: "🛣️" },
-  additional:  { label: "Additional",  icon: "➕" },
+const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
+const CITY_PORTALS = {
+  "Weston": "https://www.westonfl.org/Permits",
+  "Hollywood": "https://www.hollywoodfl.org/permits",
+  "Coral Springs": "https://www.coralsprings.org/permits",
+  "Cooper City": "https://www.coopercityfl.org/permits",
+  "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov",
 };
 
-const STEPS = ["Property & City", "Permit Type", "Application Q&A", "Review & Prepare", "Guided Submission"];
+const CITY_PERMIT_TABLES = {
+  "Weston": "weston_permit_types",
+  "Hollywood": "hollywood_permit_types",
+  "Coral Springs": "coral_springs_permit_types",
+  "Cooper City": "cooper_city_permit_types",
+  "Fort Lauderdale": "fort_lauderdale_permit_types",
+};
 
-function StepIndicator({ currentStep }) {
+// Progress bar showing 5 steps
+function ProgressBar({ currentStep }) {
+  const steps = ["Setup", "Permit Type", "Questions", "Review", "Submit"];
   return (
-    <div className="flex items-center gap-0 overflow-x-auto pb-1">
-      {STEPS.map((step, i) => {
-        const num = i + 1;
-        const done = num < currentStep;
-        const active = num === currentStep;
+    <div className="flex items-center justify-between gap-2 mb-6">
+      {steps.map((label, idx) => {
+        const stepNum = idx + 1;
+        const isComplete = stepNum < currentStep;
+        const isCurrent = stepNum === currentStep;
         return (
-          <React.Fragment key={step}>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                done ? "text-white" : active ? "text-white" : "text-gray-400 bg-gray-100"
-              }`} style={{ background: done ? "#006a61" : active ? PRIMARY : undefined }}>
-                {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : num}
-              </div>
-              <span className={`text-xs font-semibold hidden sm:block ${active ? "text-gray-900" : done ? "text-gray-400" : "text-gray-300"}`} style={{ fontFamily: FONTS.b }}>
-                {step}
-              </span>
+          <div key={stepNum} className="flex items-center flex-1">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                isComplete
+                  ? "bg-teal-500 text-white"
+                  : isCurrent
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {isComplete ? <Check className="w-4 h-4" /> : stepNum}
             </div>
-            {i < STEPS.length - 1 && (
-              <div className={`h-px flex-1 mx-2 min-w-[12px] ${done ? "bg-[#006a61]" : "bg-gray-200"}`} />
+            {idx < steps.length - 1 && (
+              <div className={`flex-1 h-1 mx-2 ${isComplete ? "bg-teal-500" : "bg-gray-200"}`} />
             )}
-          </React.Fragment>
+          </div>
         );
       })}
     </div>
   );
 }
 
-// ── STEP 1: Property & City ──
-function Step1PropertyCity({ currentUser, initial, onNext }) {
-  const [cities, setCities]             = useState([]);
-  const [selectedCity, setSelectedCity] = useState(initial?.city || null);
-  const [role, setRole]                 = useState(initial?.role || "homeowner");
-  const [selectedProperty, setSelectedProperty] = useState(initial?.property || null);
-  const [loading, setLoading]           = useState(true);
+// STEP 1: Role, City, Property
+function Step1Setup({ onNext, initialCity }) {
+  const [selectedRole, setSelectedRole] = useState("homeowner");
+  const [selectedCity, setSelectedCity] = useState(initialCity || "");
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [propertySearch, setPropertySearch] = useState("");
+  const [propertyResults, setPropertyResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
-  useEffect(() => {
-    db.City.list().then(all => {
-      const filtered = CITY_ORDER.map(n => all.find(c => c.name === n)).filter(Boolean);
-      setCities(filtered);
-      if (!selectedCity && filtered.length > 0) setSelectedCity(filtered[0]);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleSelectProperty = (p) => {
-    setSelectedProperty(p);
-    if (p.city_name) {
-      const cityObj = cities.find(c => c.name === p.city_name);
-      if (cityObj) setSelectedCity(cityObj);
+  const handlePropertySearch = async () => {
+    if (!propertySearch.trim() || propertySearch.length < 3) {
+      setSearchError("Enter at least 3 characters");
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError("");
+    setPropertyResults([]);
+    try {
+      const q = propertySearch.toLowerCase();
+      const { data, error } = await supabase
+        .from("properties_search_view")
+        .select("folio_number, full_address, owner_name, city_name, total_sqft, year_built, beds, baths")
+        .or(`folio_number.ilike.%${q}%,full_address.ilike.%${q}%,owner_name.ilike.%${q}%`)
+        .limit(10);
+      if (error) throw error;
+      setPropertyResults(data || []);
+      if (!data || data.length === 0) setSearchError("No properties found");
+    } catch (err) {
+      setSearchError(err.message || "Search failed");
+    } finally {
+      setSearchLoading(false);
     }
   };
+
+  const canContinue = selectedRole && selectedCity;
 
   return (
     <div className="space-y-5">
@@ -90,14 +98,18 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
         <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>Your Role</h3>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { key: "homeowner", label: "🏠 Homeowner", desc: "Owner-builder" },
-            { key: "contractor", label: "🔧 Contractor", desc: "Licensed contractor" },
-            { key: "private_provider", label: "🏛 Private Provider", desc: "FL 553.791" },
+            { key: "homeowner", label: "🏠 Homeowner" },
+            { key: "contractor", label: "🔧 Contractor" },
+            { key: "private_provider", label: "🏛 Provider" },
           ].map(r => (
-            <button key={r.key} onClick={() => setRole(r.key)}
-              className={`p-3 rounded-xl border-2 text-left transition-all ${role === r.key ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200"}`}>
+            <button
+              key={r.key}
+              onClick={() => setSelectedRole(r.key)}
+              className={`p-3 rounded-xl border-2 text-center transition-all ${
+                selectedRole === r.key ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200"
+              }`}
+            >
               <p className="font-semibold text-sm text-gray-800" style={{ fontFamily: FONTS.b }}>{r.label}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{r.desc}</p>
             </button>
           ))}
         </div>
@@ -105,32 +117,23 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h3 className="font-bold text-gray-800 mb-3" style={{ fontFamily: FONTS.h }}>
-          <MapPin className="inline w-4 h-4 mr-1.5 text-blue-500" />Select City
+          <MapPin className="inline w-4 h-4 mr-1.5 text-blue-500" />
+          Select City
         </h3>
-        {loading ? <div className="py-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-blue-400" /></div> : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {cities.map(c => (
-              <button key={c.id} onClick={() => setSelectedCity(c)}
-                className={`p-3 rounded-xl border-2 text-left text-sm font-medium transition-all ${selectedCity?.id === c.id ? "border-blue-500 bg-blue-50 text-blue-800" : "border-gray-200 text-gray-700 hover:border-blue-200"}`}
-                style={{ fontFamily: FONTS.b }}>
-                {c.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {selectedCity?.name === "Fort Lauderdale" && (
-          <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-800">
-            <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            Fort Lauderdale uses <strong className="mx-1">LauderBuild</strong> for permit submission.
-          </div>
-        )}
-        {selectedCity?.name === "Cooper City" && (
-          <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <strong>Cooper City requires all applications to be notarized.</strong> A Hold Harmless Agreement is also required.
-          </div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {CITIES.map(city => (
+            <button
+              key={city}
+              onClick={() => setSelectedCity(city)}
+              className={`p-3 rounded-xl border-2 text-left text-sm font-medium transition-all ${
+                selectedCity === city ? "border-blue-500 bg-blue-50 text-blue-800" : "border-gray-200 text-gray-700 hover:border-blue-200"
+              }`}
+              style={{ fontFamily: FONTS.b }}
+            >
+              {city}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -138,135 +141,154 @@ function Step1PropertyCity({ currentUser, initial, onNext }) {
         {selectedProperty ? (
           <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
             <div>
-              <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>{selectedProperty.full_address || selectedProperty.folio_number}</p>
+              <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>
+                {selectedProperty.full_address || selectedProperty.folio_number}
+              </p>
               <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
             </div>
-            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-700 underline">Change</button>
+            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-700 underline">
+              Change
+            </button>
           </div>
         ) : (
-          <div>
-            <PropertySearchBox onSelect={handleSelectProperty} placeholder="Search by address or folio number..." />
-            <p className="text-xs text-gray-400 mt-2">Selecting a property will auto-fill your application.</p>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={propertySearch}
+                onChange={e => { setPropertySearch(e.target.value); setSearchError(""); }}
+                onKeyDown={e => e.key === "Enter" && handlePropertySearch()}
+                placeholder="Search by address or folio..."
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                style={{ fontFamily: FONTS.b }}
+              />
+              <button
+                onClick={handlePropertySearch}
+                disabled={searchLoading}
+                className="px-4 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
+                style={{ background: PRIMARY }}
+              >
+                {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </button>
+            </div>
+            {searchError && <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">{searchError}</p>}
+            {propertyResults.length > 0 && (
+              <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-100 rounded-xl">
+                {propertyResults.map(p => (
+                  <button
+                    key={p.folio_number}
+                    onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0"
+                  >
+                    <p className="font-semibold text-sm text-gray-800">{p.full_address || p.folio_number}</p>
+                    <p className="text-xs text-gray-500">{p.city_name} · {p.folio_number}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       <button
-        onClick={() => onNext({ city: selectedCity, role, property: selectedProperty })}
-        disabled={!selectedCity}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-bold text-sm disabled:opacity-50 transition-opacity hover:opacity-90"
+        onClick={() => onNext({ role: selectedRole, city: selectedCity, property: selectedProperty })}
+        disabled={!canContinue}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-bold text-sm disabled:opacity-50"
         style={{ background: PRIMARY, fontFamily: FONTS.h }}
       >
-        Continue to Permit Type <ArrowRight className="w-4 h-4" />
+        Continue <ArrowRight className="w-4 h-4" />
       </button>
     </div>
   );
 }
 
-// ── STEP 2: Permit Type ──
-function Step2PermitType({ cityId, cityName, onNext, onBack }) {
+// STEP 2: Permit Type
+function Step2PermitType({ city, onNext, onBack }) {
   const [permitTypes, setPermitTypes] = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
-  const [selected, setSelected]       = useState(null);
+  const [selectedPermit, setSelectedPermit] = useState(null);
+  const [loadingPermits, setLoadingPermits] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!cityId) { setLoading(false); return; }
-    
-    let timeout = setTimeout(() => {
-      setPermitTypes([]);
-      setLoading(false);
-    }, 8000);
-
-    db.PermitType.filter({ city_id: cityId })
-      .then(pts => {
-        clearTimeout(timeout);
-        setPermitTypes(Array.isArray(pts) ? pts : []);
-        setLoading(false);
-      })
-      .catch(err => {
-        clearTimeout(timeout);
-        console.error("Failed to load permit types:", err);
+    const loadPermits = async () => {
+      setLoadingPermits(true);
+      setError("");
+      try {
+        const tableName = CITY_PERMIT_TABLES[city];
+        const { data, error: err } = await supabase
+          .from(tableName)
+          .select("id, name, category, description, typical_timeline")
+          .order("category");
+        if (err) throw err;
+        setPermitTypes(data || []);
+      } catch (err) {
+        setError(err.message);
         setPermitTypes([]);
-        setLoading(false);
-      });
-
-    return () => clearTimeout(timeout);
-  }, [cityId]);
-
-  const filtered = permitTypes.filter(pt =>
-    !search || pt.name?.toLowerCase().includes(search.toLowerCase()) || pt.description?.toLowerCase().includes(search.toLowerCase())
-  );
+      } finally {
+        setLoadingPermits(false);
+      }
+    };
+    loadPermits();
+  }, [city]);
 
   const grouped = {};
-  filtered.forEach(pt => {
-    const cat = pt.category || "additional";
+  permitTypes.forEach(pt => {
+    const cat = pt.category || "other";
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(pt);
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl">
-        <Search className="w-4 h-4 text-gray-400 shrink-0" />
-        <input
-          type="text" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search permit types..."
-          className="flex-1 bg-transparent text-sm focus:outline-none"
-          style={{ fontFamily: FONTS.b }}
-        />
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+      {loadingPermits ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>
       ) : permitTypes.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-100">
-          <p className="text-gray-600" style={{ fontFamily: FONTS.b }}>No permit types available for this city</p>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+          <p className="text-gray-600" style={{ fontFamily: FONTS.b }}>No permit types available</p>
         </div>
       ) : (
         <div className="space-y-5">
-          {Object.entries(grouped).map(([cat, types]) => {
-            const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
-            return (
-              <div key={cat}>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ fontFamily: FONTS.b }}>
-                  <span>{meta.icon}</span> {meta.label}
-                </p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {types.map(pt => (
-                    <button key={pt.id} onClick={() => setSelected(pt)}
-                      className={`text-left p-4 rounded-2xl border-2 transition-all ${
-                        selected?.id === pt.id ? "border-blue-500 bg-blue-50" : "border-gray-100 bg-white hover:border-blue-200"
-                      }`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className={`font-semibold text-sm mb-1 ${selected?.id === pt.id ? "text-blue-800" : "text-gray-800"}`} style={{ fontFamily: FONTS.b }}>{pt.name}</p>
-                          {pt.description && <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{pt.description}</p>}
-                          {pt.typical_timeline && <p className="text-xs text-blue-600 mt-1.5 font-medium">⏱ {pt.typical_timeline}</p>}
-                        </div>
-                        {selected?.id === pt.id && <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+          {Object.entries(grouped).map(([cat, types]) => (
+            <div key={cat}>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2" style={{ fontFamily: FONTS.b }}>
+                {cat}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {types.map(pt => (
+                  <button
+                    key={pt.id}
+                    onClick={() => setSelectedPermit(pt)}
+                    className={`text-left p-4 rounded-xl border-2 transition-all ${
+                      selectedPermit?.id === pt.id ? "border-blue-500 bg-blue-50" : "border-gray-100 bg-white hover:border-blue-200"
+                    }`}
+                  >
+                    <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-blue-800" : "text-gray-800"}`}>
+                      {pt.name}
+                    </p>
+                    {pt.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{pt.description}</p>}
+                    {pt.typical_timeline && <p className="text-xs text-blue-600 mt-2">⏱ {pt.typical_timeline}</p>}
+                  </button>
+                ))}
               </div>
-            );
-          })}
-          {Object.keys(grouped).length === 0 && !loading && (
-            <div className="text-center py-8">
-              <p className="text-gray-400" style={{ fontFamily: FONTS.b }}>No permit types found{search ? ` for "${search}"` : ""}</p>
             </div>
-          )}
+          ))}
         </div>
       )}
 
       <div className="flex gap-3">
-        <button onClick={onBack} className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         <button
-          onClick={() => onNext({ permitType: selected })}
-          disabled={!selected}
+          onClick={() => onNext({ permit: selectedPermit })}
+          disabled={!selectedPermit}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50"
           style={{ background: PRIMARY, fontFamily: FONTS.h }}
         >
@@ -277,77 +299,432 @@ function Step2PermitType({ cityId, cityName, onNext, onBack }) {
   );
 }
 
-// ── MAIN APPLY FOR PERMIT PAGE ──
-export default function ApplyForPermit() {
-  const [currentUser, setCurrentUser]   = useState(null);
-  const [authLoading, setAuthLoading]   = useState(true);
-  const [step, setStep]                 = useState(1);
-  const [stepData, setStepData]         = useState({});
-  const [activeGuide, setActiveGuide]   = useState(null);
-  const [resumeGuides, setResumeGuides] = useState([]);
-  const [showResume, setShowResume]     = useState(true);
-  const navigate = useNavigate();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const resumeId = urlParams.get("resume");
-  const folioParam = urlParams.get("folio");
-  const cityParam = urlParams.get("city");
+// STEP 3: Questions
+function Step3Questions({ city, permit, onNext, onBack }) {
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [error, setError] = useState("");
+  const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setCurrentUser(u || null);
-      if (u) {
-        db.SubmissionGuide.filter({ user_email: u.email }).then(g => {
-          const active = Array.isArray(g) ? g.filter(x => ["in_progress","ready_to_submit"].includes(x.overall_status)) : [];
-          setResumeGuides(active);
-          if (resumeId) {
-            const found = active.find(x => x.id === resumeId) || (Array.isArray(g) && g.find(x => x.id === resumeId));
-            if (found) setActiveGuide(found);
-          }
-        });
+    const loadQuestions = async () => {
+      setLoadingQuestions(true);
+      setError("");
+      try {
+        const { data, error: err } = await supabase
+          .from("city_application_questions")
+          .select("*")
+          .eq("city_name", city)
+          .eq("permit_type_name", permit.name)
+          .eq("is_active", true)
+          .order("display_order");
+        if (err) throw err;
+        setQuestions(data || []);
+      } catch (err) {
+        setError(err.message);
+        setQuestions([]);
+      } finally {
+        setLoadingQuestions(false);
       }
-      setAuthLoading(false);
-    }).catch(() => setAuthLoading(false));
+    };
+    loadQuestions();
+  }, [city, permit.name]);
+
+  const grouped = {};
+  questions.forEach(q => {
+    const sec = q.section || "General";
+    if (!grouped[sec]) grouped[sec] = [];
+    grouped[sec].push(q);
+  });
+
+  const sections = Object.entries(grouped);
+  const currentSection = sections[currentSectionIdx];
+
+  if (loadingQuestions) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>;
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+          <p className="text-blue-800" style={{ fontFamily: FONTS.b }}>
+            Questions for this permit type are coming soon. You can continue to review your application.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <button
+            onClick={() => onNext({ questions, answers })}
+            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
+            style={{ background: PRIMARY, fontFamily: FONTS.h }}
+          >
+            Continue to Review
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentSection) {
+    return <div className="text-center py-8 text-gray-600">No questions found</div>;
+  }
+
+  const [sectionName, sectionQuestions] = currentSection;
+
+  return (
+    <div className="space-y-5">
+      <h3 className="text-lg font-bold text-gray-800" style={{ fontFamily: FONTS.h }}>
+        {sectionName} ({currentSectionIdx + 1} of {sections.length})
+      </h3>
+
+      <div className="space-y-4">
+        {sectionQuestions.map(q => (
+          <div key={q.id} className="bg-white rounded-xl border border-gray-100 p-4">
+            <label className="block font-semibold text-gray-800 text-sm mb-2" style={{ fontFamily: FONTS.b }}>
+              {q.text}
+              {q.is_required && <span className="text-red-600 ml-1">*</span>}
+            </label>
+
+            {q.field_type === "text" && (
+              <input
+                type="text"
+                value={answers[q.question_key] || ""}
+                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                placeholder={q.placeholder || "Enter text"}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+              />
+            )}
+
+            {q.field_type === "number" && (
+              <input
+                type="number"
+                value={answers[q.question_key] || ""}
+                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                placeholder={q.placeholder || "Enter number"}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+              />
+            )}
+
+            {q.field_type === "boolean" && (
+              <div className="flex gap-2">
+                {["Yes", "No"].map(opt => (
+                  <button
+                    key={opt}
+                    onClick={() => setAnswers({ ...answers, [q.question_key]: opt === "Yes" })}
+                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                      answers[q.question_key] === (opt === "Yes")
+                        ? "bg-blue-500 text-white"
+                        : "border border-gray-200 text-gray-700 hover:border-blue-200"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {q.field_type === "select" && (
+              <select
+                value={answers[q.question_key] || ""}
+                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+              >
+                <option value="">Select an option</option>
+                {(() => {
+                  try {
+                    const opts = JSON.parse(q.options || "[]");
+                    return opts.map(opt => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ));
+                  } catch {
+                    return null;
+                  }
+                })()}
+              </select>
+            )}
+
+            {q.help_text && <p className="text-xs text-gray-500 mt-2">{q.help_text}</p>}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => (currentSectionIdx > 0 ? setCurrentSectionIdx(prev => prev - 1) : onBack())}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          <ArrowLeft className="w-4 h-4" /> {currentSectionIdx > 0 ? "Previous" : "Back"}
+        </button>
+
+        {currentSectionIdx < sections.length - 1 ? (
+          <button
+            onClick={() => setCurrentSectionIdx(prev => prev + 1)}
+            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
+            style={{ background: PRIMARY, fontFamily: FONTS.h }}
+          >
+            Next Section <ArrowRight className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            onClick={() => onNext({ questions, answers })}
+            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
+            style={{ background: PRIMARY, fontFamily: FONTS.h }}
+          >
+            Review Answers <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// STEP 4: Review
+function Step4Review({ city, permit, answers, questions, onNext, onBack }) {
+  const [fee, setFee] = useState(null);
+  const [loadingFee, setLoadingFee] = useState(true);
+
+  useEffect(() => {
+    const loadFee = async () => {
+      setLoadingFee(true);
+      try {
+        const { data } = await supabase
+          .from("fee_rules")
+          .select("flat_fee, description")
+          .eq("city_name", city)
+          .ilike("permit_name", `%${permit.name}%`)
+          .single();
+        if (data) setFee(data);
+      } catch {
+        // Fee not available
+      } finally {
+        setLoadingFee(false);
+      }
+    };
+    loadFee();
+  }, [city, permit.name]);
+
+  const grouped = {};
+  questions.forEach(q => {
+    const sec = q.section || "General";
+    if (!grouped[sec]) grouped[sec] = [];
+    grouped[sec].push(q);
+  });
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>Your Answers</h3>
+        {Object.entries(grouped).map(([sec, qs]) => (
+          <div key={sec} className="mb-5">
+            <h4 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wider" style={{ fontFamily: FONTS.b }}>
+              {sec}
+            </h4>
+            <div className="space-y-2 border-b border-gray-100 pb-4">
+              {qs.map(q => (
+                <div key={q.id} className="flex justify-between text-sm">
+                  <span className="text-gray-600">{q.text}</span>
+                  <span className="font-semibold text-gray-900">{String(answers[q.question_key] || "—")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {fee && !loadingFee && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+          <p className="text-sm text-gray-600 mb-2">Estimated Permit Fee:</p>
+          <p className="text-2xl font-bold text-blue-800" style={{ fontFamily: FONTS.h }}>
+            ${fee.flat_fee ? fee.flat_fee.toLocaleString() : "TBD"}
+          </p>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <button
+          onClick={() => onNext({})}
+          className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
+          style={{ background: PRIMARY, fontFamily: FONTS.h }}
+        >
+          Go to Submission <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// STEP 5: Guided Submission
+function Step5Submit({ role, city, permit, property, answers, questions, onBack, currentUser }) {
+  const [fieldMap, setFieldMap] = useState([]);
+  const [checkedFields, setCheckedFields] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Create field map from answers
+    const fields = questions.map(q => ({
+      key: q.question_key,
+      label: q.text,
+      value: answers[q.question_key] || "",
+      portalField: q.target_system_field || q.text,
+    }));
+    setFieldMap(fields);
+    setLoading(false);
+  }, [questions, answers]);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const { error: err } = await supabase.from("submission_guides").insert({
+        user_email: currentUser?.email || "guest@openpermit.com",
+        user_role: role,
+        city_name: city,
+        permit_type_name: permit.name,
+        permit_type_id: permit.id || "",
+        target_system: city === "Fort Lauderdale" ? "accela" : "manual",
+        phase: "guided_submission",
+        overall_status: "ready_to_submit",
+        folio_number: property?.folio_number || null,
+        questions_total: questions.length,
+        questions_answered: Object.keys(answers).length,
+        field_mapping_snapshot: JSON.stringify(answers),
+        started_date: new Date().toISOString().split("T")[0],
+      });
+      if (err) throw err;
+
+      // Show success and navigate
+      alert("Application saved! You can now submit to the city portal.");
+      window.location.href = "/MyProjects";
+    } catch (err) {
+      setError(err.message || "Failed to save application");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const allChecked = fieldMap.length > 0 && fieldMap.every(f => checkedFields[f.key]);
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>
+          Portal: {city}
+        </h3>
+        <p className="text-sm text-gray-600 mb-3">
+          Copy each field value and enter it into the{" "}
+          <a
+            href={CITY_PORTALS[city]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline font-semibold"
+          >
+            {city} permit portal ↗
+          </a>
+        </p>
+
+        <div className="space-y-2 border-t border-gray-100 pt-4">
+          {fieldMap.map(field => (
+            <div key={field.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <input
+                type="checkbox"
+                checked={checkedFields[field.key] || false}
+                onChange={e => setCheckedFields({ ...checkedFields, [field.key]: e.target.checked })}
+                className="w-5 h-5 rounded accent-blue-500"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 font-mono">{field.portalField}</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{field.value || "(empty)"}</p>
+              </div>
+              <button
+                onClick={() => navigator.clipboard.writeText(field.value || "")}
+                className="text-gray-400 hover:text-gray-700 transition"
+                title="Copy to clipboard"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>}
+
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!allChecked || submitting}
+          className="flex-1 py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{ background: PRIMARY, fontFamily: FONTS.h }}
+        >
+          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+          {allChecked ? "Mark as Submitted" : "Complete all fields first"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// MAIN COMPONENT
+export default function ApplyForPermit() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [stepData, setStepData] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u || null)).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
 
-  const handleStep1 = (data) => {
-    setStepData(prev => ({ ...prev, ...data }));
-    setStep(2);
+  const handleStep1 = data => {
+    setStepData({ ...stepData, ...data });
+    setCurrentStep(2);
   };
 
-  const handleStep2 = async (data) => {
-    const merged = { ...stepData, ...data };
-    setStepData(merged);
-    // Create SubmissionGuide in Supabase
-    const email = currentUser?.email || "";
-    const guide = await db.SubmissionGuide.create({
-      user_email:       email,
-      user_role:        merged.role || "homeowner",
-      city_name:        merged.city?.name || "",
-      city_id:          merged.city?.id || "",
-      city_portal_url:  merged.city?.portal_url || "",
-      permit_type_name: merged.permitType?.name || "",
-      permit_type_id:   merged.permitType?.id || "",
-      folio_number:     merged.property?.folio_number || "",
-      target_system:    merged.city?.name === "Fort Lauderdale" ? "accela" : "manual",
-      phase:            "application",
-      overall_status:   "in_progress",
-      started_date:     new Date().toISOString().slice(0, 10),
-      questions_answered: 0,
-      questions_prefilled: 0,
-      questions_total:  0,
-      is_guest:         !currentUser,
-    });
-    setActiveGuide(guide);
-    setStep(3);
+  const handleStep2 = data => {
+    setStepData({ ...stepData, ...data });
+    setCurrentStep(3);
   };
 
-  const handlePhaseComplete = (updated) => {
-    setActiveGuide(updated);
+  const handleStep3 = data => {
+    setStepData({ ...stepData, ...data });
+    setCurrentStep(4);
   };
 
-  const handleGuideUpdate = (updated) => {
-    setActiveGuide(updated);
+  const handleStep4 = data => {
+    setStepData({ ...stepData, ...data });
+    setCurrentStep(5);
   };
 
   if (authLoading) {
@@ -358,92 +735,51 @@ export default function ApplyForPermit() {
     );
   }
 
-  // Active submission guide — show phase UI
-  if (activeGuide) {
-    return (
-      <div className="min-h-screen pb-8" style={{ background: "#f8f9ff" }}>
-        <div className="px-4 pt-6 pb-5" style={{ background: "#022A5B" }}>
-          <div className="max-w-3xl mx-auto">
-            <button onClick={() => setActiveGuide(null)} className="flex items-center gap-1.5 text-blue-200 hover:text-white text-sm mb-4 transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Back to My Applications
-            </button>
-            <h1 className="text-white font-bold text-xl mb-0.5" style={{ fontFamily: FONTS.h }}>{activeGuide.permit_type_name}</h1>
-            <p className="text-blue-200 text-sm">{activeGuide.city_name} · Submission Guide</p>
-            <div className="mt-4">
-              <PhaseProgressBar phase={activeGuide.phase} />
-            </div>
-          </div>
-        </div>
-        <div className="max-w-3xl mx-auto px-4 py-5">
-          {activeGuide.phase === "application" && (
-            <ApplicationPhase guide={activeGuide} currentUser={currentUser} mode={currentUser ? "app" : "web"} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
-          )}
-          {activeGuide.phase === "preparation" && (
-            <PreparationPhase guide={activeGuide} currentUser={currentUser} mode={currentUser ? "app" : "web"} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
-          )}
-          {activeGuide.phase === "guided_submission" && (
-            <GuidedSubmissionPhase guide={activeGuide} currentUser={currentUser} mode={currentUser ? "app" : "web"} onComplete={handlePhaseComplete} onUpdate={handleGuideUpdate} />
-          )}
-          {activeGuide.phase === "completed" && (
-            <div className="text-center py-12">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2" style={{ fontFamily: FONTS.h }}>Application Submitted!</h2>
-              <p className="text-gray-500 mb-2">You completed the guided submission for <strong>{activeGuide.permit_type_name}</strong>.</p>
-              {activeGuide.confirmation_number && (
-                <p className="text-sm text-blue-700 font-medium mb-4">Confirmation #: {activeGuide.confirmation_number}</p>
-              )}
-              <Link to="/MyProjects" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold" style={{ background: PRIMARY, textDecoration: "none" }}>
-                View My Projects <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen pb-8" style={{ background: "#f8f9ff" }}>
-      {/* Header */}
       <div className="px-4 pt-7 pb-5 bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest mb-1 text-gray-400" style={{ fontFamily: FONTS.b }}>Apply for Permit</p>
-          <h1 className="font-extrabold text-2xl text-gray-900 mb-4" style={{ fontFamily: FONTS.h }}>New Permit Application</h1>
-          <StepIndicator currentStep={step} />
+          <p className="text-xs font-bold uppercase tracking-widest mb-1 text-gray-400" style={{ fontFamily: FONTS.b }}>
+            Apply for Permit
+          </p>
+          <h1 className="font-extrabold text-2xl text-gray-900 mb-4" style={{ fontFamily: FONTS.h }}>
+            New Permit Application
+          </h1>
+          <ProgressBar currentStep={currentStep} />
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 pt-5">
-        {/* Resume banner */}
-        {showResume && resumeGuides.length > 0 && step === 1 && (
-          <div className="mb-5 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap" style={{ background: "#eff4ff", border: "1px solid #c7d7ff" }}>
-            <div className="flex items-center gap-3">
-              <Play className="w-5 h-5" style={{ color: PRIMARY }} />
-              <div>
-                <p className="font-bold text-sm" style={{ color: PRIMARY, fontFamily: FONTS.h }}>You have {resumeGuides.length} application{resumeGuides.length > 1 ? "s" : ""} in progress</p>
-                <p className="text-xs text-gray-500">{resumeGuides[0].permit_type_name} · {resumeGuides[0].city_name}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setActiveGuide(resumeGuides[0])}
-                className="text-sm font-bold px-4 py-2 rounded-xl text-white"
-                style={{ background: PRIMARY, fontFamily: FONTS.b }}>
-                Resume →
-              </button>
-              <button onClick={() => setShowResume(false)} className="text-xs text-gray-400 hover:text-gray-600">Start New</button>
-            </div>
-          </div>
+        {currentStep === 1 && <Step1Setup onNext={handleStep1} initialCity={stepData.city} />}
+        {currentStep === 2 && <Step2PermitType city={stepData.city} onNext={handleStep2} onBack={() => setCurrentStep(1)} />}
+        {currentStep === 3 && (
+          <Step3Questions
+            city={stepData.city}
+            permit={stepData.permit}
+            onNext={handleStep3}
+            onBack={() => setCurrentStep(2)}
+          />
         )}
-
-        {step === 1 && (
-          <Step1PropertyCity currentUser={currentUser} initial={{ city: null, role: "homeowner", property: null }} onNext={handleStep1} />
+        {currentStep === 4 && (
+          <Step4Review
+            city={stepData.city}
+            permit={stepData.permit}
+            answers={stepData.answers || {}}
+            questions={stepData.questions || []}
+            onNext={handleStep4}
+            onBack={() => setCurrentStep(3)}
+          />
         )}
-        {step === 2 && (
-          <Step2PermitType
-            cityId={stepData.city?.id}
-            cityName={stepData.city?.name}
-            onNext={handleStep2}
-            onBack={() => setStep(1)}
+        {currentStep === 5 && (
+          <Step5Submit
+            role={stepData.role}
+            city={stepData.city}
+            permit={stepData.permit}
+            property={stepData.property}
+            answers={stepData.answers || {}}
+            questions={stepData.questions || []}
+            onBack={() => setCurrentStep(4)}
+            currentUser={currentUser}
           />
         )}
       </div>
