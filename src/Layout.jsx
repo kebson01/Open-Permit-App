@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Settings, LayoutDashboard, ClipboardList, ChevronDown, ShieldCheck, Map, Calculator, Search, CheckSquare, Send, Bell, Clock, Menu, X, User } from "lucide-react";
 import NotificationBell from "@/components/projects/NotificationBell";
@@ -53,8 +53,19 @@ export default function Layout({ children, currentPageName }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const navigate    = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const isAdmin     = currentUser?.role === "admin";
   const isCityAdmin = currentUser?.role === "city_admin";
+
+  const handleNavSearch = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (q) {
+      navigate(createPageUrl("PropertyGuide") + `?q=${encodeURIComponent(q)}`);
+      setSearchQuery("");
+    }
+  };
 
   const adminDropdownLinks = isAdmin
     ? [{ name: "City Manager",   page: "AdminCityManager",   icon: Settings },
@@ -127,10 +138,17 @@ export default function Layout({ children, currentPageName }) {
           {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
             {/* Search */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm" style={{ background: "#f4f6fb", border: "1px solid #e8eaf0", width: 160 }}>
+            <form onSubmit={handleNavSearch} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "#f4f6fb", border: "1px solid #e8eaf0", width: 160 }}>
               <Search className="w-3.5 h-3.5 shrink-0" style={{ color: "#9ca3af" }} />
-              <span style={{ color: "#9ca3af", fontSize: 13, fontFamily: FONTS.nav }}>Search permits...</span>
-            </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search permits..."
+                className="bg-transparent focus:outline-none text-sm w-full"
+                style={{ color: "#0d1c2e", fontFamily: FONTS.nav }}
+              />
+            </form>
 
             {/* Bell */}
             {currentUser ? (
