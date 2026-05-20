@@ -55,7 +55,7 @@ import Home from './pages/Home';
 import PermitGuide from './pages/PermitGuide';
 import PermitInfo from './pages/PermitInfo';
 import PropertyGuide from './pages/PropertyGuide';
-import __Layout from './Layout.jsx';
+import __Layout from './components/Layout';
 
 
 export const PAGES = {
