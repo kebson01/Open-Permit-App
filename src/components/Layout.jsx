@@ -17,6 +17,7 @@ const FONTS = {
 };
 
 const TOOLS_ITEMS = [
+  { label: "Permit Guide",      path: "/PermitGuide",      icon: BookOpen },
   { label: "Fee Calculator",    path: "/FeeCalculator",    icon: Calculator },
   { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
   { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
@@ -135,6 +136,7 @@ export default function Layout({ children, currentPageName }) {
           {/* Primary Nav (desktop) */}
           <div className="hidden md:flex items-center gap-0.5 flex-1">
             <NavLink to="/"><Home className="w-3.5 h-3.5" /> Home</NavLink>
+            <NavLink to="/PermitGuide"><BookOpen className="w-3.5 h-3.5" /> Permit Guide</NavLink>
             <NavLink to="/MyProperties"><Building2 className="w-3.5 h-3.5" /> My Properties</NavLink>
             <NavLink to="/ApplyForPermit"><FileText className="w-3.5 h-3.5" /> Apply for Permit</NavLink>
             <NavLink to="/MyProjects"><FolderOpen className="w-3.5 h-3.5" /> My Projects</NavLink>
@@ -240,6 +242,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="md:hidden border-t border-gray-100 bg-white pb-3 shadow-lg">
             {[
               { to: "/", label: "Home", icon: Home },
+              { to: "/PermitGuide", label: "Permit Guide", icon: BookOpen },
               { to: "/MyProperties", label: "My Properties", icon: Building2 },
               { to: "/ApplyForPermit", label: "Apply for Permit", icon: FileText },
               { to: "/MyProjects", label: "My Projects", icon: FolderOpen },
