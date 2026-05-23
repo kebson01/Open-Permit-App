@@ -3,9 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
 import { ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2, MapPin, Search, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const FONTS = { b: "'Plus Jakarta Sans', system-ui, sans-serif", h: "'Plus Jakarta Sans', system-ui, sans-serif" };
-const PRIMARY = "#004ac6";
+import PageHeader from "@/components/ui/PageHeader";
+import Btn from "@/components/ui/Btn";
 const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
 const CITY_PORTALS = {
   "Weston": "https://www.westonfl.org/Permits",
@@ -34,19 +33,22 @@ function ProgressBar({ currentStep }) {
         const isCurrent = stepNum === currentStep;
         return (
           <div key={stepNum} className="flex items-center flex-1">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                isComplete
-                  ? "bg-teal-500 text-white"
-                  : isCurrent
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              {isComplete ? <Check className="w-4 h-4" /> : stepNum}
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                  isComplete
+                    ? "bg-success text-white"
+                    : isCurrent
+                    ? "bg-action text-white"
+                    : "bg-line text-muted"
+                }`}
+              >
+                {isComplete ? <Check className="w-4 h-4" /> : stepNum}
+              </div>
+              <span className={`text-[9px] font-semibold hidden sm:block ${isCurrent ? "text-action" : "text-muted"}`}>{label}</span>
             </div>
             {idx < steps.length - 1 && (
-              <div className={`flex-1 h-1 mx-2 ${isComplete ? "bg-teal-500" : "bg-gray-200"}`} />
+              <div className={`flex-1 h-0.5 mx-2 mb-4 ${isComplete ? "bg-success" : "bg-line"}`} />
             )}
           </div>
         );
@@ -102,9 +104,9 @@ function Step1Setup({ onNext, initialCity }) {
   const canContinue = selectedRole && selectedCity;
 
   return (
-    <div className="space-y-5">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>Your Role</h3>
+    <div className="space-y-4">
+      <div className="bg-white rounded-card border border-line shadow-card p-5">
+        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">Your Role</h3>
         <div className="grid grid-cols-3 gap-3">
           {[
             { key: "homeowner", label: "🏠 Homeowner" },
@@ -114,19 +116,19 @@ function Step1Setup({ onNext, initialCity }) {
             <button
               key={r.key}
               onClick={() => setSelectedRole(r.key)}
-              className={`p-3 rounded-xl border-2 text-center transition-all ${
-                selectedRole === r.key ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200"
+              className={`p-3 rounded-control border-2 text-center transition-all ${
+                selectedRole === r.key ? "border-action bg-action-50 text-action" : "border-line text-muted hover:border-action"
               }`}
             >
-              <p className="font-semibold text-sm text-gray-800" style={{ fontFamily: FONTS.b }}>{r.label}</p>
+              <p className="font-semibold text-sm">{r.label}</p>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="font-bold text-gray-800 mb-3" style={{ fontFamily: FONTS.h }}>
-          <MapPin className="inline w-4 h-4 mr-1.5 text-blue-500" />
+      <div className="bg-white rounded-card border border-line shadow-card p-5">
+        <h3 className="font-bold text-ink mb-3 text-sm uppercase tracking-wider">
+          <MapPin className="inline w-4 h-4 mr-1.5 text-action" />
           Select City
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -134,10 +136,9 @@ function Step1Setup({ onNext, initialCity }) {
             <button
               key={city}
               onClick={() => setSelectedCity(city)}
-              className={`p-3 rounded-xl border-2 text-left text-sm font-medium transition-all ${
-                selectedCity === city ? "border-blue-500 bg-blue-50 text-blue-800" : "border-gray-200 text-gray-700 hover:border-blue-200"
+              className={`p-3 rounded-control border-2 text-left text-sm font-semibold transition-all ${
+                selectedCity === city ? "border-action bg-action-50 text-action" : "border-line text-ink hover:border-action"
               }`}
-              style={{ fontFamily: FONTS.b }}
             >
               {city}
             </button>
@@ -145,19 +146,15 @@ function Step1Setup({ onNext, initialCity }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="font-bold text-gray-800 mb-3" style={{ fontFamily: FONTS.h }}>Property (Optional)</h3>
+      <div className="bg-white rounded-card border border-line shadow-card p-5">
+        <h3 className="font-bold text-ink mb-3 text-sm uppercase tracking-wider">Property (Optional)</h3>
         {selectedProperty ? (
-          <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+          <div className="flex items-center justify-between p-3 rounded-control bg-success-50 border border-success">
             <div>
-              <p className="text-sm font-semibold text-green-800" style={{ fontFamily: FONTS.b }}>
-                {selectedProperty.full_address || selectedProperty.folio_number}
-              </p>
-              <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
+              <p className="text-sm font-semibold text-success">{selectedProperty.full_address || selectedProperty.folio_number}</p>
+              <p className="text-xs text-success">Folio: {selectedProperty.folio_number}</p>
             </div>
-            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-700 underline">
-              Change
-            </button>
+            <button onClick={() => setSelectedProperty(null)} className="text-xs text-success underline">Change</button>
           </div>
         ) : (
           <div className="space-y-2">
@@ -168,29 +165,27 @@ function Step1Setup({ onNext, initialCity }) {
                 onChange={e => { setPropertySearch(e.target.value); setSearchError(""); }}
                 onKeyDown={e => e.key === "Enter" && handlePropertySearch()}
                 placeholder="Search by address or folio..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                style={{ fontFamily: FONTS.b }}
+                className="flex-1 px-4 py-2.5 rounded-control border border-line text-sm focus:outline-none focus:border-action"
               />
               <button
                 onClick={handlePropertySearch}
                 disabled={searchLoading}
-                className="px-4 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-                style={{ background: PRIMARY }}
+                className="px-4 py-2.5 rounded-control bg-action text-white text-sm font-bold disabled:opacity-60 hover:bg-action-hover transition-colors"
               >
                 {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               </button>
             </div>
-            {searchError && <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">{searchError}</p>}
+            {searchError && <p className="text-xs text-warning bg-warning-50 px-3 py-2 rounded-control">{searchError}</p>}
             {propertyResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-100 rounded-xl">
+              <div className="max-h-48 overflow-y-auto space-y-0.5 border border-line rounded-control">
                 {propertyResults.map(p => (
                   <button
                     key={p.folio_number}
                     onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0"
+                    className="w-full text-left px-4 py-2.5 hover:bg-action-50 border-b border-line last:border-0 transition-colors"
                   >
-                    <p className="font-semibold text-sm text-gray-800">{p.full_address || p.folio_number}</p>
-                    <p className="text-xs text-gray-500">{p.city_name} · {p.folio_number}</p>
+                    <p className="font-semibold text-sm text-ink">{p.full_address || p.folio_number}</p>
+                    <p className="text-xs text-muted">{p.city_name} · {p.folio_number}</p>
                   </button>
                 ))}
               </div>
@@ -199,14 +194,12 @@ function Step1Setup({ onNext, initialCity }) {
         )}
       </div>
 
-      <button
+      <Btn variant="primary" size="lg" className="w-full justify-center"
         onClick={() => onNext({ role: selectedRole, city: selectedCity, property: selectedProperty })}
         disabled={!canContinue}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-bold text-sm disabled:opacity-50"
-        style={{ background: PRIMARY, fontFamily: FONTS.h }}
       >
         Continue <ArrowRight className="w-4 h-4" />
-      </button>
+      </Btn>
     </div>
   );
 }
@@ -276,13 +269,13 @@ function Step2PermitType({ city, onNext, onBack }) {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>
       ) : permitTypes.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-          <p className="text-gray-600" style={{ fontFamily: FONTS.b }}>No permit types available</p>
+          <p className="text-muted">No permit types available</p>
         </div>
       ) : (
         <div className="space-y-5">
           {Object.entries(grouped).map(([cat, types]) => (
             <div key={cat}>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2" style={{ fontFamily: FONTS.b }}>
+              <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">
                 {cat}
               </p>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -290,26 +283,26 @@ function Step2PermitType({ city, onNext, onBack }) {
                   <button
                     key={pt.id}
                     onClick={() => setSelectedPermit(pt)}
-                    className={`text-left p-4 rounded-xl border-2 transition-all ${
-                      selectedPermit?.id === pt.id ? "border-blue-500 bg-blue-50" : "border-gray-100 bg-white hover:border-blue-200"
+                    className={`text-left p-4 rounded-control border-2 transition-all ${
+                      selectedPermit?.id === pt.id ? "border-action bg-action-50" : "border-line bg-white hover:border-action"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-blue-800" : "text-gray-800"}`}>
+                      <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-action" : "text-ink"}`}>
                         {pt.name}
                       </p>
                       {hasQuestions(pt.name) ? (
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold whitespace-nowrap">
+                        <span className="text-xs px-2 py-1 bg-success-50 text-success rounded-full font-semibold whitespace-nowrap">
                           ✓ Ready
                         </span>
                       ) : (
-                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
+                        <span className="text-xs px-2 py-1 bg-surface text-muted rounded-full whitespace-nowrap">
                           Soon
                         </span>
                       )}
                     </div>
-                    {pt.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{pt.description}</p>}
-                    {pt.typical_timeline && <p className="text-xs text-blue-600 mt-2">⏱ {pt.typical_timeline}</p>}
+                    {pt.description && <p className="text-xs text-muted mt-1 line-clamp-2">{pt.description}</p>}
+                    {pt.typical_timeline && <p className="text-xs text-action mt-2">⏱ {pt.typical_timeline}</p>}
                   </button>
                 ))}
               </div>
@@ -319,20 +312,12 @@ function Step2PermitType({ city, onNext, onBack }) {
       )}
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
-        >
+        <Btn variant="secondary" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-        <button
-          onClick={() => onNext({ permit: selectedPermit })}
-          disabled={!selectedPermit}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50"
-          style={{ background: PRIMARY, fontFamily: FONTS.h }}
-        >
+        </Btn>
+        <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ permit: selectedPermit })} disabled={!selectedPermit}>
           Continue <ArrowRight className="w-4 h-4" />
-        </button>
+        </Btn>
       </div>
     </div>
   );
@@ -397,24 +382,17 @@ function Step3Questions({ city, permit, onNext, onBack }) {
     return (
       <div className="space-y-4">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <p className="text-blue-800 text-sm leading-relaxed" style={{ fontFamily: FONTS.b }}>
+          <p className="text-action text-sm leading-relaxed">
             Guided questions are not yet available for <strong>{permit.name}</strong> in <strong>{city}</strong>. You can continue to review your application summary and we'll guide you through the city portal submission.
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
-          >
+          <Btn variant="secondary" onClick={onBack}>
             <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <button
-            onClick={() => onNext({ questions, answers })}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm"
-            style={{ background: PRIMARY, fontFamily: FONTS.h }}
-          >
+          </Btn>
+          <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ questions, answers })}>
             Continue to Review <ArrowRight className="w-4 h-4" />
-          </button>
+          </Btn>
         </div>
       </div>
     );
@@ -429,7 +407,7 @@ function Step3Questions({ city, permit, onNext, onBack }) {
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-lg font-bold text-gray-800 mb-1" style={{ fontFamily: FONTS.h }}>
+        <h3 className="text-lg font-bold text-ink mb-1">
           {sectionName}
         </h3>
         <p className="text-xs text-gray-500">Section {currentSectionIdx + 1} of {sections.length}</p>
@@ -437,8 +415,8 @@ function Step3Questions({ city, permit, onNext, onBack }) {
 
       <div className="space-y-4">
         {sectionQuestions.map(q => (
-          <div key={q.id} className="bg-white rounded-xl border border-gray-100 p-4">
-            <label className="block font-bold text-gray-800 text-sm mb-3" style={{ fontFamily: FONTS.b }}>
+          <div key={q.id} className="bg-white rounded-card border border-line shadow-card p-4">
+            <label className="block font-bold text-ink text-sm mb-3">
               {q.question_text}
               {q.is_required && <span className="text-red-600 ml-1">*</span>}
             </label>
@@ -542,29 +520,17 @@ function Step3Questions({ city, permit, onNext, onBack }) {
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={() => (currentSectionIdx > 0 ? setCurrentSectionIdx(prev => prev - 1) : onBack())}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
-        >
+        <Btn variant="secondary" onClick={() => (currentSectionIdx > 0 ? setCurrentSectionIdx(prev => prev - 1) : onBack())}>
           <ArrowLeft className="w-4 h-4" /> {currentSectionIdx > 0 ? "Previous" : "Back"}
-        </button>
-
+        </Btn>
         {currentSectionIdx < sections.length - 1 ? (
-          <button
-            onClick={() => setCurrentSectionIdx(prev => prev + 1)}
-            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
-            style={{ background: PRIMARY, fontFamily: FONTS.h }}
-          >
+          <Btn variant="primary" className="flex-1 justify-center" onClick={() => setCurrentSectionIdx(prev => prev + 1)}>
             Next Section <ArrowRight className="w-4 h-4" />
-          </button>
+          </Btn>
         ) : (
-          <button
-            onClick={() => onNext({ questions, answers })}
-            className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
-            style={{ background: PRIMARY, fontFamily: FONTS.h }}
-          >
+          <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ questions, answers })}>
             Review Answers <ArrowRight className="w-4 h-4" />
-          </button>
+          </Btn>
         )}
       </div>
     </div>
@@ -605,11 +571,11 @@ function Step4Review({ city, permit, answers, questions, onNext, onBack }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>Your Answers</h3>
+      <div className="bg-white rounded-card border border-line shadow-card p-5">
+        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">Your Answers</h3>
         {Object.entries(grouped).map(([sec, qs]) => (
           <div key={sec} className="mb-5">
-            <h4 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wider" style={{ fontFamily: FONTS.b }}>
+            <h4 className="text-sm font-semibold text-muted mb-3 uppercase tracking-wider">
               {sec}
             </h4>
             <div className="space-y-2 border-b border-gray-100 pb-4">
@@ -625,28 +591,19 @@ function Step4Review({ city, permit, answers, questions, onNext, onBack }) {
       </div>
 
       {fee && !loadingFee && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-          <p className="text-sm text-gray-600 mb-2">Estimated Permit Fee:</p>
-          <p className="text-2xl font-bold text-blue-800" style={{ fontFamily: FONTS.h }}>
-            ${fee.flat_fee ? fee.flat_fee.toLocaleString() : "TBD"}
-          </p>
+        <div className="bg-action-50 border border-action-100 rounded-card p-5">
+          <p className="text-sm text-muted mb-2">Estimated Permit Fee:</p>
+          <p className="text-2xl font-bold text-action">${fee.flat_fee ? fee.flat_fee.toLocaleString() : "TBD"}</p>
         </div>
       )}
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
-        >
+        <Btn variant="secondary" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-        <button
-          onClick={() => onNext({})}
-          className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
-          style={{ background: PRIMARY, fontFamily: FONTS.h }}
-        >
+        </Btn>
+        <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({})}>
           Go to Submission <ArrowRight className="w-4 h-4" />
-        </button>
+        </Btn>
       </div>
     </div>
   );
@@ -707,11 +664,11 @@ function Step5Submit({ role, city, permit, property, answers, questions, onBack,
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <h3 className="font-bold text-gray-800 mb-4" style={{ fontFamily: FONTS.h }}>
+      <div className="bg-white rounded-card border border-line shadow-card p-5">
+        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">
           Portal: {city}
         </h3>
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-muted mb-3">
           Copy each field value and enter it into the{" "}
           <a
             href={CITY_PORTALS[city]}
@@ -723,9 +680,9 @@ function Step5Submit({ role, city, permit, property, answers, questions, onBack,
           </a>
         </p>
 
-        <div className="space-y-2 border-t border-gray-100 pt-4">
+        <div className="space-y-2 border-t border-line pt-4">
           {fieldMap.map(field => (
-            <div key={field.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <div key={field.key} className="flex items-center gap-3 p-3 bg-surface rounded-control">
               <input
                 type="checkbox"
                 checked={checkedFields[field.key] || false}
@@ -751,21 +708,13 @@ function Step5Submit({ role, city, permit, property, answers, questions, onBack,
       {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>}
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50"
-        >
+        <Btn variant="secondary" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={!allChecked || submitting}
-          className="flex-1 py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: PRIMARY, fontFamily: FONTS.h }}
-        >
+        </Btn>
+        <Btn variant="primary" className="flex-1 justify-center" onClick={handleSubmit} disabled={!allChecked || submitting}>
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           {allChecked ? "Mark as Submitted" : "Complete all fields first"}
-        </button>
+        </Btn>
       </div>
     </div>
   );
@@ -805,27 +754,23 @@ export default function ApplyForPermit() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#f8f9ff" }}>
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <Loader2 className="w-6 h-6 animate-spin text-action" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: "#f8f9ff" }}>
-      <div className="px-4 pt-7 pb-5 bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest mb-1 text-gray-400" style={{ fontFamily: FONTS.b }}>
-            Apply for Permit
-          </p>
-          <h1 className="font-extrabold text-2xl text-gray-900 mb-4" style={{ fontFamily: FONTS.h }}>
-            New Permit Application
-          </h1>
+    <div className="min-h-screen bg-surface pb-8">
+      <PageHeader
+        eyebrow="Apply for Permit"
+        title="New Permit Application"
+        subtitle="We'll guide you through each step — from selecting your permit type to submitting your application."
+      />
+      <div className="max-w-3xl mx-auto px-4 pt-5">
+        <div className="bg-white rounded-card border border-line shadow-card p-4 mb-5">
           <ProgressBar currentStep={currentStep} />
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 pt-5">
         {currentStep === 1 && <Step1Setup onNext={handleStep1} initialCity={stepData.city} />}
         {currentStep === 2 && <Step2PermitType city={stepData.city} onNext={handleStep2} onBack={() => setCurrentStep(1)} />}
         {currentStep === 3 && (

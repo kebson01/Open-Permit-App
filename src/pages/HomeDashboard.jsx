@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
 import {
-  Building2, FileText, FolderOpen, ArrowRight, AlertCircle,
-  Clock, CheckCircle2, Plus, TrendingUp, Loader2, Play
+  Building2, FileText, FolderOpen, ArrowRight,
+  CheckCircle2, Plus, TrendingUp, Loader2, Play
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
@@ -328,19 +328,20 @@ function GuestDashboard({ onSignIn }) {
       <p className="text-muted mb-8">
         Your all-in-one platform for navigating South Florida building permits. Sign in to track your applications, manage projects, and get guided through every step.
       </p>
-      <div className="grid sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: Building2,  label: "My Properties",   desc: "Track your properties and permit history" },
-          { icon: FileText,   label: "Apply for Permit", desc: "Step-by-step guided permit applications" },
-          { icon: FolderOpen, label: "My Projects",      desc: "Manage all your construction projects" },
+          { icon: FileText,   label: "Apply for Permit", desc: "Step-by-step guided permit applications",    to: "/ApplyForPermit" },
+          { icon: Building2,  label: "Permit Guide",     desc: "Visual guide to every permit type by zone",  to: "/PermitGuide" },
+          { icon: Building2,  label: "My Properties",    desc: "Track your properties and permit history",   to: "/MyProperties" },
+          { icon: FolderOpen, label: "My Projects",      desc: "Manage all your construction projects",      to: "/MyProjects" },
         ].map(item => (
-          <div key={item.label} className="bg-white rounded-card border border-line shadow-card p-5 text-left">
+          <Link key={item.label} to={item.to} className="bg-white rounded-card border border-line shadow-card p-5 text-left hover:border-action hover:shadow-md transition-all no-underline block">
             <div className="w-9 h-9 rounded-control flex items-center justify-center mb-3 bg-action-50">
               <item.icon className="w-4 h-4 text-action" />
             </div>
             <p className="font-bold text-sm text-ink mb-1">{item.label}</p>
             <p className="text-xs text-muted">{item.desc}</p>
-          </div>
+          </Link>
         ))}
       </div>
       <Btn variant="primary" size="lg" onClick={onSignIn}>
