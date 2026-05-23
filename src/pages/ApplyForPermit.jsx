@@ -22,33 +22,30 @@ const CITY_PERMIT_TABLES = {
   "Fort Lauderdale": "fort_lauderdale_permit_types",
 };
 
-// Progress bar showing 5 steps
+// Progress bar showing 3 steps (matches reference design)
 function ProgressBar({ currentStep }) {
-  const steps = ["Setup", "Permit Type", "Questions", "Review", "Submit"];
+  const steps = ["Setup", "Permit Type", "Questions"];
+  const displayStep = Math.min(currentStep, 3);
   return (
-    <div className="flex items-center justify-between gap-2 mb-6">
+    <div className="flex items-center justify-center gap-0 mb-6">
       {steps.map((label, idx) => {
         const stepNum = idx + 1;
-        const isComplete = stepNum < currentStep;
-        const isCurrent = stepNum === currentStep;
+        const isComplete = stepNum < displayStep;
+        const isCurrent = stepNum === displayStep;
         return (
-          <div key={stepNum} className="flex items-center flex-1">
+          <div key={stepNum} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                  isComplete
-                    ? "bg-success text-white"
-                    : isCurrent
-                    ? "bg-action text-white"
-                    : "bg-line text-muted"
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                  isComplete || isCurrent ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {isComplete ? <Check className="w-4 h-4" /> : stepNum}
               </div>
-              <span className={`text-[9px] font-semibold hidden sm:block ${isCurrent ? "text-action" : "text-muted"}`}>{label}</span>
+              <span className={`text-[10px] font-semibold mt-0.5 ${isCurrent ? "text-blue-600" : isComplete ? "text-blue-600" : "text-gray-400"}`}>{label}</span>
             </div>
             {idx < steps.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 mb-4 ${isComplete ? "bg-success" : "bg-line"}`} />
+              <div className={`w-12 h-0.5 mb-4 mx-1 ${isComplete ? "bg-blue-600" : "bg-gray-200"}`} />
             )}
           </div>
         );
@@ -57,10 +54,17 @@ function ProgressBar({ currentStep }) {
   );
 }
 
-// STEP 1: Role, City, Property
+const ROLE_OPTIONS = [
+  { key: "homeowner",       icon: "🏠", label: "Homeowner",  sub: "DIY or hiring help" },
+  { key: "contractor",      icon: "🔧", label: "Contractor", sub: "Licensed professional" },
+  { key: "private_provider",icon: "🏢", label: "Provider",   sub: "Authorized agent" },
+];
+
+// STEP 1: Role, City, Property — matches reference design
 function Step1Setup({ onNext, initialCity }) {
   const [selectedRole, setSelectedRole] = useState("homeowner");
-  const [selectedCity, setSelectedCity] = useState(initialCity || "");
+  const [selectedCity, setSelectedCity] = useState(initialCity || "Weston");
+  const [showCityPicker, setShowCityPicker] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [propertySearch, setPropertySearch] = useState("");
   const [propertyResults, setPropertyResults] = useState([]);
@@ -81,15 +85,11 @@ function Step1Setup({ onNext, initialCity }) {
         .from("properties_search_view")
         .select("folio_number, full_address, owner_name, city_name, total_sqft, year_built, beds, baths")
         .limit(10);
-
-      // Prioritize folio number if it looks like one (all digits)
       if (/^\d+$/.test(q)) {
         query = query.ilike("folio_number", `${q}%`);
       } else {
-        // Search address only to avoid timeout
         query = query.ilike("full_address", `%${q}%`);
       }
-
       const { data, error } = await query;
       if (error) throw error;
       setPropertyResults(data || []);
@@ -104,102 +104,134 @@ function Step1Setup({ onNext, initialCity }) {
   const canContinue = selectedRole && selectedCity;
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-card border border-line shadow-card p-5">
-        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">Your Role</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { key: "homeowner", label: "🏠 Homeowner" },
-            { key: "contractor", label: "🔧 Contractor" },
-            { key: "private_provider", label: "🏛 Provider" },
-          ].map(r => (
+    <div className="space-y-6">
+      {/* Section: I am applying as */}
+      <div>
+        <p className="text-sm text-gray-500 mb-3">I am applying as a:</p>
+        <div className="space-y-3">
+          {ROLE_OPTIONS.map(r => (
             <button
               key={r.key}
               onClick={() => setSelectedRole(r.key)}
-              className={`p-3 rounded-control border-2 text-center transition-all ${
-                selectedRole === r.key ? "border-action bg-action-50 text-action" : "border-line text-muted hover:border-action"
+              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 transition-all text-left ${
+                selectedRole === r.key
+                  ? "border-blue-600 bg-white"
+                  : "border-gray-200 bg-white hover:border-gray-300"
               }`}
             >
-              <p className="font-semibold text-sm">{r.label}</p>
+              <span className="text-2xl w-8 text-center">{r.icon}</span>
+              <div>
+                <p className={`font-semibold text-base ${selectedRole === r.key ? "text-gray-900" : "text-gray-800"}`}>{r.label}</p>
+                <p className="text-sm text-gray-400">{r.sub}</p>
+              </div>
             </button>
           ))}
         </div>
+        {selectedRole === "homeowner" && (
+          <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-xl px-4 py-3">
+            <span className="text-blue-500 text-sm mt-0.5">ℹ️</span>
+            <p className="text-sm text-blue-700">Homeowners can apply for most residential permits without a license if they live in the property.</p>
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-card border border-line shadow-card p-5">
-        <h3 className="font-bold text-ink mb-3 text-sm uppercase tracking-wider">
-          <MapPin className="inline w-4 h-4 mr-1.5 text-action" />
-          Select City
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {CITIES.map(city => (
-            <button
-              key={city}
-              onClick={() => setSelectedCity(city)}
-              className={`p-3 rounded-control border-2 text-left text-sm font-semibold transition-all ${
-                selectedCity === city ? "border-action bg-action-50 text-action" : "border-line text-ink hover:border-action"
-              }`}
-            >
-              {city}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-card border border-line shadow-card p-5">
-        <h3 className="font-bold text-ink mb-3 text-sm uppercase tracking-wider">Property (Optional)</h3>
-        {selectedProperty ? (
-          <div className="flex items-center justify-between p-3 rounded-control bg-success-50 border border-success">
-            <div>
-              <p className="text-sm font-semibold text-success">{selectedProperty.full_address || selectedProperty.folio_number}</p>
-              <p className="text-xs text-success">Folio: {selectedProperty.folio_number}</p>
+      {/* Section: Jurisdiction / City */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-2">Jurisdiction / City</p>
+        <div className="relative">
+          <button
+            onClick={() => setShowCityPicker(!showCityPicker)}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm font-semibold text-gray-800"
+          >
+            <MapPin className="w-4 h-4 text-gray-400" />
+            <span className="flex-1 text-left">{selectedCity || "Select a city..."}</span>
+            <span className="text-gray-400">▼</span>
+          </button>
+          {showCityPicker && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-20 overflow-hidden">
+              {CITIES.map(c => (
+                <button key={c}
+                  onClick={() => { setSelectedCity(c); setShowCityPicker(false); }}
+                  className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors ${selectedCity === c ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"}`}
+                >
+                  {c}, FL
+                </button>
+              ))}
             </div>
-            <button onClick={() => setSelectedProperty(null)} className="text-xs text-success underline">Change</button>
+          )}
+        </div>
+      </div>
+
+      {/* Section: Property Search */}
+      <div>
+        <p className="text-base font-bold text-gray-900 mb-1">Property Search</p>
+        <p className="text-sm text-gray-400 mb-3">Search by address or parcel number to auto-fill property details.</p>
+        {selectedProperty ? (
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-green-50 border border-green-200">
+            <div>
+              <p className="text-sm font-semibold text-green-700">{selectedProperty.full_address || selectedProperty.folio_number}</p>
+              <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
+            </div>
+            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-600 font-semibold underline">Change</button>
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="flex gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-gray-200 bg-white">
+              <Search className="w-4 h-4 text-gray-400 shrink-0" />
               <input
                 type="text"
                 value={propertySearch}
                 onChange={e => { setPropertySearch(e.target.value); setSearchError(""); }}
                 onKeyDown={e => e.key === "Enter" && handlePropertySearch()}
-                placeholder="Search by address or folio..."
-                className="flex-1 px-4 py-2.5 rounded-control border border-line text-sm focus:outline-none focus:border-action"
+                placeholder="123 Modern Ave, Suite 4..."
+                className="flex-1 text-sm focus:outline-none text-gray-800 bg-transparent"
               />
-              <button
-                onClick={handlePropertySearch}
-                disabled={searchLoading}
-                className="px-4 py-2.5 rounded-control bg-action text-white text-sm font-bold disabled:opacity-60 hover:bg-action-hover transition-colors"
-              >
-                {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              </button>
             </div>
-            {searchError && <p className="text-xs text-warning bg-warning-50 px-3 py-2 rounded-control">{searchError}</p>}
+            <button
+              onClick={handlePropertySearch}
+              disabled={searchLoading}
+              className="w-full py-3.5 rounded-2xl bg-blue-600 text-white text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Search
+            </button>
+            {searchError && <p className="text-xs text-amber-600 bg-amber-50 px-4 py-2 rounded-xl">{searchError}</p>}
             {propertyResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto space-y-0.5 border border-line rounded-control">
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-2xl overflow-hidden">
                 {propertyResults.map(p => (
                   <button
                     key={p.folio_number}
                     onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-action-50 border-b border-line last:border-0 transition-colors"
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
                   >
-                    <p className="font-semibold text-sm text-ink">{p.full_address || p.folio_number}</p>
-                    <p className="text-xs text-muted">{p.city_name} · {p.folio_number}</p>
+                    <p className="font-semibold text-sm text-gray-800">{p.full_address || p.folio_number}</p>
+                    <p className="text-xs text-gray-400">{p.city_name} · {p.folio_number}</p>
                   </button>
                 ))}
+              </div>
+            )}
+            {/* Map placeholder */}
+            {!propertyResults.length && !searchError && (
+              <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 flex flex-col items-center justify-center h-36">
+                <div className="w-full h-full relative">
+                  <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=60" alt="Map" className="w-full h-full object-cover opacity-50" />
+                  <div className="absolute inset-0 flex items-end justify-center pb-3">
+                    <p className="text-xs text-gray-500 font-medium text-center bg-white/80 rounded-lg px-3 py-1">Enter an address to see property details and zoning constraints.</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <Btn variant="primary" size="lg" className="w-full justify-center"
+      <button
         onClick={() => onNext({ role: selectedRole, city: selectedCity, property: selectedProperty })}
         disabled={!canContinue}
+        className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-base disabled:opacity-40 flex items-center justify-center gap-2"
       >
         Continue <ArrowRight className="w-4 h-4" />
-      </Btn>
+      </button>
     </div>
   );
 }
@@ -760,17 +792,29 @@ export default function ApplyForPermit() {
     );
   }
 
+  const stepTitles = ["Basic Setup", "Permit Type", "Questions", "Review", "Submit"];
+
   return (
-    <div className="min-h-screen bg-surface pb-8">
-      <PageHeader
-        eyebrow="Apply for Permit"
-        title="New Permit Application"
-        subtitle="We'll guide you through each step — from selecting your permit type to submitting your application."
-      />
-      <div className="max-w-3xl mx-auto px-4 pt-5">
-        <div className="bg-white rounded-card border border-line shadow-card p-4 mb-5">
-          <ProgressBar currentStep={currentStep} />
+    <div className="min-h-screen bg-gray-50 pb-12">
+      {/* Mobile header */}
+      <div className="bg-white px-5 pt-10 pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-5">
+          {currentStep > 1 ? (
+            <button onClick={() => setCurrentStep(s => s - 1)} className="flex items-center gap-1 text-gray-600 text-sm font-medium">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          ) : (
+            <div className="w-8" />
+          )}
+          <span className="font-bold text-blue-700 text-base">OpenPermit</span>
+          <div className="w-8" />
         </div>
+        <ProgressBar currentStep={currentStep} />
+        <h1 className="text-2xl font-extrabold text-gray-900 mt-1">{stepTitles[currentStep - 1]}</h1>
+        {currentStep === 1 && <p className="text-sm text-gray-400 mt-1">Tell us who you are and where the work will be performed.</p>}
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 pt-6">
         {currentStep === 1 && <Step1Setup onNext={handleStep1} initialCity={stepData.city} />}
         {currentStep === 2 && <Step2PermitType city={stepData.city} onNext={handleStep2} onBack={() => setCurrentStep(1)} />}
         {currentStep === 3 && (
