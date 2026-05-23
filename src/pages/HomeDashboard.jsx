@@ -245,6 +245,78 @@ export default function HomeDashboard() {
         {/* Quick Actions */}
         <QuickActions />
 
+        {/* Features Grid */}
+        <div>
+          <h2 className="font-bold text-gray-900 text-base mb-3">Features & Tools</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Link to="/ApplyForPermit"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Permits</p>
+                <p className="text-sm font-bold text-gray-900">Apply for Permit</p>
+              </div>
+            </Link>
+
+            <Link to="/FeeCalculator"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Calculate</p>
+                <p className="text-sm font-bold text-gray-900">Fee Calculator</p>
+              </div>
+            </Link>
+
+            <Link to="/PermitGuide"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                <User className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Guide</p>
+                <p className="text-sm font-bold text-gray-900">Permit Guide</p>
+              </div>
+            </Link>
+
+            <Link to="/MyProperties"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+                <Search className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Search</p>
+                <p className="text-sm font-bold text-gray-900">Find Property</p>
+              </div>
+            </Link>
+
+            <Link to="/BuildingCodes"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Codes</p>
+                <p className="text-sm font-bold text-gray-900">Building Codes</p>
+              </div>
+            </Link>
+
+            <Link to="/MyProjects"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                <FolderOpen className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase">Manage</p>
+                <p className="text-sm font-bold text-gray-900">My Projects</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+
         {/* Upcoming Applications */}
         {currentUser && activeGuides.length > 0 && (
           <div>
