@@ -1,17 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
-import { ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2, MapPin, Search, Building2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import PageHeader from "@/components/ui/PageHeader";
-import Btn from "@/components/ui/Btn";
-const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2,
+  Search, Home, Wrench, Shield, ExternalLink, AlertTriangle, FileText
+} from "lucide-react";
+
+// ── Constants ──────────────────────────────────────────────────────────
+const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale", "Sunrise"];
+
 const CITY_PORTALS = {
   "Weston": "https://www.westonfl.org/Permits",
   "Hollywood": "https://www.hollywoodfl.org/permits",
   "Coral Springs": "https://www.coralsprings.org/permits",
   "Cooper City": "https://www.coopercityfl.org/permits",
   "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov",
+  "Sunrise": "https://www.sunrisefl.gov/permits",
 };
 
 const CITY_PERMIT_TABLES = {
@@ -20,32 +25,35 @@ const CITY_PERMIT_TABLES = {
   "Coral Springs": "coral_springs_permit_types",
   "Cooper City": "cooper_city_permit_types",
   "Fort Lauderdale": "fort_lauderdale_permit_types",
+  "Sunrise": "sunrise_permit_types",
 };
 
-// Progress bar showing 3 steps (matches reference design)
+const STEP_LABELS = ["Setup", "Permit Type", "Application", "Review", "Submit"];
+
+// ── Progress Bar ───────────────────────────────────────────────────────
 function ProgressBar({ currentStep }) {
-  const steps = ["Setup", "Permit Type", "Questions"];
-  const displayStep = Math.min(currentStep, 3);
   return (
-    <div className="flex items-center justify-center gap-0 mb-6">
-      {steps.map((label, idx) => {
+    <div className="flex items-center justify-center gap-0 py-4">
+      {STEP_LABELS.map((label, idx) => {
         const stepNum = idx + 1;
-        const isComplete = stepNum < displayStep;
-        const isCurrent = stepNum === displayStep;
+        const isComplete = stepNum < currentStep;
+        const isCurrent = stepNum === currentStep;
         return (
           <div key={stepNum} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                  isComplete || isCurrent ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {isComplete ? <Check className="w-4 h-4" /> : stepNum}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
+                isComplete ? "bg-teal-500 border-teal-500 text-white" :
+                isCurrent ? "bg-[#004ac6] border-[#004ac6] text-white" :
+                "bg-white border-gray-300 text-gray-400"
+              }`}>
+                {isComplete ? <Check className="w-3.5 h-3.5" /> : stepNum}
               </div>
-              <span className={`text-[10px] font-semibold mt-0.5 ${isCurrent ? "text-blue-600" : isComplete ? "text-blue-600" : "text-gray-400"}`}>{label}</span>
+              <span className={`text-[9px] font-semibold whitespace-nowrap ${
+                isCurrent ? "text-[#004ac6]" : isComplete ? "text-teal-500" : "text-gray-400"
+              }`}>{label}</span>
             </div>
-            {idx < steps.length - 1 && (
-              <div className={`w-12 h-0.5 mb-4 mx-1 ${isComplete ? "bg-blue-600" : "bg-gray-200"}`} />
+            {idx < STEP_LABELS.length - 1 && (
+              <div className={`w-8 sm:w-12 h-0.5 mb-4 ${isComplete ? "bg-teal-500" : "bg-gray-200"}`} />
             )}
           </div>
         );
@@ -54,235 +62,331 @@ function ProgressBar({ currentStep }) {
   );
 }
 
-const ROLE_OPTIONS = [
-  { key: "homeowner",       icon: "🏠", label: "Homeowner",  sub: "DIY or hiring help" },
-  { key: "contractor",      icon: "🔧", label: "Contractor", sub: "Licensed professional" },
-  { key: "private_provider",icon: "🏢", label: "Provider",   sub: "Authorized agent" },
-];
+// ── Helpers ────────────────────────────────────────────────────────────
+function calcFee(feeRule, answers) {
+  if (!feeRule) return null;
+  const tech = feeRule.technology_admin_fee || 0;
+  const jobVal = parseFloat(answers?.job_valuation || answers?.construction_cost || 0);
+  const linFt = parseFloat(answers?.linear_feet || 0);
+  switch (feeRule.calc_type) {
+    case "flat": return (feeRule.flat_fee || 0) + tech;
+    case "flat_plus_pct": return (feeRule.base_fee || 0) + ((feeRule.rate_percentage || 0) / 100 * jobVal) + tech;
+    case "flat_plus_linear": return (feeRule.base_fee || 0) + (feeRule.rate_per_linear_ft || 0) * Math.max(0, linFt - (feeRule.base_includes_ft || 0)) + tech;
+    default: return (feeRule.flat_fee || feeRule.base_fee || 0) + tech;
+  }
+}
 
-// STEP 1: Role, City, Property — matches reference design
-function Step1Setup({ onNext, initialCity }) {
+function getDocumentList(permitName) {
+  const n = (permitName || "").toLowerCase();
+  if (n.includes("roof")) return ["Signed & Sealed Plans", "Florida Product Approval / NOA", "Contractor License", "Certificate of Insurance", "HOA Approval Letter (if applicable)"];
+  if (n.includes("pool")) return ["Pool Construction Plans", "Contractor License", "Certificate of Insurance", "Pool Barrier Plan", "HOA Approval Letter (if applicable)"];
+  if (n.includes("screen") || n.includes("enclosure")) return ["Enclosure Plans", "NOA / Product Approval", "Contractor License", "Certificate of Insurance", "HOA Approval Letter (if applicable)"];
+  return ["Plans / Drawings", "Contractor License", "Certificate of Insurance"];
+}
+
+function hasGuidedQuestions(permitName, questionsAvailable) {
+  const base = (permitName || "").split("/")[0].trim().toLowerCase();
+  return Array.from(questionsAvailable).some(q =>
+    q.toLowerCase().includes(base) || base.includes(q.split("/")[0].trim().toLowerCase())
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────
+export default function ApplyForPermit() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // ── Shared wizard state ──
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState("homeowner");
-  const [selectedCity, setSelectedCity] = useState(initialCity || "Weston");
-  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [selectedCity, setSelectedCity] = useState("Weston");
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedPermit, setSelectedPermit] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [feeRule, setFeeRule] = useState(null);
+  const [guideId, setGuideId] = useState(null);
+  const [portalChecked, setPortalChecked] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [confirmationNumber, setConfirmationNumber] = useState("");
+
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u || null)).catch(() => {}).finally(() => setAuthLoading(false));
+  }, []);
+
+  const resetAll = () => {
+    setCurrentStep(1); setSelectedRole("homeowner"); setSelectedCity("Weston");
+    setSelectedProperty(null); setSelectedPermit(null); setQuestions([]); setAnswers({});
+    setCurrentSectionIndex(0); setFeeRule(null); setGuideId(null); setPortalChecked({});
+    setSubmitting(false); setSubmitError(""); setSubmitted(false); setConfirmationNumber("");
+  };
+
+  const calculatedFee = calcFee(feeRule, answers);
+
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FAF8FF" }}>
+      <Loader2 className="w-6 h-6 animate-spin text-[#004ac6]" />
+    </div>
+  );
+
+  const stepTitles = ["Setup", "Select Permit Type", "Application Questions", "Review & Prepare", "Guided Submission"];
+
+  return (
+    <div className="min-h-screen pb-16" style={{ background: "#F5F6FA" }}>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 pt-6 pb-2">
+        <div className="max-w-2xl mx-auto">
+          <ProgressBar currentStep={currentStep} />
+          <h1 className="text-xl font-extrabold text-gray-900 mt-1" style={{ fontFamily: "'Manrope', system-ui, sans-serif" }}>
+            {stepTitles[currentStep - 1]}
+          </h1>
+          {currentStep === 1 && <p className="text-sm text-gray-400 mt-0.5">Tell us who you are and where the work will be performed.</p>}
+          {currentStep === 2 && <p className="text-sm text-gray-400 mt-0.5">Select the type of permit you need for <strong>{selectedCity}</strong>.</p>}
+          {currentStep === 3 && <p className="text-sm text-gray-400 mt-0.5">Answer questions to prepare your application.</p>}
+          {currentStep === 4 && <p className="text-sm text-gray-400 mt-0.5">Review your answers, fee estimate, and required documents.</p>}
+          {currentStep === 5 && <p className="text-sm text-gray-400 mt-0.5">Open the city portal and enter each field as you go.</p>}
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 pt-5">
+        {currentStep === 1 && (
+          <Step1
+            selectedRole={selectedRole} setSelectedRole={setSelectedRole}
+            selectedCity={selectedCity} setSelectedCity={setSelectedCity}
+            selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty}
+            onNext={() => setCurrentStep(2)}
+          />
+        )}
+        {currentStep === 2 && (
+          <Step2
+            selectedCity={selectedCity}
+            selectedPermit={selectedPermit} setSelectedPermit={setSelectedPermit}
+            onBack={() => setCurrentStep(1)}
+            onNext={() => setCurrentStep(3)}
+          />
+        )}
+        {currentStep === 3 && (
+          <Step3
+            selectedCity={selectedCity}
+            selectedPermit={selectedPermit}
+            selectedProperty={selectedProperty}
+            currentUser={currentUser}
+            questions={questions} setQuestions={setQuestions}
+            answers={answers} setAnswers={setAnswers}
+            currentSectionIndex={currentSectionIndex} setCurrentSectionIndex={setCurrentSectionIndex}
+            onBack={() => setCurrentStep(2)}
+            onNext={() => setCurrentStep(4)}
+          />
+        )}
+        {currentStep === 4 && (
+          <Step4
+            selectedCity={selectedCity}
+            selectedPermit={selectedPermit}
+            questions={questions}
+            answers={answers}
+            feeRule={feeRule} setFeeRule={setFeeRule}
+            calculatedFee={calculatedFee}
+            onBack={() => setCurrentStep(3)}
+            onNext={() => setCurrentStep(5)}
+          />
+        )}
+        {currentStep === 5 && (
+          <Step5
+            selectedRole={selectedRole}
+            selectedCity={selectedCity}
+            selectedPermit={selectedPermit}
+            selectedProperty={selectedProperty}
+            questions={questions}
+            answers={answers}
+            feeRule={feeRule}
+            calculatedFee={calculatedFee}
+            currentUser={currentUser}
+            guideId={guideId} setGuideId={setGuideId}
+            portalChecked={portalChecked} setPortalChecked={setPortalChecked}
+            submitting={submitting} setSubmitting={setSubmitting}
+            submitError={submitError} setSubmitError={setSubmitError}
+            submitted={submitted} setSubmitted={setSubmitted}
+            confirmationNumber={confirmationNumber} setConfirmationNumber={setConfirmationNumber}
+            onBack={() => setCurrentStep(4)}
+            onReset={resetAll}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// STEP 1 — SETUP
+// ══════════════════════════════════════════════════════════════════════
+function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, selectedProperty, setSelectedProperty, onNext }) {
   const [propertySearch, setPropertySearch] = useState("");
   const [propertyResults, setPropertyResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [showResults, setShowResults] = useState(false);
 
-  const handlePropertySearch = async () => {
-    if (!propertySearch.trim() || propertySearch.length < 2) {
-      setSearchError("Enter at least 2 characters");
-      return;
-    }
-    setSearchLoading(true);
-    setSearchError("");
-    setPropertyResults([]);
+  const ROLES = [
+    { key: "homeowner", icon: Home, label: "Homeowner", sub: "Managing your own home or property" },
+    { key: "contractor", icon: Wrench, label: "Contractor", sub: "Licensed contractor pulling permits" },
+    { key: "private_provider", icon: Shield, label: "Private Provider", sub: "FL Statute 553.791 provider" },
+  ];
+
+  const handleSearch = async () => {
+    const q = propertySearch.trim();
+    if (q.length < 2) { setSearchError("Enter at least 2 characters"); return; }
+    setSearchLoading(true); setSearchError(""); setPropertyResults([]); setShowResults(false);
     try {
-      const q = propertySearch.trim();
-      let query = supabase
+      const { data, error } = await supabase
         .from("properties_search_view")
-        .select("folio_number, full_address, owner_name, city_name, total_sqft, year_built, beds, baths")
+        .select("folio_number,full_address,owner_name,city_name,homestead_flag,total_sqft,year_built,beds,baths,zip_code")
+        .or(`folio_number.ilike.%${q}%,full_address.ilike.%${q}%,owner_name.ilike.%${q}%`)
         .limit(10);
-      if (/^\d+$/.test(q)) {
-        query = query.ilike("folio_number", `${q}%`);
-      } else {
-        query = query.ilike("full_address", `%${q}%`);
-      }
-      const { data, error } = await query;
       if (error) throw error;
       setPropertyResults(data || []);
-      if (!data || data.length === 0) setSearchError("No properties found");
+      setShowResults(true);
+      if (!data || data.length === 0) setSearchError("No properties found. Try a different address or folio number.");
     } catch (err) {
-      setSearchError("Search failed—try a shorter query");
+      setSearchError("Search failed — try a shorter query.");
     } finally {
       setSearchLoading(false);
     }
   };
 
-  const canContinue = selectedRole && selectedCity;
-
   return (
     <div className="space-y-6">
-      {/* Section: I am applying as */}
-      <div>
-        <p className="text-sm text-gray-500 mb-3">I am applying as a:</p>
-        <div className="space-y-3">
-          {ROLE_OPTIONS.map(r => (
-            <button
-              key={r.key}
-              onClick={() => setSelectedRole(r.key)}
-              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 transition-all text-left ${
-                selectedRole === r.key
-                  ? "border-blue-600 bg-white"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-            >
-              <span className="text-2xl w-8 text-center">{r.icon}</span>
-              <div>
-                <p className={`font-semibold text-base ${selectedRole === r.key ? "text-gray-900" : "text-gray-800"}`}>{r.label}</p>
-                <p className="text-sm text-gray-400">{r.sub}</p>
-              </div>
+      {/* Role */}
+      <Card>
+        <SectionLabel>I am applying as a</SectionLabel>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+          {ROLES.map(r => {
+            const Icon = r.icon;
+            const active = selectedRole === r.key;
+            return (
+              <button key={r.key} onClick={() => setSelectedRole(r.key)}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-center transition-all ${active ? "border-[#004ac6] bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
+                <Icon className={`w-6 h-6 ${active ? "text-[#004ac6]" : "text-gray-400"}`} />
+                <div>
+                  <p className={`font-semibold text-sm ${active ? "text-[#004ac6]" : "text-gray-800"}`}>{r.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{r.sub}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {selectedRole === "homeowner" && (
+          <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-lg px-3 py-2.5">
+            <span className="text-blue-500 text-sm">ℹ️</span>
+            <p className="text-xs text-blue-700">Homeowners can apply for most residential permits without a license if they live in the property.</p>
+          </div>
+        )}
+      </Card>
+
+      {/* City */}
+      <Card>
+        <SectionLabel>Jurisdiction / City</SectionLabel>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+          {CITIES.map(c => (
+            <button key={c} onClick={() => setSelectedCity(c)}
+              className={`py-2.5 px-3 rounded-lg text-sm font-medium border-2 transition-all ${selectedCity === c ? "bg-[#004ac6] border-[#004ac6] text-white" : "border-gray-200 text-gray-700 hover:border-[#004ac6] hover:text-[#004ac6]"}`}>
+              {c}
             </button>
           ))}
         </div>
-        {selectedRole === "homeowner" && (
-          <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-xl px-4 py-3">
-            <span className="text-blue-500 text-sm mt-0.5">ℹ️</span>
-            <p className="text-sm text-blue-700">Homeowners can apply for most residential permits without a license if they live in the property.</p>
-          </div>
-        )}
-      </div>
+      </Card>
 
-      {/* Section: Jurisdiction / City */}
-      <div>
-        <p className="text-sm font-semibold text-gray-700 mb-2">Jurisdiction / City</p>
-        <div className="relative">
-          <button
-            onClick={() => setShowCityPicker(!showCityPicker)}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm font-semibold text-gray-800"
-          >
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <span className="flex-1 text-left">{selectedCity || "Select a city..."}</span>
-            <span className="text-gray-400">▼</span>
-          </button>
-          {showCityPicker && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-20 overflow-hidden">
-              {CITIES.map(c => (
-                <button key={c}
-                  onClick={() => { setSelectedCity(c); setShowCityPicker(false); }}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors ${selectedCity === c ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"}`}
-                >
-                  {c}, FL
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Property Search */}
+      <Card>
+        <SectionLabel>Property <span className="text-gray-400 font-normal">(Optional)</span></SectionLabel>
+        <p className="text-xs text-gray-400 mt-0.5 mb-3">Selecting a property will auto-fill your application</p>
 
-      {/* Section: Property Search */}
-      <div>
-        <p className="text-base font-bold text-gray-900 mb-1">Property Search</p>
-        <p className="text-sm text-gray-400 mb-3">Search by address or parcel number to auto-fill property details.</p>
         {selectedProperty ? (
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-green-50 border border-green-200">
+          <div className="flex items-start justify-between p-3 rounded-xl bg-teal-50 border border-teal-200">
             <div>
-              <p className="text-sm font-semibold text-green-700">{selectedProperty.full_address || selectedProperty.folio_number}</p>
-              <p className="text-xs text-green-600">Folio: {selectedProperty.folio_number}</p>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <CheckCircle2 className="w-4 h-4 text-teal-500" />
+                <p className="text-sm font-semibold text-teal-800">{selectedProperty.full_address}</p>
+              </div>
+              <p className="text-xs text-teal-600">{selectedProperty.owner_name} · Folio: {selectedProperty.folio_number}</p>
             </div>
-            <button onClick={() => setSelectedProperty(null)} className="text-xs text-green-600 font-semibold underline">Change</button>
+            <button onClick={() => { setSelectedProperty(null); setPropertyResults([]); setShowResults(false); setPropertySearch(""); }}
+              className="text-xs text-teal-600 font-semibold underline ml-3 shrink-0">Clear</button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-gray-200 bg-white">
-              <Search className="w-4 h-4 text-gray-400 shrink-0" />
-              <input
-                type="text"
-                value={propertySearch}
-                onChange={e => { setPropertySearch(e.target.value); setSearchError(""); }}
-                onKeyDown={e => e.key === "Enter" && handlePropertySearch()}
-                placeholder="123 Modern Ave, Suite 4..."
-                className="flex-1 text-sm focus:outline-none text-gray-800 bg-transparent"
-              />
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5 bg-white focus-within:border-[#004ac6]">
+                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <input
+                  type="text"
+                  value={propertySearch}
+                  onChange={e => { setPropertySearch(e.target.value); setSearchError(""); }}
+                  onKeyDown={e => e.key === "Enter" && handleSearch()}
+                  placeholder="Address, owner name, or folio #"
+                  className="flex-1 text-sm focus:outline-none bg-transparent text-gray-800"
+                />
+              </div>
+              <button onClick={handleSearch} disabled={searchLoading}
+                className="px-4 py-2.5 rounded-lg bg-[#004ac6] text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-1.5 shrink-0">
+                {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+              </button>
             </div>
-            <button
-              onClick={handlePropertySearch}
-              disabled={searchLoading}
-              className="w-full py-3.5 rounded-2xl bg-blue-600 text-white text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              Search
-            </button>
-            {searchError && <p className="text-xs text-amber-600 bg-amber-50 px-4 py-2 rounded-xl">{searchError}</p>}
-            {propertyResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-2xl overflow-hidden">
+            {searchError && <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">{searchError}</p>}
+            {showResults && propertyResults.length > 0 && (
+              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto shadow-sm">
                 {propertyResults.map(p => (
-                  <button
-                    key={p.folio_number}
-                    onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
-                  >
-                    <p className="font-semibold text-sm text-gray-800">{p.full_address || p.folio_number}</p>
-                    <p className="text-xs text-gray-400">{p.city_name} · {p.folio_number}</p>
+                  <button key={p.folio_number} onClick={() => { setSelectedProperty(p); setShowResults(false); setPropertyResults([]); setPropertySearch(""); }}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors">
+                    <p className="font-semibold text-sm text-gray-900">{p.full_address}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{p.owner_name} · {p.folio_number}</p>
                   </button>
                 ))}
               </div>
             )}
-            {/* Map placeholder */}
-            {!propertyResults.length && !searchError && (
-              <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 flex flex-col items-center justify-center h-36">
-                <div className="w-full h-full relative">
-                  <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=60" alt="Map" className="w-full h-full object-cover opacity-50" />
-                  <div className="absolute inset-0 flex items-end justify-center pb-3">
-                    <p className="text-xs text-gray-500 font-medium text-center bg-white/80 rounded-lg px-3 py-1">Enter an address to see property details and zoning constraints.</p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
-      </div>
+      </Card>
 
-      <button
-        onClick={() => onNext({ role: selectedRole, city: selectedCity, property: selectedProperty })}
-        disabled={!canContinue}
-        className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-base disabled:opacity-40 flex items-center justify-center gap-2"
-      >
-        Continue <ArrowRight className="w-4 h-4" />
-      </button>
+      <PrimaryButton onClick={onNext} disabled={!selectedRole || !selectedCity}>
+        Continue to Permit Type <ArrowRight className="w-4 h-4" />
+      </PrimaryButton>
     </div>
   );
 }
 
-// STEP 2: Permit Type
-function Step2PermitType({ city, onNext, onBack }) {
+// ══════════════════════════════════════════════════════════════════════
+// STEP 2 — PERMIT TYPE
+// ══════════════════════════════════════════════════════════════════════
+function Step2({ selectedCity, selectedPermit, setSelectedPermit, onBack, onNext }) {
   const [permitTypes, setPermitTypes] = useState([]);
-  const [availableQuestionTypes, setAvailableQuestionTypes] = useState(new Set());
-  const [selectedPermit, setSelectedPermit] = useState(null);
-  const [loadingPermits, setLoadingPermits] = useState(true);
+  const [questionsAvailable, setQuestionsAvailable] = useState(new Set());
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadPermits = async () => {
-      setLoadingPermits(true);
-      setError("");
+    const load = async () => {
+      setLoading(true); setError("");
       try {
-        const tableName = CITY_PERMIT_TABLES[city];
-        const { data, error: err } = await supabase
-          .from(tableName)
-          .select("id, name, category, description, typical_timeline")
-          .order("category");
-        if (err) throw err;
-        setPermitTypes(data || []);
-
-        // Load available questions to show availability badges
-        const { data: questionData } = await supabase
-          .from("city_application_questions")
-          .select("permit_type_name")
-          .eq("city_name", city)
-          .eq("is_active", true);
-        
-        if (questionData) {
-          const typeNames = new Set(questionData.map(q => q.permit_type_name?.toLowerCase() || ""));
-          setAvailableQuestionTypes(typeNames);
-        }
+        const table = CITY_PERMIT_TABLES[selectedCity];
+        if (!table) throw new Error("City not configured");
+        const [{ data: pts, error: e1 }, { data: qs }] = await Promise.all([
+          supabase.from(table).select("id,name,category,description,typical_timeline").order("category"),
+          supabase.from("city_application_questions").select("permit_type_name").eq("city_name", selectedCity).eq("is_active", true),
+        ]);
+        if (e1) throw e1;
+        setPermitTypes(pts || []);
+        setQuestionsAvailable(new Set((qs || []).map(q => q.permit_type_name || "")));
       } catch (err) {
         setError(err.message);
-        setPermitTypes([]);
       } finally {
-        setLoadingPermits(false);
+        setLoading(false);
       }
     };
-    loadPermits();
-  }, [city]);
-
-  const hasQuestions = (permitName) => {
-    const name = permitName.toLowerCase();
-    const base = name.split("/")[0].trim();
-    return Array.from(availableQuestionTypes).some(qt => qt.includes(base) || base.includes(qt.split(" ")[0]));
-  };
+    load();
+  }, [selectedCity]);
 
   const grouped = {};
   permitTypes.forEach(pt => {
@@ -292,131 +396,99 @@ function Step2PermitType({ city, onNext, onBack }) {
   });
 
   return (
-    <div className="space-y-4">
-      {loadingPermits ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-        </div>
+    <div className="space-y-5">
+      {loading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#004ac6]" /></div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>
-      ) : permitTypes.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-          <p className="text-muted">No permit types available</p>
-        </div>
       ) : (
-        <div className="space-y-5">
-          {Object.entries(grouped).map(([cat, types]) => (
-            <div key={cat}>
-              <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">
-                {cat}
-              </p>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {types.map(pt => (
-                  <button
-                    key={pt.id}
-                    onClick={() => setSelectedPermit(pt)}
-                    className={`text-left p-4 rounded-control border-2 transition-all ${
-                      selectedPermit?.id === pt.id ? "border-action bg-action-50" : "border-line bg-white hover:border-action"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className={`font-semibold text-sm ${selectedPermit?.id === pt.id ? "text-action" : "text-ink"}`}>
-                        {pt.name}
-                      </p>
-                      {hasQuestions(pt.name) ? (
-                        <span className="text-xs px-2 py-1 bg-success-50 text-success rounded-full font-semibold whitespace-nowrap">
-                          ✓ Ready
-                        </span>
-                      ) : (
-                        <span className="text-xs px-2 py-1 bg-surface text-muted rounded-full whitespace-nowrap">
-                          Soon
-                        </span>
-                      )}
+        Object.entries(grouped).map(([cat, types]) => (
+          <div key={cat}>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{cat}</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {types.map(pt => {
+                const guided = hasGuidedQuestions(pt.name, questionsAvailable);
+                const active = selectedPermit?.id === pt.id;
+                return (
+                  <button key={pt.id} onClick={() => setSelectedPermit(pt)}
+                    className={`text-left p-4 rounded-xl border-2 transition-all ${active ? "border-[#004ac6] bg-blue-50" : "border-gray-200 bg-white hover:border-[#004ac6]"}`}>
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <p className={`font-semibold text-sm ${active ? "text-[#004ac6]" : "text-gray-900"}`}>{pt.name}</p>
+                      {guided
+                        ? <span className="text-[10px] px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-full font-semibold whitespace-nowrap">✓ Guided</span>
+                        : <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-400 rounded-full whitespace-nowrap">Coming soon</span>}
                     </div>
-                    {pt.description && <p className="text-xs text-muted mt-1 line-clamp-2">{pt.description}</p>}
-                    {pt.typical_timeline && <p className="text-xs text-action mt-2">⏱ {pt.typical_timeline}</p>}
+                    {pt.description && <p className="text-xs text-gray-500 line-clamp-2">{pt.description}</p>}
+                    {pt.typical_timeline && <p className="text-xs text-[#004ac6] mt-1.5">⏱ {pt.typical_timeline}</p>}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+        ))
       )}
-
-      <div className="flex gap-3">
-        <Btn variant="secondary" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Btn>
-        <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ permit: selectedPermit })} disabled={!selectedPermit}>
-          Continue <ArrowRight className="w-4 h-4" />
-        </Btn>
-      </div>
+      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!selectedPermit} nextLabel="Continue to Application →" />
     </div>
   );
 }
 
-// STEP 3: Questions
-function Step3Questions({ city, permit, property, onNext, onBack }) {
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
+// ══════════════════════════════════════════════════════════════════════
+// STEP 3 — APPLICATION Q&A
+// ══════════════════════════════════════════════════════════════════════
+function Step3({ selectedCity, selectedPermit, selectedProperty, currentUser, questions, setQuestions, answers, setAnswers, currentSectionIndex, setCurrentSectionIndex, onBack, onNext }) {
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
 
   useEffect(() => {
-    const loadQuestions = async () => {
-      setLoadingQuestions(true);
-      setError("");
+    const load = async () => {
+      setLoading(true); setError("");
       try {
-        const permitBase = permit.name.split("/")[0].trim();
+        const base = selectedPermit.name.split("/")[0].trim();
         const { data, error: err } = await supabase
           .from("city_application_questions")
           .select("*")
-          .eq("city_name", city)
-          .ilike("permit_type_name", `%${permitBase}%`)
+          .eq("city_name", selectedCity)
+          .ilike("permit_type_name", `%${base}%`)
           .eq("is_active", true)
           .order("display_order");
         if (err) throw err;
         const loaded = data || [];
         setQuestions(loaded);
+        setCurrentSectionIndex(0);
 
-        // Auto-prefill property-related answers from selected property
-        if (property) {
-          const prefilled = {};
-          const addr = [
-            property.full_address ||
-            [property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION, property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE]
-              .filter(Boolean).join(" ")
-          ].filter(Boolean)[0] || "";
-
-          loaded.forEach(q => {
-            const key = (q.question_key || "").toLowerCase();
-            const text = (q.question_text || "").toLowerCase();
-            if ((key.includes("address") || text.includes("address")) && addr) {
-              prefilled[q.question_key] = addr;
-            } else if ((key.includes("folio") || key.includes("parcel") || text.includes("folio") || text.includes("parcel")) && property.folio_number) {
-              prefilled[q.question_key] = property.folio_number;
-            } else if ((key.includes("owner") && key.includes("name") || text.includes("owner name") || text.includes("property owner")) && (property.NAME_LINE_1 || property.owner_name)) {
-              prefilled[q.question_key] = property.NAME_LINE_1 || property.owner_name || "";
-            } else if ((key.includes("sqft") || key.includes("square") || text.includes("square feet") || text.includes("sq ft")) && property.BLDG_TOT_SQ_FOOTAGE) {
-              prefilled[q.question_key] = String(property.BLDG_TOT_SQ_FOOTAGE);
-            } else if ((key.includes("year_built") || text.includes("year built")) && property.BLDG_YEAR_BUILT) {
-              prefilled[q.question_key] = String(property.BLDG_YEAR_BUILT);
-            }
-          });
-          if (Object.keys(prefilled).length > 0) {
-            setAnswers(prefilled);
-          }
+        // Auto-prefill
+        const prefillMap = {
+          "property.full_address": selectedProperty?.full_address,
+          "property.FOLIO_NUMBER": selectedProperty?.folio_number,
+          "property.NAME_LINE_1": selectedProperty?.owner_name,
+          "property.HOMESTEAD_FLAG": selectedProperty?.homestead_flag === "Y" ? "Yes" : selectedProperty?.homestead_flag === "N" ? "No" : null,
+          "property.BLDG_TOT_SQ_FOOTAGE": selectedProperty?.total_sqft?.toString(),
+          "project.estimated_cost": null,
+          "project.description": null,
+          "project.square_footage": selectedProperty?.total_sqft?.toString(),
+          "user.email": currentUser?.email || null,
+          "user.phone": null,
+          "contractor.company_name": null,
+          "contractor.license_number": null,
+          "contractor.phone": null,
+          "contractor.insurance_expiration": null,
+        };
+        const prefilled = {};
+        loaded.forEach(q => {
+          const val = prefillMap[q.prefill_from];
+          if (q.prefill_from && val) prefilled[q.question_key] = val;
+        });
+        if (Object.keys(prefilled).length > 0) {
+          setAnswers(prev => ({ ...prefilled, ...prev }));
         }
       } catch (err) {
         setError(err.message);
-        setQuestions([]);
       } finally {
-        setLoadingQuestions(false);
+        setLoading(false);
       }
     };
-    loadQuestions();
-  }, [city, permit.name]);
+    load();
+  }, [selectedCity, selectedPermit?.name]);
 
   const grouped = {};
   questions.forEach(q => {
@@ -424,205 +496,151 @@ function Step3Questions({ city, permit, property, onNext, onBack }) {
     if (!grouped[sec]) grouped[sec] = [];
     grouped[sec].push(q);
   });
-
   const sections = Object.entries(grouped);
-  const currentSection = sections[currentSectionIdx];
 
-  if (loadingQuestions) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>;
-  }
+  if (loading) return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#004ac6]" /></div>;
+  if (error) return <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>;
 
   if (questions.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <p className="text-action text-sm leading-relaxed">
-            Guided questions are not yet available for <strong>{permit.name}</strong> in <strong>{city}</strong>. You can continue to review your application summary and we'll guide you through the city portal submission.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Btn variant="secondary" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4" /> Back
-          </Btn>
-          <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ questions, answers })}>
-            Continue to Review <ArrowRight className="w-4 h-4" />
-          </Btn>
-        </div>
+        <Card>
+          <div className="flex items-start gap-3">
+            <span className="text-blue-400 mt-0.5">ℹ️</span>
+            <p className="text-sm text-blue-800">Guided questions are not yet available for <strong>{selectedPermit.name}</strong> in <strong>{selectedCity}</strong>. You can still continue to review and submit your application.</p>
+          </div>
+        </Card>
+        <NavButtons onBack={onBack} onNext={onNext} nextLabel="Continue to Review →" />
       </div>
     );
   }
 
-  if (!currentSection) {
-    return <div className="text-center py-8 text-gray-600">No questions found</div>;
-  }
-
-  const [sectionName, sectionQuestions] = currentSection;
+  const [sectionName, sectionQuestions] = sections[currentSectionIndex] || [];
+  const visibleQuestions = (sectionQuestions || []).filter(q =>
+    !q.conditional_on_key || answers[q.conditional_on_key] === q.conditional_on_value
+  );
+  const prefillKeys = new Set(questions.filter(q => q.prefill_from && answers[q.question_key]).map(q => q.question_key));
+  const sectionProgress = Math.round(((currentSectionIndex + 1) / sections.length) * 100);
+  const isLastSection = currentSectionIndex === sections.length - 1;
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h3 className="text-lg font-bold text-ink mb-1">
-          {sectionName}
-        </h3>
-        <p className="text-xs text-gray-500">Section {currentSectionIdx + 1} of {sections.length}</p>
+    <div className="space-y-4">
+      {/* Section header */}
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 text-base">{sectionName}</h3>
+        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Section {currentSectionIndex + 1} of {sections.length}</span>
+      </div>
+      <div className="w-full h-1.5 bg-gray-200 rounded-full">
+        <div className="h-1.5 bg-[#004ac6] rounded-full transition-all" style={{ width: `${sectionProgress}%` }} />
       </div>
 
-      <div className="space-y-4">
-        {sectionQuestions.map(q => (
-          <div key={q.id} className="bg-white rounded-card border border-line shadow-card p-4">
-            <label className="block font-bold text-ink text-sm mb-3">
-              {q.question_text}
-              {q.is_required && <span className="text-red-600 ml-1">*</span>}
-            </label>
-
-            {(q.input_type === "text" || q.input_type === "address") && (
-              <input
-                type="text"
-                value={answers[q.question_key] || ""}
-                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                placeholder="Enter your answer..."
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
-              />
-            )}
-
-            {q.input_type === "number" && (
-              <input
-                type="number"
-                value={answers[q.question_key] || ""}
-                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                placeholder="0"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
-              />
-            )}
-
-            {q.input_type === "date" && (
-              <input
-                type="date"
-                value={answers[q.question_key] || ""}
-                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
-              />
-            )}
-
-            {q.input_type === "boolean" && (
-              <div className="flex gap-2">
-                {["Yes", "No"].map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => setAnswers({ ...answers, [q.question_key]: opt === "Yes" })}
-                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                      answers[q.question_key] === (opt === "Yes")
-                        ? "bg-blue-500 text-white"
-                        : "border border-gray-200 text-gray-700 hover:border-blue-200"
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
+      {/* Questions */}
+      <div className="space-y-3">
+        {visibleQuestions.map((q, qi) => {
+          const isPrefilled = prefillKeys.has(q.question_key);
+          return (
+            <div key={q.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <label className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                  <span className="text-xs text-gray-400 font-normal">{qi + 1}.</span>
+                  {q.question_text}
+                  {q.is_required && <span className="text-red-500">*</span>}
+                </label>
+                {isPrefilled && <span className="text-[10px] px-2 py-0.5 bg-teal-50 text-teal-600 border border-teal-200 rounded-full font-semibold whitespace-nowrap shrink-0">Auto-filled</span>}
               </div>
-            )}
 
-            {q.input_type === "select" && (
-              <select
-                value={answers[q.question_key] || ""}
-                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
-              >
-                <option value="">Select an option</option>
-                {Array.isArray(q.options) && q.options.map(opt => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {q.input_type === "multi_select" && (
-              <div className="space-y-2">
-                {Array.isArray(q.options) && q.options.map(opt => (
-                  <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(answers[q.question_key] || []).includes(opt)}
-                      onChange={e => {
-                        const current = answers[q.question_key] || [];
-                        if (e.target.checked) {
-                          setAnswers({ ...answers, [q.question_key]: [...current, opt] });
-                        } else {
-                          setAnswers({ ...answers, [q.question_key]: current.filter(x => x !== opt) });
-                        }
-                      }}
-                      className="w-4 h-4 rounded accent-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{opt}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {q.input_type === "file" && (
-              <input
-                type="file"
-                onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.files?.[0]?.name || "" })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
-              />
-            )}
-
-            {q.help_text && <p className="text-xs text-gray-500 italic mt-2">{q.help_text}</p>}
-          </div>
-        ))}
+              {(q.input_type === "text" || q.input_type === "address") && (
+                <input type="text" value={answers[q.question_key] || ""} onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                  placeholder="Enter your answer..." className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#004ac6]" />
+              )}
+              {q.input_type === "number" && (
+                <input type="number" value={answers[q.question_key] || ""} onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                  placeholder="0" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#004ac6]" />
+              )}
+              {q.input_type === "date" && (
+                <input type="date" value={answers[q.question_key] || ""} onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#004ac6]" />
+              )}
+              {q.input_type === "boolean" && (
+                <div className="flex gap-2">
+                  <button onClick={() => setAnswers({ ...answers, [q.question_key]: "Yes" })}
+                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${answers[q.question_key] === "Yes" ? "bg-green-50 border-green-500 text-green-700" : "border-gray-300 text-gray-600 hover:border-green-400"}`}>Yes</button>
+                  <button onClick={() => setAnswers({ ...answers, [q.question_key]: "No" })}
+                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${answers[q.question_key] === "No" ? "bg-red-50 border-red-400 text-red-700" : "border-gray-300 text-gray-600 hover:border-red-300"}`}>No</button>
+                </div>
+              )}
+              {q.input_type === "select" && (
+                <select value={answers[q.question_key] || ""} onChange={e => setAnswers({ ...answers, [q.question_key]: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#004ac6]">
+                  <option value="">— Select an option —</option>
+                  {(Array.isArray(q.options) ? q.options : []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              )}
+              {q.input_type === "multi_select" && (
+                <div className="space-y-1.5">
+                  {(Array.isArray(q.options) ? q.options : []).map(opt => (
+                    <label key={opt} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                      <input type="checkbox"
+                        checked={(answers[q.question_key] || "").includes(opt)}
+                        onChange={e => {
+                          const current = (answers[q.question_key] || "").split(",").filter(Boolean);
+                          const updated = e.target.checked ? [...current, opt] : current.filter(v => v !== opt);
+                          setAnswers({ ...answers, [q.question_key]: updated.join(",") });
+                        }}
+                        className="w-4 h-4 accent-[#004ac6]" />
+                      <span className="text-gray-700">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {q.help_text && <p className="text-xs text-gray-400 italic mt-2">{q.help_text}</p>}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="flex gap-3">
-        <Btn variant="secondary" onClick={() => (currentSectionIdx > 0 ? setCurrentSectionIdx(prev => prev - 1) : onBack())}>
-          <ArrowLeft className="w-4 h-4" /> {currentSectionIdx > 0 ? "Previous" : "Back"}
-        </Btn>
-        {currentSectionIdx < sections.length - 1 ? (
-          <Btn variant="primary" className="flex-1 justify-center" onClick={() => setCurrentSectionIdx(prev => prev + 1)}>
-            Next Section <ArrowRight className="w-4 h-4" />
-          </Btn>
+      {/* Section nav */}
+      <div className="flex gap-3 pt-2">
+        <button onClick={() => currentSectionIndex > 0 ? setCurrentSectionIndex(i => i - 1) : onBack()}
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> {currentSectionIndex > 0 ? "Previous" : "Back"}
+        </button>
+        {isLastSection ? (
+          <PrimaryButton className="flex-1" onClick={onNext}>Review Answers <ArrowRight className="w-4 h-4" /></PrimaryButton>
         ) : (
-          <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({ questions, answers })}>
-            Review Answers <ArrowRight className="w-4 h-4" />
-          </Btn>
+          <PrimaryButton className="flex-1" onClick={() => setCurrentSectionIndex(i => i + 1)}>
+            Next Section <ArrowRight className="w-4 h-4" />
+          </PrimaryButton>
         )}
       </div>
     </div>
   );
 }
 
-// STEP 4: Review
-function Step4Review({ city, permit, answers, questions, onNext, onBack }) {
-  const [fee, setFee] = useState(null);
+// ══════════════════════════════════════════════════════════════════════
+// STEP 4 — REVIEW & PREPARE
+// ══════════════════════════════════════════════════════════════════════
+function Step4({ selectedCity, selectedPermit, questions, answers, feeRule, setFeeRule, calculatedFee, onBack, onNext }) {
   const [loadingFee, setLoadingFee] = useState(true);
+  const [docChecks, setDocChecks] = useState({});
+  const [expandedSections, setExpandedSections] = useState({});
 
   useEffect(() => {
-    const loadFee = async () => {
+    const load = async () => {
       setLoadingFee(true);
       try {
-        const { data } = await supabase
-          .from("fee_rules")
-          .select("flat_fee, description")
-          .eq("city_name", city)
-          .ilike("permit_name", `%${permit.name}%`)
-          .single();
-        if (data) setFee(data);
+        const base = selectedPermit.name.split("/")[0].trim();
+        const { data } = await supabase.from("fee_rules").select("*").eq("city_name", selectedCity)
+          .ilike("permit_name", `%${base}%`).limit(1).single();
+        setFeeRule(data || null);
       } catch {
-        // Fee not available
+        setFeeRule(null);
       } finally {
         setLoadingFee(false);
       }
     };
-    loadFee();
-  }, [city, permit.name]);
+    load();
+  }, [selectedCity, selectedPermit?.name]);
 
   const grouped = {};
   questions.forEach(q => {
@@ -631,254 +649,325 @@ function Step4Review({ city, permit, answers, questions, onNext, onBack }) {
     grouped[sec].push(q);
   });
 
+  const missingRequired = questions.filter(q => q.is_required && !answers[q.question_key]);
+  const docs = getDocumentList(selectedPermit?.name);
+  const jobVal = parseFloat(answers?.job_valuation || answers?.construction_cost || 0);
+
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-card border border-line shadow-card p-5">
-        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">Your Answers</h3>
-        {Object.entries(grouped).map(([sec, qs]) => (
-          <div key={sec} className="mb-5">
-            <h4 className="text-sm font-semibold text-muted mb-3 uppercase tracking-wider">
-              {sec}
-            </h4>
-            <div className="space-y-2 border-b border-gray-100 pb-4">
-              {qs.map(q => (
-                <div key={q.id} className="flex justify-between text-sm">
-                  <span className="text-gray-600">{q.text}</span>
-                  <span className="font-semibold text-gray-900">{String(answers[q.question_key] || "—")}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {fee && !loadingFee && (
-        <div className="bg-action-50 border border-action-100 rounded-card p-5">
-          <p className="text-sm text-muted mb-2">Estimated Permit Fee:</p>
-          <p className="text-2xl font-bold text-action">${fee.flat_fee ? fee.flat_fee.toLocaleString() : "TBD"}</p>
+      {/* Missing fields warning */}
+      {missingRequired.length > 0 && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-800">
+            <strong>{missingRequired.length} required field{missingRequired.length > 1 ? "s are" : " is"} missing.</strong> You can still continue but the city may request this information.
+          </p>
         </div>
       )}
 
-      <div className="flex gap-3">
-        <Btn variant="secondary" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Btn>
-        <Btn variant="primary" className="flex-1 justify-center" onClick={() => onNext({})}>
-          Go to Submission <ArrowRight className="w-4 h-4" />
-        </Btn>
-      </div>
+      {/* Answer Summary */}
+      <Card>
+        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Your Answers</h3>
+        <div className="space-y-3">
+          {Object.entries(grouped).map(([sec, qs]) => {
+            const isOpen = expandedSections[sec] !== false;
+            return (
+              <div key={sec} className="border border-gray-100 rounded-lg overflow-hidden">
+                <button className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  onClick={() => setExpandedSections(p => ({ ...p, [sec]: !isOpen }))}>
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{sec}</span>
+                  <span className="text-gray-400 text-xs">{isOpen ? "▲" : "▼"}</span>
+                </button>
+                {isOpen && (
+                  <div className="divide-y divide-gray-50">
+                    {qs.map(q => (
+                      <div key={q.id} className="flex justify-between items-center px-4 py-2.5 gap-4 text-sm">
+                        <span className="text-gray-500 flex-1">{q.question_text}</span>
+                        {answers[q.question_key]
+                          ? <span className="font-medium text-gray-900 text-right max-w-[160px] truncate">{String(answers[q.question_key])}</span>
+                          : q.is_required
+                            ? <span className="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded">⚠ Required</span>
+                            : <span className="text-gray-300 text-xs">—</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {questions.length === 0 && <p className="text-sm text-gray-400">No questions were answered for this permit type.</p>}
+        </div>
+      </Card>
+
+      {/* Fee Estimate */}
+      <Card>
+        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Fee Estimate</h3>
+        {loadingFee ? (
+          <div className="flex items-center gap-2 py-2"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /><span className="text-sm text-gray-400">Loading fee...</span></div>
+        ) : feeRule ? (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-gray-500">Permit</span><span className="text-gray-700">{selectedPermit?.name}</span></div>
+            {feeRule.flat_fee > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Base fee</span><span className="text-gray-700">${feeRule.flat_fee?.toFixed(2)}</span></div>}
+            {feeRule.base_fee > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Base fee</span><span className="text-gray-700">${feeRule.base_fee?.toFixed(2)}</span></div>}
+            {feeRule.rate_percentage > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">{feeRule.rate_percentage}% of ${jobVal.toLocaleString()}</span><span className="text-gray-700">${((feeRule.rate_percentage / 100) * jobVal).toFixed(2)}</span></div>}
+            {feeRule.technology_admin_fee > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Technology & admin</span><span className="text-gray-700">${feeRule.technology_admin_fee?.toFixed(2)}</span></div>}
+            <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+              <span className="font-bold text-gray-900">Estimated Total</span>
+              <span className="font-bold text-[#004ac6] text-lg">${calculatedFee?.toFixed(2) || "TBD"}</span>
+            </div>
+            <p className="text-xs text-gray-400 italic">Estimate only. Final fee determined at time of submission.</p>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">Fee estimate not available for this permit type.</p>
+        )}
+      </Card>
+
+      {/* Documents Checklist */}
+      <Card>
+        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Documents Needed</h3>
+        <div className="space-y-2">
+          {docs.map(doc => (
+            <label key={doc} className="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" checked={!!docChecks[doc]} onChange={e => setDocChecks(p => ({ ...p, [doc]: e.target.checked }))}
+                className="w-4 h-4 accent-[#004ac6] rounded" />
+              <span className={`text-sm transition-colors ${docChecks[doc] ? "line-through text-gray-300" : "text-gray-700"}`}>{doc}</span>
+            </label>
+          ))}
+        </div>
+      </Card>
+
+      <NavButtons onBack={onBack} onNext={onNext} nextLabel="Go to Guided Submission →" />
     </div>
   );
 }
 
-// STEP 5: Guided Submission
-function Step5Submit({ role, city, permit, property, answers, questions, onBack, currentUser }) {
-  const [fieldMap, setFieldMap] = useState([]);
-  const [checkedFields, setCheckedFields] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+// ══════════════════════════════════════════════════════════════════════
+// STEP 5 — GUIDED SUBMISSION
+// ══════════════════════════════════════════════════════════════════════
+function Step5({ selectedRole, selectedCity, selectedPermit, selectedProperty, questions, answers, feeRule, calculatedFee, currentUser, guideId, setGuideId, portalChecked, setPortalChecked, submitting, setSubmitting, submitError, setSubmitError, submitted, setSubmitted, confirmationNumber, setConfirmationNumber, onBack, onReset }) {
+  const [saving, setSaving] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState({});
+  const savedRef = useRef(false);
 
+  const portalUrl = CITY_PORTALS[selectedCity] || "#";
+
+  // Save to submission_guides on mount
   useEffect(() => {
-    // Create field map from answers
-    const fields = questions.map(q => ({
-      key: q.question_key,
-      label: q.text,
-      value: answers[q.question_key] || "",
-      portalField: q.target_system_field || q.text,
-    }));
-    setFieldMap(fields);
-    setLoading(false);
-  }, [questions, answers]);
+    if (savedRef.current || guideId) return;
+    savedRef.current = true;
+    const save = async () => {
+      setSaving(true);
+      try {
+        const { data, error } = await supabase.from("submission_guides").insert({
+          user_email: currentUser?.email || "guest@openpermit.com",
+          user_role: selectedRole,
+          is_guest: !currentUser,
+          city_name: selectedCity,
+          city_portal_url: portalUrl,
+          permit_type_name: selectedPermit?.name,
+          target_system: selectedCity === "Fort Lauderdale" ? "accela" : "manual",
+          phase: "guided_submission",
+          overall_status: "ready_to_submit",
+          folio_number: selectedProperty?.folio_number || null,
+          questions_total: questions.length,
+          questions_answered: Object.keys(answers).filter(k => answers[k]).length,
+          questions_prefilled: questions.filter(q => q.prefill_from && answers[q.question_key]).length,
+          estimated_fee: calculatedFee || null,
+          fee_breakdown: feeRule ? JSON.stringify({ base: feeRule.base_fee || feeRule.flat_fee, rate: feeRule.rate_percentage, tech: feeRule.technology_admin_fee, total: calculatedFee }) : null,
+          field_mapping_snapshot: JSON.stringify(answers),
+          started_date: new Date().toISOString().split("T")[0],
+        }).select().single();
+        if (error) throw error;
+        if (data) setGuideId(data.id);
+      } catch (err) {
+        setSubmitError(err.message);
+      } finally {
+        setSaving(false);
+      }
+    };
+    save();
+  }, []);
 
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    setError("");
+  const checklistItems = questions.filter(q => q.target_system_field && answers[q.question_key]);
+  const checkedCount = Object.values(portalChecked).filter(Boolean).length;
+  const allChecked = checklistItems.length > 0 && checkedCount === checklistItems.length;
+
+  const copyToClipboard = (key, value) => {
+    navigator.clipboard.writeText(value || "").then(() => {
+      setCopyFeedback(p => ({ ...p, [key]: true }));
+      setTimeout(() => setCopyFeedback(p => ({ ...p, [key]: false })), 1500);
+    });
+  };
+
+  const handleMarkSubmitted = async () => {
+    if (!guideId) return;
+    setSubmitting(true); setSubmitError("");
     try {
-      const { error: err } = await supabase.from("submission_guides").insert({
-        user_email: currentUser?.email || "guest@openpermit.com",
-        user_role: role,
-        city_name: city,
-        permit_type_name: permit.name,
-        permit_type_id: permit.id || "",
-        target_system: city === "Fort Lauderdale" ? "accela" : "manual",
-        phase: "guided_submission",
-        overall_status: "ready_to_submit",
-        folio_number: property?.folio_number || null,
-        questions_total: questions.length,
-        questions_answered: Object.keys(answers).length,
-        field_mapping_snapshot: JSON.stringify(answers),
-        started_date: new Date().toISOString().split("T")[0],
-      });
-      if (err) throw err;
-
-      // Show success and navigate
-      alert("Application saved! You can now submit to the city portal.");
-      window.location.href = "/MyProjects";
+      const { error } = await supabase.from("submission_guides").update({
+        overall_status: "submitted",
+        phase: "completed",
+        submitted_date: new Date().toISOString().split("T")[0],
+        confirmation_number: confirmationNumber || null,
+      }).eq("id", guideId);
+      if (error) throw error;
+      setSubmitted(true);
     } catch (err) {
-      setError(err.message || "Failed to save application");
+      setSubmitError(err.message || "Failed to mark as submitted.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const allChecked = fieldMap.length > 0 && fieldMap.every(f => checkedFields[f.key]);
-
-  return (
-    <div className="space-y-5">
-      <div className="bg-white rounded-card border border-line shadow-card p-5">
-        <h3 className="font-bold text-ink mb-4 text-sm uppercase tracking-wider">
-          Portal: {city}
-        </h3>
-        <p className="text-sm text-muted mb-3">
-          Copy each field value and enter it into the{" "}
-          <a
-            href={CITY_PORTALS[city]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline font-semibold"
-          >
-            {city} permit portal ↗
-          </a>
-        </p>
-
-        <div className="space-y-2 border-t border-line pt-4">
-          {fieldMap.map(field => (
-            <div key={field.key} className="flex items-center gap-3 p-3 bg-surface rounded-control">
-              <input
-                type="checkbox"
-                checked={checkedFields[field.key] || false}
-                onChange={e => setCheckedFields({ ...checkedFields, [field.key]: e.target.checked })}
-                className="w-5 h-5 rounded accent-blue-500"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 font-mono">{field.portalField}</p>
-                <p className="text-sm font-semibold text-gray-800 truncate">{field.value || "(empty)"}</p>
-              </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(field.value || "")}
-                className="text-gray-400 hover:text-gray-700 transition"
-                title="Copy to clipboard"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>}
-
-      <div className="flex gap-3">
-        <Btn variant="secondary" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Btn>
-        <Btn variant="primary" className="flex-1 justify-center" onClick={handleSubmit} disabled={!allChecked || submitting}>
-          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-          {allChecked ? "Mark as Submitted" : "Complete all fields first"}
-        </Btn>
-      </div>
-    </div>
-  );
-}
-
-// MAIN COMPONENT
-export default function ApplyForPermit() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [stepData, setStepData] = useState({});
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    base44.auth.me().then(u => setCurrentUser(u || null)).catch(() => {}).finally(() => setAuthLoading(false));
-  }, []);
-
-  const handleStep1 = data => {
-    setStepData({ ...stepData, ...data });
-    setCurrentStep(2);
-  };
-
-  const handleStep2 = data => {
-    setStepData({ ...stepData, ...data });
-    setCurrentStep(3);
-  };
-
-  const handleStep3 = data => {
-    setStepData({ ...stepData, ...data });
-    setCurrentStep(4);
-  };
-
-  const handleStep4 = data => {
-    setStepData({ ...stepData, ...data });
-    setCurrentStep(5);
-  };
-
-  if (authLoading) {
+  // ── Final success screen ──
+  if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <Loader2 className="w-6 h-6 animate-spin text-action" />
+      <div className="flex flex-col items-center text-center py-10 space-y-5">
+        <div className="w-20 h-20 rounded-full bg-teal-50 flex items-center justify-center border-4 border-teal-200">
+          <CheckCircle2 className="w-10 h-10 text-teal-500" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-extrabold text-gray-900" style={{ fontFamily: "'Manrope', system-ui, sans-serif" }}>Application Submitted!</h2>
+          <p className="text-gray-500 text-sm mt-1">Your application has been logged and saved.</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 w-full text-left space-y-2">
+          <div className="flex justify-between text-sm"><span className="text-gray-500">Permit Type</span><span className="font-semibold text-gray-900">{selectedPermit?.name}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">City</span><span className="font-semibold text-gray-900">{selectedCity}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">Date</span><span className="font-semibold text-gray-900">{new Date().toLocaleDateString()}</span></div>
+          {confirmationNumber && <div className="flex justify-between text-sm"><span className="text-gray-500">Confirmation #</span><span className="font-semibold text-[#004ac6]">{confirmationNumber}</span></div>}
+        </div>
+        <div className="flex gap-3 w-full">
+          <Link to="/MyProjects" className="flex-1 py-3 rounded-xl bg-[#004ac6] text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity">
+            View in My Projects
+          </Link>
+          <button onClick={onReset} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+            Start Another
+          </button>
+        </div>
       </div>
     );
   }
 
-  const stepTitles = ["Basic Setup", "Permit Type", "Questions", "Review", "Submit"];
-
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Mobile header */}
-      <div className="bg-white px-5 pt-10 pb-5 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-5">
-          {currentStep > 1 ? (
-            <button onClick={() => setCurrentStep(s => s - 1)} className="flex items-center gap-1 text-gray-600 text-sm font-medium">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          ) : (
-            <div className="w-8" />
-          )}
-          <span className="font-bold text-blue-700 text-base">OpenPermit</span>
-          <div className="w-8" />
+    <div className="space-y-5">
+      {saving && (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" /> Saving your application...
         </div>
-        <ProgressBar currentStep={currentStep} />
-        <h1 className="text-2xl font-extrabold text-gray-900 mt-1">{stepTitles[currentStep - 1]}</h1>
-        {currentStep === 1 && <p className="text-sm text-gray-400 mt-1">Tell us who you are and where the work will be performed.</p>}
-      </div>
+      )}
 
-      <div className="max-w-lg mx-auto px-4 pt-6">
-        {currentStep === 1 && <Step1Setup onNext={handleStep1} initialCity={stepData.city} />}
-        {currentStep === 2 && <Step2PermitType city={stepData.city} onNext={handleStep2} onBack={() => setCurrentStep(1)} />}
-        {currentStep === 3 && (
-          <Step3Questions
-            city={stepData.city}
-            permit={stepData.permit}
-            property={stepData.property}
-            onNext={handleStep3}
-            onBack={() => setCurrentStep(2)}
-          />
+      {/* Header card */}
+      <Card>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <p className="font-bold text-gray-900">{selectedPermit?.name}</p>
+            <p className="text-sm text-gray-500">{selectedCity}, FL</p>
+          </div>
+          <a href={portalUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#004ac6] text-white text-xs font-semibold hover:opacity-90 transition-opacity shrink-0">
+            <ExternalLink className="w-3.5 h-3.5" /> Open Portal
+          </a>
+        </div>
+        <p className="text-xs text-gray-500 bg-blue-50 rounded-lg px-3 py-2.5">
+          Open the city portal in a new tab. Enter each field below as you go. Check each one off when done.
+        </p>
+      </Card>
+
+      {/* Progress */}
+      {checklistItems.length > 0 && (
+        <div>
+          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+            <span>Fields entered</span>
+            <span className="font-semibold">{checkedCount} of {checklistItems.length}</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full">
+            <div className="h-2 bg-teal-500 rounded-full transition-all" style={{ width: `${checklistItems.length > 0 ? (checkedCount / checklistItems.length) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* Field checklist */}
+      <Card>
+        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Fields to Enter</h3>
+        {checklistItems.length === 0 ? (
+          <p className="text-sm text-gray-400">No portal field mappings available. Refer to the city portal directly.</p>
+        ) : (
+          <div className="space-y-2">
+            {checklistItems.map(q => {
+              const checked = !!portalChecked[q.question_key];
+              const val = answers[q.question_key] || "";
+              return (
+                <div key={q.question_key} className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${checked ? "bg-gray-50 border-gray-100 opacity-60" : "bg-white border-gray-200"}`}>
+                  <input type="checkbox" checked={checked} onChange={e => setPortalChecked(p => ({ ...p, [q.question_key]: e.target.checked }))}
+                    className="w-4 h-4 accent-teal-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-semibold text-gray-500 ${checked ? "line-through" : ""}`}>{q.target_system_field}</p>
+                    <p className={`text-sm font-mono text-gray-800 truncate ${checked ? "line-through" : ""}`}>{val || "(empty)"}</p>
+                  </div>
+                  <button onClick={() => copyToClipboard(q.question_key, val)}
+                    className={`shrink-0 transition-colors ${copyFeedback[q.question_key] ? "text-teal-500" : "text-gray-400 hover:text-gray-700"}`}
+                    title="Copy to clipboard">
+                    {copyFeedback[q.question_key] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
-        {currentStep === 4 && (
-          <Step4Review
-            city={stepData.city}
-            permit={stepData.permit}
-            answers={stepData.answers || {}}
-            questions={stepData.questions || []}
-            onNext={handleStep4}
-            onBack={() => setCurrentStep(3)}
-          />
-        )}
-        {currentStep === 5 && (
-          <Step5Submit
-            role={stepData.role}
-            city={stepData.city}
-            permit={stepData.permit}
-            property={stepData.property}
-            answers={stepData.answers || {}}
-            questions={stepData.questions || []}
-            onBack={() => setCurrentStep(4)}
-            currentUser={currentUser}
-          />
-        )}
-      </div>
+      </Card>
+
+      {/* Completion state */}
+      {(allChecked || checklistItems.length === 0) && (
+        <div className="bg-teal-50 border border-teal-200 rounded-xl p-5 space-y-3">
+          {checklistItems.length > 0 && <div className="flex items-center gap-2 text-teal-700 font-semibold"><CheckCircle2 className="w-5 h-5" /> All fields entered!</div>}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmation number <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" value={confirmationNumber} onChange={e => setConfirmationNumber(e.target.value)}
+              placeholder="Enter city confirmation number..."
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-teal-400" />
+          </div>
+          {submitError && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{submitError}</p>}
+          <button onClick={handleMarkSubmitted} disabled={submitting}
+            className="w-full py-3 rounded-xl bg-teal-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-teal-600 transition-colors disabled:opacity-60">
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Mark as Submitted
+          </button>
+        </div>
+      )}
+
+      {submitError && !allChecked && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{submitError}</p>}
+
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <ArrowLeft className="w-4 h-4" /> Back to Review
+      </button>
+    </div>
+  );
+}
+
+// ── Shared UI primitives ───────────────────────────────────────────────
+function Card({ children, className = "" }) {
+  return <div className={`bg-white border border-gray-200 rounded-xl p-5 shadow-sm ${className}`}>{children}</div>;
+}
+
+function SectionLabel({ children }) {
+  return <p className="text-sm font-semibold text-gray-700">{children}</p>;
+}
+
+function PrimaryButton({ children, onClick, disabled = false, className = "" }) {
+  return (
+    <button onClick={onClick} disabled={disabled}
+      className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#004ac6] text-white font-bold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+function NavButtons({ onBack, onNext, nextDisabled = false, nextLabel = "Continue →" }) {
+  return (
+    <div className="flex gap-3 pt-2">
+      <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+      <PrimaryButton className="flex-1" onClick={onNext} disabled={nextDisabled}>{nextLabel}</PrimaryButton>
     </div>
   );
 }
