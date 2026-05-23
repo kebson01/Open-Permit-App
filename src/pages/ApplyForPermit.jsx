@@ -757,29 +757,39 @@ function Step5({ selectedRole, selectedCity, selectedPermit, selectedProperty, q
     const save = async () => {
       setSaving(true);
       try {
-        const { data, error } = await supabase.from("submission_guides").insert({
-          user_email: currentUser?.email || "guest@openpermit.com",
-          user_role: selectedRole,
-          is_guest: !currentUser,
-          city_name: selectedCity,
-          city_portal_url: portalUrl,
-          permit_type_name: selectedPermit?.name,
-          target_system: selectedCity === "Fort Lauderdale" ? "accela" : "manual",
-          phase: "guided_submission",
-          overall_status: "ready_to_submit",
-          folio_number: selectedProperty?.folio_number || null,
-          questions_total: questions.length,
-          questions_answered: Object.keys(answers).filter(k => answers[k]).length,
-          questions_prefilled: questions.filter(q => q.prefill_from && answers[q.question_key]).length,
-          estimated_fee: calculatedFee || null,
-          fee_breakdown: feeRule ? JSON.stringify({ base: feeRule.base_fee || feeRule.flat_fee, rate: feeRule.rate_percentage, tech: feeRule.technology_admin_fee, total: calculatedFee }) : null,
-          field_mapping_snapshot: JSON.stringify(answers),
-          started_date: new Date().toISOString().split("T")[0],
-        }).select().single();
-        if (error) throw error;
-        if (data) setGuideId(data.id);
-      } catch (err) {
-        setSubmitError(err.message);
+        const currentUser = supabase.auth.getUser ? (await supabase.auth.getUser()).data?.user : null;
+
+        const { data: guideData, error: guideError } = await supabase
+          .from('submission_guides')
+          .insert({
+            user_email: currentUser?.email || 'guest@openpermit.com',
+            user_id: currentUser?.id || null,
+            user_role: selectedRole,
+            is_guest: !currentUser,
+            city_name: selectedCity,
+            city_portal_url: portalUrl,
+            permit_type_name: selectedPermit?.name,
+            target_system: selectedCity === 'Fort Lauderdale' ? 'accela' : 'manual',
+            phase: 'guided_submission',
+            overall_status: 'ready_to_submit',
+            folio_number: selectedProperty?.folio_number || null,
+            questions_total: questions.length,
+            questions_answered: Object.keys(answers).filter(k => answers[k] && answers[k] !== '').length,
+            questions_prefilled: questions.filter(q => q.prefill_from && answers[q.question_key]).length,
+            estimated_fee: calculatedFee || null,
+            field_mapping_snapshot: answers,
+            started_date: new Date().toISOString().split('T')[0],
+          })
+          .select('id')
+          .single();
+
+        if (guideError) {
+          console.error('Guide save error:', guideError);
+          setSubmitError('Could not save application: ' + guideError.message);
+          return;
+        }
+
+        setGuideId(guideData.id);
       } finally {
         setSaving(false);
       }
@@ -801,20 +811,25 @@ function Step5({ selectedRole, selectedCity, selectedPermit, selectedProperty, q
   const handleMarkSubmitted = async () => {
     if (!guideId) return;
     setSubmitting(true); setSubmitError("");
-    try {
-      const { error } = await supabase.from("submission_guides").update({
-        overall_status: "submitted",
-        phase: "completed",
-        submitted_date: new Date().toISOString().split("T")[0],
+
+    const { error: updateError } = await supabase
+      .from('submission_guides')
+      .update({
+        overall_status: 'submitted',
+        phase: 'completed',
+        submitted_date: new Date().toISOString().split('T')[0],
         confirmation_number: confirmationNumber || null,
-      }).eq("id", guideId);
-      if (error) throw error;
-      setSubmitted(true);
-    } catch (err) {
-      setSubmitError(err.message || "Failed to mark as submitted.");
-    } finally {
+      })
+      .eq('id', guideId);
+
+    if (updateError) {
+      setSubmitError('Could not mark as submitted: ' + updateError.message);
       setSubmitting(false);
+      return;
     }
+
+    setSubmitted(true);
+    setSubmitting(false);
   };
 
   // ── Final success screen ──
