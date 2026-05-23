@@ -42,8 +42,8 @@ function QuickActions() {
     <div className="grid grid-cols-2 gap-3">
       <Link to="/PropertyGuide"
         className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-2 no-underline hover:shadow-md transition-shadow">
-        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-          <Search className="w-5 h-5 text-blue-600" />
+        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#EBF5FF" }}>
+            <Search className="w-5 h-5" style={{ color: "#1A56DB" }} />
         </div>
         <span className="text-sm font-semibold text-gray-800 text-center">Find a Professional</span>
       </Link>
@@ -67,9 +67,9 @@ function AppointmentCard({ guide }) {
   return (
     <Link to={`/ApplyForPermit?resume=${guide.id}`}
       className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-start no-underline hover:shadow-md transition-shadow">
-      <div className="bg-blue-50 rounded-xl px-3 py-2 text-center min-w-[52px]">
-        <p className="text-xs font-bold text-blue-600 uppercase">{mon}</p>
-        <p className="text-2xl font-extrabold text-blue-700 leading-none">{day}</p>
+      <div className="rounded-xl px-3 py-2 text-center min-w-[52px]" style={{ background: "#EBF5FF" }}>
+        <p className="text-xs font-bold uppercase" style={{ color: "#1A56DB" }}>{mon}</p>
+        <p className="text-2xl font-extrabold leading-none" style={{ color: "#003FB1" }}>{day}</p>
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-900 text-sm">{guide.permit_type_name || "Permit Application"}</p>
@@ -89,7 +89,7 @@ function AppointmentCard({ guide }) {
 const ACTIVITY_ICONS = {
   completed: { icon: CheckCircle2, bg: "bg-green-50", color: "text-green-500" },
   quote:     { icon: DollarSign,   bg: "bg-orange-50", color: "text-orange-500" },
-  message:   { icon: MessageSquare, bg: "bg-blue-50", color: "text-blue-500" },
+  message:   { icon: MessageSquare, bg: "bg-[#EBF5FF]", color: "text-[#1A56DB]" },
   default:   { icon: CheckCircle2, bg: "bg-gray-50",  color: "text-gray-400" },
 };
 
@@ -156,10 +156,10 @@ function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around py-2 z-50 max-w-md mx-auto">
       <Link to="/" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-          <Home className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#EBF5FF" }}>
+        <Home className="w-4 h-4" style={{ color: "#1A56DB" }} />
         </div>
-        <span className="text-xs font-semibold text-blue-600">Home</span>
+        <span className="text-xs font-semibold" style={{ color: "#1A56DB" }}>Home</span>
       </Link>
       <Link to="/ApplyForPermit" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
         <LayoutDashboard className="w-5 h-5 text-gray-400 mt-1.5" />
@@ -199,8 +199,8 @@ export default function HomeDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#FAF8FF" }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#1A56DB" }} />
       </div>
     );
   }
@@ -209,14 +209,14 @@ export default function HomeDashboard() {
   const activeGuides = guides.filter(g => ["in_progress", "ready_to_submit"].includes(g.overall_status));
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24" style={{ background: "#FAF8FF" }}>
       {/* Header */}
       <div className="bg-white px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "#1A56DB" }}>
             <span className="text-white font-bold text-sm">OP</span>
           </div>
-          <span className="font-bold text-blue-700 text-lg">OpenPermit</span>
+          <span className="font-bold text-lg" style={{ color: "#1A56DB" }}>OpenPermit</span>
         </div>
         <Link to="/MyAccount" className="no-underline">
           <Bell className="w-5 h-5 text-gray-500" />
@@ -251,8 +251,8 @@ export default function HomeDashboard() {
           <div className="grid grid-cols-2 gap-3">
             <Link to="/ApplyForPermit"
               className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-start gap-2 no-underline hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#EBF5FF" }}>
+                <Plus className="w-5 h-5" style={{ color: "#1A56DB" }} />
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase">Permits</p>
@@ -322,7 +322,7 @@ export default function HomeDashboard() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-gray-900 text-base">Active Applications</h2>
-              <Link to="/ApplyForPermit" className="text-sm text-blue-600 font-semibold no-underline flex items-center gap-0.5">
+              <Link to="/ApplyForPermit" className="text-sm font-semibold no-underline flex items-center gap-0.5" style={{ color: "#1A56DB" }}>
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -334,12 +334,13 @@ export default function HomeDashboard() {
 
         {/* Guest CTA */}
         {!currentUser && (
-          <div className="bg-blue-600 rounded-2xl p-6 text-center">
+          <div className="rounded-2xl p-6 text-center" style={{ background: "#1A56DB" }}>
             <h3 className="font-extrabold text-white text-lg mb-1">Get started today</h3>
             <p className="text-blue-200 text-sm mb-4">Sign in to track applications and manage your projects.</p>
             <button
               onClick={() => base44.auth.redirectToLogin(window.location.href)}
-              className="bg-white text-blue-600 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-blue-50 transition-colors"
+              className="bg-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors hover:opacity-90"
+              style={{ color: "#1A56DB" }}
             >
               Sign In →
             </button>

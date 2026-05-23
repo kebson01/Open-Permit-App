@@ -10,7 +10,7 @@ import * as db from "@/lib/db";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import AuthModal from "@/components/auth/AuthModal";
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#1A56DB";
 const FONTS = {
   logo: "'Manrope', system-ui, sans-serif",
   nav: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -105,7 +105,7 @@ export default function Layout({ children, currentPageName }) {
       to={to}
       onClick={() => setMobileOpen(false)}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${
-        isActive(to) ? "text-[#004ac6] bg-[#eff4ff]" : "text-[#434655] hover:bg-[#f4f6fb] hover:text-[#0d1c2e]"
+        isActive(to) ? "text-[#1A56DB] bg-[#EBF5FF]" : "text-[#434654] hover:bg-[#F3F3FE] hover:text-[#191B23]"
       }`}
       style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
     >
@@ -146,7 +146,7 @@ export default function Layout({ children, currentPageName }) {
               <button
                 onClick={() => setToolsOpen(p => !p)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-                  toolsOpen ? "text-[#004ac6] bg-[#eff4ff]" : "text-[#434655] hover:bg-[#f4f6fb]"
+                  toolsOpen ? "text-[#1A56DB] bg-[#EBF5FF]" : "text-[#434654] hover:bg-[#F3F3FE]"
                 }`}
                 style={{ fontFamily: FONTS.nav }}
               >
@@ -177,7 +177,7 @@ export default function Layout({ children, currentPageName }) {
             {(isAdmin || isCityAdmin) && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#434655] hover:bg-[#f4f6fb] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#434654] hover:bg-[#F3F3FE] transition-colors"
                 style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
               >
                 <ShieldCheck className="w-3.5 h-3.5" /> Admin
@@ -249,7 +249,7 @@ export default function Layout({ children, currentPageName }) {
             ].map(item => (
               <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b border-gray-50 hover:bg-gray-50"
-                style={{ fontFamily: FONTS.nav, color: isActive(item.to) ? PRIMARY : "#434655", textDecoration: "none" }}>
+                style={{ fontFamily: FONTS.nav, color: isActive(item.to) ? PRIMARY : "#434654", textDecoration: "none" }}>
                 <item.icon className="w-4 h-4" /> {item.label}
               </Link>
             ))}

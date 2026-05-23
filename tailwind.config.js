@@ -62,16 +62,16 @@ module.exports = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			// ── Design tokens ──────────────────────────────────────
+  			// ── Reliant Direct Design tokens ───────────────────────
   			action: {
-  				DEFAULT: '#2563EB',
-  				hover:   '#1D4ED8',
-  				50:      '#EFF4FE',
-  				100:     '#DBEAFE',
+  				DEFAULT: '#1A56DB',
+  				hover:   '#003FB1',
+  				50:      '#EBF5FF',
+  				100:     '#D4DCFF',
   			},
-  			brand:   '#0A2540',
+  			brand:   '#003FB1',
   			success: {
-  				DEFAULT: '#16A34A',
+  				DEFAULT: '#059669',
   				50:      '#ECFDF5',
   			},
   			warning: {
@@ -79,14 +79,14 @@ module.exports = {
   				50:      '#FFFBEB',
   			},
   			danger: {
-  				DEFAULT: '#DC2626',
-  				50:      '#FEF2F2',
+  				DEFAULT: '#BA1A1A',
+  				50:      '#FFDAD6',
   			},
-  			ink:     '#0F172A',
-  			muted:   '#64748B',
-  			surface: '#F8FAFC',
+  			ink:     '#191B23',
+  			muted:   '#434654',
+  			surface: '#FAF8FF',
   			// "card" already exists from shadcn — we override the DEFAULT only
-  			line:    '#E2E8F0',
+  			line:    '#C3C5D7',
   		},
   		boxShadow: {
   			card: '0 1px 4px 0 rgba(15,23,42,0.06), 0 4px 16px 0 rgba(15,23,42,0.04)',

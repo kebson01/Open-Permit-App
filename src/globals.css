@@ -1,83 +1,68 @@
+/* globals.css — Reliant Direct design tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --navy-dark: #022A5B;
-  --navy-mid: #025799;
-  --blue-primary: #025799;
-  --blue-accent: #60A9DE;
-  --gold: #60A9DE;
-  --gold-dark: #025799;
+  /* ── Reliant Direct brand palette ── */
+  --rd-primary:           #1A56DB;
+  --rd-primary-dark:      #003FB1;
+  --rd-primary-light:     #EBF5FF;
+  --rd-primary-container: #D4DCFF;
+
+  --rd-surface:           #FAF8FF;
+  --rd-surface-low:       #F3F3FE;
+  --rd-surface-container: #EDEDF8;
+  --rd-surface-high:      #E7E7F3;
+  --rd-on-surface:        #191B23;
+  --rd-on-surface-var:    #434654;
+  --rd-outline:           #737686;
+  --rd-outline-var:       #C3C5D7;
+
+  --rd-success:           #059669;
+  --rd-success-bg:        #ECFDF5;
+  --rd-warning:           #D97706;
+  --rd-warning-bg:        #FFFBEB;
+  --rd-error:             #BA1A1A;
+  --rd-error-bg:          #FFDAD6;
+
+  /* ── shadcn/ui CSS vars (mapped to Reliant Direct) ── */
+  --background:           250 100% 99%;   /* #FAF8FF */
+  --foreground:           228 16% 11%;    /* #191B23 */
+  --card:                 0 0% 100%;
+  --card-foreground:      228 16% 11%;
+  --popover:              0 0% 100%;
+  --popover-foreground:   228 16% 11%;
+  --primary:              221 78% 47%;    /* #1A56DB */
+  --primary-foreground:   0 0% 100%;
+  --secondary:            211 100% 96%;   /* #EBF5FF */
+  --secondary-foreground: 221 78% 47%;
+  --muted:                240 11% 96%;
+  --muted-foreground:     232 12% 36%;    /* #434654 */
+  --accent:               240 11% 94%;
+  --accent-foreground:    228 16% 11%;
+  --destructive:          0 72% 42%;      /* #BA1A1A */
+  --destructive-foreground: 0 0% 100%;
+  --border:               236 30% 84%;    /* #C3C5D7 */
+  --input:                236 30% 84%;
+  --ring:                 221 78% 47%;
+  --radius:               0.5rem;
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    --primary: 211 97% 18%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 211 97% 30%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 207 62% 62%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 221 83% 53%;
-    --radius: 0.625rem;
+  * { @apply border-border outline-ring/50; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #FAF8FF;
   }
 }
 
-body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background-color: #f8fafc;
-}
-
-@layer components {
-  .gradient-primary {
-    background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
-    color: #ffffff !important;
-  }
-
-  .gradient-navy {
-    background: linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%) !important;
-    color: #ffffff !important;
-  }
-
-  .text-gold {
-    color: #3b82f6;
-  }
-
-  .bg-gold {
-    background-color: #3b82f6;
-  }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C3C5D7; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #737686; }
+html { scroll-behavior: smooth; }
