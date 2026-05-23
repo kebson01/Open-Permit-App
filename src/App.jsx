@@ -8,6 +8,8 @@ import Layout from './components/Layout';
 import { AuthContext, useAuthProvider } from './lib/auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
+import AuthSignIn from './pages/AuthSignIn';
+import AuthSignUp from './pages/AuthSignUp';
 
 // Core pages
 import HomeDashboard from './pages/HomeDashboard';
@@ -61,6 +63,10 @@ function App() {
             <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
             <Route path="/PermitGuide" element={<LayoutWrapper currentPageName="PermitGuide"><PermitGuide /></LayoutWrapper>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/login" element={<AuthSignIn />} />
+            <Route path="/auth/login" element={<AuthSignIn />} />
+            <Route path="/signup" element={<AuthSignUp />} />
+            <Route path="/auth/signup" element={<AuthSignUp />} />
 
             {/* ── PROTECTED ── */}
             <Route path="/ApplyForPermit" element={<LayoutWrapper currentPageName="ApplyForPermit"><ProtectedRoute><ApplyForPermit /></ProtectedRoute></LayoutWrapper>} />
