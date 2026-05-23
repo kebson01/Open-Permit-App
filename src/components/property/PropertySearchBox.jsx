@@ -21,43 +21,15 @@ export default function PropertySearchBox({ onSelect, placeholder, cityFilter })
     setResults([]);
 
     try {
-      const lowerQuery = query.toLowerCase();
-      
-      let q = supabase
-        .from("properties_search_view")
-        .select("folio_number, full_address, owner_name, city_name, homestead_flag, total_sqft, year_built, beds, baths, zip_code");
-
-      // Folio search takes priority — it's an exact match or starts with
-      if (/^\d{12,15}$/.test(query)) {
-        q = q.ilike("folio_number", `${query}%`);
-      } else {
-        // Address or owner name search
-        q = q.or(`full_address.ilike.%${lowerQuery}%,owner_name.ilike.%${lowerQuery}%`);
-      }
-
-      if (cityFilter && cityFilter !== "All Cities") {
-        q = q.eq("city_name", cityFilter);
-      }
-
-      const response = await q.limit(10).abortSignal(AbortSignal.timeout(5000));
-
-      if (response.error) {
-        setErrorMsg("Search failed: " + response.error.message);
+      const { data, error } = await supabase.rpc("search_properties", { search_query: query });
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        setErrorMsg("No properties found. Try a different address, folio number, or owner name.");
         return;
       }
-
-      if (!response.data || response.data.length === 0) {
-        setErrorMsg("No properties found. Try a different address or folio number.");
-        return;
-      }
-
-      setResults(response.data);
+      setResults(data);
     } catch (err) {
-      if (err.name === "AbortError" || err.message?.includes("timeout")) {
-        setErrorMsg("Search took too long. Try a more specific address or folio number.");
-      } else {
-        setErrorMsg("Search failed. Please try again.");
-      }
+      setErrorMsg("Search unavailable. Please try again.");
     } finally {
       setIsLoading(false);
     }

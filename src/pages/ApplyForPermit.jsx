@@ -237,20 +237,16 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
 
   const handleSearch = async () => {
     const q = propertySearch.trim();
-    if (q.length < 2) { setSearchError("Enter at least 2 characters"); return; }
+    if (q.length < 3) { setSearchError("Enter at least 3 characters"); return; }
     setSearchLoading(true); setSearchError(""); setPropertyResults([]); setShowResults(false);
     try {
-      const { data, error } = await supabase
-        .from("properties_search_view")
-        .select("folio_number,full_address,owner_name,city_name,homestead_flag,total_sqft,year_built,beds,baths,zip_code")
-        .or(`folio_number.ilike.%${q}%,full_address.ilike.%${q}%,owner_name.ilike.%${q}%`)
-        .limit(10);
+      const { data, error } = await supabase.rpc("search_properties", { search_query: q });
       if (error) throw error;
-      setPropertyResults(data || []);
+      if (!data || data.length === 0) { setSearchError("No properties found. Try a different address, folio number, or owner name."); return; }
+      setPropertyResults(data);
       setShowResults(true);
-      if (!data || data.length === 0) setSearchError("No properties found. Try a different address or folio number.");
     } catch (err) {
-      setSearchError("Search failed — try a shorter query.");
+      setSearchError("Search unavailable. Please try again.");
     } finally {
       setSearchLoading(false);
     }

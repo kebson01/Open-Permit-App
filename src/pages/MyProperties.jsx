@@ -23,20 +23,12 @@ function SearchBar({ onSelect, cityFilter }) {
     if (!q || q.length < 3) { setError("Enter at least 3 characters"); return; }
     setLoading(true); setError(""); setResults([]);
     try {
-      let query = supabase.from("properties_search_view")
-        .select("folio_number, full_address, owner_name, city_name, homestead_flag, total_sqft, year_built, beds, baths, zip_code");
-      if (/^\d{12,15}$/.test(q)) {
-        query = query.ilike("folio_number", `${q}%`);
-      } else {
-        query = query.or(`full_address.ilike.%${q.toLowerCase()}%,owner_name.ilike.%${q.toLowerCase()}%`);
-      }
-      if (cityFilter && cityFilter !== "All Cities") query = query.eq("city_name", cityFilter);
-      const { data, error: err } = await query.limit(10).abortSignal(AbortSignal.timeout(5000));
+      const { data, error: err } = await supabase.rpc("search_properties", { search_query: q });
       if (err) throw err;
-      if (!data || data.length === 0) { setError("No properties found. Try a different address or folio."); return; }
+      if (!data || data.length === 0) { setError("No properties found. Try a different address, folio number, or owner name."); return; }
       setResults(data);
     } catch (e) {
-      setError(e.name === "AbortError" ? "Search timed out. Try a more specific query." : "Search failed. Please try again.");
+      setError("Search unavailable. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -160,14 +152,13 @@ function PropertyDetail({ property, onBack }) {
           {tab === "overview" && (
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Owner", value: property.owner_name },
-                { label: "Year Built", value: property.year_built },
-                { label: "Total SF", value: property.total_sqft ? Number(property.total_sqft).toLocaleString() + " SF" : null },
-                { label: "Under-Air SF", value: property.under_air_sqft ? Number(property.under_air_sqft).toLocaleString() + " SF" : null },
-                { label: "Beds / Baths", value: property.beds && property.baths ? `${property.beds} bed / ${property.baths} bath` : null },
-                { label: "Homestead", value: property.homestead_flag === "Y" || property.homestead_flag === true ? "Yes" : property.homestead_flag === "N" || property.homestead_flag === false ? "No" : null },
-                { label: "ZIP Code", value: property.zip_code },
-                { label: "Building Value", value: property.building_value ? `$${Number(property.building_value).toLocaleString()}` : null },
+                { label: "Owner", value: property.owner_name || null },
+                { label: "Year Built", value: property.year_built || null },
+                { label: "Total SF", value: parseInt(property.total_sqft) ? parseInt(property.total_sqft).toLocaleString() + " SF" : null },
+                { label: "Beds / Baths", value: (parseInt(property.beds) || parseInt(property.baths)) ? `${parseInt(property.beds) || "—"} bed / ${parseInt(property.baths) || "—"} bath` : null },
+                { label: "Homestead", value: property.homestead_flag === "Y" ? "Yes" : property.homestead_flag === "N" ? "No" : null },
+                { label: "ZIP Code", value: property.zip_code || null },
+                { label: "Building Value", value: parseInt(property.building_value) ? `$${parseInt(property.building_value).toLocaleString()}` : null },
               ].filter(f => f.value).map(field => (
                 <div key={field.label} className="py-2 border-b border-gray-50 last:border-0">
                   <p className="text-xs text-gray-400 mb-0.5">{field.label}</p>
