@@ -5,6 +5,9 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import Layout from './components/Layout';
+import { AuthContext, useAuthProvider } from './lib/auth';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import ForgotPassword from './pages/ForgotPassword';
 
 // Core pages
 import HomeDashboard from './pages/HomeDashboard';
@@ -34,39 +37,51 @@ import SubmissionGuide from './pages/SubmissionGuide';
 const LayoutWrapper = ({ children, currentPageName }) =>
   <Layout currentPageName={currentPageName}>{children}</Layout>;
 
+function AuthProvider({ children }) {
+  const auth = useAuthProvider();
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>
-        <Routes>
-          {/* ── PRIMARY NAVIGATION ── */}
-          <Route path="/" element={<LayoutWrapper currentPageName="Home"><HomeDashboard /></LayoutWrapper>} />
-          <Route path="/MyProperties" element={<LayoutWrapper currentPageName="MyProperties"><MyProperties /></LayoutWrapper>} />
-          <Route path="/ApplyForPermit" element={<LayoutWrapper currentPageName="ApplyForPermit"><ApplyForPermit /></LayoutWrapper>} />
-          <Route path="/MyProjects" element={<LayoutWrapper currentPageName="MyProjects"><MyProjects /></LayoutWrapper>} />
-          <Route path="/MyAccount" element={<LayoutWrapper currentPageName="MyAccount"><MyAccount /></LayoutWrapper>} />
+        <AuthProvider>
+          <Routes>
+            {/* ── PUBLIC ── */}
+            <Route path="/" element={<LayoutWrapper currentPageName="Home"><HomeDashboard /></LayoutWrapper>} />
+            <Route path="/MyProperties" element={<LayoutWrapper currentPageName="MyProperties"><MyProperties /></LayoutWrapper>} />
+            <Route path="/FeeCalculator" element={<LayoutWrapper currentPageName="FeeCalculator"><FeeCalculator /></LayoutWrapper>} />
+            <Route path="/ExemptionChecker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
+            <Route path="/BuildingCodes" element={<LayoutWrapper currentPageName="BuildingCodes"><BuildingCodes /></LayoutWrapper>} />
+            <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
+            <Route path="/PermitGuide" element={<LayoutWrapper currentPageName="PermitGuide"><PermitGuide /></LayoutWrapper>} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* ── TOOLS ── */}
-          <Route path="/FeeCalculator" element={<LayoutWrapper currentPageName="FeeCalculator"><FeeCalculator /></LayoutWrapper>} />
-          <Route path="/ExemptionChecker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
-          <Route path="/BuildingCodes" element={<LayoutWrapper currentPageName="BuildingCodes"><BuildingCodes /></LayoutWrapper>} />
-          <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
-          <Route path="/PermitGuide" element={<LayoutWrapper currentPageName="PermitGuide"><PermitGuide /></LayoutWrapper>} />
+            {/* ── PROTECTED ── */}
+            <Route path="/ApplyForPermit" element={<LayoutWrapper currentPageName="ApplyForPermit"><ProtectedRoute><ApplyForPermit /></ProtectedRoute></LayoutWrapper>} />
+            <Route path="/MyProjects" element={<LayoutWrapper currentPageName="MyProjects"><ProtectedRoute><MyProjects /></ProtectedRoute></LayoutWrapper>} />
+            <Route path="/MyAccount" element={<LayoutWrapper currentPageName="MyAccount"><ProtectedRoute><MyAccount /></ProtectedRoute></LayoutWrapper>} />
 
-          {/* ── ADMIN ── */}
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><AdminHealth /></LayoutWrapper>} />
-          <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><AdminPermitRecords /></LayoutWrapper>} />
+            {/* ── ADMIN ── */}
+            <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+            <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><ProtectedRoute><AdminHealth /></ProtectedRoute></LayoutWrapper>} />
+            <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
 
-          {/* ── LEGACY / KEEP ALIVE ── */}
-          <Route path="/SubmissionGuide" element={<LayoutWrapper currentPageName="SubmissionGuide"><SubmissionGuide /></LayoutWrapper>} />
-          <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
-          <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
-          <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
+            {/* ── LEGACY ── */}
+            <Route path="/SubmissionGuide" element={<LayoutWrapper currentPageName="SubmissionGuide"><SubmissionGuide /></LayoutWrapper>} />
+            <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
+            <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
+            <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
 
-          {/* ── CATCH ALL ── */}
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
+            {/* ── CATCH ALL ── */}
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </AuthProvider>
       </Router>
       <Toaster />
     </QueryClientProvider>

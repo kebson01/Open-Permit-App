@@ -757,15 +757,15 @@ function Step5({ selectedRole, selectedCity, selectedPermit, selectedProperty, q
     const save = async () => {
       setSaving(true);
       try {
-        const currentUser = supabase.auth.getUser ? (await supabase.auth.getUser()).data?.user : null;
+        const { data: { user: sbUser } } = await supabase.auth.getUser();
 
         const { data: guideData, error: guideError } = await supabase
           .from('submission_guides')
           .insert({
-            user_email: currentUser?.email || 'guest@openpermit.com',
-            user_id: currentUser?.id || null,
+            user_email: sbUser?.email || 'guest@openpermit.com',
+            user_id: sbUser?.id || null,
             user_role: selectedRole,
-            is_guest: !currentUser,
+            is_guest: !sbUser,
             city_name: selectedCity,
             city_portal_url: portalUrl,
             permit_type_name: selectedPermit?.name,
@@ -790,6 +790,11 @@ function Step5({ selectedRole, selectedCity, selectedPermit, selectedProperty, q
         }
 
         setGuideId(guideData.id);
+
+        // Claim any previous guest submissions by this email
+        if (sbUser) {
+          await supabase.rpc('claim_guest_guides', { p_email: sbUser.email, p_user_id: sbUser.id }).catch(() => {});
+        }
       } finally {
         setSaving(false);
       }

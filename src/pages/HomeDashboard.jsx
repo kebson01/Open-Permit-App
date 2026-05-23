@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/auth";
 import * as db from "@/lib/db";
 import {
   Plus, Search, AlertTriangle, Bell, ChevronRight,
@@ -174,30 +174,25 @@ function BottomNav() {
 }
 
 export default function HomeDashboard() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [guides, setGuides] = useState([]);
+  const { user, loading: authLoading } = useAuth();
+  const [guides, setGuides]   = useState([]);
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    base44.auth.me()
-      .then(u => {
-        setCurrentUser(u || null);
-        if (u) {
-          return Promise.all([
-            db.SubmissionGuide.filter({ user_email: u.email }),
-            db.Project.filter({ owner_email: u.email }, 'updated_at.desc', 5),
-          ]).then(([g, p]) => {
-            setGuides(Array.isArray(g) ? g : []);
-            setProjects(Array.isArray(p) ? p : []);
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    if (authLoading) return;
+    if (!user) return;
+    setLoading(true);
+    Promise.all([
+      db.SubmissionGuide.filter({ user_email: user.email }),
+      db.Project.filter({ owner_email: user.email }, 'updated_at.desc', 5),
+    ]).then(([g, p]) => {
+      setGuides(Array.isArray(g) ? g : []);
+      setProjects(Array.isArray(p) ? p : []);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [user, authLoading]);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#FAF8FF" }}>
         <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#1A56DB" }} />
@@ -205,7 +200,8 @@ export default function HomeDashboard() {
     );
   }
 
-  const firstName = currentUser?.full_name?.split(" ")[0] || (currentUser ? "there" : null);
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+  const firstName   = displayName.split(" ")[0] || (user ? "there" : null);
   const activeGuides = guides.filter(g => ["in_progress", "ready_to_submit"].includes(g.overall_status));
 
   return (
@@ -226,9 +222,9 @@ export default function HomeDashboard() {
       <div className="px-5 py-4 space-y-5">
         {/* Greeting */}
         <div>
-          {currentUser ? (
+          {user ? (
             <>
-              <h1 className="text-3xl font-extrabold text-gray-900">{getGreeting()}, {firstName}</h1>
+              <h1 className="text-3xl font-extrabold text-gray-900">{getGreeting()}, {firstName}!</h1>
               <p className="text-gray-500 text-sm mt-1">Here's your permit activity overview.</p>
             </>
           ) : (
@@ -318,7 +314,7 @@ export default function HomeDashboard() {
         </div>
 
         {/* Upcoming Applications */}
-        {currentUser && activeGuides.length > 0 && (
+        {user && activeGuides.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-gray-900 text-base">Active Applications</h2>
@@ -333,22 +329,20 @@ export default function HomeDashboard() {
         )}
 
         {/* Guest CTA */}
-        {!currentUser && (
+        {!user && (
           <div className="rounded-2xl p-6 text-center" style={{ background: "#1A56DB" }}>
             <h3 className="font-extrabold text-white text-lg mb-1">Get started today</h3>
-            <p className="text-blue-200 text-sm mb-4">Sign in to track applications and manage your projects.</p>
-            <button
-              onClick={() => base44.auth.redirectToLogin(window.location.href)}
-              className="bg-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors hover:opacity-90"
-              style={{ color: "#1A56DB" }}
-            >
-              Sign In →
-            </button>
+            <p className="text-blue-200 text-sm mb-4">Create a free account to track applications and manage your projects.</p>
+            <Link to="/signup"
+              className="inline-block bg-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors hover:opacity-90 no-underline"
+              style={{ color: "#1A56DB" }}>
+              Get Started →
+            </Link>
           </div>
         )}
 
         {/* Recent Activity */}
-        {currentUser && (
+        {user && (
           <div>
             <h2 className="font-bold text-gray-900 text-base mb-3">Recent Activity</h2>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">

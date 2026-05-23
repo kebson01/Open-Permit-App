@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
+import { useAuth } from "@/lib/auth";
 import { User, Shield, AlertTriangle, Loader2, CheckCircle2, LogOut } from "lucide-react";
 
 const PRIMARY = "#004ac6";
@@ -29,38 +30,30 @@ function daysUntil(dateStr) {
 }
 
 export default function MyAccount() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user, signOut, loading: authLoading } = useAuth();
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
   const [saved, setSaved]             = useState(false);
   const [tab, setTab]                 = useState("profile");
   const [profile, setProfile]         = useState({});
-  const [contractorProfile, setContractorProfile] = useState(null);
   const [cpId, setCpId]               = useState(null);
   const [cp, setCp]                   = useState({});
   const [savingCp, setSavingCp]       = useState(false);
   const [savedCp, setSavedCp]         = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(async u => {
-      if (!u) { setLoading(false); return; }
-      setCurrentUser(u);
-      setProfile({ full_name: u.full_name || "", email: u.email || "" });
-      try {
-        const records = await db.ContractorProfile.filter({ user_email: u.email });
-        if (records && records.length > 0) {
-          setContractorProfile(records[0]);
-          setCpId(records[0].id);
-          setCp(records[0]);
-        }
-      } catch {}
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    if (authLoading) return;
+    if (!user) { setLoading(false); return; }
+    const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "";
+    setProfile({ full_name: displayName, phone: user.user_metadata?.phone || "" });
+    db.ContractorProfile.filter({ user_email: user.email }).then(records => {
+      if (records && records.length > 0) { setCpId(records[0].id); setCp(records[0]); }
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [user, authLoading]);
 
   const saveProfile = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ full_name: profile.full_name });
+    await supabase.auth.updateUser({ data: { full_name: profile.full_name, phone: profile.phone } });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -69,11 +62,11 @@ export default function MyAccount() {
   const saveContractor = async () => {
     setSavingCp(true);
     if (cpId) {
-      await db.ContractorProfile.update(cpId, { ...cp, user_email: currentUser.email });
+      await db.ContractorProfile.update(cpId, { ...cp, user_email: user.email });
     } else {
-      const created = await db.ContractorProfile.create({ ...cp, user_email: currentUser.email });
+      const created = await db.ContractorProfile.create({ ...cp, user_email: user.email });
       setCpId(created.id);
-      setContractorProfile(created);
+      setCp(created);
     }
     setSavingCp(false);
     setSavedCp(true);
@@ -83,27 +76,19 @@ export default function MyAccount() {
   const licenseExp = daysUntil(cp.license_expiration);
   const insuranceExp = daysUntil(cp.insurance_expiration);
 
-  if (loading) {
+  if (loading || authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>;
   }
 
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#f8f9ff" }}>
-        <div className="text-center">
-          <p className="font-semibold text-gray-600 mb-3">Sign in to view your account</p>
-          <button onClick={() => base44.auth.redirectToLogin(window.location.href)}
-            className="px-6 py-2.5 rounded-xl text-white font-bold text-sm" style={{ background: PRIMARY }}>
-            Sign In
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null; // ProtectedRoute handles redirect
+
+  const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "";
+  const userRole    = user.user_metadata?.role || "homeowner";
+  const isContractor = userRole === "contractor";
 
   const TABS = [
     { key: "profile", label: "Profile" },
-    { key: "contractor", label: "Contractor Profile" },
+    ...(isContractor ? [{ key: "contractor", label: "Contractor Profile" }] : []),
   ];
 
   return (
@@ -113,14 +98,14 @@ export default function MyAccount() {
           <p className="text-xs font-bold uppercase tracking-widest mb-1 text-gray-400">My Account</p>
           <div className="flex items-center justify-between">
             <h1 className="font-extrabold text-2xl text-gray-900" style={{ fontFamily: FONTS.h }}>
-              {currentUser.full_name || currentUser.email}
+              {displayName}
             </h1>
-            <button onClick={() => base44.auth.logout("/")}
+            <button onClick={signOut}
               className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 font-semibold transition-colors">
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
           </div>
-          <p className="text-sm text-gray-400 mt-0.5">{currentUser.email}</p>
+          <p className="text-sm text-gray-400 mt-0.5">{user.email}</p>
         </div>
       </div>
 
@@ -140,12 +125,12 @@ export default function MyAccount() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-gray-50">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold text-white" style={{ background: PRIMARY }}>
-                {currentUser.full_name?.[0]?.toUpperCase() || "U"}
+                {displayName[0]?.toUpperCase() || "U"}
               </div>
               <div>
-                <p className="font-bold text-gray-800" style={{ fontFamily: FONTS.h }}>{currentUser.full_name || "Set your name"}</p>
-                <p className="text-sm text-gray-400">{currentUser.email}</p>
-                <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium capitalize">{currentUser.role || "user"}</span>
+                <p className="font-bold text-gray-800" style={{ fontFamily: FONTS.h }}>{displayName || "Set your name"}</p>
+                <p className="text-sm text-gray-400">{user.email}</p>
+                <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium capitalize">{userRole}</span>
               </div>
             </div>
 
@@ -153,7 +138,10 @@ export default function MyAccount() {
               <Input value={profile.full_name} onChange={e => setProfile(p => ({ ...p, full_name: e.target.value }))} placeholder="Your full name" />
             </FieldGroup>
             <FieldGroup label="Email">
-              <Input value={currentUser.email} disabled />
+              <Input value={user.email} disabled />
+            </FieldGroup>
+            <FieldGroup label="Phone Number">
+              <Input value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="(954) 555-0000" type="tel" />
             </FieldGroup>
 
             <button onClick={saveProfile} disabled={saving}
