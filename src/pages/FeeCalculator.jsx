@@ -1,52 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Calculator, MapPin, Info, RotateCcw, ExternalLink, Phone, Mail, Clock, Loader2, Printer, ClipboardCopy, Check } from "lucide-react";
-import HintTooltip, { HintBanner, HintCard } from "@/components/ui/HintTooltip";
+import {
+  Calculator, MapPin, Info, RotateCcw, ExternalLink,
+  Phone, Mail, Clock, Loader2, Printer, ClipboardCopy,
+  Check, ChevronDown, Save, Home, LayoutDashboard, FolderOpen
+} from "lucide-react";
 import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
-
-
-
-// Sunrise surcharge calculation helper
-function calcSunriseSurcharges(permitFee, constructionValue) {
-  const bcaib = Math.max(permitFee * 0.015, 2.00);
-  const fbc = Math.max(permitFee * 0.010, 2.00);
-  const bra = Math.max((constructionValue / 1000) * 0.52, 2.00);
-  return { bcaib, fbc, bra };
-}
-
-const CITY_NOTES = {
-  "Weston": "NOC required if job value over $2,500 (A/C: $15,000). Fees effective October 2025.",
-  "Coral Springs": "NOC required if job value over $5,000 (A/C: $15,000).",
-  "Hollywood": "NOC required if job value over $5,000 (A/C: $15,000). Process fee: 25% of job cost charged separately. Express Review: Wednesdays.",
-  "Fort Lauderdale": "NOC required if job value over $2,500 (A/C: $15,000). Digital submissions only via LauderBuild.",
-  "Cooper City": "NOC required if job value over $2,500 (A/C: $15,000). All applications must be NOTARIZED. Hold Harmless Agreement required.",
-  "Sunrise": "NOC required if job value over $2,500 (A/C: $7,500). Fees effective October 1, 2024.",
-};
-
-const CITY_FEE_SUMMARY = {
-  "Weston": "Flat 1.5% rate on all permit types. Technology fee: $75.",
-  "Coral Springs": "Variable rates by permit type: 0.14%–5.30%. Lowest minimum fee in Broward ($54.55).",
-  "Fort Lauderdale": "1.85% rate. Digital submissions only via LauderBuild. Walk-Thru available for small projects.",
-  "Hollywood": "2.20% tiered rate + separate 25% process fee. Express Review every Wednesday.",
-  "Cooper City": "1.85% rate. ALL applications must be notarized. Hold Harmless Agreement required.",
-  "Sunrise": "Fixed flat fees per permit type. No percentage calculation for most residential permits.",
-};
-
-const CITY_ACCENT = {
-  "Weston":          { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-800",   dot: "bg-blue-500" },
-  "Coral Springs":   { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-800",  dot: "bg-green-500" },
-  "Fort Lauderdale": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-800", dot: "bg-purple-500" },
-  "Hollywood":       { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", dot: "bg-orange-500" },
-  "Cooper City":     { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-800",    dot: "bg-red-500" },
-  "Sunrise":         { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-800",  dot: "bg-amber-500" },
-};
 
 const CITY_PORTAL_URLS = {
   "Weston": "https://www.westonfl.org/Permits",
@@ -57,730 +20,440 @@ const CITY_PORTAL_URLS = {
   "Sunrise": "https://sunrisefl.gov/openforbusiness",
 };
 
-const CATEGORY_ORDER = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
-const CATEGORY_META = {
-  building:    { label: "Building Permits",      icon: "🏗️" },
-  electrical:  { label: "Electrical Permits",    icon: "⚡" },
-  plumbing:    { label: "Plumbing Permits",       icon: "🔧" },
-  fire:        { label: "Fire Code Services",     icon: "🔥" },
-  certificate: { label: "Certificates",           icon: "📜" },
-  planning:    { label: "Planning & Zoning",      icon: "📐" },
-  engineering: { label: "Engineering Permits",    icon: "🛣️" },
-  additional:  { label: "Additional Services",    icon: "➕" },
+const CITY_NOTES = {
+  "Weston": "NOC required if job value over $2,500. Fees effective October 2025.",
+  "Coral Springs": "NOC required if job value over $5,000.",
+  "Hollywood": "NOC required if job value over $5,000. Express Review: Wednesdays.",
+  "Fort Lauderdale": "NOC required if job value over $2,500. Digital submissions only via LauderBuild.",
+  "Cooper City": "NOC required if job value over $2,500. All applications must be NOTARIZED.",
+  "Sunrise": "NOC required if job value over $2,500. Fees effective October 1, 2024.",
 };
 
-// ── Standard fee calculation (Weston, Coral Springs, Ft Laud, Hollywood, Cooper City) ──
+const PERMIT_CATEGORIES = [
+  { key: "building",    label: "Building",     icon: "🏗️" },
+  { key: "electrical",  label: "Electrical",   icon: "⚡" },
+  { key: "plumbing",    label: "Plumbing",     icon: "🔧" },
+  { key: "engineering", label: "Engineering",  icon: "🛣️" },
+  { key: "fire",        label: "Fire",         icon: "🔥" },
+  { key: "certificate", label: "Certificate",  icon: "📜" },
+  { key: "planning",    label: "Planning",     icon: "📐" },
+  { key: "additional",  label: "Additional",   icon: "➕" },
+];
+
+function calcSunriseSurcharges(permitFee, constructionValue) {
+  const bcaib = Math.max(permitFee * 0.015, 2.00);
+  const fbc   = Math.max(permitFee * 0.010, 2.00);
+  const bra   = Math.max((constructionValue / 1000) * 0.52, 2.00);
+  return { bcaib, fbc, bra };
+}
+
 function calculateStandardFee(rule, constructionCost, surcharge) {
   const cost = parseFloat(constructionCost) || 0;
   const breakdown = [];
-
   const flatFee  = parseFloat(rule.flat_fee)  || 0;
   const baseFee  = parseFloat(rule.base_fee)  || 0;
   const rate     = parseFloat(rule.rate_percentage) || 0;
   const calcType = rule.calc_type || "flat";
-
-  let permitFee = 0;
+  let permitFee  = 0;
 
   if (calcType === "flat") {
-    // Use flat_fee if set, otherwise fall back to base_fee
     permitFee = flatFee > 0 ? flatFee : baseFee;
-    breakdown.push({ label: "Permit Fee (Flat)", amount: permitFee });
-
+    breakdown.push({ label: "Base Application Fee", amount: permitFee });
   } else if (calcType === "flat_plus_pct") {
     const pctAmount = (rate / 100) * cost;
     permitFee = baseFee + pctAmount;
-    if (baseFee > 0) breakdown.push({ label: "Base Fee", amount: baseFee });
-    if (pctAmount > 0) breakdown.push({ label: `Percentage Fee (${rate}% of $${cost.toLocaleString()})`, amount: pctAmount });
-
+    if (baseFee > 0) breakdown.push({ label: "Base Application Fee", amount: baseFee });
+    if (pctAmount > 0) breakdown.push({ label: `Plan Review (${rate}%)`, amount: pctAmount });
   } else if (calcType === "flat_plus_linear") {
-    const linearFeet = cost; // for linear permits, cost input is used as linear feet
-    const baseIncludes = parseFloat(rule.base_includes_ft) || 0;
-    const ratePerFt = parseFloat(rule.rate_per_linear_ft) || 0;
-    const overFt = Math.max(0, linearFeet - baseIncludes);
-    const linearExtra = overFt * ratePerFt;
+    const linearFeet     = cost;
+    const baseIncludes   = parseFloat(rule.base_includes_ft) || 0;
+    const ratePerFt      = parseFloat(rule.rate_per_linear_ft) || 0;
+    const overFt         = Math.max(0, linearFeet - baseIncludes);
+    const linearExtra    = overFt * ratePerFt;
     permitFee = baseFee + linearExtra;
-    breakdown.push({ label: "Base Fee", amount: baseFee });
-    if (linearExtra > 0) breakdown.push({ label: `Linear Footage Add-on (${overFt} ft × $${ratePerFt}/ft)`, amount: linearExtra });
-
+    breakdown.push({ label: "Base Application Fee", amount: baseFee });
+    if (linearExtra > 0) breakdown.push({ label: `Linear Footage Add-on`, amount: linearExtra });
   } else {
-    // Legacy: percentage-based (base or percent, whichever is higher)
     if (rate > 0) {
       const pctFee = cost * (rate / 100);
       permitFee = Math.max(baseFee, pctFee);
     } else {
       permitFee = flatFee > 0 ? flatFee : baseFee;
     }
-    breakdown.push({ label: "Base Permit Fee", amount: permitFee });
+    breakdown.push({ label: "Base Application Fee", amount: permitFee });
   }
 
-  // DB column is 'technology_admin' on city_surcharges; per-rule override uses 'technology_admin_fee'
   const techFee = parseFloat(rule.technology_admin_fee) || (surcharge ? parseFloat(surcharge.technology_admin) || 0 : 0);
-  if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
+  if (techFee > 0) breakdown.push({ label: "Administrative Processing", amount: techFee });
 
-  let dcaFee = 0, dbprFee = 0, eduFee = 0, borFee = 0;
+  let stateFees = 0;
   if (surcharge) {
-    const dcaRate = parseFloat(surcharge.dca_rate) || 0;
+    const dcaRate  = parseFloat(surcharge.dca_rate)  || 0;
     const dbprRate = parseFloat(surcharge.dbpr_rate) || 0;
-    const eduRate = parseFloat(surcharge.educational_rate) || 0;
-    const borRate = parseFloat(surcharge.board_of_rules_rate) || 0;
-
-    if (dcaRate > 0) {
-      dcaFee = permitFee * dcaRate;
-      breakdown.push({ label: `State DCA Surcharge (${(dcaRate * 100).toFixed(1)}%)`, amount: dcaFee });
-    }
-    if (dbprRate > 0) {
-      dbprFee = permitFee * dbprRate;
-      breakdown.push({ label: `State DBPR Surcharge (${(dbprRate * 100).toFixed(1)}%)`, amount: dbprFee });
-    }
-    if (eduRate > 0) {
-      eduFee = permitFee * eduRate;
-      breakdown.push({ label: "Educational & Training Fee", amount: eduFee });
-    }
-    if (borRate > 0) {
-      borFee = permitFee * borRate;
-      breakdown.push({ label: `Board of Rules Surcharge (${(borRate * 100).toFixed(2)}%)`, amount: borFee });
-    }
+    const eduRate  = parseFloat(surcharge.educational_rate) || 0;
+    const borRate  = parseFloat(surcharge.board_of_rules_rate) || 0;
+    if (dcaRate > 0)  { const f = permitFee * dcaRate;  stateFees += f; breakdown.push({ label: "State DCA Surcharge", amount: f, isState: true }); }
+    if (dbprRate > 0) { const f = permitFee * dbprRate; stateFees += f; breakdown.push({ label: "State DBPR Surcharge", amount: f, isState: true }); }
+    if (eduRate > 0)  { const f = permitFee * eduRate;  stateFees += f; breakdown.push({ label: "Educational & Training Fee", amount: f, isState: true }); }
+    if (borRate > 0)  { const f = permitFee * borRate;  stateFees += f; breakdown.push({ label: "Board of Rules Surcharge", amount: f, isState: true }); }
   }
 
-  const total = permitFee + techFee + dcaFee + dbprFee + eduFee + borFee;
-  return { total, breakdown };
+  const cityFees = permitFee + techFee;
+  const total    = cityFees + stateFees;
+  return { total, cityFees, stateFees, breakdown };
 }
 
-// ── Sunrise fee calculation ──
 function calculateSunriseFee(rule, constructionCost, roofSqFt) {
   const cost = parseFloat(constructionCost) || 0;
   const breakdown = [];
-
-  let permitFee = 0;
+  let permitFee  = 0;
   const isPercentage = rule.calc_type === "percentage";
 
   if (isPercentage) {
     const calculated = cost * ((rule.rate_percentage || 4.40) / 100);
     const minFee = 208.46;
     permitFee = Math.max(calculated, minFee);
-    breakdown.push({ label: `Permit Fee (${rule.rate_percentage || 4.40}% of construction value)`, amount: permitFee });
-    if (calculated < minFee) {
-      breakdown.push({ label: "  (Minimum fee applied)", amount: 0 });
-    }
+    breakdown.push({ label: "Base Application Fee", amount: permitFee });
   } else {
-    // flat
     permitFee = rule.base_fee || 0;
-    breakdown.push({ label: "Permit Fee", amount: permitFee });
-
-    // Roof overage: $101.56 per 1,000 SF over 3,000 SF
+    breakdown.push({ label: "Base Application Fee", amount: permitFee });
     const sqft = parseFloat(roofSqFt) || 0;
     if (rule.permit_name?.toLowerCase().includes("roof") && sqft > 3000) {
-      const overageSqft = sqft - 3000;
-      const overage = Math.ceil(overageSqft / 1000) * 101.56;
-      breakdown.push({ label: `Roof overage (${Math.ceil(overageSqft / 1000)} × $101.56/1,000 SF)`, amount: overage });
+      const overage = Math.ceil((sqft - 3000) / 1000) * 101.56;
+      breakdown.push({ label: "Roof Overage", amount: overage });
       permitFee += overage;
     }
   }
 
-  // For Sunrise: per-rule tech fee stored as technology_admin_fee
   const techFee = parseFloat(rule.technology_admin_fee) || 0;
-  if (techFee > 0) breakdown.push({ label: "Technology & Admin Fee", amount: techFee });
+  if (techFee > 0) breakdown.push({ label: "Administrative Processing", amount: techFee });
 
-  // BRA: use constructionValue for percentage permits, base_fee for flat permits
   const braBase = isPercentage ? cost : (rule.base_fee || 0);
-  const { bcaib: bcaibFee, fbc: fbcFee, bra: braFee } = calcSunriseSurcharges(permitFee, braBase);
-  breakdown.push({ label: "BRA Surcharge ($0.52/$1,000)", amount: braFee });
-  breakdown.push({ label: "BCAIB Surcharge (1.5%)", amount: bcaibFee });
-  breakdown.push({ label: "FBC Surcharge (1.0%)", amount: fbcFee });
+  const { bcaib, fbc, bra } = calcSunriseSurcharges(permitFee, braBase);
+  let stateFees = bra + bcaib + fbc;
+  breakdown.push({ label: "State Surcharge (BRA)", amount: bra, isState: true });
+  breakdown.push({ label: "State Surcharge (BCAIB)", amount: bcaib, isState: true });
+  breakdown.push({ label: "State Surcharge (FBC)", amount: fbc, isState: true });
 
-  const total = permitFee + techFee + braFee + bcaibFee + fbcFee;
-  return { total, breakdown };
+  const cityFees = permitFee + techFee;
+  const total    = cityFees + stateFees;
+  return { total, cityFees, stateFees, breakdown };
 }
 
-function SunriseCityInfo() {
+function BottomNav() {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-4">
-      <div className="px-4 py-3 border-b border-gray-100" style={{ background: "linear-gradient(135deg, #0D2B5E, #0F3575)" }}>
-        <p className="text-white font-bold text-sm">Sunrise Building Department</p>
-      </div>
-      <div className="p-4 space-y-2.5 text-sm">
-        <a href="tel:9545722354" className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-          <Phone className="w-4 h-4 text-blue-500 shrink-0" />
-          (954) 572-2354
-        </a>
-        <a href="mailto:askbuilding@sunrisefl.gov" className="flex items-center gap-2 text-gray-700 hover:text-blue-600 break-all">
-          <Mail className="w-4 h-4 text-blue-500 shrink-0" />
-          askbuilding@sunrisefl.gov
-        </a>
-        <div className="flex items-start gap-2 text-gray-600">
-          <Clock className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs">Mon–Thu: 8:00 AM – 5:00 PM</p>
-            <p className="text-xs">Fri: 8:00 AM – 4:00 PM</p>
-            <p className="text-xs font-semibold text-blue-700 mt-1">📋 Professional Day: Wed 8AM–Noon (walk-in plan review)</p>
-          </div>
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around py-2 z-50">
+      <Link to="/" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
+        <Home className="w-5 h-5 text-gray-400 mt-1.5" />
+        <span className="text-xs text-gray-400">Home</span>
+      </Link>
+      <Link to="/FeeCalculator" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
+        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+          <LayoutDashboard className="w-4 h-4 text-blue-600" />
         </div>
-        <a href="https://sunrisefl.gov/openforbusiness" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 text-blue-600 hover:underline text-xs font-medium">
-          <ExternalLink className="w-3.5 h-3.5" />
-          sunrisefl.gov/openforbusiness
-        </a>
-      </div>
+        <span className="text-xs font-semibold text-blue-600">Dashboard</span>
+      </Link>
+      <Link to="/MyProjects" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
+        <FolderOpen className="w-5 h-5 text-gray-400 mt-1.5" />
+        <span className="text-xs text-gray-400">Projects</span>
+      </Link>
     </div>
   );
 }
 
 export default function FeeCalculator() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlCity = urlParams.get("city") || "";
-  const singleCity = !!urlCity;
-
+  const urlParams  = new URLSearchParams(window.location.search);
+  const urlCity    = urlParams.get("city") || "";
   const { cities, loading: citiesLoading } = useCities();
-  const [city, setCity] = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
-
-  // Find the current city object from the cities list
-  const cityObj = cities.find(c => c.name === city) || null;
-  const hasFeeData = cityHasFeeData(cityObj);
-  const usesBroward = cityUsesBrowardCounty(cityObj);
-  const [feeRules, setFeeRules] = useState([]);
+  const [city, setCity]           = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
+  const [feeRules, setFeeRules]   = useState([]);
   const [surcharge, setSurcharge] = useState(null);
   const [loadingRules, setLoadingRules] = useState(false);
-  const [selectedRule, setSelectedRule] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("building");
+  const [selectedRule, setSelectedRule]     = useState(null);
   const [constructionCost, setConstructionCost] = useState("");
-  const [roofSqFt, setRoofSqFt] = useState("");
-  const [results, setResults] = useState(null);
-  const [search, setSearch] = useState("");
-  const [feeCopied, setFeeCopied] = useState(false);
+  const [results, setResults]     = useState(null);
+  const [copied, setCopied]       = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
 
-  const isSunrise = city === "Sunrise";
+  const cityObj   = cities.find(c => c.name === city) || null;
+  const hasFeeData = cityHasFeeData(cityObj);
+  const isSunrise  = city === "Sunrise";
 
   useEffect(() => {
     if (city) sessionStorage.setItem("selectedCity", city);
     setSelectedRule(null);
     setConstructionCost("");
-    setRoofSqFt("");
     setResults(null);
-    setSearch("");
-    loadCityData(city, cities.find(c => c.name === city) || null);
-  }, [city]);
-
-  const loadCityData = async (cityName, cityRecord) => {
-    // Skip DB fetch for cities without fee data
-    if (cityRecord && !cityHasFeeData(cityRecord)) {
-      setFeeRules([]);
-      setSurcharge(null);
-      setLoadingRules(false);
-      return;
-    }
+    if (cityObj && !hasFeeData) { setFeeRules([]); setSurcharge(null); return; }
     setLoadingRules(true);
-    const encoded = encodeURIComponent(cityName);
-    const [rulesRes, surchargeRes] = await Promise.all([
+    const encoded = encodeURIComponent(city);
+    Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/fee_rules?city_name=eq.${encoded}&order=sort_order.asc`, { headers: SB_HEADERS }),
       fetch(`${SUPABASE_URL}/rest/v1/city_surcharges?city_name=eq.${encoded}&limit=1`, { headers: SB_HEADERS }),
-    ]);
-    const rules = await rulesRes.json();
-    const surcharges = await surchargeRes.json();
-    setFeeRules(Array.isArray(rules) ? rules : []);
-    setSurcharge(Array.isArray(surcharges) && surcharges.length > 0 ? surcharges[0] : null);
-    setLoadingRules(false);
-  };
+    ]).then(async ([r, s]) => {
+      const rules = await r.json();
+      const surcharges = await s.json();
+      setFeeRules(Array.isArray(rules) ? rules : []);
+      setSurcharge(Array.isArray(surcharges) && surcharges.length > 0 ? surcharges[0] : null);
+      setLoadingRules(false);
+    });
+  }, [city]);
 
-  // For Sunrise: flat fees are immediately calculable; percentage needs cost input
+  const rulesForCategory = feeRules.filter(r => r.category === activeCategory);
+
   const isSunriseFlat = isSunrise && selectedRule?.calc_type === "flat";
-  const isSunrisePct = isSunrise && selectedRule?.calc_type === "percentage";
-  const isRoofPermit = isSunriseFlat && selectedRule?.permit_name?.toLowerCase().includes("roof");
+  const needsCost     = isSunrise ? selectedRule?.calc_type === "percentage" : (selectedRule?.rate_percentage > 0);
 
-  const needsCost = isSunrise
-    ? isSunrisePct
-    : (selectedRule?.rate_percentage > 0);
-
-  const canCalculate = selectedRule && (isSunriseFlat || (needsCost ? (constructionCost && parseFloat(constructionCost) > 0) : true));
-
-  const handleCalculate = () => {
-    if (!selectedRule) return;
-    let result;
-    if (isSunrise) {
-      result = calculateSunriseFee(selectedRule, constructionCost, roofSqFt);
-    } else {
-      result = calculateStandardFee(selectedRule, constructionCost, surcharge);
-    }
-    setResults(result);
-  };
-
-  const handleReset = () => {
-    setSelectedRule(null);
-    setConstructionCost("");
-    setRoofSqFt("");
-    setResults(null);
-  };
-
-  // Auto-calculate for Sunrise flat fees when selected
+  // Auto-calculate
   useEffect(() => {
-    if (isSunriseFlat && selectedRule) {
-      const result = calculateSunriseFee(selectedRule, "", "");
-      setResults(result);
-    }
-  }, [selectedRule, isSunriseFlat]);
-
-  // Real-time calculation for standard (non-Sunrise) permits as user types
-  useEffect(() => {
-    if (!isSunrise && selectedRule) {
-      const calcType = selectedRule.calc_type || "flat";
-      const isFlat = calcType === "flat" || (selectedRule.rate_percentage <= 0 && !selectedRule.flat_fee === false);
-      const needsInput = selectedRule.rate_percentage > 0 || calcType === "flat_plus_pct" || calcType === "flat_plus_linear";
-      if (needsInput && (!constructionCost || parseFloat(constructionCost) <= 0)) {
-        // Only clear if not a pure flat fee
-        if (!(calcType === "flat" || (!selectedRule.rate_percentage && (selectedRule.flat_fee > 0 || selectedRule.base_fee > 0)))) {
-          setResults(null);
-          return;
-        }
+    if (!selectedRule) { setResults(null); return; }
+    if (needsCost && (!constructionCost || parseFloat(constructionCost) <= 0)) {
+      if (!(selectedRule.calc_type === "flat" || (!selectedRule.rate_percentage && (selectedRule.flat_fee > 0 || selectedRule.base_fee > 0)))) {
+        setResults(null); return;
       }
-      const result = calculateStandardFee(selectedRule, constructionCost, surcharge);
-      setResults(result);
     }
-  }, [constructionCost, selectedRule, surcharge, isSunrise]);
+    const res = isSunrise
+      ? calculateSunriseFee(selectedRule, constructionCost, "")
+      : calculateStandardFee(selectedRule, constructionCost, surcharge);
+    setResults(res);
+  }, [selectedRule, constructionCost, surcharge, isSunrise]);
 
-  const filtered = feeRules.filter(r =>
-    !search || r.permit_name?.toLowerCase().includes(search.toLowerCase()) ||
-    r.description?.toLowerCase().includes(search.toLowerCase())
-  );
-  const grouped = {};
-  filtered.forEach(r => {
-    const cat = r.category || "additional";
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(r);
-  });
+  const cityFeeItems    = results?.breakdown.filter(i => !i.isState && i.amount > 0) || [];
+  const stateFeeItems   = results?.breakdown.filter(i => i.isState && i.amount > 0) || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f9f9fc" }}>
-      {/* Hero Header */}
-      <div className="px-5 pt-8 pb-7" style={{ background: "#00020c" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-start justify-between gap-6 flex-wrap">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Fee Calculator</p>
-              <div className="flex items-center gap-3 flex-wrap mb-2">
-                <h1 className="font-bold text-white leading-tight" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Estimate Permit Costs</h1>
-                <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "rgba(59,130,246,0.25)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.4)" }}>Fee transparency required by FL HB 683</span>
+    <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Header */}
+      <div className="bg-white px-5 pt-12 pb-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Link to="/" className="no-underline">
+            <div className="flex items-center gap-1.5 text-blue-700 font-bold text-lg">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">OP</span>
               </div>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)", maxWidth: 400 }}>Get an instant permit fee estimate before visiting the building department. Select your city, choose your permit type, and enter your project value to see a full fee breakdown including state surcharges.</p>
+              OpenPermit
             </div>
-            <div className="shrink-0 mt-1">
-              {singleCity ? (
-                <div className="flex items-center gap-2 rounded-xl px-4 h-11" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                  <MapPin className="w-4 h-4" style={{ color: "rgba(255,255,255,0.5)" }} />
-                  <span className="text-white text-sm font-medium">{city}</span>
-                </div>
-              ) : (
-                <Select value={city} onValueChange={setCity}>
-                  <SelectTrigger className="w-52 h-11 rounded-xl text-sm bg-white border-0 shadow-md">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-blue-600" />
-                      {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select city..." />}
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          </div>
+          </Link>
         </div>
+        <h1 className="text-2xl font-extrabold text-gray-900">Permit Cost Estimator</h1>
+        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+          Calculate estimated regulatory fees for your next renovation project across major municipalities.
+        </p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-8">
-        <div className="mb-4">
-          <HintBanner>
-            Select your city, choose your permit type, and enter your project value to see a full fee breakdown including state surcharges. Fees are estimates — final amounts are set at permit issuance.
-          </HintBanner>
-        </div>
-        {/* Mobile city selector — hidden on desktop since header has it */}
-        <div className="md:hidden mb-4">
-          {!singleCity && (
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-full h-11 rounded-xl text-sm bg-white border-gray-200">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  {citiesLoading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <SelectValue placeholder="Select city..." />}
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {cities.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+      <div className="px-4 py-5 space-y-5">
+        {/* City Selector */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select City</p>
+          <div className="relative">
+            <button
+              onClick={() => setShowCityPicker(!showCityPicker)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-800"
+            >
+              <span>{city || "Select a city..."}</span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCityPicker ? "rotate-180" : ""}`} />
+            </button>
+            {showCityPicker && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+                {citiesLoading ? (
+                  <div className="p-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-blue-500" /></div>
+                ) : cities.map(c => (
+                  <button key={c.name}
+                    onClick={() => { setCity(c.name); setShowCityPicker(false); }}
+                    className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors ${city === c.name ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"}`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {CITY_NOTES[city] && (
+            <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-xl px-3 py-2">
+              <Info className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
+            </div>
           )}
         </div>
 
-        <div className="md:flex md:gap-6 md:items-start">
-          {/* Main permit list column */}
-          <div className="flex-1 min-w-0">
-            {/* City accent badge + NOC note */}
-            {(() => {
-              const accent = CITY_ACCENT[city] || CITY_ACCENT["Weston"];
+        {/* Permit Type Category Grid */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Permit Type</p>
+          <div className="grid grid-cols-2 gap-2">
+            {PERMIT_CATEGORIES.map(cat => {
+              const hasRules = feeRules.some(r => r.category === cat.key);
+              const isActive = activeCategory === cat.key;
               return (
-                <div className="mb-4 space-y-2">
-                  {/* City badge */}
-                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${accent.bg} ${accent.border} ${accent.text}`}>
-                    <span className={`w-2 h-2 rounded-full ${accent.dot}`} />
-                    {city} Fee Schedule
-                  </div>
-                  {/* NOC banner */}
-                  {CITY_NOTES[city] && (
-                    <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                      <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
-                    </div>
-                  )}
-                  {/* Fee structure summary */}
-                  {CITY_FEE_SUMMARY[city] && (
-                    <div className={`flex items-start gap-2 p-3 rounded-xl border ${accent.bg} ${accent.border}`}>
-                      <Calculator className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${accent.text}`} />
-                      <p className={`text-xs font-medium ${accent.text}`}>{CITY_FEE_SUMMARY[city]}</p>
-                    </div>
-                  )}
-                </div>
+                <button key={cat.key}
+                  onClick={() => { setActiveCategory(cat.key); setSelectedRule(null); setResults(null); }}
+                  disabled={!hasRules && !loadingRules}
+                  className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl border-2 transition-all text-center ${
+                    isActive ? "border-blue-600 bg-blue-600 text-white shadow-sm" :
+                    hasRules ? "border-gray-200 bg-white text-gray-700 hover:border-blue-300" :
+                    "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  <span className="text-xl">{cat.icon}</span>
+                  <span className="text-xs font-semibold">{cat.label}</span>
+                </button>
               );
-            })()}
+            })}
+          </div>
 
-            {/* Coming Soon / Broward County message for cities without fee data */}
-            {cityObj && !hasFeeData && !loadingRules && (
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
-                  <Info className="w-6 h-6 text-blue-500" />
-                </div>
-                {usesBroward ? (
-                  <>
-                    <p className="font-semibold text-gray-800 mb-1">{city} uses Broward County Building Division</p>
-                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
-                      Permitting for {city} is handled directly by Broward County. Contact the Broward County Building Division for fee schedules and permit applications.
-                    </p>
-                    <a href="tel:9547655200" className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
-                      <Phone className="w-4 h-4" /> (954) 765-5200
-                    </a>
-                    <p className="text-xs text-gray-400 mt-1">
-                      <a href="https://www.broward.org/Building" target="_blank" rel="noopener noreferrer" className="hover:underline">broward.org/Building</a>
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-semibold text-gray-800 mb-1">Fee schedule coming soon for {city}</p>
-                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
-                      For current permit fees, contact the {city} Building Department directly.
-                    </p>
-                    {cityObj.building_department_phone && (
-                      <a href={`tel:${cityObj.building_department_phone.replace(/\D/g, "")}`} className="inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:underline">
-                        <Phone className="w-4 h-4" /> {cityObj.building_department_phone}
-                      </a>
-                    )}
-                    {cityObj.portal_url && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        <a href={cityObj.portal_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{cityObj.portal_url.replace(/^https?:\/\//, "")}</a>
+          {/* Permit list within category */}
+          {!loadingRules && rulesForCategory.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Permit</p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {rulesForCategory.map(rule => (
+                  <button key={rule.id}
+                    onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                      selectedRule?.id === rule.id
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 bg-white hover:border-blue-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-700" : "text-gray-800"}`}>
+                        {rule.permit_name}
                       </p>
-                    )}
-                  </>
-                )}
+                      <span className="text-xs text-gray-400 shrink-0 ml-2">
+                        {rule.rate_percentage > 0 ? `${rule.rate_percentage}%` :
+                          rule.flat_fee > 0 ? `$${rule.flat_fee}` :
+                          rule.base_fee > 0 ? `$${rule.base_fee}` : ""}
+                      </span>
+                    </div>
+                    {rule.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{rule.description}</p>}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+          {loadingRules && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+            </div>
+          )}
+        </div>
 
-            {/* Search — only show if city has fee data */}
-            {hasFeeData && (
-            <div className="relative mb-5">
-              <Input
-                placeholder="Search for permit types (e.g. 'Roofing', 'HVAC')..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-4 rounded-xl bg-white"
+        {/* Project Value Input */}
+        {selectedRule && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Estimated Project Value ($)</p>
+            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+              <span className="px-4 py-3 bg-gray-50 text-gray-500 font-semibold border-r border-gray-200">$</span>
+              <input
+                type="number"
+                value={constructionCost}
+                onChange={e => setConstructionCost(e.target.value)}
+                placeholder="50000"
+                className="flex-1 px-4 py-3 text-sm focus:outline-none text-gray-800 font-semibold"
               />
             </div>
-            )}
-
-            {/* Category filter pills */}
-            {!loadingRules && Object.keys(grouped).length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-5">
-                {CATEGORY_ORDER.filter(c => grouped[c]).map(cat => {
-                  const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
-                  return (
-                    <span key={cat} className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-700">
-                      {meta.icon} {meta.label.replace(" Permits", "").replace(" Code Services", "")}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Permit list */}
-            {loadingRules ? (
-              <div className="text-center py-12">
-                <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Loading permits for {city}...</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {CATEGORY_ORDER.map(cat => {
-                  if (!grouped[cat]) return null;
-                  const meta = CATEGORY_META[cat] || { label: cat, icon: "📋" };
-                  return (
-                    <div key={cat}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-base">{meta.icon}</span>
-                        <h4 className="text-sm font-bold text-gray-700">{meta.label}</h4>
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-3">
-                        {grouped[cat].map(rule => {
-                          const isSunriseFlat = isSunrise && rule.calc_type === "flat";
-                          const isSunrisePctCard = isSunrise && rule.calc_type === "percentage";
-                          return (
-                            <button
-                              key={rule.id}
-                              onClick={() => { setSelectedRule(rule); setConstructionCost(""); setRoofSqFt(""); setResults(null); }}
-                              className={`text-left px-4 py-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                                selectedRule?.id === rule.id
-                                  ? "border-blue-500 bg-blue-50 shadow-sm"
-                                  : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
-                              }`}
-                            >
-                              <div className="mb-3">
-                                <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-800" : "text-gray-800"}`}>
-                                  {rule.permit_name}
-                                </p>
-                                {rule.description && (
-                                  <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{rule.description}</p>
-                                )}
-                                {isSunriseFlat && rule.permit_name?.toLowerCase().includes("roof") && (
-                                  <p className="text-xs text-amber-600 mt-1">+ $101.56/1,000 SF over 3,000 SF</p>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  {isSunriseFlat && (
-                                     <>
-                                       <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
-                                       <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toFixed(2)}</p>
-                                     </>
-                                   )}
-                                  {isSunrisePctCard && (
-                                    <>
-                                      <p className="text-xs text-gray-400 uppercase tracking-wider">Rate</p>
-                                      <p className="text-sm font-bold text-gray-900">{rule.rate_percentage || 4.40}% of job value</p>
-                                    </>
-                                  )}
-                                  {!isSunrise && (
-                                    <>
-                                      {(rule.rate_percentage > 0) ? (
-                                        <>
-                                          <p className="text-xs text-gray-400 uppercase tracking-wider">Base Fee</p>
-                                          <p className="text-sm font-bold text-gray-900">${(rule.base_fee || 0).toLocaleString()} + {rule.rate_percentage}%</p>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <p className="text-xs text-gray-400 uppercase tracking-wider">Flat Fee</p>
-                                          <p className="text-sm font-bold text-gray-900">${(rule.flat_fee > 0 ? rule.flat_fee : (rule.base_fee || 0)).toLocaleString()}</p>
-                                        </>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                                <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                  selectedRule?.id === rule.id
-                                    ? "bg-blue-700 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-                                }`}>
-                                  {selectedRule?.id === rule.id ? "Selected" : "Select"}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-                {Object.keys(grouped).length === 0 && !loadingRules && (
-                  <p className="text-center text-gray-400 py-6">No permits found{search ? ` matching "${search}"` : " for this city"}.</p>
-                )}
-              </div>
-            )}
+            <p className="text-xs text-gray-400 mt-2">
+              {needsCost ? "Used to calculate percentage-based administrative and state fees." : "Optional — overrides minimum fee if higher."}
+            </p>
           </div>
+        )}
 
-          {/* Right sidebar */}
-          <div className="md:w-72 md:shrink-0 mt-5 md:mt-0">
-            {/* Sunrise city info */}
-            {isSunrise && <SunriseCityInfo />}
-
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden sticky top-4">
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <Calculator className="w-4 h-4 text-blue-600" />
-                <h3 className="font-bold text-gray-800 text-sm">Estimate
-                <HintTooltip text="Select a permit type from the list on the left. For permits with a percentage rate, enter your total construction value to calculate the fee." />
-              </h3>
-              </div>
-
-              {!selectedRule ? (
-                <div className="px-4 py-8 text-center text-gray-400">
-                  <Calculator className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                  <p className="text-sm">Select a permit type to calculate your estimated fee.</p>
-                </div>
-              ) : (
-                <div className="p-4">
-                  <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">
-                          {(CATEGORY_META[selectedRule.category] || {}).label || selectedRule.category}
-                        </p>
-                        <p className="font-semibold text-gray-900 text-sm">{selectedRule.permit_name}</p>
-                      </div>
-                      <button onClick={handleReset} className="text-gray-300 hover:text-gray-500 p-0.5 shrink-0">
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+        {/* Fee Breakdown */}
+        {results && (
+          <>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Estimated Fee Breakdown</p>
+              <div className="space-y-2">
+                {cityFeeItems.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <span className="text-sm text-gray-700">{item.label}</span>
+                    <span className="text-sm font-semibold text-gray-900">${item.amount.toFixed(2)}</span>
                   </div>
-
-                  {/* Construction cost input */}
-                  {needsCost && (
-                    <div className="mb-4">
-                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">Enter Job / Construction Value ($)
-                      <HintTooltip text="Enter the total estimated construction value including all labor and materials. For roofing, use the total contract price. For remodels, use the total cost of the project." />
-                    </Label>
-                      <Input
-                        type="number" min="0" placeholder="e.g. 25000"
-                        value={constructionCost}
-                        onChange={e => setConstructionCost(e.target.value)}
-                        className="rounded-xl text-sm"
-                        autoFocus
-                      />
-                      {constructionCost && parseFloat(constructionCost) > 0 && selectedRule?.rate_percentage > 0 && (() => {
-                        const jobVal = parseFloat(constructionCost);
-                        const baseFee = parseFloat(selectedRule.base_fee) || 150;
-                        const rate = parseFloat(selectedRule.rate_percentage) || 1.5;
-                        const pctFee = jobVal * rate / 100;
-                        if (pctFee < baseFee) {
-                          return (
-                            <p className="text-xs text-amber-600 mt-1.5 font-medium">
-                              Minimum permit fee of ${baseFee.toFixed(2)} applies.
-                            </p>
-                          );
-                        }
-                        return null;
-                      })()}
+                ))}
+                {stateFeeItems.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div>
+                      <span className="text-sm text-gray-700">{item.label}</span>
+                      <p className="text-[10px] text-orange-500 font-medium">Mandatory state development tax</p>
                     </div>
-                  )}
-
-                  {/* Roof SF input (Sunrise roof permits) */}
-                  {isRoofPermit && (
-                    <div className="mb-4">
-                      <Label className="text-xs font-medium text-gray-700 mb-1 block">Roof Area (SF) — optional</Label>
-                      <Input
-                        type="number" min="0" placeholder="e.g. 2500"
-                        value={roofSqFt}
-                        onChange={e => { setRoofSqFt(e.target.value); setResults(null); }}
-                        className="rounded-xl text-sm"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">+$101.56 per 1,000 SF over 3,000 SF</p>
-                    </div>
-                  )}
-
-                  {results && (
-                    <div className="mb-4 divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
-                      {results.breakdown.filter(i => i.amount > 0 || i.label.startsWith("  ")).map((item, i) => (
-                        <div key={i} className={`flex justify-between px-3 py-2 ${item.label.startsWith("  ") ? "opacity-50 bg-gray-50" : "bg-white"}`}>
-                          <span className="text-xs text-gray-600">{item.label}</span>
-                          {item.amount > 0 && <span className="text-xs font-semibold text-gray-800">${item.amount.toFixed(2)}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Show calculate button only for Sunrise (non-real-time) */}
-                  {isSunrise && (!isSunriseFlat || isRoofPermit) && (
-                    <Button
-                      onClick={handleCalculate}
-                      disabled={!canCalculate}
-                      className="w-full text-white rounded-xl h-10 text-sm font-semibold disabled:opacity-50 mb-3"
-                      style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
-                    >
-                      <Calculator className="w-4 h-4 mr-1.5" />
-                      {results ? "Recalculate" : "Calculate Fee"}
-                    </Button>
-                  )}
-
-                  {results && (
-                    <>
-                      <div className="rounded-xl p-3 text-center mb-3" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
-                        <p className="text-blue-200 text-xs mb-0.5">Estimated Total</p>
-                        <p className="text-2xl font-extrabold text-white">${results.total.toFixed(2)}</p>
-                      </div>
-                      <div className="flex gap-2 mb-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 rounded-xl text-xs h-8"
-                          onClick={() => {
-                            const lines = [
-                              `OpenPermit Fee Estimate`,
-                              `City: ${city}  |  Permit: ${selectedRule?.permit_name || ""}`,
-                              ``,
-                              ...results.breakdown.map(i => `  ${i.label}: $${i.amount.toFixed(2)}`),
-                              ``,
-                              `Total: $${results.total.toFixed(2)}`,
-                              ``,
-                              `Estimate only. Final fees per ${city} Building Dept.`,
-                            ].join("\n");
-                            const win = window.open("", "_blank");
-                            win.document.write(`<html><head><title>Fee Estimate — ${city}</title><style>body{font-family:monospace;white-space:pre;padding:40px;font-size:13px}</style></head><body>${lines.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</body></html>`);
-                            win.document.close(); win.focus(); win.print();
-                          }}
-                        >
-                          <Printer className="w-3 h-3 mr-1" /> Print
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 rounded-xl text-xs h-8"
-                          onClick={() => {
-                            const lines = [
-                              `OpenPermit Fee Estimate`,
-                              `City: ${city}  |  Permit: ${selectedRule?.permit_name || ""}`,
-                              ...results.breakdown.map(i => `${i.label}: $${i.amount.toFixed(2)}`),
-                              `Total: $${results.total.toFixed(2)}`,
-                              `Estimate only.`,
-                            ].join("\n");
-                            navigator.clipboard.writeText(lines).then(() => { setFeeCopied(true); setTimeout(() => setFeeCopied(false), 2000); });
-                          }}
-                        >
-                          {feeCopied ? <Check className="w-3 h-3 mr-1 text-green-600" /> : <ClipboardCopy className="w-3 h-3 mr-1" />}
-                          {feeCopied ? "Copied" : "Copy"}
-                        </Button>
-                      </div>
-                      {CITY_PORTAL_URLS[city] && (
-                        <Button asChild className="w-full text-white rounded-xl h-10 text-sm mb-2" style={{ background: "#1E4D99" }}>
-                          <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Apply for Permit
-                          </a>
-                        </Button>
-                      )}
-                      <HintCard
-                        title="What do these fees mean?"
-                        items={[
-                          { label: "Permit Fee", desc: "The base fee charged by the city building department to process and issue your permit." },
-                          { label: "Technology / Admin Fee", desc: "A flat fee charged by the city to cover permit processing systems and administrative costs." },
-                          { label: "State DCA Surcharge", desc: "Florida Department of Community Affairs surcharge — required by state law on all building permits. Currently 1.5% of the permit fee." },
-                          { label: "State DBPR Surcharge", desc: "Florida Department of Business & Professional Regulation surcharge — required by state law. Currently 1.5% of the permit fee." },
-                          { label: "Educational & Training Fee", desc: "A small state-mandated surcharge that funds construction industry education programs." },
-                          { label: "Total Estimated", desc: "This is an estimate only. Final fees are determined at permit issuance and may include additional fees based on plan review complexity." },
-                        ]}
-                      />
-                      <p className="text-xs text-gray-400 text-center leading-snug mt-2">This is an estimate only. Final fees determined at permit issuance.</p>
-                    </>
-                  )}
-
-                  {!results && (
-                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 mt-2">
-                      <p className="text-xs text-amber-700">Fees are estimates based on official schedules. Professional review may result in adjustments.</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    <span className="text-sm font-semibold text-gray-900">${item.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* Grand Total */}
+            <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
+              <p className="text-sm font-extrabold text-gray-900 mb-3">Estimated Total</p>
+              <div className="space-y-1.5 mb-4">
+                {results.cityFees > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">City Fees</span>
+                    <span className="text-sm font-bold text-gray-700">${results.cityFees.toFixed(2)}</span>
+                  </div>
+                )}
+                {results.stateFees > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">State Fees</span>
+                    <span className="text-sm font-bold text-gray-700">${results.stateFees.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
+                  <span className="text-sm font-extrabold text-gray-900">Grand Total</span>
+                  <span className="text-2xl font-extrabold text-blue-600">${results.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Save button */}
+              <button
+                onClick={() => {
+                  const lines = [
+                    `OpenPermit Fee Estimate`,
+                    `City: ${city} | Permit: ${selectedRule?.permit_name}`,
+                    ``,
+                    ...results.breakdown.map(i => `  ${i.label}: $${i.amount.toFixed(2)}`),
+                    ``,
+                    `Grand Total: $${results.total.toFixed(2)}`,
+                    ``,
+                    `Estimate only. Final fees per ${city} Building Dept.`,
+                  ].join("\n");
+                  navigator.clipboard.writeText(lines).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm"
+                style={{ background: "#1353d8" }}
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {copied ? "Copied to clipboard!" : "Save Estimate"}
+              </button>
+
+              <div className="flex items-start gap-2 mt-4">
+                <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Estimates are based on published 2024 municipal fee schedules. Final costs may vary based on structural specifics or zoning variances.
+                </p>
+              </div>
+            </div>
+
+            {/* Download / Portal links */}
+            {CITY_PORTAL_URLS[city] && (
+              <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-3.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-blue-600 transition-all no-underline">
+                View City Fee Schedule PDF ↗
+              </a>
+            )}
+          </>
+        )}
+
+        {/* Empty state */}
+        {!selectedRule && !loadingRules && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <Calculator className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-gray-500">Select a permit type above to see your fee estimate.</p>
           </div>
-        </div>
+        )}
       </div>
+
+      <BottomNav />
     </div>
   );
 }
