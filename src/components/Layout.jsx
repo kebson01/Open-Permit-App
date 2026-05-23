@@ -104,8 +104,8 @@ export default function Layout({ children, currentPageName }) {
     <Link
       to={to}
       onClick={() => setMobileOpen(false)}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${
-        isActive(to) ? "text-[#1A56DB] bg-[#EBF5FF]" : "text-[#434654] hover:bg-[#F3F3FE] hover:text-[#191B23]"
+      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+        isActive(to) ? "text-[#1A56DB] bg-[#EBF5FF] font-semibold" : "text-[#434654] hover:text-[#191B23] hover:bg-[#F3F3FE]"
       }`}
       style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
     >
@@ -120,49 +120,54 @@ export default function Layout({ children, currentPageName }) {
         className="sticky top-0 z-50 transition-transform duration-300"
         style={{
           background: "#fff",
-          borderBottom: "1px solid #e8eaf0",
-          height: 52,
+          borderBottom: "1px solid #E8EAF0",
+          height: 56,
           transform: navVisible ? "translateY(0)" : "translateY(-100%)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-1">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-1.5 shrink-0 mr-4" style={{ textDecoration: "none" }}>
-            <span className="font-extrabold text-base" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
+          <Link to="/" className="shrink-0" style={{ textDecoration: "none" }}>
+            <span className="font-extrabold text-base tracking-tight" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
               OpenPermit
             </span>
           </Link>
 
+          {/* Divider */}
+          <div className="hidden md:block w-px h-5 bg-gray-200 shrink-0" />
+
           {/* Primary Nav (desktop) */}
-          <div className="hidden md:flex items-center gap-0.5 flex-1">
-            <NavLink to="/"><Home className="w-3.5 h-3.5" /> Home</NavLink>
-            <NavLink to="/PermitGuide"><BookOpen className="w-3.5 h-3.5" /> Permit Guide</NavLink>
-            <NavLink to="/MyProperties"><Building2 className="w-3.5 h-3.5" /> My Properties</NavLink>
-            <NavLink to="/ApplyForPermit"><FileText className="w-3.5 h-3.5" /> Apply for Permit</NavLink>
-            <NavLink to="/MyProjects"><FolderOpen className="w-3.5 h-3.5" /> My Projects</NavLink>
+          <div className="hidden md:flex items-center gap-1 flex-1">
+            <NavLink to="/">Home</NavLink>
+            <NavLink to="/PermitGuide">Permit Guide</NavLink>
+            <NavLink to="/MyProperties">My Properties</NavLink>
+            <NavLink to="/ApplyForPermit">Apply for Permit</NavLink>
+            <NavLink to="/MyProjects">My Projects</NavLink>
 
             {/* Tools dropdown */}
             <div className="relative" ref={toolsRef}>
               <button
                 onClick={() => setToolsOpen(p => !p)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-                  toolsOpen ? "text-[#1A56DB] bg-[#EBF5FF]" : "text-[#434654] hover:bg-[#F3F3FE]"
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  toolsOpen ? "text-[#1A56DB] bg-[#EBF5FF] font-semibold" : "text-[#434654] hover:text-[#191B23] hover:bg-[#F3F3FE]"
                 }`}
                 style={{ fontFamily: FONTS.nav }}
               >
-                <Wrench className="w-3.5 h-3.5" /> Tools <ChevronDown className={`w-3 h-3 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
+                Tools <ChevronDown className={`w-3.5 h-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
               </button>
               {toolsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 z-50">
+                <div className="absolute top-full left-0 mt-1.5 w-52 bg-white rounded-xl py-1 z-50" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.10)", border: "1px solid #E8EAF0" }}>
                   {TOOLS_ITEMS.map(item => (
                     <Link
                       key={item.path}
                       to={item.path}
                       onClick={() => setToolsOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none", color: "#434654" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#F3F3FE"}
+                      onMouseLeave={e => e.currentTarget.style.background = ""}
                     >
-                      <item.icon className="w-4 h-4 text-gray-400" /> {item.label}
+                      <item.icon className="w-4 h-4" style={{ color: "#1A56DB" }} /> {item.label}
                     </Link>
                   ))}
                 </div>
@@ -170,17 +175,15 @@ export default function Layout({ children, currentPageName }) {
             </div>
           </div>
 
-          <div className="flex-1 hidden md:block" />
-
           {/* Right side (desktop) */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2 ml-auto">
             {(isAdmin || isCityAdmin) && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#434654] hover:bg-[#F3F3FE] transition-colors"
+                className="px-3 py-1.5 rounded-md text-sm font-medium text-[#434654] hover:bg-[#F3F3FE] transition-colors"
                 style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
               >
-                <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                Admin
               </Link>
             )}
 
@@ -188,27 +191,31 @@ export default function Layout({ children, currentPageName }) {
               <div className="relative" ref={accountRef}>
                 <button
                   onClick={() => setAccountOpen(p => !p)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
-                  style={{ fontFamily: FONTS.nav }}
+                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full text-sm font-medium hover:bg-[#F3F3FE] transition-colors"
+                  style={{ fontFamily: FONTS.nav, border: "1px solid #E8EAF0" }}
                 >
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: PRIMARY }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: PRIMARY }}>
                     {currentUser.full_name?.[0]?.toUpperCase() || "U"}
                   </div>
-                  <span className="text-gray-700 max-w-[100px] truncate">{currentUser.full_name || currentUser.email}</span>
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                  <span className="max-w-[90px] truncate" style={{ color: "#191B23" }}>{currentUser.full_name?.split(" ")[0] || currentUser.email}</span>
+                  <ChevronDown className="w-3 h-3" style={{ color: "#9CA3AF" }} />
                 </button>
                 {accountOpen && (
-                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 z-50">
+                  <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl py-1 z-50" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.10)", border: "1px solid #E8EAF0" }}>
                     <Link to="/MyAccount" onClick={() => setAccountOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                      <User className="w-4 h-4 text-gray-400" /> My Account
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none", color: "#434654" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#F3F3FE"}
+                      onMouseLeave={e => e.currentTarget.style.background = ""}>
+                      <User className="w-4 h-4" style={{ color: "#434654" }} /> My Account
                     </Link>
-                    <div className="border-t border-gray-100 my-1" />
+                    <div style={{ borderTop: "1px solid #E8EAF0", margin: "4px 0" }} />
                     <button
                       onClick={() => { base44.auth.logout("/"); setAccountOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                      style={{ fontFamily: FONTS.nav }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm"
+                      style={{ fontFamily: FONTS.nav, color: "#BA1A1A" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#FFDAD6"}
+                      onMouseLeave={e => e.currentTarget.style.background = ""}
                     >
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
@@ -218,8 +225,8 @@ export default function Layout({ children, currentPageName }) {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-bold text-sm text-white transition-colors hover:opacity-90"
-                style={{ background: PRIMARY, fontFamily: FONTS.logo }}
+                className="px-4 py-1.5 rounded-lg font-semibold text-sm text-white transition-opacity hover:opacity-90"
+                style={{ background: PRIMARY, fontFamily: FONTS.nav }}
               >
                 Sign In
               </button>
@@ -230,7 +237,8 @@ export default function Layout({ children, currentPageName }) {
           <div className="md:hidden ml-auto">
             <button
               onClick={() => setMobileOpen(p => !p)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              style={{ color: "#434654" }}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
