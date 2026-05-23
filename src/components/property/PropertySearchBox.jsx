@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Search, Loader2, Building2, MapPin } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { Search, Loader2, Building2, MapPin, CheckCircle2 } from "lucide-react";
+import { searchProperties } from "@/lib/searchProperties";
 
 const FONTS = { b: "'Plus Jakarta Sans', system-ui, sans-serif" };
 
@@ -9,30 +9,51 @@ export default function PropertySearchBox({ onSelect, placeholder, cityFilter })
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [selected, setSelected] = useState(null);
 
-  async function handleSearch() {
-    const query = searchInput.trim();
-    if (!query || query.length < 3) {
-      setErrorMsg("Please enter at least 3 characters");
-      return;
-    }
-    setIsLoading(true);
-    setErrorMsg("");
+  const handleSearch = () => searchProperties(searchInput, setResults, setIsLoading, setErrorMsg);
+
+  const handleSelect = (p) => {
+    setSelected(p);
     setResults([]);
+    setSearchInput("");
+    onSelect(p);
+  };
 
-    try {
-      const { data, error } = await supabase.rpc("search_properties", { search_query: query });
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        setErrorMsg("No properties found. Try a different address, folio number, or owner name.");
-        return;
-      }
-      setResults(data);
-    } catch (err) {
-      setErrorMsg("Search unavailable. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleClear = () => {
+    setSelected(null);
+    setResults([]);
+    setSearchInput("");
+    setErrorMsg("");
+  };
+
+  if (selected) {
+    return (
+      <div className="rounded-xl border p-4 bg-white" style={{ borderColor: "#C3C5D7" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2 min-w-0">
+            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 text-sm leading-snug">{selected.full_address}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Owner: {selected.owner_name || "—"}</p>
+              <p className="text-xs font-mono text-gray-400 mt-0.5">Folio: {selected.folio_number}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {[
+                  selected.year_built ? `${selected.year_built} built` : null,
+                  selected.total_sqft ? `${parseInt(selected.total_sqft).toLocaleString()} sq ft` : null,
+                  (selected.beds || selected.baths) ? `${selected.beds || "—"} bed / ${selected.baths || "—"} bath` : null,
+                  selected.homestead_flag === "Y" ? "Homestead: Yes" : selected.homestead_flag === "N" ? "Homestead: No" : null,
+                ].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="text-xs text-gray-400">{selected.city_name}</span>
+            <button onClick={handleClear} className="text-xs text-blue-600 font-semibold underline mt-1">Clear</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -71,20 +92,22 @@ export default function PropertySearchBox({ onSelect, placeholder, cityFilter })
           {results.map((p, i) => (
             <button
               key={p.folio_number || i}
-              onClick={() => { onSelect(p); setResults([]); setSearchInput(""); }}
+              onClick={() => handleSelect(p)}
               className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0"
               style={{ fontFamily: FONTS.b }}
             >
-              <div className="flex items-start gap-2">
-                <Building2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{p.full_address || p.folio_number}</p>
-                  {p.owner_name && <p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p>}
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400 font-mono">{p.folio_number}</span>
-                    {p.city_name && <span className="text-xs text-gray-400">· {p.city_name}{p.zip_code ? ` ${p.zip_code}` : ""}</span>}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 min-w-0">
+                  <Building2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-sm truncate">{p.full_address || p.folio_number}</p>
+                    {p.owner_name && <p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p>}
+                    <p className="text-xs font-mono text-gray-400 mt-0.5">{p.folio_number}</p>
                   </div>
                 </div>
+                {p.city_name && (
+                  <span className="text-xs text-gray-400 shrink-0 mt-0.5">{p.city_name}</span>
+                )}
               </div>
             </button>
           ))}

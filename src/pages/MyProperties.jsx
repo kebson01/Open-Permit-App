@@ -3,36 +3,23 @@ import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
 import { supabase } from "@/lib/supabaseClient";
+import { searchProperties } from "@/lib/searchProperties";
 import {
   Search, Building2, FileText, ArrowRight, Loader2,
-  Hash, History, Lightbulb, Home, LayoutDashboard, FolderOpen, Bell
+  Hash, History, Lightbulb, Home, LayoutDashboard, FolderOpen, Bell, CheckCircle2
 } from "lucide-react";
 
 const PRIMARY = "#2563EB";
 const CITIES = ["All Cities", "Miami", "Weston", "Coral Springs", "Hollywood", "Fort Lauderdale", "Hialeah", "Doral"];
 
-// ── Search box inlined (uses PropertySearchBox logic directly) ──────────────
-function SearchBar({ onSelect, cityFilter }) {
+// ── Search box inlined ───────────────────────────────────────────────────────
+function SearchBar({ onSelect }) {
   const [input, setInput]     = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
-  async function handleSearch() {
-    const q = input.trim();
-    if (!q || q.length < 3) { setError("Enter at least 3 characters"); return; }
-    setLoading(true); setError(""); setResults([]);
-    try {
-      const { data, error: err } = await supabase.rpc("search_properties", { search_query: q });
-      if (err) throw err;
-      if (!data || data.length === 0) { setError("No properties found. Try a different address, folio number, or owner name."); return; }
-      setResults(data);
-    } catch (e) {
-      setError("Search unavailable. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleSearch = () => searchProperties(input, setResults, setLoading, setError);
 
   return (
     <div>
@@ -67,8 +54,14 @@ function SearchBar({ onSelect, cityFilter }) {
             <button key={p.folio_number || i}
               onClick={() => { onSelect(p); setResults([]); setInput(""); }}
               className="w-full text-left px-4 py-3.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors">
-              <p className="font-semibold text-sm text-gray-900 truncate">{p.full_address || p.folio_number}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{p.owner_name} · {p.city_name} · {p.folio_number}</p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-gray-900 truncate">{p.full_address || p.folio_number}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p>
+                  <p className="text-xs font-mono text-gray-400 mt-0.5">{p.folio_number}</p>
+                </div>
+                <span className="text-xs text-gray-400 shrink-0 mt-0.5">{p.city_name}</span>
+              </div>
             </button>
           ))}
         </div>
@@ -125,11 +118,32 @@ function PropertyDetail({ property, onBack }) {
         <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-4">
           ← Back to search
         </button>
-        <h2 className="font-extrabold text-xl text-gray-900 leading-tight">{property.full_address || property.folio_number}</h2>
-        <p className="text-sm text-gray-400 mt-1">{property.city_name}, FL · Folio: {property.folio_number}</p>
+        {/* Selected property card */}
+        <div className="flex items-start justify-between gap-3 p-4 rounded-2xl bg-teal-50 border border-teal-200 mb-4">
+          <div className="flex items-start gap-2 min-w-0">
+            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 text-base leading-snug">{property.full_address || property.folio_number}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Owner: {property.owner_name || "—"}</p>
+              <p className="text-xs font-mono text-gray-400 mt-0.5">Folio: {property.folio_number}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {[
+                  property.year_built ? `${property.year_built} built` : null,
+                  property.total_sqft ? `${parseInt(property.total_sqft).toLocaleString()} sq ft` : null,
+                  (property.beds || property.baths) ? `${property.beds || "—"} bed / ${property.baths || "—"} bath` : null,
+                  property.homestead_flag === "Y" ? "Homestead: Yes" : property.homestead_flag === "N" ? "Homestead: No" : null,
+                ].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="text-xs text-gray-400">{property.city_name}</span>
+            <button onClick={onBack} className="text-xs text-teal-600 font-semibold underline mt-1">Clear</button>
+          </div>
+        </div>
         <Link
           to={`/ApplyForPermit?folio=${property.folio_number}&city=${encodeURIComponent(property.city_name || "")}`}
-          className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-2xl text-white font-bold text-sm no-underline"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-bold text-sm no-underline"
           style={{ background: PRIMARY }}
         >
           <FileText className="w-4 h-4" /> Start Permit Application
@@ -267,7 +281,7 @@ export default function MyProperties() {
         <h1 className="text-2xl font-extrabold text-white mb-1">Property Records</h1>
         <p className="text-blue-200 text-sm mb-5 leading-relaxed">Access historical permits, zoning data, and official building details instantly.</p>
 
-        <SearchBar onSelect={setSelectedProperty} cityFilter={cityFilter} />
+        <SearchBar onSelect={setSelectedProperty} />
 
         {/* City filter chips */}
         <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">

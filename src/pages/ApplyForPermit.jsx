@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
+import { searchProperties } from "@/lib/searchProperties";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2,
@@ -227,7 +228,6 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
   const [propertyResults, setPropertyResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [showResults, setShowResults] = useState(false);
 
   const ROLES = [
     { key: "homeowner", icon: Home, label: "Homeowner", sub: "Managing your own home or property" },
@@ -235,22 +235,7 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
     { key: "private_provider", icon: Shield, label: "Private Provider", sub: "FL Statute 553.791 provider" },
   ];
 
-  const handleSearch = async () => {
-    const q = propertySearch.trim();
-    if (q.length < 3) { setSearchError("Enter at least 3 characters"); return; }
-    setSearchLoading(true); setSearchError(""); setPropertyResults([]); setShowResults(false);
-    try {
-      const { data, error } = await supabase.rpc("search_properties", { search_query: q });
-      if (error) throw error;
-      if (!data || data.length === 0) { setSearchError("No properties found. Try a different address, folio number, or owner name."); return; }
-      setPropertyResults(data);
-      setShowResults(true);
-    } catch (err) {
-      setSearchError("Search unavailable. Please try again.");
-    } finally {
-      setSearchLoading(false);
-    }
-  };
+  const handleSearch = () => searchProperties(propertySearch, setPropertyResults, setSearchLoading, setSearchError);
 
   return (
     <div className="space-y-6">
@@ -300,16 +285,28 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
         <p className="text-xs text-gray-400 mt-0.5 mb-3">Selecting a property will auto-fill your application</p>
 
         {selectedProperty ? (
-          <div className="flex items-start justify-between p-3 rounded-xl bg-teal-50 border border-teal-200">
-            <div>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-500" />
-                <p className="text-sm font-semibold text-teal-800">{selectedProperty.full_address}</p>
+          <div className="flex items-start justify-between p-4 rounded-xl bg-teal-50 border border-teal-200">
+            <div className="flex items-start gap-2 min-w-0">
+              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="font-bold text-sm text-gray-900 leading-snug">{selectedProperty.full_address}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Owner: {selectedProperty.owner_name || "—"}</p>
+                <p className="text-xs font-mono text-gray-400 mt-0.5">Folio: {selectedProperty.folio_number}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {[
+                    selectedProperty.year_built ? `${selectedProperty.year_built} built` : null,
+                    selectedProperty.total_sqft ? `${parseInt(selectedProperty.total_sqft).toLocaleString()} sq ft` : null,
+                    (selectedProperty.beds || selectedProperty.baths) ? `${selectedProperty.beds || "—"} bed / ${selectedProperty.baths || "—"} bath` : null,
+                    selectedProperty.homestead_flag === "Y" ? "Homestead: Yes" : selectedProperty.homestead_flag === "N" ? "Homestead: No" : null,
+                  ].filter(Boolean).join(" · ")}
+                </p>
               </div>
-              <p className="text-xs text-teal-600">{selectedProperty.owner_name} · Folio: {selectedProperty.folio_number}</p>
             </div>
-            <button onClick={() => { setSelectedProperty(null); setPropertyResults([]); setShowResults(false); setPropertySearch(""); }}
-              className="text-xs text-teal-600 font-semibold underline ml-3 shrink-0">Clear</button>
+            <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
+              <span className="text-xs text-gray-400">{selectedProperty.city_name}</span>
+              <button onClick={() => { setSelectedProperty(null); setPropertyResults([]); setPropertySearch(""); }}
+                className="text-xs text-teal-600 font-semibold underline">Clear</button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
@@ -331,13 +328,19 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
               </button>
             </div>
             {searchError && <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">{searchError}</p>}
-            {showResults && propertyResults.length > 0 && (
+            {propertyResults.length > 0 && (
               <div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto shadow-sm">
                 {propertyResults.map(p => (
-                  <button key={p.folio_number} onClick={() => { setSelectedProperty(p); setShowResults(false); setPropertyResults([]); setPropertySearch(""); }}
+                  <button key={p.folio_number} onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }}
                     className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors">
-                    <p className="font-semibold text-sm text-gray-900">{p.full_address}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{p.owner_name} · {p.folio_number}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-gray-900">{p.full_address}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p>
+                        <p className="text-xs font-mono text-gray-400 mt-0.5">{p.folio_number}</p>
+                      </div>
+                      <span className="text-xs text-gray-400 shrink-0 mt-0.5">{p.city_name}</span>
+                    </div>
                   </button>
                 ))}
               </div>
