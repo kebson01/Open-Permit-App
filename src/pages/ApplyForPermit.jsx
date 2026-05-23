@@ -356,7 +356,7 @@ function Step2PermitType({ city, onNext, onBack }) {
 }
 
 // STEP 3: Questions
-function Step3Questions({ city, permit, onNext, onBack }) {
+function Step3Questions({ city, permit, property, onNext, onBack }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [loadingQuestions, setLoadingQuestions] = useState(true);
@@ -377,7 +377,37 @@ function Step3Questions({ city, permit, onNext, onBack }) {
           .eq("is_active", true)
           .order("display_order");
         if (err) throw err;
-        setQuestions(data || []);
+        const loaded = data || [];
+        setQuestions(loaded);
+
+        // Auto-prefill property-related answers from selected property
+        if (property) {
+          const prefilled = {};
+          const addr = [
+            property.full_address ||
+            [property.SITUS_STREET_NUMBER, property.SITUS_STREET_DIRECTION, property.SITUS_STREET_NAME, property.SITUS_STREET_TYPE]
+              .filter(Boolean).join(" ")
+          ].filter(Boolean)[0] || "";
+
+          loaded.forEach(q => {
+            const key = (q.question_key || "").toLowerCase();
+            const text = (q.question_text || "").toLowerCase();
+            if ((key.includes("address") || text.includes("address")) && addr) {
+              prefilled[q.question_key] = addr;
+            } else if ((key.includes("folio") || key.includes("parcel") || text.includes("folio") || text.includes("parcel")) && property.folio_number) {
+              prefilled[q.question_key] = property.folio_number;
+            } else if ((key.includes("owner") && key.includes("name") || text.includes("owner name") || text.includes("property owner")) && (property.NAME_LINE_1 || property.owner_name)) {
+              prefilled[q.question_key] = property.NAME_LINE_1 || property.owner_name || "";
+            } else if ((key.includes("sqft") || key.includes("square") || text.includes("square feet") || text.includes("sq ft")) && property.BLDG_TOT_SQ_FOOTAGE) {
+              prefilled[q.question_key] = String(property.BLDG_TOT_SQ_FOOTAGE);
+            } else if ((key.includes("year_built") || text.includes("year built")) && property.BLDG_YEAR_BUILT) {
+              prefilled[q.question_key] = String(property.BLDG_YEAR_BUILT);
+            }
+          });
+          if (Object.keys(prefilled).length > 0) {
+            setAnswers(prefilled);
+          }
+        }
       } catch (err) {
         setError(err.message);
         setQuestions([]);
@@ -821,6 +851,7 @@ export default function ApplyForPermit() {
           <Step3Questions
             city={stepData.city}
             permit={stepData.permit}
+            property={stepData.property}
             onNext={handleStep3}
             onBack={() => setCurrentStep(2)}
           />
