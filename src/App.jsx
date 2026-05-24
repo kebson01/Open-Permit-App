@@ -28,6 +28,7 @@ import PermitGuide from './pages/PermitGuide';
 // Projects & Tools
 import ProjectsPage from './pages/ProjectsPage';
 import BuildingCodesPage from './pages/BuildingCodesPage';
+import ExemptionCheckerV2 from './pages/ExemptionCheckerV2';
 
 // Private Provider
 import ProviderDirectory from './pages/ProviderDirectory';
@@ -88,7 +89,7 @@ function App() {
             <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
 
             {/* ── PROJECTS & TOOLS ── */}
-            <Route path="/tools/exemption-checker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
+            <Route path="/tools/exemption-checker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionCheckerV2 /></LayoutWrapper>} />
             <Route path="/projects" element={<LayoutWrapper currentPageName="ProjectsPage"><ProjectsPage /></LayoutWrapper>} />
             <Route path="/tools/building-codes" element={<LayoutWrapper currentPageName="BuildingCodesPage"><BuildingCodesPage /></LayoutWrapper>} />
 
