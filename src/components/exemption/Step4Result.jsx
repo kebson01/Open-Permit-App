@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { CheckCircle2, XCircle, AlertTriangle, AlertCircle, Phone, ExternalLink, RefreshCw, Save, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, Phone, ExternalLink, RefreshCw, Save, Loader2 } from "lucide-react";
 import { calculateResult } from "@/lib/exemptionLogic";
 import { Link } from "react-router-dom";
+import ResultMayNeedPermit from "./ResultMayNeedPermit";
+import ResultPermitRequired from "./ResultPermitRequired";
 
 const PRIMARY = "#004ac6";
 
@@ -36,12 +38,17 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
   const { verdict, reason, code } = calculateResult(answers);
   const cfg = VERDICT_CONFIG[verdict];
-  const { Icon } = cfg;
 
   useEffect(() => {
     if (!answers.city) return;
     supabase.from("cities").select("name,building_department_phone,building_department_address,portal_url").eq("name", answers.city).single().then(({ data }) => setCityInfo(data));
   }, [answers.city]);
+
+  // Delegate to detailed screens for these verdicts
+  if (verdict === "MAY_NEED_PERMIT") return <ResultMayNeedPermit answers={answers} cityInfo={cityInfo} currentUser={currentUser} onReset={onReset} />;
+  if (verdict === "PERMIT_REQUIRED") return <ResultPermitRequired answers={answers} cityInfo={cityInfo} currentUser={currentUser} onReset={onReset} />;
+
+  const VerdictIcon = cfg.Icon;
 
   const handleSave = async () => {
     setSaving(true);
@@ -63,21 +70,12 @@ export default function Step4Result({ answers, currentUser, onReset }) {
       {/* Main verdict card */}
       <div style={{ background: cfg.bg, border: `2px solid ${cfg.border}`, borderRadius: 16, padding: "28px 24px", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <Icon className="w-10 h-10 flex-shrink-0" style={{ color: cfg.iconColor, marginTop: 2 }} />
+          <VerdictIcon className="w-10 h-10 flex-shrink-0" style={{ color: cfg.iconColor, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: cfg.headingColor, fontFamily: "'Manrope', sans-serif", marginBottom: 10, lineHeight: 1.3 }}>{cfg.heading}</h2>
             <p style={{ fontSize: 14, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.6, marginBottom: 12 }}>{reason}</p>
             {code && (
               <span style={{ display: "inline-block", background: "rgba(0,0,0,0.06)", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 700, color: "#374151", fontFamily: "monospace" }}>📋 {code}</span>
-            )}
-
-            {verdict === "PERMIT_REQUIRED" && (
-              <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 10, padding: "12px 14px", marginTop: 14 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>⚠️ Don't skip the permit</p>
-                <p style={{ fontSize: 12, color: "#7f1d1d", fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5, margin: 0 }}>
-                  Unpermitted work can result in fines and stop-work orders, difficulty selling your home, voided insurance claims, and required demolition of the work.
-                </p>
-              </div>
             )}
 
             {verdict === "EXEMPT" && (
@@ -99,15 +97,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         </div>
       </div>
 
-      {/* CTA buttons for PERMIT_REQUIRED / MAY_NEED_PERMIT */}
-      {(verdict === "PERMIT_REQUIRED" || verdict === "MAY_NEED_PERMIT") && (
-        <div style={{ marginBottom: 20 }}>
-          <Link to="/ApplyForPermit"
-            style={{ display: "block", textAlign: "center", background: PRIMARY, color: "white", padding: "13px", borderRadius: 12, fontWeight: 700, fontSize: 15, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            {verdict === "PERMIT_REQUIRED" ? "Start Your Permit Application →" : "Start Application Anyway →"}
-          </Link>
-        </div>
-      )}
+
 
       {/* City contact card */}
       <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 14, padding: "18px 20px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
