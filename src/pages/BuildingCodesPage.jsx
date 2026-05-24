@@ -140,11 +140,8 @@ export default function BuildingCodesPage() {
 
         {/* CTA */}
         <div style={{ marginTop: 40, background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "28px", textAlign: "center", boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
-          <p style={{ fontSize: 14, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif', marginBottom: 12" }}>
-            Need help interpreting a code section?
-          </p>
           <p style={{ fontSize: 14, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 16 }}>
-            Need help interpreting a code section?
+            Need help interpreting a code section? Ask our AI assistant.
           </p>
           <Link to="/"
             style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#004ac6", color: "white", padding: "10px 22px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>

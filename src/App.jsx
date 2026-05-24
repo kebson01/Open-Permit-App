@@ -88,6 +88,7 @@ function App() {
             <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
 
             {/* ── PROJECTS & TOOLS ── */}
+            <Route path="/tools/exemption-checker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionChecker /></LayoutWrapper>} />
             <Route path="/projects" element={<LayoutWrapper currentPageName="ProjectsPage"><ProjectsPage /></LayoutWrapper>} />
             <Route path="/tools/building-codes" element={<LayoutWrapper currentPageName="BuildingCodesPage"><BuildingCodesPage /></LayoutWrapper>} />
 
