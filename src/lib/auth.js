@@ -15,14 +15,31 @@ export function useAuthProvider() {
   const [user, setUser] = useState(undefined); // undefined = still loading
 
   useEffect(() => {
-    // Initial load
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data?.user ?? null);
+    // getSession handles OAuth redirect hash fragments correctly
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
     });
 
-    // Subscribe to changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+
+      if (event === "SIGNED_IN" && session) {
+        // Claim any guest submissions silently
+        supabase.rpc("claim_guest_guides", {
+          p_email: session.user.email,
+          p_user_id: session.user.id,
+        }).catch(() => {});
+
+        // After OAuth redirect, send user away from auth pages
+        const path = window.location.pathname;
+        if (path === "/login" || path === "/auth/login" || path === "/signup" || path === "/auth/signup") {
+          window.location.href = "/";
+        }
+      }
+
+      if (event === "SIGNED_OUT") {
+        window.location.href = "/login";
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -30,10 +47,8 @@ export function useAuthProvider() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/";
   };
 
-  // Helper: display name from supabase user
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const firstName = displayName.split(" ")[0];
   const initial = displayName[0]?.toUpperCase() || "U";
