@@ -25,6 +25,10 @@ import BuildingCodes from './pages/BuildingCodes';
 import PropertyGuide from './pages/PropertyGuide';
 import PermitGuide from './pages/PermitGuide';
 
+// Projects & Tools
+import ProjectsPage from './pages/ProjectsPage';
+import BuildingCodesPage from './pages/BuildingCodesPage';
+
 // Private Provider
 import ProviderDirectory from './pages/ProviderDirectory';
 import ProviderRegister from './pages/ProviderRegister';
@@ -82,6 +86,10 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><ProtectedRoute><AdminHealth /></ProtectedRoute></LayoutWrapper>} />
             <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
+
+            {/* ── PROJECTS & TOOLS ── */}
+            <Route path="/projects" element={<LayoutWrapper currentPageName="ProjectsPage"><ProjectsPage /></LayoutWrapper>} />
+            <Route path="/tools/building-codes" element={<LayoutWrapper currentPageName="BuildingCodesPage"><BuildingCodesPage /></LayoutWrapper>} />
 
             {/* ── PRIVATE PROVIDERS ── */}
             <Route path="/providers" element={<LayoutWrapper currentPageName="ProviderDirectory"><ProviderDirectory /></LayoutWrapper>} />

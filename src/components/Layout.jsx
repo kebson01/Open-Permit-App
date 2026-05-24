@@ -22,6 +22,7 @@ const TOOLS_ITEMS = [
   { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
   { label: "Property Search",   path: "/PropertyGuide",    icon: Search },
   { label: "Private Providers", path: "/providers",        icon: ShieldCheck },
+  { label: "Building Codes",   path: "/tools/building-codes", icon: BookOpen },
 ];
 
 export default function Layout({ children, currentPageName }) {
