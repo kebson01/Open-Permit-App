@@ -25,6 +25,11 @@ import BuildingCodes from './pages/BuildingCodes';
 import PropertyGuide from './pages/PropertyGuide';
 import PermitGuide from './pages/PermitGuide';
 
+// Private Provider
+import ProviderDirectory from './pages/ProviderDirectory';
+import ProviderRegister from './pages/ProviderRegister';
+import ProviderDashboard from './pages/ProviderDashboard';
+
 // Admin
 import AdminPanel from './pages/AdminPanel.jsx';
 import AdminHealth from './pages/AdminHealth.jsx';
@@ -77,6 +82,11 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><ProtectedRoute><AdminHealth /></ProtectedRoute></LayoutWrapper>} />
             <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
+
+            {/* ── PRIVATE PROVIDERS ── */}
+            <Route path="/providers" element={<LayoutWrapper currentPageName="ProviderDirectory"><ProviderDirectory /></LayoutWrapper>} />
+            <Route path="/provider-register" element={<LayoutWrapper currentPageName="ProviderRegister"><ProviderRegister /></LayoutWrapper>} />
+            <Route path="/provider-dashboard" element={<LayoutWrapper currentPageName="ProviderDashboard"><ProviderDashboard /></LayoutWrapper>} />
 
             {/* ── LEGACY ── */}
             <Route path="/SubmissionGuide" element={<LayoutWrapper currentPageName="SubmissionGuide"><SubmissionGuide /></LayoutWrapper>} />
