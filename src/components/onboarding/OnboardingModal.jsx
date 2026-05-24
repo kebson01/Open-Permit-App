@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import { X, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -28,7 +28,7 @@ export default function OnboardingModal({ currentUser, onComplete, onSkip }) {
     const timeout = new Promise(resolve => setTimeout(resolve, 3000));
     const write = (async () => {
       try {
-        await base44.auth.updateMe({ role });
+        await supabase.auth.updateUser({ data: { role } });
         await db.UserOnboarding.create({
           user_email: currentUser.email,
           role,

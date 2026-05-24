@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClient";
 import { searchProperties } from "@/lib/searchProperties";
 import { Link } from "react-router-dom";
@@ -115,7 +114,7 @@ export default function ApplyForPermit() {
   const [confirmationNumber, setConfirmationNumber] = useState("");
 
   useEffect(() => {
-    base44.auth.me().then(u => setCurrentUser(u || null)).catch(() => {}).finally(() => setAuthLoading(false));
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user || null)).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
 
   const resetAll = () => {

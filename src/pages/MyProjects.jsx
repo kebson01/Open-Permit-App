@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import {
   Plus, Loader2, ArrowRight, Calendar, MapPin,
@@ -460,9 +460,9 @@ export default function MyProjects() {
   const [creating, setCreating]       = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setCurrentUser(u || null);
-      if (u) loadProjects(u);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUser(user || null);
+      if (user) loadProjects(user);
       else setLoading(false);
     }).catch(() => setLoading(false));
 
@@ -484,7 +484,7 @@ export default function MyProjects() {
   const createProject = async () => {
     if (!newProject.name || !currentUser) return;
     setCreating(true);
-    const p = await db.Project.create({ ...newProject, owner_email: currentUser.email, status: "planning" });
+    const p = await db.Project.create({ ...newProject, owner_email: currentUser.email, status: "planning", created_at: new Date().toISOString() });
     setProjects(prev => [p, ...prev]);
     setShowNewForm(false);
     setNewProject({ name: "", project_type: "remodel", city_name: "Weston", property_address: "" });
@@ -518,7 +518,7 @@ export default function MyProjects() {
           </div>
           <Link to="/MyAccount" className="no-underline">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
-              {currentUser?.full_name?.[0] || "?"}
+              {currentUser?.user_metadata?.full_name?.[0] || currentUser?.email?.[0]?.toUpperCase() || "?"}
             </div>
           </Link>
         </div>
@@ -592,7 +592,7 @@ export default function MyProjects() {
           <div className="text-center py-16">
             <FolderOpen className="w-12 h-12 text-gray-200 mx-auto mb-3" />
             <p className="font-semibold text-gray-600 mb-4">Sign in to manage your projects</p>
-            <button onClick={() => base44.auth.redirectToLogin(window.location.href)}
+            <button onClick={() => window.location.replace("/login")}
               className="px-6 py-2.5 rounded-xl text-white font-bold text-sm" style={{ background: PRIMARY }}>
               Sign In
             </button>
