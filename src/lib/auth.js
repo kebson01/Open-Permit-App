@@ -24,21 +24,19 @@ export function useAuthProvider() {
       setUser(session?.user ?? null);
 
       if (event === "SIGNED_IN" && session) {
-        // Claim any guest submissions silently
         supabase.rpc("claim_guest_guides", {
           p_email: session.user.email,
           p_user_id: session.user.id,
         }).catch(() => {});
 
-        // After OAuth redirect, send user away from auth pages
         const path = window.location.pathname;
         if (path === "/login" || path === "/auth/login" || path === "/signup" || path === "/auth/signup") {
-          window.location.href = "/";
+          window.location.replace("/");
         }
       }
 
       if (event === "SIGNED_OUT") {
-        window.location.href = "/login";
+        window.location.replace("/login");
       }
     });
 
