@@ -191,6 +191,46 @@ export default function Home() {
         </div>
       </FadeSection>
 
+      {/* ── CITY COVERAGE ────────────────────────────────────────────── */}
+      <FadeSection className="px-4 mt-14 max-w-5xl mx-auto">
+        <h2 className="text-center font-extrabold mb-2" style={{ fontFamily: FONTS.headline, fontSize: 22, color: "#0d1c2e" }}>
+          Coverage by City
+        </h2>
+        <p className="text-center text-xs mb-6" style={{ color: "#6b7280", fontFamily: FONTS.body }}>
+          Guided applications available for all 6 cities. Weston also includes full historical permit records.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            { name: "Weston",          badge: "Full Coverage",  badgeCls: "bg-green-100 text-green-700 border-green-200",  detail: "115,959 permit records + guided application" },
+            { name: "Hollywood",       badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
+            { name: "Coral Springs",   badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
+            { name: "Cooper City",     badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
+            { name: "Fort Lauderdale", badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types (via LauderBuild)" },
+            { name: "Sunrise",         badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
+          ].map(city => (
+            <Link
+              key={city.name}
+              to={`/ApplyForPermit`}
+              className="flex items-start gap-3 p-4 transition-all"
+              style={{ background: "#fff", borderRadius: 10, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", textDecoration: "none", border: "1px solid #e8eaf0" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,74,198,0.12)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 8px rgba(0,0,0,0.06)"}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff4ff" }}>
+                <MapPin className="w-4 h-4" style={{ color: PRIMARY }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-bold text-sm" style={{ fontFamily: FONTS.headline, color: "#0d1c2e" }}>{city.name}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${city.badgeCls}`}>{city.badge}</span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "#6b7280", fontFamily: FONTS.body }}>{city.detail}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </FadeSection>
+
       {/* ── YOUR PATH TO APPROVAL ────────────────────────────────────── */}
       <FadeSection className="mt-14" style={{ background: "#eef2ff" }}>
         <div className="px-4 py-14 max-w-5xl mx-auto">

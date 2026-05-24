@@ -188,7 +188,7 @@ export default function PropertyPermitHistory({ folio_number, city_name }) {
         <div className="text-center py-6">
           <ClipboardList className="w-10 h-10 text-gray-200 mx-auto mb-2" />
           <p className="text-sm text-gray-400">No permit records found for this parcel.</p>
-          <p className="text-xs text-gray-300 mt-1">Permit data may not be available for this municipality yet.</p>
+          <p className="text-xs text-gray-300 mt-1">Historical permit records are currently available for Weston properties.</p>
         </div>
       ) : (
         <>

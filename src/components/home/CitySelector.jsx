@@ -11,6 +11,7 @@ const CITIES = [
   "Fort Lauderdale",
   "Hollywood",
   "Cooper City",
+  "Sunrise",
 ];
 
 export default function CitySelector() {
