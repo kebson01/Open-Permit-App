@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import * as db from "@/lib/db";
+import { useLicenseAlerts } from "@/hooks/useLicenseAlerts";
+import LicenseAlertBanner from "@/components/alerts/LicenseAlertBanner";
 import {
   Plus, Search, AlertTriangle, Bell, ChevronRight,
   Clock, User, CheckCircle2, MessageSquare, DollarSign,
@@ -178,6 +180,7 @@ export default function HomeDashboard() {
   const [guides, setGuides]   = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { alerts } = useLicenseAlerts(user?.email);
 
   useEffect(() => {
     if (authLoading) return;
@@ -234,6 +237,11 @@ export default function HomeDashboard() {
             </>
           )}
         </div>
+
+        {/* License Alerts */}
+        {user && alerts.length > 0 && (
+          <LicenseAlertBanner alerts={alerts} />
+        )}
 
         {/* Hero CTA */}
         <HeroCard />

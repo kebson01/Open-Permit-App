@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { User, Shield, AlertTriangle, Loader2, CheckCircle2, LogOut } from "lucide-react";
+import { useLicenseAlerts } from "@/hooks/useLicenseAlerts";
+import LicenseAlertBanner from "@/components/alerts/LicenseAlertBanner";
 
 const PRIMARY = "#004ac6";
 const FONTS = { h: "'Manrope', system-ui, sans-serif", b: "'Plus Jakarta Sans', system-ui, sans-serif" };
@@ -75,6 +77,7 @@ export default function MyAccount() {
 
   const licenseExp = daysUntil(cp.license_expiration);
   const insuranceExp = daysUntil(cp.insurance_expiration);
+  const { alerts } = useLicenseAlerts(user?.email);
 
   if (loading || authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>;
@@ -110,6 +113,13 @@ export default function MyAccount() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pt-5">
+        {/* License Alerts */}
+        {alerts.length > 0 && (
+          <div className="mb-4">
+            <LicenseAlertBanner alerts={alerts} />
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 bg-white border border-gray-100 rounded-xl p-1 mb-5 shadow-sm">
           {TABS.map(t => (
@@ -159,23 +169,7 @@ export default function MyAccount() {
               <h3 className="font-bold text-gray-800" style={{ fontFamily: FONTS.h }}>Contractor Profile</h3>
             </div>
 
-            {/* Expiration warnings */}
-            {licenseExp !== null && licenseExp < 60 && (
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-orange-50 border border-orange-200">
-                <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-orange-700">
-                  <strong>License expires in {licenseExp} day{licenseExp !== 1 ? "s" : ""}</strong> — update before it expires.
-                </p>
-              </div>
-            )}
-            {insuranceExp !== null && insuranceExp < 60 && (
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-red-700">
-                  <strong>Insurance expires in {insuranceExp} day{insuranceExp !== 1 ? "s" : ""}</strong> — update before it expires.
-                </p>
-              </div>
-            )}
+
 
             {[
               { key: "company_name", label: "Company Name", placeholder: "Your business name" },
