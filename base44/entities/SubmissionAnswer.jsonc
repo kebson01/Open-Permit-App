@@ -1,0 +1,64 @@
+{
+  "name": "SubmissionAnswer",
+  "properties": {
+    "answer_value": {
+      "description": "The user's actual answer",
+      "type": "string"
+    },
+    "answered_by": {
+      "description": "Email of user who provided or confirmed the answer",
+      "type": "string"
+    },
+    "answered_date": {
+      "description": "Date the answer was recorded",
+      "format": "date",
+      "type": "string"
+    },
+    "flag_reason": {
+      "description": "Why this answer was flagged for review",
+      "type": "string"
+    },
+    "guide_id": {
+      "description": "Reference to SubmissionGuide entity",
+      "type": "string"
+    },
+    "is_flagged": {
+      "default": false,
+      "description": "Whether this answer needs review before submission",
+      "type": "boolean"
+    },
+    "prefill_source": {
+      "description": "Where the prefill value came from e.g. project.estimated_cost",
+      "type": "string"
+    },
+    "question_id": {
+      "description": "Reference to CityApplicationQuestion entity",
+      "type": "string"
+    },
+    "question_key": {
+      "description": "Snapshot of question_key at time of answer",
+      "type": "string"
+    },
+    "question_text": {
+      "description": "Snapshot of question text at time of answer",
+      "type": "string"
+    },
+    "was_edited": {
+      "default": false,
+      "description": "Whether the user changed a prefilled value",
+      "type": "boolean"
+    },
+    "was_prefilled": {
+      "default": false,
+      "description": "Whether Open Permit auto-populated this answer",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "guide_id",
+    "question_id",
+    "question_key",
+    "answered_by"
+  ],
+  "type": "object"
+}

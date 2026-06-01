@@ -42,7 +42,7 @@ function HeroCard() {
 function QuickActions() {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Link to="/PropertyGuide"
+      <Link to="/providers"
         className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-2 no-underline hover:shadow-md transition-shadow">
         <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#EBF5FF" }}>
             <Search className="w-5 h-5" style={{ color: "#1A56DB" }} />

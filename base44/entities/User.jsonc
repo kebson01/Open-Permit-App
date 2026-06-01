@@ -6,17 +6,47 @@
       "type": "string",
       "enum": [
         "admin",
-        "city_admin"
+        "city_admin",
+        "homeowner",
+        "contractor",
+        "private_provider"
       ],
-      "default": "city_admin",
-      "description": "User role - admin can manage all cities, city_admin can only manage their assigned city"
+      "default": "homeowner",
+      "description": "User role"
     },
     "city_name": {
       "type": "string",
       "description": "For city_admin users: the city they are assigned to manage"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Company or firm name (contractors and private providers)"
+    },
+    "license_number": {
+      "type": "string",
+      "description": "License number (contractors and private providers)"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "signup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date user signed up"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "active",
+      "description": "Account status"
     }
   },
   "required": [
-    "city_name"
+    "role"
   ]
 }

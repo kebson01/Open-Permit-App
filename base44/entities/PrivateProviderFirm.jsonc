@@ -1,0 +1,69 @@
+{
+  "name": "PrivateProviderFirm",
+  "properties": {
+    "address": {
+      "description": "Firm business address",
+      "type": "string"
+    },
+    "firm_name": {
+      "description": "Name of the private provider firm",
+      "type": "string"
+    },
+    "fl_statute_certified": {
+      "default": false,
+      "description": "Certified under Florida Statute 553.791",
+      "type": "boolean"
+    },
+    "license_number": {
+      "description": "State license number",
+      "type": "string"
+    },
+    "owner_email": {
+      "description": "Email of the primary account holder",
+      "type": "string"
+    },
+    "phone": {
+      "description": "Firm phone number",
+      "type": "string"
+    },
+    "services_offered": {
+      "description": "Types of services offered",
+      "items": {
+        "enum": [
+          "plan_review",
+          "inspections",
+          "threshold_inspections",
+          "fire_review",
+          "structural_review"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "status": {
+      "default": "active",
+      "description": "Firm status",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "type": "string"
+    },
+    "verified": {
+      "default": false,
+      "description": "Whether the firm has been verified by platform admin",
+      "type": "boolean"
+    },
+    "website": {
+      "description": "Firm website URL",
+      "type": "string"
+    }
+  },
+  "required": [
+    "firm_name",
+    "owner_email",
+    "license_number"
+  ],
+  "type": "object"
+}

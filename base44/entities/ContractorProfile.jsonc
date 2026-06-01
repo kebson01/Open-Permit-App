@@ -1,0 +1,80 @@
+{
+  "name": "ContractorProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the contractor user account"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Business or company name"
+    },
+    "license_number": {
+      "type": "string",
+      "description": "State contractor license number"
+    },
+    "license_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "electrical",
+        "plumbing",
+        "mechanical",
+        "roofing",
+        "specialty"
+      ],
+      "description": "Type of contractor license"
+    },
+    "license_expiration": {
+      "type": "string",
+      "format": "date",
+      "description": "License expiration date"
+    },
+    "insurance_provider": {
+      "type": "string",
+      "description": "Insurance company name"
+    },
+    "insurance_policy_number": {
+      "type": "string",
+      "description": "Insurance policy number"
+    },
+    "insurance_expiration": {
+      "type": "string",
+      "format": "date",
+      "description": "Insurance expiration date"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Business phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Business address"
+    },
+    "service_cities": {
+      "type": "string",
+      "description": "Comma-separated list of cities they operate in"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "active",
+      "description": "Profile status"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether license has been verified"
+    }
+  },
+  "required": [
+    "user_email",
+    "license_number",
+    "license_type"
+  ]
+}

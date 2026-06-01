@@ -1,0 +1,88 @@
+{
+  "name": "PermitMilestone",
+  "properties": {
+    "city_id": {
+      "description": "Reference to City entity",
+      "type": "string"
+    },
+    "city_name": {
+      "description": "City name for display",
+      "type": "string"
+    },
+    "completed_by_email": {
+      "description": "Email of user who marked this milestone complete",
+      "type": "string"
+    },
+    "completed_by_name": {
+      "description": "Name of user who completed this milestone",
+      "type": "string"
+    },
+    "completed_date": {
+      "description": "Date milestone was completed",
+      "format": "date",
+      "type": "string"
+    },
+    "display_order": {
+      "description": "Order in which milestone appears in the timeline UI",
+      "type": "number"
+    },
+    "folio_number": {
+      "description": "BCPA folio number",
+      "type": "string"
+    },
+    "milestone_type": {
+      "description": "Type of milestone",
+      "enum": [
+        "application_submitted",
+        "documents_received",
+        "plan_review_started",
+        "plan_review_approved",
+        "plan_review_rejected",
+        "permit_issued",
+        "inspection_scheduled",
+        "inspection_passed",
+        "inspection_failed",
+        "reinspection_required",
+        "final_approval",
+        "certificate_of_occupancy",
+        "permit_closed"
+      ],
+      "type": "string"
+    },
+    "notes": {
+      "description": "Notes or comments on this milestone",
+      "type": "string"
+    },
+    "permit_number": {
+      "description": "Municipal permit number",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Reference to Project entity",
+      "type": "string"
+    },
+    "status": {
+      "default": "pending",
+      "description": "Milestone status",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "skipped",
+        "blocked"
+      ],
+      "type": "string"
+    },
+    "target_date": {
+      "description": "Expected completion date for this milestone",
+      "format": "date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "permit_number",
+    "milestone_type",
+    "display_order"
+  ],
+  "type": "object"
+}

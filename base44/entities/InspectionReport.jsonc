@@ -1,0 +1,104 @@
+{
+  "name": "InspectionReport",
+  "properties": {
+    "certification_statement": {
+      "description": "Required statutory certification text per FL 553.791",
+      "type": "string"
+    },
+    "city_id": {
+      "description": "Reference to City entity",
+      "type": "string"
+    },
+    "city_name": {
+      "description": "City name",
+      "type": "string"
+    },
+    "document_url": {
+      "description": "URL to uploaded inspection report document",
+      "type": "string"
+    },
+    "firm_id": {
+      "description": "Reference to PrivateProviderFirm",
+      "type": "string"
+    },
+    "firm_name": {
+      "description": "Private provider firm name",
+      "type": "string"
+    },
+    "folio_number": {
+      "description": "BCPA folio number linking to property",
+      "type": "string"
+    },
+    "inspection_date": {
+      "description": "Date inspection was performed",
+      "format": "date",
+      "type": "string"
+    },
+    "inspection_type": {
+      "description": "Type of inspection performed",
+      "enum": [
+        "foundation",
+        "framing",
+        "rough_electric",
+        "rough_plumbing",
+        "rough_mechanical",
+        "insulation",
+        "final_electric",
+        "final_plumbing",
+        "final_mechanical",
+        "final_building",
+        "fire",
+        "structural",
+        "threshold"
+      ],
+      "type": "string"
+    },
+    "inspector_license": {
+      "description": "Inspector license number",
+      "type": "string"
+    },
+    "inspector_name": {
+      "description": "Name of inspector who performed the inspection",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Inspection notes or conditions",
+      "type": "string"
+    },
+    "permit_number": {
+      "description": "Municipal permit number",
+      "type": "string"
+    },
+    "project_id": {
+      "description": "Reference to Project entity",
+      "type": "string"
+    },
+    "result": {
+      "description": "Inspection result",
+      "enum": [
+        "passed",
+        "failed",
+        "partial",
+        "re_inspection_required"
+      ],
+      "type": "string"
+    },
+    "submitted_by": {
+      "description": "Email of user who submitted the report",
+      "type": "string"
+    },
+    "submitted_date": {
+      "description": "Date report was submitted to the city",
+      "format": "date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "folio_number",
+    "inspection_type",
+    "inspection_date",
+    "firm_id",
+    "result"
+  ],
+  "type": "object"
+}
