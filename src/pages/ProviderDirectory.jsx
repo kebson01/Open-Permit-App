@@ -1,30 +1,54 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
-import { Shield, Phone, Globe, MapPin, CheckCircle, Loader2, Search, Building2, ChevronRight } from "lucide-react";
+import {
+  Shield, Phone, Globe, MapPin, Loader2, Search,
+  Building2, ChevronRight, HardHat, Users
+} from "lucide-react";
 import RequestServicesModal from "@/components/providers/RequestServicesModal";
 
 const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
-const SERVICES = [
-  "General Contractor",
-  "Engineer",
-  "Architect",
-  "Electrical Contractor",
-  "Plumbing Contractor",
-  "Mechanical Contractor",
-  "Roofing Contractor",
+
+const CATEGORIES = [
+  "Roofing",
+  "HVAC / A/C",
+  "Plumbing / Gas",
+  "Pool & Spa",
+  "Solar",
+  "General / Building",
+  "Specialty / Openings",
+  "Site / Driveway / Utility",
+  "Irrigation",
+  "Electrical",
+  "Alarm",
+  "Engineering / Design",
+  "Architecture",
 ];
 
+const TYPE_TABS = [
+  { label: "All", value: null },
+  { label: "Contractors", value: "contractor" },
+  { label: "Private Providers", value: "private_provider" },
+];
+
+const STATUS_STYLES = {
+  active:        { bg: "#ecfdf5", color: "#065f46", border: "#a7f3d0", label: "Active" },
+  expiring_soon: { bg: "#fffbeb", color: "#92400e", border: "#fcd34d", label: "Expiring Soon" },
+  expired:       { bg: "#fef2f2", color: "#991b1b", border: "#fca5a5", label: "Expired" },
+};
+
 const PRIMARY = "#004ac6";
-const TEAL = "#006a61";
+const TEAL    = "#006a61";
+const FF      = "'Plus Jakarta Sans', sans-serif";
+const HEADING = "'Manrope', sans-serif";
 
 export default function ProviderDirectory() {
-  const [providers, setProviders] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedService, setSelectedService] = useState("");
+  const [results, setResults]         = useState([]);
+  const [loading, setLoading]         = useState(false);
+  const [searched, setSearched]       = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter]   = useState(null);      // null | 'contractor' | 'private_provider'
+  const [category, setCategory]       = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [requestTarget, setRequestTarget] = useState(null);
   const navigate = useNavigate();
@@ -33,45 +57,34 @@ export default function ProviderDirectory() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUser(session?.user ?? null);
     });
-    // Load all on mount
-    fetchProviders();
+    fetchProfessionals();
   }, []);
 
-  const fetchProviders = async (city, service) => {
+  const fetchProfessionals = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("search_provider_firms", {
-        p_query: searchQuery || null,
-        p_profession: service || null,
-        p_state: "FL",
+      const { data, error } = await supabase.rpc("search_professionals", {
+        p_query:       searchQuery || null,
+        p_type:        typeFilter  || null,
+        p_category:    category    || null,
+        p_active_only: true,
+        p_limit:       200,
       });
-      if (error) {
-        // Fallback: direct table query if RPC not available
-        let q = supabase.from("provider_firm_directory").select("*").eq("state", "FL");
-        if (searchQuery) q = q.ilike("firm_name", `%${searchQuery}%`);
-        if (service) q = q.eq("profession", service);
-        const { data: d2, error: e2 } = await q.order("firm_name").limit(200);
-        if (e2) throw e2;
-        setProviders(d2 || []);
-      } else {
-        setProviders(data || []);
-      }
+      if (error) throw error;
+      setResults(data || []);
     } catch {
-      setProviders([]);
+      setResults([]);
     } finally {
       setLoading(false);
       setSearched(true);
     }
   };
 
-  const handleSearch = () => fetchProviders(selectedCity, selectedService);
+  const handleSearch = () => fetchProfessionals();
 
-  const handleRequestServices = (provider) => {
-    if (!currentUser) {
-      navigate("/login");
-      return;
-    }
-    setRequestTarget(provider);
+  const handleRequestServices = (professional) => {
+    if (!currentUser) { navigate("/login"); return; }
+    setRequestTarget(professional);
   };
 
   return (
@@ -80,22 +93,25 @@ export default function ProviderDirectory() {
       <div style={{ background: "linear-gradient(135deg, #004ac6 0%, #003399 100%)", padding: "48px 24px 40px" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-5 h-5 text-white opacity-80" />
-            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Florida Statute 553.791
+            <Users className="w-5 h-5 text-white opacity-80" />
+            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: FF }}>
+              Licensed Contractors &amp; Private Providers
             </span>
           </div>
-          <h1 style={{ color: "white", fontSize: 32, fontWeight: 800, fontFamily: "'Manrope', sans-serif", marginBottom: 10 }}>
-            Licensed Private Providers
+          <h1 style={{ color: "white", fontSize: 32, fontWeight: 800, fontFamily: HEADING, marginBottom: 10 }}>
+            Find a Professional
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, maxWidth: 580, lineHeight: 1.6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Speed up your permit with a Florida Statute 553.791 certified private provider. Plan reviews in <strong style={{ color: "white" }}>10–16 business days</strong>.
+          <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, maxWidth: 580, lineHeight: 1.6, fontFamily: FF }}>
+            Search Florida-licensed contractors and FL 553.791-certified private providers in one place.
           </p>
 
-          {/* Info banner */}
           <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "12px 16px", marginTop: 20, maxWidth: 640 }}>
-            <p style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6, fontFamily: "'Plus Jakarta Sans', sans-serif", margin: 0 }}>
-              <strong style={{ color: "white" }}>ℹ️ What is a private provider?</strong> Licensed professionals who perform plan reviews and inspections as an alternative to the city building department. Using a private provider does not bypass city permit requirements.
+            <p style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6, fontFamily: FF, margin: 0 }}>
+              <strong style={{ color: "white" }}>
+                <Shield className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                Private providers (FL 553.791)
+              </strong>{" "}
+              are licensed professionals who perform plan reviews and inspections statewide as an alternative to the city building department.
             </p>
           </div>
         </div>
@@ -103,78 +119,109 @@ export default function ProviderDirectory() {
 
       {/* Filters */}
       <div style={{ background: "white", borderBottom: "1px solid #e8eaf0", padding: "16px 24px" }}>
-        <div className="max-w-5xl mx-auto flex flex-wrap gap-3 items-end">
-          <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>City</label>
-            <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}
-              style={{ border: "1px solid #e0e4f0", borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#191B23", background: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              <option value="">All Cities</option>
-              {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+        <div className="max-w-5xl mx-auto space-y-3">
+          {/* Type toggle */}
+          <div className="flex gap-2 flex-wrap">
+            {TYPE_TABS.map(tab => (
+              <button key={String(tab.value)} onClick={() => setTypeFilter(tab.value)}
+                style={{
+                  padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  fontFamily: FF, border: "1px solid",
+                  background: typeFilter === tab.value ? PRIMARY : "white",
+                  color:      typeFilter === tab.value ? "white"  : "#374151",
+                  borderColor: typeFilter === tab.value ? PRIMARY : "#e0e4f0",
+                  transition: "all 0.15s",
+                }}>
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Service</label>
-            <select value={selectedService} onChange={e => setSelectedService(e.target.value)}
-              style={{ border: "1px solid #e0e4f0", borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#191B23", background: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              <option value="">All Services</option>
-              {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Firm Name</label>
-            <div style={{ display: "flex", alignItems: "center", border: "1px solid #e0e4f0", borderRadius: 8, padding: "0 12px", background: "white" }}>
-              <Search className="w-4 h-4" style={{ color: "#9ca3af", flexShrink: 0 }} />
-              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleSearch()}
-                placeholder="Search by firm name..."
-                style={{ flex: 1, border: "none", outline: "none", padding: "9px 8px", fontSize: 13, color: "#191B23", fontFamily: "'Plus Jakarta Sans', sans-serif", background: "transparent" }} />
+
+          {/* Search row */}
+          <div className="flex flex-wrap gap-3 items-end">
+            {/* Search box */}
+            <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: FF }}>Name / Business</label>
+              <div style={{ display: "flex", alignItems: "center", border: "1px solid #e0e4f0", borderRadius: 8, padding: "0 12px", background: "white" }}>
+                <Search className="w-4 h-4" style={{ color: "#9ca3af", flexShrink: 0 }} />
+                <input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSearch()}
+                  placeholder="Search by name or business..."
+                  style={{ flex: 1, border: "none", outline: "none", padding: "9px 8px", fontSize: 13, color: "#191B23", fontFamily: FF, background: "transparent" }}
+                />
+              </div>
             </div>
+
+            {/* Category */}
+            <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: FF }}>Category</label>
+              <select value={category} onChange={e => setCategory(e.target.value)}
+                style={{ border: "1px solid #e0e4f0", borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#191B23", background: "white", fontFamily: FF }}>
+                <option value="">All Categories</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {/* City — informational only */}
+            <div className="flex flex-col gap-1 min-w-[140px]">
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: FF }}>
+                City <span style={{ fontSize: 9, fontWeight: 400, color: "#9ca3af" }}>(informational)</span>
+              </label>
+              <select style={{ border: "1px solid #e0e4f0", borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#9ca3af", background: "white", fontFamily: FF }}>
+                <option value="">All Cities</option>
+                {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <button onClick={handleSearch}
+              style={{ background: PRIMARY, color: "white", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: FF, flexShrink: 0 }}>
+              Search
+            </button>
           </div>
-          <button onClick={handleSearch}
-            style={{ background: PRIMARY, color: "white", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", flexShrink: 0 }}>
-            Find Providers
-          </button>
         </div>
       </div>
 
       {/* Results */}
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {!loading && searched && providers.length > 0 && (
-          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Showing <strong>{providers.length}</strong> provider{providers.length !== 1 ? "s" : ""} statewide (FL 553.791)
+        {!loading && searched && results.length > 0 && (
+          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, fontFamily: FF }}>
+            Showing <strong>{results.length}</strong> professional{results.length !== 1 ? "s" : ""} statewide
           </p>
         )}
+
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
             <Loader2 className="w-7 h-7 animate-spin" style={{ color: PRIMARY }} />
           </div>
-        ) : providers.length === 0 && searched ? (
+        ) : results.length === 0 && searched ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <Building2 className="w-12 h-12 mx-auto mb-4" style={{ color: "#d1d5db" }} />
-            <p style={{ fontSize: 16, fontWeight: 600, color: "#374151", fontFamily: "'Manrope', sans-serif" }}>No providers found</p>
-            <p style={{ fontSize: 14, color: "#9ca3af", marginTop: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              No providers found for your search. Check back soon — providers are being added regularly.
+            <p style={{ fontSize: 16, fontWeight: 600, color: "#374151", fontFamily: HEADING }}>No professionals found</p>
+            <p style={{ fontSize: 14, color: "#9ca3af", marginTop: 6, fontFamily: FF }}>
+              Try adjusting your search or category filter.
             </p>
           </div>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2">
-            {providers.map(provider => (
-              <ProviderCard key={provider.id} provider={provider} onRequest={handleRequestServices} isLoggedIn={!!currentUser} />
+          <div className="grid gap-4 md:grid-cols-2">
+            {results.map((prof, i) => (
+              <ProfessionalCard key={prof.id ?? i} professional={prof} onRequest={handleRequestServices} />
             ))}
           </div>
         )}
 
-        {/* CTA for providers */}
+        {/* CTA */}
         <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "32px", marginTop: 48, textAlign: "center", boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
           <Shield className="w-10 h-10 mx-auto mb-3" style={{ color: TEAL }} />
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#191B23", fontFamily: "'Manrope', sans-serif", marginBottom: 8 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#191B23", fontFamily: HEADING, marginBottom: 8 }}>
             Are you a licensed private provider?
           </h3>
-          <p style={{ fontSize: 14, color: "#6b7280", fontFamily: "'Plus Jakarta Sans', sans-serif", maxWidth: 460, margin: "0 auto 20px" }}>
+          <p style={{ fontSize: 14, color: "#6b7280", fontFamily: FF, maxWidth: 460, margin: "0 auto 20px" }}>
             Register your firm on Open Permit to connect with homeowners and contractors in South Florida.
           </p>
           <Link to="/provider-register"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: TEAL, color: "white", padding: "10px 22px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: TEAL, color: "white", padding: "10px 22px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none", fontFamily: FF }}>
             Register Your Firm <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -191,64 +238,94 @@ export default function ProviderDirectory() {
   );
 }
 
-function ProviderCard({ provider, onRequest, isLoggedIn }) {
-  const location = [provider.city, provider.state].filter(Boolean).join(", ");
+function ProfessionalCard({ professional, onRequest }) {
+  const isPrivateProvider = professional.professional_type === "private_provider";
+  const statusStyle = STATUS_STYLES[professional.status] || STATUS_STYLES.active;
+  const location = [professional.city, professional.state].filter(Boolean).join(", ");
 
   return (
-    <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Header */}
+    <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Top row: type label + status badge */}
+      <div className="flex items-center justify-between gap-2">
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          background: isPrivateProvider ? "#f0fdf4" : "#eff6ff",
+          color:      isPrivateProvider ? "#166534"  : "#1e40af",
+          border:     `1px solid ${isPrivateProvider ? "#bbf7d0" : "#bfdbfe"}`,
+          borderRadius: 20, padding: "2px 10px", fontSize: 10, fontWeight: 700, fontFamily: FF,
+        }}>
+          {isPrivateProvider
+            ? <><Shield className="w-2.5 h-2.5" /> Private Provider</>
+            : <><HardHat className="w-2.5 h-2.5" /> Contractor</>}
+        </span>
+        <span style={{
+          background: statusStyle.bg, color: statusStyle.color,
+          border: `1px solid ${statusStyle.border}`,
+          borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: FF,
+        }}>
+          {statusStyle.label}
+        </span>
+      </div>
+
+      {/* Name */}
       <div>
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: "#191B23", fontFamily: "'Manrope', sans-serif", lineHeight: 1.3 }}>{provider.firm_name}</h3>
-          <span style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>
-            ✓ FL 553.791
-          </span>
-        </div>
-        {provider.license_number && (
-          <p style={{ fontFamily: "monospace", fontSize: 11, color: "#9ca3af", margin: 0 }}>License: {provider.license_number}</p>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: "#191B23", fontFamily: HEADING, lineHeight: 1.3, margin: 0 }}>
+          {professional.name}
+        </h3>
+        {professional.secondary && (
+          <p style={{ fontSize: 12, color: "#6b7280", margin: "3px 0 0", fontFamily: FF }}>{professional.secondary}</p>
+        )}
+        {professional.license_number && (
+          <p style={{ fontFamily: "monospace", fontSize: 10, color: "#9ca3af", margin: "3px 0 0" }}>
+            Lic: {professional.license_number}
+          </p>
         )}
       </div>
 
-      {/* Contact & Location */}
-      <div className="flex flex-col gap-1.5">
-        {provider.phone && (
+      {/* Category + location */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {professional.category && (
+          <span style={{ fontSize: 12, color: "#374151", fontFamily: FF, display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY, display: "inline-block" }} />
+            {professional.category}
+          </span>
+        )}
+        {location && (
+          <span style={{ fontSize: 12, color: "#6b7280", fontFamily: FF, display: "flex", alignItems: "center", gap: 3 }}>
+            <MapPin className="w-3 h-3" /> {location}
+          </span>
+        )}
+      </div>
+
+      {/* Contact */}
+      <div className="flex flex-col gap-1">
+        {professional.phone && (
           <div className="flex items-center gap-2">
             <Phone className="w-3.5 h-3.5" style={{ color: "#9ca3af", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{provider.phone}</span>
+            <span style={{ fontSize: 12, color: "#374151", fontFamily: FF }}>{professional.phone}</span>
           </div>
         )}
-        {provider.website && (
+        {professional.website && (
           <div className="flex items-center gap-2">
             <Globe className="w-3.5 h-3.5" style={{ color: "#9ca3af", flexShrink: 0 }} />
-            <a href={provider.website.startsWith("http") ? provider.website : `https://${provider.website}`}
+            <a href={professional.website.startsWith("http") ? professional.website : `https://${professional.website}`}
               target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 13, color: "#004ac6", fontFamily: "'Plus Jakarta Sans', sans-serif", textDecoration: "none" }}>
-              {provider.website.replace(/^https?:\/\//, "")}
+              style={{ fontSize: 12, color: PRIMARY, fontFamily: FF, textDecoration: "none" }}>
+              {professional.website.replace(/^https?:\/\//, "")}
             </a>
           </div>
         )}
-        {location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5" style={{ color: "#9ca3af", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{location}</span>
-          </div>
-        )}
       </div>
 
-      {/* Profession */}
-      {provider.profession && (
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Profession</p>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3 h-3" style={{ color: "#006a61", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{provider.profession}</span>
-          </div>
+      {isPrivateProvider && (
+        <div style={{ fontSize: 10, color: "#059669", fontFamily: FF, fontWeight: 600 }}>
+          ✓ FL Statute 553.791 Certified
         </div>
       )}
 
-      <button onClick={() => onRequest(provider)}
-        style={{ marginTop: "auto", background: "#004ac6", color: "white", border: "none", borderRadius: 10, padding: "10px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        Request Services
+      <button onClick={() => onRequest(professional)}
+        style={{ marginTop: "auto", background: PRIMARY, color: "white", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: FF }}>
+        Contact Professional
       </button>
     </div>
   );
