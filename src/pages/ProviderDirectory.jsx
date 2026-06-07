@@ -6,11 +6,13 @@ import RequestServicesModal from "@/components/providers/RequestServicesModal";
 
 const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
 const SERVICES = [
-  "Plan Review",
-  "Structural Inspection",
-  "Electrical Inspection",
-  "Mechanical Inspection",
-  "Threshold Building Inspection",
+  "General Contractor",
+  "Engineer",
+  "Architect",
+  "Electrical Contractor",
+  "Plumbing Contractor",
+  "Mechanical Contractor",
+  "Roofing Contractor",
 ];
 
 const PRIMARY = "#004ac6";
@@ -38,13 +40,22 @@ export default function ProviderDirectory() {
   const fetchProviders = async (city, service) => {
     setLoading(true);
     try {
-      let query = supabase.from("private_provider_firms").select("*").eq("status", "active");
-      if (city) query = query.contains("cities", [city]);
-      if (service) query = query.contains("services_offered", [service]);
-      if (searchQuery) query = query.ilike("firm_name", `%${searchQuery}%`);
-      const { data, error } = await query.order("firm_name");
-      if (error) throw error;
-      setProviders(data || []);
+      const { data, error } = await supabase.rpc("search_provider_firms", {
+        p_query: searchQuery || null,
+        p_profession: service || null,
+        p_state: "FL",
+      });
+      if (error) {
+        // Fallback: direct table query if RPC not available
+        let q = supabase.from("provider_firm_directory").select("*").eq("state", "FL");
+        if (searchQuery) q = q.ilike("firm_name", `%${searchQuery}%`);
+        if (service) q = q.eq("profession", service);
+        const { data: d2, error: e2 } = await q.order("firm_name").limit(200);
+        if (e2) throw e2;
+        setProviders(d2 || []);
+      } else {
+        setProviders(data || []);
+      }
     } catch {
       setProviders([]);
     } finally {
@@ -128,6 +139,11 @@ export default function ProviderDirectory() {
 
       {/* Results */}
       <div className="max-w-5xl mx-auto px-6 py-8">
+        {!loading && searched && providers.length > 0 && (
+          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Showing <strong>{providers.length}</strong> provider{providers.length !== 1 ? "s" : ""} statewide (FL 553.791)
+          </p>
+        )}
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
             <Loader2 className="w-7 h-7 animate-spin" style={{ color: PRIMARY }} />
@@ -176,8 +192,7 @@ export default function ProviderDirectory() {
 }
 
 function ProviderCard({ provider, onRequest, isLoggedIn }) {
-  const cities = Array.isArray(provider.cities) ? provider.cities : [];
-  const services = Array.isArray(provider.services_offered) ? provider.services_offered : [];
+  const location = [provider.city, provider.state].filter(Boolean).join(", ");
 
   return (
     <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -185,25 +200,16 @@ function ProviderCard({ provider, onRequest, isLoggedIn }) {
       <div>
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 style={{ fontSize: 17, fontWeight: 800, color: "#191B23", fontFamily: "'Manrope', sans-serif", lineHeight: 1.3 }}>{provider.firm_name}</h3>
-          <div className="flex gap-1.5 flex-shrink-0">
-            {provider.fl_statute_certified && (
-              <span style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", whiteSpace: "nowrap" }}>
-                ✓ FL 553.791
-              </span>
-            )}
-            {provider.verified && (
-              <span style={{ background: "#f0fdfa", color: "#0d6efd", border: "1px solid #99f6e4", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Verified
-              </span>
-            )}
-          </div>
+          <span style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", borderRadius: 20, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>
+            ✓ FL 553.791
+          </span>
         </div>
         {provider.license_number && (
           <p style={{ fontFamily: "monospace", fontSize: 11, color: "#9ca3af", margin: 0 }}>License: {provider.license_number}</p>
         )}
       </div>
 
-      {/* Contact */}
+      {/* Contact & Location */}
       <div className="flex flex-col gap-1.5">
         {provider.phone && (
           <div className="flex items-center gap-2">
@@ -221,32 +227,22 @@ function ProviderCard({ provider, onRequest, isLoggedIn }) {
             </a>
           </div>
         )}
+        {location && (
+          <div className="flex items-center gap-2">
+            <MapPin className="w-3.5 h-3.5" style={{ color: "#9ca3af", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{location}</span>
+          </div>
+        )}
       </div>
 
-      {/* Cities */}
-      {cities.length > 0 && (
+      {/* Profession */}
+      {provider.profession && (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cities Served</p>
-          <div className="flex flex-wrap gap-1.5">
-            {cities.map(c => (
-              <span key={c} style={{ background: "#f0f4ff", color: "#004ac6", border: "1px solid #dbeafe", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{c}</span>
-            ))}
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Profession</p>
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="w-3 h-3" style={{ color: "#006a61", flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{provider.profession}</span>
           </div>
-        </div>
-      )}
-
-      {/* Services */}
-      {services.length > 0 && (
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Services</p>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 3 }}>
-            {services.map(s => (
-              <li key={s} className="flex items-center gap-1.5">
-                <CheckCircle className="w-3 h-3" style={{ color: "#006a61", flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: "#374151", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{s}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
