@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import {
   Shield, Phone, Globe, MapPin, Loader2, Search,
-  Building2, ChevronRight, HardHat, Users
+  Building2, ChevronRight, HardHat, Users, ExternalLink
 } from "lucide-react";
 import RequestServicesModal from "@/components/providers/RequestServicesModal";
 
@@ -46,10 +46,11 @@ export default function ProviderDirectory() {
   const [results, setResults]         = useState([]);
   const [loading, setLoading]         = useState(false);
   const [searched, setSearched]       = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter]   = useState(null);      // null | 'contractor' | 'private_provider'
-  const [category, setCategory]       = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [typeFilter, setTypeFilter]       = useState(null);      // null | 'contractor' | 'private_provider'
+  const [category, setCategory]           = useState("");
+  const [statewideOnly, setStatewideOnly] = useState(false);
+  const [currentUser, setCurrentUser]     = useState(null);
   const [requestTarget, setRequestTarget] = useState(null);
   const navigate = useNavigate();
 
@@ -64,11 +65,12 @@ export default function ProviderDirectory() {
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc("search_professionals", {
-        p_query:       searchQuery || null,
-        p_type:        typeFilter  || null,
-        p_category:    category    || null,
-        p_active_only: true,
-        p_limit:       200,
+        p_query:          searchQuery    || null,
+        p_type:           typeFilter     || null,
+        p_category:       category       || null,
+        p_active_only:    true,
+        p_statewide_only: statewideOnly,
+        p_limit:          200,
       });
       if (error) throw error;
       setResults(data || []);
@@ -136,6 +138,24 @@ export default function ProviderDirectory() {
               </button>
             ))}
           </div>
+
+          {/* Statewide filter */}
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+            <div onClick={() => setStatewideOnly(v => !v)}
+              style={{
+                width: 36, height: 20, borderRadius: 10, background: statewideOnly ? "#059669" : "#d1d5db",
+                position: "relative", transition: "background 0.2s", flexShrink: 0, cursor: "pointer",
+              }}>
+              <div style={{
+                position: "absolute", top: 2, left: statewideOnly ? 18 : 2,
+                width: 16, height: 16, borderRadius: "50%", background: "white",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 0.2s",
+              }} />
+            </div>
+            <span style={{ fontSize: 13, color: "#374151", fontFamily: FF, fontWeight: 500 }}>
+              Only show pros that can work anywhere in Florida
+            </span>
+          </label>
 
           {/* Search row */}
           <div className="flex flex-wrap gap-3 items-end">
@@ -211,6 +231,13 @@ export default function ProviderDirectory() {
           </div>
         )}
 
+        {/* Footer note */}
+        {searched && results.length > 0 && (
+          <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 24, marginBottom: 0, fontFamily: FF, lineHeight: 1.6 }}>
+            ℹ️ Open Permit verifies license currency from state records. Tapping <strong>Find contact</strong> or <strong>View on Maps</strong> opens a Google search so you can locate current contact details directly.
+          </p>
+        )}
+
         {/* CTA */}
         <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "32px", marginTop: 48, textAlign: "center", boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
           <Shield className="w-10 h-10 mx-auto mb-3" style={{ color: TEAL }} />
@@ -242,6 +269,21 @@ function ProfessionalCard({ professional, onRequest }) {
   const isPrivateProvider = professional.professional_type === "private_provider";
   const statusStyle = STATUS_STYLES[professional.status] || STATUS_STYLES.active;
   const location = [professional.city, professional.state].filter(Boolean).join(", ");
+
+  // Service-area badge
+  const statewide = professional.operates_statewide;
+  const serviceAreaNote = professional.service_area_note || (
+    statewide
+      ? "Operates statewide — can work in any Florida city, including your area"
+      : "County/local registration — confirm authorization with your city building department"
+  );
+
+  // Deep-link helpers
+  const q = encodeURIComponent;
+  const findContactUrl = `https://www.google.com/search?q=${q([professional.name, professional.city, professional.category].filter(Boolean).join(" "))}`;
+  const mapsUrl        = `https://www.google.com/maps/search/?api=1&query=${q([professional.name, professional.city].filter(Boolean).join(" "))}`;
+  const bizName        = professional.secondary || (isPrivateProvider ? professional.name : null);
+  const sunbizUrl      = bizName ? `https://www.google.com/search?q=${q(bizName + " site:sunbiz.org")}` : null;
 
   return (
     <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -297,6 +339,23 @@ function ProfessionalCard({ professional, onRequest }) {
         )}
       </div>
 
+      {/* Service-area badge */}
+      <div title={serviceAreaNote} style={{
+        display: "inline-flex", alignItems: "center", gap: 5, alignSelf: "flex-start",
+        background: statewide ? "#f0fdf4" : "#fffbeb",
+        color:      statewide ? "#166534" : "#92400e",
+        border:     `1px solid ${statewide ? "#bbf7d0" : "#fcd34d"}`,
+        borderRadius: 20, padding: "3px 10px", fontSize: 10, fontWeight: 700, fontFamily: FF, cursor: "default",
+      }}>
+        {statewide ? "✓ Works in your area" : "⚠ Local — verify with city"}
+        <span style={{ fontSize: 10, fontWeight: 400, color: statewide ? "#166534" : "#92400e", opacity: 0.8 }}>
+          ({statewide ? "statewide" : "local"})
+        </span>
+      </div>
+      <p style={{ fontSize: 10, color: "#9ca3af", margin: "-6px 0 0", fontFamily: FF, lineHeight: 1.5 }}>
+        {serviceAreaNote}
+      </p>
+
       {/* Contact */}
       <div className="flex flex-col gap-1">
         {professional.phone && (
@@ -322,6 +381,24 @@ function ProfessionalCard({ professional, onRequest }) {
           ✓ FL Statute 553.791 Certified
         </div>
       )}
+
+      {/* Deep-link buttons */}
+      <div className="flex flex-wrap gap-2" style={{ marginTop: 4 }}>
+        <a href={findContactUrl} target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
+          <Search className="w-3 h-3" /> Find contact
+        </a>
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
+          <MapPin className="w-3 h-3" /> View on Maps
+        </a>
+        {sunbizUrl && (
+          <a href={sunbizUrl} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
+            <ExternalLink className="w-3 h-3" /> Business record
+          </a>
+        )}
+      </div>
 
       <button onClick={() => onRequest(professional)}
         style={{ marginTop: "auto", background: PRIMARY, color: "white", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: FF }}>
