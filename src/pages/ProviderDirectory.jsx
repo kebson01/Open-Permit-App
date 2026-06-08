@@ -280,10 +280,10 @@ function ProfessionalCard({ professional, onRequest }) {
 
   // Deep-link helpers
   const q = encodeURIComponent;
-  const findContactUrl = `https://www.google.com/search?q=${q([professional.name, professional.city, professional.category].filter(Boolean).join(" "))}`;
   const mapsUrl        = `https://www.google.com/maps/search/?api=1&query=${q([professional.name, professional.city].filter(Boolean).join(" "))}`;
+  const webSearchUrl   = `https://www.bing.com/search?q=${q([professional.name, professional.city, professional.category, "contact phone"].filter(Boolean).join(" "))}`;
   const bizName        = professional.secondary || (isPrivateProvider ? professional.name : null);
-  const sunbizUrl      = bizName ? `https://www.google.com/search?q=${q(bizName + " site:sunbiz.org")}` : null;
+  const sunbizUrl      = bizName ? `https://www.bing.com/search?q=${q(bizName + " sunbiz Florida")}` : null;
 
   return (
     <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -384,19 +384,19 @@ function ProfessionalCard({ professional, onRequest }) {
 
       {/* Deep-link buttons */}
       <div className="flex flex-wrap gap-2" style={{ marginTop: 4 }}>
-        <a href={findContactUrl} target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
-          <Search className="w-3 h-3" /> Find contact
-        </a>
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
-          <MapPin className="w-3 h-3" /> View on Maps
-        </a>
+        <button onClick={() => window.open(mapsUrl, '_blank', 'noopener,noreferrer')}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, cursor: "pointer" }}>
+          <MapPin className="w-3 h-3" /> Find on Google Maps
+        </button>
+        <button onClick={() => window.open(webSearchUrl, '_blank', 'noopener,noreferrer')}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, cursor: "pointer" }}>
+          <Search className="w-3 h-3" /> Web search
+        </button>
         {sunbizUrl && (
-          <a href={sunbizUrl} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, textDecoration: "none", cursor: "pointer" }}>
+          <button onClick={() => window.open(sunbizUrl, '_blank', 'noopener,noreferrer')}
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, fontFamily: FF, cursor: "pointer" }}>
             <ExternalLink className="w-3 h-3" /> Business record
-          </a>
+          </button>
         )}
       </div>
 
