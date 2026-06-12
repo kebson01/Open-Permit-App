@@ -322,6 +322,11 @@ function ProfessionalCard({ professional, onRequest }) {
             Lic: {professional.license_number}
           </p>
         )}
+        {!isPrivateProvider && professional.expiration_date && (
+          <p style={{ fontSize: 11, color: "#6b7280", margin: "3px 0 0", fontFamily: FF }}>
+            <span style={{ fontWeight: 600 }}>License expires:</span> {professional.expiration_date}
+          </p>
+        )}
       </div>
 
       {/* Category + location */}
