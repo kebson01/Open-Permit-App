@@ -127,10 +127,10 @@ function BottomNav() {
         <span className="text-xs text-gray-400">Home</span>
       </Link>
       <Link to="/ApplyForPermit" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-          <LayoutDashboard className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 rounded-xl bg-[#cfe0f0] flex items-center justify-center">
+          <LayoutDashboard className="w-4 h-4 text-[#003466]" />
         </div>
-        <span className="text-xs font-semibold text-blue-600">Dashboard</span>
+        <span className="text-xs font-semibold text-[#003466]">Dashboard</span>
       </Link>
       <Link to="/MyProjects" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
         <FolderOpen className="w-5 h-5 text-gray-400 mt-1.5" />
@@ -271,7 +271,7 @@ export default function PermitGuide() {
         )}
       </div>
 
-      <div className="max-w-lg mx-auto px-4 pt-5 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 pt-5 space-y-5">
         {/* Commercial subtype selector */}
         {propertyType === "commercial" && !commercialSubtype && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -281,9 +281,9 @@ export default function PermitGuide() {
                 const Icon = sub.icon;
                 return (
                   <button key={sub.id} onClick={() => { setCommercialSubtype(sub); setCommercialView(sub.view); }}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all text-left">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-blue-600" />
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-gray-100 hover:border-[#a9c5e0] hover:bg-[#eaf1f8]/40 transition-all text-left">
+                    <div className="w-10 h-10 rounded-xl bg-[#eaf1f8] flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-[#003466]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800">{sub.label}</p>
@@ -298,10 +298,10 @@ export default function PermitGuide() {
         )}
 
         {propertyType === "commercial" && commercialSubtype && (
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 rounded-2xl border border-blue-100">
-            <commercialSubtype.icon className="w-4 h-4 text-blue-600 shrink-0" />
-            <span className="text-xs font-medium text-blue-700 flex-1">{commercialSubtype.label}</span>
-            <button onClick={() => setCommercialSubtype(null)} className="text-xs text-blue-500 hover:text-blue-700 underline">Change</button>
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-[#eaf1f8] rounded-2xl border border-[#cfe0f0]">
+            <commercialSubtype.icon className="w-4 h-4 text-[#003466] shrink-0" />
+            <span className="text-xs font-medium text-[#003466] flex-1">{commercialSubtype.label}</span>
+            <button onClick={() => setCommercialSubtype(null)} className="text-xs text-[#003466] hover:text-[#003466] underline">Change</button>
           </div>
         )}
 
@@ -368,8 +368,8 @@ export default function PermitGuide() {
         {/* AI Photo Analysis */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#eaf1f8] flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-[#003466]" />
             </div>
             <div>
               <p className="font-bold text-gray-800 text-sm">AI Smart Check</p>
@@ -378,7 +378,7 @@ export default function PermitGuide() {
           </div>
           {!showPhotoAnalyzer ? (
             <button onClick={() => setShowPhotoAnalyzer(true)}
-              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 rounded-xl py-3.5 text-blue-600 hover:border-blue-400 transition-colors text-sm font-semibold">
+              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[#cfe0f0] rounded-xl py-3.5 text-[#003466] hover:border-[#003466] transition-colors text-sm font-semibold">
               <Camera className="w-4 h-4" /> Upload or Take Photo
             </button>
           ) : (
@@ -389,12 +389,12 @@ export default function PermitGuide() {
         {/* Need a Pro? CTA */}
         <div className="rounded-2xl p-5 text-white" style={{ background: "#003466" }}>
           <h2 className="text-lg font-extrabold mb-2">Need a Pro?</h2>
-          <p className="text-blue-100 text-sm leading-relaxed mb-4">
+          <p className="text-[#cfe0f0] text-sm leading-relaxed mb-4">
             Our permit expediters can handle the paperwork for you, cutting approval times by up to 40%.
           </p>
           <button
             onClick={() => { setAiInitialMessage("I need help finding a permit expediter."); setAiOpen(true); }}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-white rounded-2xl text-blue-600 font-bold text-sm hover:bg-blue-50 transition-colors">
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-white rounded-2xl text-[#003466] font-bold text-sm hover:bg-[#eaf1f8] transition-colors">
             Get Free Quote <ArrowRight className="w-4 h-4" />
           </button>
         </div>
