@@ -271,7 +271,7 @@ export default function PermitGuide() {
         )}
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 pt-5 space-y-5">
+      <div className="w-full max-w-5xl mx-auto px-4 pt-5 space-y-5">
         {/* Commercial subtype selector */}
         {propertyType === "commercial" && !commercialSubtype && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
