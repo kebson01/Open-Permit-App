@@ -228,7 +228,7 @@ export default function FeeCalculator() {
       <div className="bg-white px-5 pt-12 pb-5">
         <div className="flex items-center gap-2 mb-4">
           <Link to="/" className="no-underline">
-            <div className="flex items-center gap-1.5 text-blue-700 font-bold text-lg">
+            <div className="flex items-center gap-1.5 text-[#003466] font-bold text-lg">
               <span className="font-extrabold text-xl no-underline" style={{ color: "#003466", fontFamily: "'Hanken Grotesk', sans-serif" }}>OpenPermit</span>
             </div>
           </Link>
@@ -254,11 +254,11 @@ export default function FeeCalculator() {
             {showCityPicker && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
                 {citiesLoading ? (
-                  <div className="p-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-blue-500" /></div>
+                  <div className="p-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-[#003466]" /></div>
                 ) : cities.map(c => (
                   <button key={c.name}
                     onClick={() => { setCity(c.name); setShowCityPicker(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors ${city === c.name ? "text-blue-600 font-semibold bg-blue-50" : "text-gray-700"}`}
+                    className={`w-full text-left px-4 py-3 text-sm hover:bg-[#eaf1f8] border-b border-gray-50 last:border-0 transition-colors ${city === c.name ? "text-[#003466] font-semibold bg-[#eaf1f8]" : "text-gray-700"}`}
                   >
                     {c.name}
                   </button>
@@ -267,9 +267,9 @@ export default function FeeCalculator() {
             )}
           </div>
           {CITY_NOTES[city] && (
-            <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-xl px-3 py-2">
-              <Info className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-blue-700">{CITY_NOTES[city]}</p>
+            <div className="mt-3 flex items-start gap-2 bg-[#eaf1f8] rounded-xl px-3 py-2">
+              <Info className="w-3.5 h-3.5 text-[#003466] mt-0.5 shrink-0" />
+              <p className="text-xs text-[#003466]">{CITY_NOTES[city]}</p>
             </div>
           )}
         </div>
@@ -286,8 +286,8 @@ export default function FeeCalculator() {
                   onClick={() => { setActiveCategory(cat.key); setSelectedRule(null); setResults(null); }}
                   disabled={!hasRules && !loadingRules}
                   className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl border-2 transition-all text-center ${
-                    isActive ? "border-blue-600 bg-blue-600 text-white shadow-sm" :
-                    hasRules ? "border-gray-200 bg-white text-gray-700 hover:border-blue-300" :
+                    isActive ? "border-[#003466] bg-[#003466] text-white shadow-sm" :
+                    hasRules ? "border-gray-200 bg-white text-gray-700 hover:border-[#a9c5e0]" :
                     "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
                   }`}
                 >
@@ -308,12 +308,12 @@ export default function FeeCalculator() {
                     onClick={() => { setSelectedRule(rule); setConstructionCost(""); setResults(null); }}
                     className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
                       selectedRule?.id === rule.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 bg-white hover:border-blue-300"
+                        ? "border-[#003466] bg-[#eaf1f8]"
+                        : "border-gray-200 bg-white hover:border-[#a9c5e0]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-blue-700" : "text-gray-800"}`}>
+                      <p className={`text-sm font-semibold ${selectedRule?.id === rule.id ? "text-[#003466]" : "text-gray-800"}`}>
                         {rule.permit_name}
                       </p>
                       <span className="text-xs text-gray-400 shrink-0 ml-2">
@@ -330,7 +330,7 @@ export default function FeeCalculator() {
           )}
           {loadingRules && (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#003466]" />
             </div>
           )}
         </div>
@@ -380,7 +380,7 @@ export default function FeeCalculator() {
             </div>
 
             {/* Grand Total */}
-            <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
+            <div className="bg-[#eaf1f8] rounded-2xl border border-[#cfe0f0] p-5">
               <p className="text-sm font-extrabold text-gray-900 mb-3">Estimated Total</p>
               <div className="space-y-1.5 mb-4">
                 {results.cityFees > 0 && (
@@ -395,9 +395,9 @@ export default function FeeCalculator() {
                     <span className="text-sm font-bold text-gray-700">${results.stateFees.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
+                <div className="border-t border-[#cfe0f0] pt-2 mt-2 flex justify-between items-center">
                   <span className="text-sm font-extrabold text-gray-900">Grand Total</span>
-                  <span className="text-2xl font-extrabold text-blue-600">${results.total.toFixed(2)}</span>
+                  <span className="text-2xl font-extrabold text-[#003466]">${results.total.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -434,7 +434,7 @@ export default function FeeCalculator() {
             {/* Download / Portal links */}
             {CITY_PORTAL_URLS[city] && (
               <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer"
-                className="block w-full text-center py-3.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-blue-600 transition-all no-underline">
+                className="block w-full text-center py-3.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-[#a9c5e0] hover:text-[#003466] transition-all no-underline">
                 View City Fee Schedule PDF ↗
               </a>
             )}

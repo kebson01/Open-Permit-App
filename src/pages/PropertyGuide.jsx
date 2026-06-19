@@ -28,9 +28,9 @@ const STATUS_STYLES = {
   "Closed":    { bg: "#ECFDF5", color: "#059669" },
   "Finaled":   { bg: "#ECFDF5", color: "#059669" },
   "Completed": { bg: "#ECFDF5", color: "#059669" },
-  "Open":      { bg: "#EBF5FF", color: "#1A56DB" },
-  "Issued":    { bg: "#EBF5FF", color: "#1A56DB" },
-  "Active":    { bg: "#EBF5FF", color: "#1A56DB" },
+  "Open":      { bg: "#eaf1f8", color: "#003466" },
+  "Issued":    { bg: "#eaf1f8", color: "#003466" },
+  "Active":    { bg: "#eaf1f8", color: "#003466" },
   "In Review": { bg: "#FFFBEB", color: "#D97706" },
   "Expired":   { bg: "#FFDAD6", color: "#BA1A1A" },
   "Void":      { bg: "#EDEDF8", color: "#434654" },
@@ -59,8 +59,8 @@ function PropertyCard({ property: p, onClick }) {
       style={{ borderColor: "#C3C5D7" }}
     >
       <div className="flex gap-3 items-start min-w-0">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#EBF5FF" }}>
-          <Home className="w-4 h-4" style={{ color: "#1A56DB" }} />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eaf1f8" }}>
+          <Home className="w-4 h-4" style={{ color: "#003466" }} />
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 text-sm leading-snug truncate">{p.full_address || p.folio_number}</p>
@@ -109,7 +109,7 @@ function PropertyDetail({ property: p, onBack }) {
       </button>
 
       {/* Header */}
-      <div className="rounded-2xl p-5 mb-5 text-white" style={{ background: "#1A56DB" }}>
+      <div className="rounded-2xl p-5 mb-5 text-white" style={{ background: "#003466" }}>
         <div className="flex items-start gap-3">
           <Building2 className="w-6 h-6 text-white shrink-0 mt-0.5" />
           <div>
@@ -146,10 +146,10 @@ function PropertyDetail({ property: p, onBack }) {
       {/* Permit History */}
       <div className="bg-white rounded-xl overflow-hidden mb-5" style={{ border: "1px solid #C3C5D7" }}>
         <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid #C3C5D7" }}>
-          <ClipboardList className="w-4 h-4" style={{ color: "#1A56DB" }} />
+          <ClipboardList className="w-4 h-4" style={{ color: "#003466" }} />
           <h3 className="font-semibold text-sm" style={{ color: "#191B23" }}>Permit History</h3>
           <span className="ml-1 group relative">
-            <Info className="w-3.5 h-3.5 cursor-pointer" style={{ color: "#1A56DB" }} />
+            <Info className="w-3.5 h-3.5 cursor-pointer" style={{ color: "#003466" }} />
             <span className="hidden group-hover:block absolute left-4 top-0 z-50 w-56 bg-white rounded-xl shadow-xl p-3 text-xs text-gray-700 leading-relaxed" style={{ borderColor: "#C3C5D7", border: "1px solid #C3C5D7" }}>
               Showing permits on record for this property from the City of Weston's permit database. Records from other cities will be added as they become available.
             </span>
@@ -167,7 +167,7 @@ function PropertyDetail({ property: p, onBack }) {
             <p className="text-gray-400 text-sm mt-1">Search directly at the city's permit portal.</p>
             {portalUrl && (
               <a href={portalUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-3 text-sm hover:underline font-medium" style={{ color: "#1A56DB" }}>
+                className="inline-flex items-center gap-1 mt-3 text-sm hover:underline font-medium" style={{ color: "#003466" }}>
                 <ExternalLink className="w-3.5 h-3.5" /> {p.city_name} Permit Portal →
               </a>
             )}
@@ -194,7 +194,7 @@ function PropertyDetail({ property: p, onBack }) {
               <tbody style={{ borderColor: "#C3C5D7" }}>
                 {permits.map((r, i) => (
                   <tr key={r.permit_number || i} style={{ borderBottom: "1px solid #C3C5D7" }}>
-                    <td className="px-4 py-2.5 font-mono text-xs whitespace-nowrap" style={{ color: "#1A56DB" }}>{r.permit_number || "—"}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs whitespace-nowrap" style={{ color: "#003466" }}>{r.permit_number || "—"}</td>
                     <td className="px-4 py-2.5 text-gray-700 max-w-xs"><span className="line-clamp-1">{r.permit_name || r.permit_type || "—"}</span></td>
                     <td className="px-4 py-2.5">
                       {r.status_normalized ? (
@@ -222,14 +222,14 @@ function PropertyDetail({ property: p, onBack }) {
         <Link
            to={`/ApplyForPermit?city=${encodeURIComponent(p.city_name || "")}&folio=${encodeURIComponent(p.folio_number || "")}`}
            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-           style={{ background: "#1A56DB" }}
+           style={{ background: "#003466" }}
          >
            <Home className="w-4 h-4" /> Start a Permit for This Property →
          </Link>
          <Link
            to={`/FeeCalculator?city=${encodeURIComponent(p.city_name || "")}`}
            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-           style={{ color: "#1A56DB", borderColor: "#D4DCFF", background: "#EBF5FF", border: "1px solid #D4DCFF" }}
+           style={{ color: "#003466", borderColor: "#cfe0f0", background: "#eaf1f8", border: "1px solid #cfe0f0" }}
          >
           <Calculator className="w-4 h-4" /> Estimate Permit Costs →
         </Link>
@@ -253,11 +253,11 @@ export default function PropertyGuide() {
   const [selected, setSelected] = useState(null);
 
   return (
-    <div className="min-h-screen" style={{ background: "#FAF8FF" }}>
+    <div className="min-h-screen" style={{ background: "#f7f9fb" }}>
       {/* Header */}
-      <div className="px-5 pt-8 pb-7" style={{ background: "#1A56DB" }}>
-        <div className="max-w-2xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Property Search</p>
+      <div className="px-5 pt-8 pb-7" style={{ background: "linear-gradient(135deg, #003466 0%, #00489a 100%)" }}>
+      <div className="max-w-2xl mx-auto">
+        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Property Search</p>
           <h1 className="font-bold text-white leading-tight mb-2" style={{ fontSize: "clamp(22px, 4vw, 30px)" }}>Search Any Property</h1>
           <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
             Search Broward County's property database to find property details, ownership information, building characteristics, and permit history — all in one place.
@@ -302,9 +302,9 @@ export default function PropertyGuide() {
           {/* Left sidebar (desktop only) */}
           {!selected && (
             <div className="hidden md:block w-56 shrink-0">
-              <div className="rounded-xl p-4" style={{ background: "#EBF5FF", border: "1px solid #D4DCFF" }}>
-                <p className="text-xs font-bold mb-1" style={{ color: "#003FB1" }}>Public Access Records</p>
-                <p className="text-xs leading-relaxed" style={{ color: "#1A56DB" }}>Look up historical permits, zoning classifications, and building details for any registered property.</p>
+              <div className="rounded-xl p-4" style={{ background: "#eaf1f8", border: "1px solid #cfe0f0" }}>
+                <p className="text-xs font-bold mb-1" style={{ color: "#003466" }}>Public Access Records</p>
+                <p className="text-xs leading-relaxed" style={{ color: "#003466" }}>Look up historical permits, zoning classifications, and building details for any registered property.</p>
               </div>
             </div>
           )}
