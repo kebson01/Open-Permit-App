@@ -148,10 +148,10 @@ function BottomNav() {
         <span className="text-xs text-gray-400">Home</span>
       </Link>
       <Link to="/FeeCalculator" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-          <LayoutDashboard className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#d5e3ff" }}>
+        <LayoutDashboard className="w-4 h-4" style={{ color: "#003466" }} />
         </div>
-        <span className="text-xs font-semibold text-blue-600">Dashboard</span>
+        <span className="text-xs font-semibold" style={{ color: "#003466" }}>Dashboard</span>
       </Link>
       <Link to="/MyProjects" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
         <FolderOpen className="w-5 h-5 text-gray-400 mt-1.5" />
@@ -223,16 +223,13 @@ export default function FeeCalculator() {
   const stateFeeItems   = results?.breakdown.filter(i => i.isState && i.amount > 0) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#f7f9fb] pb-24">
       {/* Header */}
       <div className="bg-white px-5 pt-12 pb-5">
         <div className="flex items-center gap-2 mb-4">
           <Link to="/" className="no-underline">
             <div className="flex items-center gap-1.5 text-blue-700 font-bold text-lg">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">OP</span>
-              </div>
-              OpenPermit
+              <span className="font-extrabold text-xl no-underline" style={{ color: "#003466", fontFamily: "'Hanken Grotesk', sans-serif" }}>OpenPermit</span>
             </div>
           </Link>
         </div>
@@ -420,7 +417,7 @@ export default function FeeCalculator() {
                   navigator.clipboard.writeText(lines).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
                 }}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm"
-                style={{ background: "#1353d8" }}
+                style={{ background: "#003466" }}
               >
                 {copied ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {copied ? "Copied to clipboard!" : "Save Estimate"}

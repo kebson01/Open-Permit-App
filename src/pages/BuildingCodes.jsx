@@ -134,7 +134,7 @@ export default function BuildingCodes() {
   return (
     <div className="min-h-screen" style={{ background: "#f8fafc" }}>
       {/* Header */}
-      <div className="px-5 pt-8 pb-7" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+      <div className="px-5 pt-8 pb-7" style={{ background: "linear-gradient(135deg, #003466 0%, #00489a 100%)" }}>
         <div className="max-w-4xl mx-auto">
           <p className="text-xs font-bold uppercase tracking-widest mb-2 text-blue-300">Reference</p>
           <div className="flex items-center gap-3 mb-2">

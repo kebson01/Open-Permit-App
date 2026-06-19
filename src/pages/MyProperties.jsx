@@ -9,7 +9,7 @@ import {
   Hash, History, Lightbulb, Home, LayoutDashboard, FolderOpen, Bell, CheckCircle2
 } from "lucide-react";
 
-const PRIMARY = "#2563EB";
+const PRIMARY = "#003466";
 const CITIES = ["All Cities", "Miami", "Weston", "Coral Springs", "Hollywood", "Fort Lauderdale", "Hialeah", "Doral"];
 
 // ── Search box inlined ───────────────────────────────────────────────────────
@@ -267,7 +267,7 @@ export default function MyProperties() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Blue hero header */}
-      <div className="px-5 pt-12 pb-8" style={{ background: "linear-gradient(135deg, #1e40af 0%, #2563eb 100%)" }}>
+      <div className="px-5 pt-12 pb-8" style={{ background: "linear-gradient(135deg, #003466 0%, #00489a 100%)" }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">

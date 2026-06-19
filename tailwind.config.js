@@ -8,8 +8,6 @@ module.exports = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
-  			card: '16px',
-  			control: '12px',
   		},
   		colors: {
   			background: 'hsl(var(--background))',
@@ -62,31 +60,10 @@ module.exports = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			// ── Reliant Direct Design tokens ───────────────────────
-  			action: {
-  				DEFAULT: '#1A56DB',
-  				hover:   '#003FB1',
-  				50:      '#EBF5FF',
-  				100:     '#D4DCFF',
-  			},
-  			brand:   '#003FB1',
-  			success: {
-  				DEFAULT: '#059669',
-  				50:      '#ECFDF5',
-  			},
-  			warning: {
-  				DEFAULT: '#D97706',
-  				50:      '#FFFBEB',
-  			},
-  			danger: {
-  				DEFAULT: '#BA1A1A',
-  				50:      '#FFDAD6',
-  			},
-  			ink:     '#191B23',
-  			muted:   '#434654',
-  			surface: '#FAF8FF',
-  			// "card" already exists from shadcn — we override the DEFAULT only
-  			line:    '#C3C5D7',
+  		},
+  		fontFamily: {
+  			heading: ['Hanken Grotesk', 'system-ui', 'sans-serif'],
+  			body: ['Public Sans', 'system-ui', 'sans-serif'],
   		},
   		boxShadow: {
   			card: '0 1px 4px 0 rgba(15,23,42,0.06), 0 4px 16px 0 rgba(15,23,42,0.04)',

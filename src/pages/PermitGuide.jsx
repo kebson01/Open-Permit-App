@@ -224,15 +224,12 @@ export default function PermitGuide() {
   })();
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#f7f9fb] pb-24">
       {/* Header */}
-      <div className="bg-white px-5 pt-10 pb-5 border-b border-gray-100">
+      <div className="bg-white px-5 pt-10 pb-5 border-b border-[#c3c6d1]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">OP</span>
-            </div>
-            <span className="font-bold text-blue-700 text-base">HomeAssist</span>
+            <span className="font-extrabold text-xl" style={{ color: "#003466", fontFamily: "'Hanken Grotesk', sans-serif" }}>OpenPermit</span>
           </div>
           <Bell className="w-5 h-5 text-gray-400" />
         </div>
@@ -246,9 +243,9 @@ export default function PermitGuide() {
           {PROPERTY_TYPES.map(pt => (
             <button key={pt.value} onClick={() => handlePropertyTypeChange(pt.value)}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                propertyType === pt.value
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"
+                  propertyType === pt.value
+                    ? "bg-[#003466] text-white shadow-sm"
+                    : "bg-white border border-[#c3c6d1] text-[#424750] hover:border-[#003466]"
               }`}>
               {pt.label}
             </button>
@@ -317,7 +314,7 @@ export default function PermitGuide() {
             {activeViewOptions.map(opt => (
               <button key={opt.value} onClick={() => setActiveView(opt.value)}
                 className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeView === opt.value ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  activeView === opt.value ? "bg-[#003466] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}>
                 {opt.label}
               </button>
@@ -353,7 +350,7 @@ export default function PermitGuide() {
           <div className="space-y-4">
             {PERMIT_LIFECYCLE_STEPS.map((step, i) => (
               <div key={step.n} className="flex items-start gap-4">
-                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center shrink-0 text-white font-bold text-sm">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm" style={{ background: "#003466" }}>
                   {step.n}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -390,7 +387,7 @@ export default function PermitGuide() {
         </div>
 
         {/* Need a Pro? CTA */}
-        <div className="rounded-2xl p-5 text-white" style={{ background: "#2563EB" }}>
+        <div className="rounded-2xl p-5 text-white" style={{ background: "#003466" }}>
           <h2 className="text-lg font-extrabold mb-2">Need a Pro?</h2>
           <p className="text-blue-100 text-sm leading-relaxed mb-4">
             Our permit expediters can handle the paperwork for you, cutting approval times by up to 40%.
@@ -435,7 +432,7 @@ export default function PermitGuide() {
             <p className="text-xs text-gray-500 leading-relaxed mb-3">{zoneInfoPanel.description}</p>
             <a href={`/PermitGuide?city=${encodeURIComponent(city)}&zone=${encodeURIComponent(zoneInfoPanel.label)}`}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-sm font-bold no-underline"
-              style={{ background: "#2563EB" }}>
+              style={{ background: "#003466" }}>
               View Full Requirements <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>

@@ -37,10 +37,10 @@ const STATUS_STYLES = {
   expired:       { bg: "#fef2f2", color: "#991b1b", border: "#fca5a5", label: "Expired" },
 };
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 const TEAL    = "#006a61";
-const FF      = "'Plus Jakarta Sans', sans-serif";
-const HEADING = "'Manrope', sans-serif";
+const FF      = "'Public Sans', system-ui, sans-serif";
+const HEADING = "'Hanken Grotesk', system-ui, sans-serif";
 
 export default function ProviderDirectory() {
   const [results, setResults]         = useState([]);
@@ -90,9 +90,9 @@ export default function ProviderDirectory() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#f8f9ff" }}>
+    <div className="min-h-screen" style={{ background: "#f7f9fb" }}>
       {/* Header */}
-      <div style={{ background: "linear-gradient(135deg, #004ac6 0%, #003399 100%)", padding: "48px 24px 40px" }}>
+      <div style={{ background: "linear-gradient(135deg, #003466 0%, #00489a 100%)", padding: "48px 24px 40px" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-5 h-5 text-white opacity-80" />
@@ -120,7 +120,7 @@ export default function ProviderDirectory() {
       </div>
 
       {/* Filters */}
-      <div style={{ background: "white", borderBottom: "1px solid #e8eaf0", padding: "16px 24px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #c3c6d1", padding: "16px 24px" }}>
         <div className="max-w-5xl mx-auto space-y-3">
           {/* Type toggle */}
           <div className="flex gap-2 flex-wrap">
@@ -131,7 +131,7 @@ export default function ProviderDirectory() {
                   fontFamily: FF, border: "1px solid",
                   background: typeFilter === tab.value ? PRIMARY : "white",
                   color:      typeFilter === tab.value ? "white"  : "#374151",
-                  borderColor: typeFilter === tab.value ? PRIMARY : "#e0e4f0",
+                  borderColor: typeFilter === tab.value ? PRIMARY : "#c3c6d1",
                   transition: "all 0.15s",
                 }}>
                 {tab.label}
@@ -239,7 +239,7 @@ export default function ProviderDirectory() {
         )}
 
         {/* CTA */}
-        <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "32px", marginTop: 48, textAlign: "center", boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
+        <div style={{ background: "white", border: "1px solid #c3c6d1", borderRadius: 16, padding: "32px", marginTop: 48, textAlign: "center" }}>
           <Shield className="w-10 h-10 mx-auto mb-3" style={{ color: TEAL }} />
           <h3 style={{ fontSize: 20, fontWeight: 800, color: "#191B23", fontFamily: HEADING, marginBottom: 8 }}>
             Are you a licensed private provider?
@@ -286,7 +286,7 @@ function ProfessionalCard({ professional, onRequest }) {
   const sunbizUrl      = bizName ? `https://www.bing.com/search?q=${q(bizName + " sunbiz Florida")}` : null;
 
   return (
-    <div style={{ background: "white", border: "1px solid #e8eaf0", borderRadius: 16, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,23,42,0.06)", display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{ background: "white", border: "1px solid #c3c6d1", borderRadius: 16, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Top row: type label + status badge */}
       <div className="flex items-center justify-between gap-2">
         <span style={{
