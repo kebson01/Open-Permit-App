@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 
 const PRIMARY = "#003466";
-const CITIES = ["All Cities", "Miami", "Weston", "Coral Springs", "Hollywood", "Fort Lauderdale", "Hialeah", "Doral"];
 
 // ── Search box inlined ───────────────────────────────────────────────────────
 function SearchBar({ onSelect }) {
@@ -38,7 +37,8 @@ function SearchBar({ onSelect }) {
         <button
           onClick={handleSearch}
           disabled={loading}
-          className="px-5 py-3.5 bg-blue-600 text-white text-sm font-bold flex items-center gap-2 disabled:opacity-60"
+          className="px-5 py-3.5 text-white text-sm font-bold flex items-center gap-2 disabled:opacity-60"
+          style={{ background: PRIMARY }}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
         </button>
@@ -53,7 +53,7 @@ function SearchBar({ onSelect }) {
           {results.map((p, i) => (
             <button key={p.folio_number || i}
               onClick={() => { onSelect(p); setResults([]); setInput(""); }}
-              className="w-full text-left px-4 py-3.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors">
+              className="w-full text-left px-4 py-3.5 hover:bg-[#eaf1f8] border-b border-gray-50 last:border-0 transition-colors">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-bold text-sm text-gray-900 truncate">{p.full_address || p.folio_number}</p>
@@ -99,7 +99,7 @@ function PropertyDetail({ property, onBack }) {
 
   const STATUS_COLORS = {
     "Closed":  "bg-green-100 text-green-700",
-    "Open":    "bg-blue-100 text-blue-700",
+    "Open":    "bg-[#cfe0f0] text-[#003466]",
     "Expired": "bg-red-100 text-red-700",
     "Void":    "bg-gray-100 text-gray-600",
   };
@@ -184,7 +184,7 @@ function PropertyDetail({ property, onBack }) {
 
           {tab === "permits" && (
             loadingPermits ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
+              <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[#003466]" /></div>
             ) : permits.length === 0 ? (
               <p className="text-center text-gray-400 py-8 text-sm">No permit records found for this property.</p>
             ) : (
@@ -218,7 +218,7 @@ function PropertyDetail({ property, onBack }) {
                 </div>
               ) : guides.map(g => (
                 <Link key={g.id} to={`/ApplyForPermit?resume=${g.id}`}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all no-underline">
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-[#cfe0f0] hover:bg-[#eaf1f8]/30 transition-all no-underline">
                   <div>
                     <p className="font-semibold text-sm text-gray-800">{g.permit_type_name}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{g.city_name} · {g.phase?.replace("_", " ")}</p>
@@ -258,7 +258,6 @@ function BottomNav() {
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function MyProperties() {
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [cityFilter, setCityFilter] = useState("All Cities");
 
   if (selectedProperty) {
     return <PropertyDetail property={selectedProperty} onBack={() => setSelectedProperty(null)} />;
@@ -279,22 +278,11 @@ export default function MyProperties() {
         </div>
 
         <h1 className="text-2xl font-extrabold text-white mb-1">Property Records</h1>
-        <p className="text-blue-200 text-sm mb-5 leading-relaxed">Access historical permits, zoning data, and official building details instantly.</p>
+        <p className="text-white/70 text-sm mb-5 leading-relaxed">Access historical permits, zoning data, and official building details instantly.</p>
 
         <SearchBar onSelect={setSelectedProperty} />
 
-        {/* City filter chips */}
-        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">
-          {CITIES.map(c => (
-            <button key={c}
-              onClick={() => setCityFilter(c)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
-                cityFilter === c ? "bg-white text-blue-700" : "bg-white/20 text-white hover:bg-white/30"
-              }`}>
-              {c}
-            </button>
-          ))}
-        </div>
+
       </div>
 
       <div className="px-4 pt-6 max-w-lg mx-auto">
@@ -321,8 +309,8 @@ export default function MyProperties() {
             const Icon = tip.icon;
             return (
               <div key={tip.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#eaf1f8] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#003466]" />
                 </div>
                 <div>
                   <p className="font-bold text-gray-800 text-sm mb-1">{tip.title}</p>
@@ -339,8 +327,8 @@ export default function MyProperties() {
             <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
               <Search className="w-10 h-10 text-gray-300" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border-2 border-white">
-              <Building2 className="w-5 h-5 text-blue-500" />
+            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#cfe0f0] flex items-center justify-center border-2 border-white">
+              <Building2 className="w-5 h-5 text-[#003466]" />
             </div>
           </div>
           <h3 className="font-bold text-gray-700 text-base mb-2">Search for a property</h3>
