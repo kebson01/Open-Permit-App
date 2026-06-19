@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import {
   ArrowLeft, Loader2, Edit2, Save, X, Send,
   CheckCircle2, Circle, FileText, Image, Upload,
@@ -245,13 +246,13 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     if (!projectId) { setLoading(false); return; }
-    base44.entities.Project.get(projectId)
+    db.Project.get(projectId)
       .then(data => { if (data) setProject(data); })
       .finally(() => setLoading(false));
   }, [projectId]);
 
   const saveStatus = async (newStatus) => {
-    await base44.entities.Project.update(project.id, { status: newStatus });
+    await db.Project.update(project.id, { status: newStatus });
     setProject(prev => ({ ...prev, status: newStatus }));
   };
 
@@ -264,7 +265,7 @@ export default function ProjectDetail() {
     setSaving(true);
     const payload = { ...editForm, estimated_cost: editForm.estimated_cost ? parseFloat(editForm.estimated_cost) : null };
     Object.keys(payload).forEach(k => { if (payload[k] === "") delete payload[k]; });
-    await base44.entities.Project.update(project.id, payload);
+    await db.Project.update(project.id, payload);
     setProject(prev => ({ ...prev, ...payload }));
     setEditing(false);
     setSaving(false);

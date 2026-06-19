@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,9 +55,9 @@ function PermitTypeForm({ permit, cityId, cityName, onSaved, onCancel }) {
   const handleSave = async () => {
     setSaving(true);
     if (permit?.id) {
-      await base44.entities.PermitType.update(permit.id, form);
+      await db.PermitType.update(permit.id, form);
     } else {
-      await base44.entities.PermitType.create(form);
+      await db.PermitType.create(form);
     }
     setSaving(false);
     onSaved();
@@ -178,11 +178,11 @@ export default function CityPermitTypesPanel({ city }) {
 
   const { data: permits = [] } = useQuery({
     queryKey: ["permitTypes", city.id],
-    queryFn: () => base44.entities.PermitType.filter({ city_id: city.id }),
+    queryFn: () => db.PermitType.filter({ city_id: city.id }),
   });
 
   const deletePermit = useMutation({
-    mutationFn: (id) => base44.entities.PermitType.delete(id),
+    mutationFn: (id) => db.PermitType.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["permitTypes", city.id] }),
   });
 

@@ -4,7 +4,6 @@ import { HintBanner } from "@/components/ui/HintTooltip";
 import { useCities } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
-import { base44 } from "@/api/base44Client";
 import PropertySearchBox from "@/components/property/PropertySearchBox";
 
 function formatDate(dateStr) {

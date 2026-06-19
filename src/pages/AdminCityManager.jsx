@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +34,11 @@ export default function AdminCityManager() {
 
   const { data: cities = [], isLoading } = useQuery({
     queryKey: ["cities"],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: () => db.City.list(),
   });
 
   const deleteCityMutation = useMutation({
-    mutationFn: (id) => base44.entities.City.delete(id),
+    mutationFn: (id) => db.City.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cities"] }),
   });
 

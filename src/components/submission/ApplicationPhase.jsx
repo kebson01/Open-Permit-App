@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import * as db from "@/lib/db";
 import { Loader2, ChevronRight, ChevronLeft, AlertTriangle } from "lucide-react";
 import { useGuideQuestions } from "./useGuideQuestions";

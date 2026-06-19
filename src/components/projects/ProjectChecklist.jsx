@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckSquare, Square, Plus, Trash2, Loader2 } from "lucide-react";
@@ -13,7 +13,7 @@ export default function ProjectChecklist({ project, onUpdated }) {
 
   const save = async (updated) => {
     setSaving(true);
-    const p = await base44.entities.Project.update(project.id, {
+    const p = await db.Project.update(project.id, {
       permit_checklist: JSON.stringify(updated),
     });
     onUpdated(p);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Send, MessageCircle, Bell, Info, AlertTriangle } from "lucide-react";
 
@@ -26,12 +26,12 @@ export default function ProjectMessagesTab({ project, currentUser }) {
 
   const { data: messages = [] } = useQuery({
     queryKey: ["messages", project.id],
-    queryFn: () => base44.entities.ProjectMessage.filter({ project_id: project.id }, "created_date", 200),
+    queryFn: () => db.ProjectMessage.filter({ project_id: project.id }, "created_date", 200),
     refetchInterval: 15000,
   });
 
   const sendMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProjectMessage.create(data),
+    mutationFn: (data) => db.ProjectMessage.create(data),
     onSuccess: () => { qc.invalidateQueries(["messages", project.id]); setInput(""); },
   });
 

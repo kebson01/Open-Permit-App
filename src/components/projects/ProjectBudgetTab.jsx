@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, DollarSign, Trash2, TrendingUp, TrendingDown, CheckCircle2, Clock, AlertCircle } from "lucide-react";
@@ -34,21 +34,21 @@ export default function ProjectBudgetTab({ project }) {
 
   const { data: items = [] } = useQuery({
     queryKey: ["budget", project.id],
-    queryFn: () => base44.entities.ProjectBudgetItem.filter({ project_id: project.id }),
+    queryFn: () => db.ProjectBudgetItem.filter({ project_id: project.id }),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProjectBudgetItem.create({ ...data, project_id: project.id }),
+    mutationFn: (data) => db.ProjectBudgetItem.create({ ...data, project_id: project.id }),
     onSuccess: () => { qc.invalidateQueries(["budget", project.id]); setShowForm(false); setForm(EMPTY_FORM); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ProjectBudgetItem.delete(id),
+    mutationFn: (id) => db.ProjectBudgetItem.delete(id),
     onSuccess: () => qc.invalidateQueries(["budget", project.id]),
   });
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.ProjectBudgetItem.update(id, { status }),
+    mutationFn: ({ id, status }) => db.ProjectBudgetItem.update(id, { status }),
     onSuccess: () => qc.invalidateQueries(["budget", project.id]),
   });
 

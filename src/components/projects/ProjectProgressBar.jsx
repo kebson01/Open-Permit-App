@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
 
@@ -21,7 +21,7 @@ export default function ProjectProgressBar({ project, onUpdate }) {
   const handleProgressChange = async (e) => {
     const val = parseInt(e.target.value);
     setSaving(true);
-    await base44.entities.Project.update(project.id, { progress_pct: val });
+    await db.Project.update(project.id, { progress_pct: val });
     onUpdate(prev => ({ ...prev, progress_pct: val }));
     setSaving(false);
   };

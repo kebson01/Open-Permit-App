@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, ExternalLink, Loader2 } from "lucide-react";
 
@@ -36,7 +36,7 @@ export default function ProjectOrdinances({ project }) {
 
   const { data: ordinances = [], isLoading } = useQuery({
     queryKey: ["ordinances", project.city_id],
-    queryFn: () => base44.entities.CodeOfOrdinance.filter({ city_id: project.city_id, is_active: true }),
+    queryFn: () => db.CodeOfOrdinance.filter({ city_id: project.city_id, is_active: true }),
     enabled: !!project.city_id,
   });
 

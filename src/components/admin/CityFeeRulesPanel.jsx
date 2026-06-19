@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ function SurchargePanel({ city }) {
   const queryClient = useQueryClient();
   const { data: surcharges = [] } = useQuery({
     queryKey: ["citySurcharges", city.id],
-    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: city.id }),
+    queryFn: () => db.CitySurcharge.filter({ city_id: city.id }),
   });
   const surcharge = surcharges[0];
   const [editing, setEditing] = useState(false);
@@ -31,8 +31,8 @@ function SurchargePanel({ city }) {
     const data = { ...form };
     ["technology_admin", "board_of_rules_rate", "educational_rate", "dca_rate", "dbpr_rate"]
       .forEach(k => { if (data[k] !== "" && data[k] !== undefined) data[k] = parseFloat(data[k]); else delete data[k]; });
-    if (surcharge?.id) await base44.entities.CitySurcharge.update(surcharge.id, data);
-    else await base44.entities.CitySurcharge.create(data);
+    if (surcharge?.id) await db.CitySurcharge.update(surcharge.id, data);
+    else await db.CitySurcharge.create(data);
     queryClient.invalidateQueries({ queryKey: ["citySurcharges", city.id] });
     setSaving(false);
     setEditing(false);
@@ -196,12 +196,12 @@ function ImportExportPanel({ city, rules, onImported }) {
     try {
       // Delete all existing rules for this city
       for (const rule of rules) {
-        await base44.entities.FeeRule.delete(rule.id);
+        await db.FeeRule.delete(rule.id);
       }
       // Create all new rules from the JSON
       for (const rule of previewData) {
         const { id, ...ruleData } = rule;
-        await base44.entities.FeeRule.create({
+        await db.FeeRule.create({
           ...ruleData,
           city_id: city.id,
           city_name: city.name,
@@ -339,7 +339,7 @@ export default function CityFeeRulesPanel({ city }) {
 
   const { data: rules = [] } = useQuery({
     queryKey: ["feeRules", city.id],
-    queryFn: () => base44.entities.FeeRule.filter({ city_id: city.id }),
+    queryFn: () => db.FeeRule.filter({ city_id: city.id }),
   });
 
   const onImported = () => queryClient.invalidateQueries({ queryKey: ["feeRules", city.id] });

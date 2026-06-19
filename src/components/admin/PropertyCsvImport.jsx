@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, Loader2, AlertCircle, Eye, X } from "lucide-react";
 
@@ -148,7 +148,7 @@ export default function PropertyCsvImport() {
       }).filter(r => r.FOLIO_NUMBER);
 
       if (records.length > 0) {
-        await base44.entities.Property.bulkCreate(records);
+        await db.Property.bulkCreate(records);
       }
 
       done += chunk.length;

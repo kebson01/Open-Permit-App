@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { CheckSquare, Square, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ export default function ProjectPermitChecklist({ project, onUpdate }) {
 
   const { data: permitTypes = [], isLoading } = useQuery({
     queryKey: ["permit_types", project.city_id],
-    queryFn: () => base44.entities.PermitType.filter({ city_id: project.city_id }),
+    queryFn: () => db.PermitType.filter({ city_id: project.city_id }),
     enabled: !!project.city_id,
   });
 
@@ -23,7 +23,7 @@ export default function ProjectPermitChecklist({ project, onUpdate }) {
 
   const save = async (updated) => {
     setItems(updated);
-    await base44.entities.Project.update(project.id, { permit_checklist: JSON.stringify(updated) });
+    await db.Project.update(project.id, { permit_checklist: JSON.stringify(updated) });
     onUpdate && onUpdate({ ...project, permit_checklist: JSON.stringify(updated) });
   };
 

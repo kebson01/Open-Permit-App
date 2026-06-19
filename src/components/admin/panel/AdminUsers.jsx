@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +23,7 @@ export default function AdminUsers({ currentUser }) {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.User.list("-created_date", 200);
+    const data = await db.User.list("-created_date", 200);
     setUsers(Array.isArray(data) ? data : []);
     setLoading(false);
   };
@@ -32,7 +32,7 @@ export default function AdminUsers({ currentUser }) {
 
   const handleRoleChange = async (userId, newRole) => {
     setUpdating(userId);
-    await base44.entities.User.update(userId, { role: newRole });
+    await db.User.update(userId, { role: newRole });
     setUpdating(null);
     load();
   };

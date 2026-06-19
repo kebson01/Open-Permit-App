@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -83,17 +83,17 @@ export default function PropertyGroupPanel({ currentUser, projects }) {
 
   const { data: groups = [] } = useQuery({
     queryKey: ["groups", currentUser?.email],
-    queryFn: () => base44.entities.PropertyGroup.filter({ owner_email: currentUser.email }),
+    queryFn: () => db.PropertyGroup.filter({ owner_email: currentUser.email }),
     enabled: !!currentUser,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PropertyGroup.create({ ...data, owner_email: currentUser.email }),
+    mutationFn: (data) => db.PropertyGroup.create({ ...data, owner_email: currentUser.email }),
     onSuccess: () => { qc.invalidateQueries(["groups"]); setShowForm(false); setForm({ name: "", description: "", color: COLORS[0] }); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.PropertyGroup.delete(id),
+    mutationFn: (id) => db.PropertyGroup.delete(id),
     onSuccess: () => qc.invalidateQueries(["groups"]),
   });
 

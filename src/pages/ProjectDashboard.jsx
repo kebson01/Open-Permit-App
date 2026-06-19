@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import AuthModal from "@/components/auth/AuthModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, FolderOpen, Search, Loader2, Home, Briefcase } from "lucide-react";
@@ -83,7 +84,7 @@ export default function ProjectDashboard() {
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects", currentUser?.email],
-    queryFn: () => base44.entities.Project.filter({ owner_email: currentUser.email }, "-created_date"),
+    queryFn: () => db.Project.filter({ owner_email: currentUser.email }, "-created_date"),
     enabled: !!currentUser,
   });
 

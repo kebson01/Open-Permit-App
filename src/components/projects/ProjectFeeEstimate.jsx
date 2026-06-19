@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, Calculator, Loader2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,13 +14,13 @@ export default function ProjectFeeEstimate({ project }) {
 
   const { data: feeRules = [] } = useQuery({
     queryKey: ["fee_rules", project.city_id],
-    queryFn: () => base44.entities.FeeRule.filter({ city_id: project.city_id }),
+    queryFn: () => db.FeeRule.filter({ city_id: project.city_id }),
     enabled: !!project.city_id,
   });
 
   const { data: surcharges = [] } = useQuery({
     queryKey: ["surcharges", project.city_id],
-    queryFn: () => base44.entities.CitySurcharge.filter({ city_id: project.city_id }),
+    queryFn: () => db.CitySurcharge.filter({ city_id: project.city_id }),
     enabled: !!project.city_id,
   });
 

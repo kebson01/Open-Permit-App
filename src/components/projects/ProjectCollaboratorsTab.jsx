@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Users, Trash2, Phone, Mail, Building2, Shield } from "lucide-react";
@@ -25,16 +25,16 @@ export default function ProjectCollaboratorsTab({ project, currentUser }) {
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["collaborators", project.id],
-    queryFn: () => base44.entities.ProjectCollaborator.filter({ project_id: project.id }),
+    queryFn: () => db.ProjectCollaborator.filter({ project_id: project.id }),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProjectCollaborator.create({ ...data, project_id: project.id, invited_by: currentUser?.email }),
+    mutationFn: (data) => db.ProjectCollaborator.create({ ...data, project_id: project.id, invited_by: currentUser?.email }),
     onSuccess: () => { qc.invalidateQueries(["collaborators", project.id]); setShowForm(false); setForm(EMPTY_FORM); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ProjectCollaborator.delete(id),
+    mutationFn: (id) => db.ProjectCollaborator.delete(id),
     onSuccess: () => qc.invalidateQueries(["collaborators", project.id]),
   });
 

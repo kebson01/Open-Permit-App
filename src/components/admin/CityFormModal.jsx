@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen, ExternalLink } from "lucide-react";
@@ -53,9 +53,9 @@ export default function CityFormModal({ city, onClose, onSaved }) {
     const slug = form.slug || form.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const data = { ...form, slug };
     if (city?.id) {
-      await base44.entities.City.update(city.id, data);
+      await db.City.update(city.id, data);
     } else {
-      await base44.entities.City.create(data);
+      await db.City.create(data);
     }
     setSaving(false);
     onSaved();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { Bell, X, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 
@@ -24,7 +24,7 @@ export default function NotificationBell({ currentUser }) {
 
   const fetchNotifications = async () => {
     try {
-      const data = await base44.entities.ProjectMessage.filter({ message_type: "alert" }, "-created_date");
+      const data = await db.ProjectMessage.filter({ message_type: "alert" }, "created_at.desc");
       setNotifications((data || []).filter(m => m.sender_email !== currentUser.email));
     } catch {}
   };
@@ -37,11 +37,11 @@ export default function NotificationBell({ currentUser }) {
 
   const handleAccept = async (notif) => {
     try {
-      const collabs = await base44.entities.ProjectCollaborator.filter({ project_id: notif.project_id, email: currentUser.email });
+      const collabs = await db.ProjectCollaborator.filter({ project_id: notif.project_id, email: currentUser.email });
       const mine = (collabs || []).find(c => c.status === "invited" || c.status === "pending");
       if (mine) {
-        await base44.entities.ProjectCollaborator.update(mine.id, { status: "active" });
-        await base44.entities.ProjectMessage.create({
+        await db.ProjectCollaborator.update(mine.id, { status: "active" });
+        await db.ProjectMessage.create({
           project_id: notif.project_id,
           sender_email: currentUser.email,
           sender_name: currentUser.full_name || currentUser.email,
@@ -57,9 +57,9 @@ export default function NotificationBell({ currentUser }) {
 
   const handleDecline = async (notif) => {
     try {
-      const collabs = await base44.entities.ProjectCollaborator.filter({ project_id: notif.project_id, email: currentUser.email });
+      const collabs = await db.ProjectCollaborator.filter({ project_id: notif.project_id, email: currentUser.email });
       const mine = (collabs || [])[0];
-      if (mine) await base44.entities.ProjectCollaborator.delete(mine.id);
+      if (mine) await db.ProjectCollaborator.delete(mine.id);
       dismiss(notif.id);
       fetchNotifications();
     } catch {}

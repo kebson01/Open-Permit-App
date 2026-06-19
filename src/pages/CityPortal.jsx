@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Shield, Phone, MapPin, Globe, Calendar, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export default function CityPortal() {
 
   const { data: cities = [] } = useQuery({
     queryKey: ["cities", cityName],
-    queryFn: () => base44.entities.City.filter({ name: cityName }),
+    queryFn: () => db.City.filter({ name: cityName }),
     enabled: !!cityName,
   });
 

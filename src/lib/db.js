@@ -95,8 +95,12 @@ export const City = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.name) f['name'] = `eq.${filters.name}`;
+    if (filters.city_id) f['id'] = `eq.${filters.city_id}`;
     return rest('cities', { filters: f, order: 'name.asc' });
   },
+  create: (data) => restInsert('cities', data),
+  update: (id, data) => restUpdate('cities', id, data),
+  delete: (id) => restDelete('cities', id),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -117,6 +121,20 @@ export const PermitType = {
     return rest(table, { filters: f, order: 'category.asc,name.asc' });
   },
   list: () => rest('weston_permit_types', { order: 'category.asc,name.asc' }),
+  create: (data) => {
+    const table = PERMIT_TYPE_TABLE[data.city_name] || 'weston_permit_types';
+    return restInsert(table, data);
+  },
+  update: (id, data) => {
+    const table = PERMIT_TYPE_TABLE[data.city_name] || 'weston_permit_types';
+    return restUpdate(table, id, data);
+  },
+  delete: (id) => {
+    // Try all known permit type tables
+    const tables = Object.values(PERMIT_TYPE_TABLE);
+    const promises = tables.map(t => restDelete(t, id).catch(() => null));
+    return Promise.any ? Promise.any(promises) : Promise.allSettled(promises).then(r => r.find(x => x.status === 'fulfilled')?.value);
+  },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -130,12 +148,16 @@ export const FeeRule = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.city_name)  f.city_name  = `eq.${filters.city_name}`;
+    if (filters.city_id)    f.city_id    = `eq.${filters.city_id}`;
     if (filters.category)   f.category   = `eq.${filters.category}`;
     if (filters.permit_name) f.permit_name = `eq.${filters.permit_name}`;
     if (filters.permit_id)  f.permit_id  = `eq.${filters.permit_id}`;
     return rest('fee_rules', { filters: f, order: 'sort_order.asc' });
   },
   list: () => rest('fee_rules', { order: 'city_name.asc,sort_order.asc' }),
+  create: (data) => restInsert('fee_rules', data),
+  update: (id, data) => restUpdate('fee_rules', id, data),
+  delete: (id) => restDelete('fee_rules', id),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -145,12 +167,15 @@ export const CitySurcharge = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
+    if (filters.city_id)   f.city_id   = `eq.${filters.city_id}`;
     return rest('city_surcharges', { filters: f });
   },
   getByCity: async (cityName) => {
     const rows = await rest('city_surcharges', { filters: { city_name: `eq.${cityName}` }, limit: 1 });
     return rows[0] || null;
   },
+  create: (data) => restInsert('city_surcharges', data),
+  update: (id, data) => restUpdate('city_surcharges', id, data),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -181,6 +206,13 @@ export const Property = {
     if (filters.folio_number) f.folio_number = `eq.${filters.folio_number}`;
     if (filters.city_name)    f.city_name    = `eq.${filters.city_name}`;
     return rest('properties_search_view', { filters: f, limit });
+  },
+  bulkCreate: async (records) => {
+    const results = [];
+    for (const record of records) {
+      results.push(await restInsert('properties_search_view', record));
+    }
+    return results;
   },
 };
 
@@ -228,13 +260,18 @@ export const CodeOfOrdinance = {
   filter: (filters = {}) => {
     const f = {};
     if (filters.city_name) f.city_name = `eq.${filters.city_name}`;
+    if (filters.city_id)   f.city_id   = `eq.${filters.city_id}`;
     if (filters.category)  f.category  = `eq.${filters.category}`;
+    if (filters.is_active !== undefined) f.is_active = `eq.${filters.is_active}`;
     return rest('weston_code_of_ordinances', { filters: f, order: 'chapter_number.asc' });
   },
   search: (cityName, q) => rest('weston_code_of_ordinances', {
     filters: { city_name: `eq.${cityName}`, content: `ilike.*${q}*` },
     limit: 20,
   }),
+  create: (data) => restInsert('weston_code_of_ordinances', data),
+  update: (id, data) => restUpdate('weston_code_of_ordinances', id, data),
+  delete: (id) => restDelete('weston_code_of_ordinances', id),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -251,6 +288,10 @@ export const Project = {
     return rest('projects', { filters: f, order, limit });
   },
   list: (order = 'created_at.desc', limit = 50) => rest('projects', { order, limit }),
+  get: async (id) => {
+    const rows = await rest('projects', { filters: { id: `eq.${id}` }, limit: 1 });
+    return rows[0] || null;
+  },
   create: (data) => restInsert('projects', { ...data, created_at: new Date().toISOString() }),
   update: (id, data) => restUpdate('projects', id, data),
   delete: (id) => restDelete('projects', id),
@@ -288,10 +329,11 @@ export const ProjectBudgetItem = {
 // PROJECT MESSAGES
 // ══════════════════════════════════════════════════════════════════════════════
 export const ProjectMessage = {
-  filter: (filters = {}) => {
+  filter: (filters = {}, order = 'created_at.asc', limit) => {
     const f = {};
     if (filters.project_id) f.project_id = `eq.${filters.project_id}`;
-    return rest('project_messages', { filters: f, order: 'created_at.asc' });
+    if (filters.message_type) f.message_type = `eq.${filters.message_type}`;
+    return rest('project_messages', { filters: f, order, limit });
   },
   create: (data) => restInsert('project_messages', data),
 };
@@ -437,6 +479,21 @@ export const PermitStatusLog = {
     return rest('permit_status_logs', { filters: f, order, limit });
   },
   create: (data) => restInsert('permit_status_logs', data),
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// USERS (via Supabase auth)
+// For admin user management — queries the users table in Supabase
+// ══════════════════════════════════════════════════════════════════════════════
+export const User = {
+  list: (order = 'created_at.desc', limit = 200) => rest('users', { order, limit }),
+  filter: (filters = {}, order = 'created_at.desc', limit = 200) => {
+    const f = {};
+    if (filters.email) f.email = `eq.${filters.email}`;
+    if (filters.role)  f.role  = `eq.${filters.role}`;
+    return rest('users', { filters: f, order, limit });
+  },
+  update: (id, data) => restUpdate('users', id, data),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
