@@ -16,14 +16,11 @@ const FONTS = {
 };
 
 const TOOLS_ITEMS = [
-  { label: "Permit Guide",      path: "/PermitGuide",      icon: BookOpen },
   { label: "Fee Calculator",    path: "/FeeCalculator",    icon: Calculator },
   { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
   { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
   { label: "Property Search",   path: "/PropertyGuide",    icon: Search },
   { label: "Private Providers", path: "/providers",        icon: ShieldCheck },
-  { label: "Building Codes",   path: "/tools/building-codes",     icon: BookOpen },
-  { label: "Exemption Checker", path: "/tools/exemption-checker", icon: ShieldCheck },
 ];
 
 export default function Layout({ children, currentPageName }) {
