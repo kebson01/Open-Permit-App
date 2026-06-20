@@ -65,7 +65,7 @@ export default function AddToProjectModal({ permitName, onClose }) {
                 className="px-5 py-2 rounded-xl text-sm font-semibold text-white inline-block"
                 style={{ background: "#3B82F6" }}
               >
-                Create a Project
+                Start My Project
               </a>
             </div>
           ) : (

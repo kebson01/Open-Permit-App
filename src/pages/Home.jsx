@@ -17,7 +17,7 @@ const LAW_CARDS = [
 
 const TOOLS = [
   { icon: ShieldCheck, title: "Exception Checker",  sub: "See if your project qualifies for a waiver",  page: "ExemptionChecker" },
-  { icon: BookOpen,    title: "Visual Permit Guide", sub: "Interactive step-by-step documentation",      page: "PermitGuide" },
+  { icon: BookOpen,    title: "Visual Permit Checklist", sub: "View required documents and track your progress",      page: "PermitGuide" },
   { icon: Calculator,  title: "Fee Calculator",      sub: "Estimate city and county permit costs",       page: "FeeCalculator" },
   { icon: Search,      title: "Property Search",     sub: "Check historical permits by address",         page: "PropertyGuide" },
 ];

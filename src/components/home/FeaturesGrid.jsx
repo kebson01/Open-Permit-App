@@ -2,7 +2,7 @@ import React from "react";
 import { MousePointerClick, DollarSign, MessageSquare } from "lucide-react";
 
 const features = [
-  { icon: MousePointerClick, title: "Visual Permit Guide", desc: "Identify the permit you need.", color: "bg-blue-50 text-blue-600" },
+  { icon: MousePointerClick, title: "Visual Permit Checklist", desc: "Identify the permit you need.", color: "bg-blue-50 text-blue-600" },
   { icon: DollarSign, title: "Transparent Fees", desc: "Estimate permit costs in advance.", color: "bg-blue-50 text-blue-600" },
   { icon: MessageSquare, title: "AI-Powered Guidance", desc: "Let it do the work for you.", color: "bg-blue-50 text-blue-600" },
 ];

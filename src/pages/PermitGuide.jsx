@@ -233,9 +233,9 @@ export default function PermitGuide() {
           </div>
           <Bell className="w-5 h-5 text-gray-400" />
         </div>
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Permit Explorer</h1>
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Permit Checklist</h1>
         <p className="text-sm text-gray-400 leading-relaxed mb-4">
-          Tap the highlighted zones on the house to see specific requirements for your project.
+          Review the documents and requirements needed to apply for your permit. Mark each item complete as you prepare it.
         </p>
 
         {/* Property type toggle */}
@@ -418,7 +418,7 @@ export default function PermitGuide() {
         city={city} onAskAI={(msg) => { setAiInitialMessage(msg); setAiOpen(true); }}
       />
 
-      <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitGuide" initialMessage={aiInitialMessage} />
+      <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitChecklist" initialMessage={aiInitialMessage} />
 
       {zoneInfoPanel && !selectedPermit && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">

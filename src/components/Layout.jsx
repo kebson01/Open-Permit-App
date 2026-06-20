@@ -137,7 +137,9 @@ export default function Layout({ children, currentPageName }) {
           {/* Primary Nav (desktop) */}
           <div className="hidden md:flex items-center gap-1 flex-1">
             <NavLink to="/">Home</NavLink>
-            <NavLink to="/PermitGuide">Permit Guide</NavLink>
+            <NavLink to="/PermitGuide">
+              <span title="View the required documents and requirements for your permit, and track your progress.">Permit Checklist</span>
+            </NavLink>
             <NavLink to="/MyProperties">My Properties</NavLink>
             {user && <NavLink to="/ApplyForPermit">Apply for Permit</NavLink>}
             {user && <NavLink to="/MyProjects">My Projects</NavLink>}
@@ -261,7 +263,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="md:hidden border-t border-[#c3c6d1] bg-white pb-3 shadow-lg">
             {[
               { to: "/", label: "Home", icon: Home },
-              { to: "/PermitGuide", label: "Permit Guide", icon: BookOpen },
+              { to: "/PermitGuide", label: "Permit Checklist", icon: BookOpen },
               { to: "/MyProperties", label: "My Properties", icon: Building2 },
               ...(user ? [
                 { to: "/ApplyForPermit", label: "Apply for Permit", icon: FileText },

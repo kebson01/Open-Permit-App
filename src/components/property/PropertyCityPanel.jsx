@@ -9,7 +9,7 @@ import FeasibilityChecker from "@/components/property/FeasibilityChecker";
 
 const TABS = [
   { id: "fees", label: "Fee Calculator", icon: Calculator },
-  { id: "permits", label: "Permit Guide", icon: Map },
+  { id: "permits", label: "Permit Checklist", icon: Map },
   { id: "feasibility", label: "Feasibility Check", icon: CheckSquare },
 ];
 
@@ -43,7 +43,7 @@ export default function PropertyCityPanel({ property }) {
           </div>
           <div className="text-left">
             <p className="font-semibold text-gray-800">City Services — {cityName}</p>
-            <p className="text-xs text-gray-500">Fee calculator, permit guide & feasibility checker</p>
+            <p className="text-xs text-gray-500">Fee calculator, permit checklist & feasibility checker</p>
           </div>
         </div>
         {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}

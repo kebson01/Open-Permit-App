@@ -197,7 +197,7 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
-          Documents Needed
+          Required Documents
         </h4>
         {checkedCount > 0 && (
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
@@ -236,12 +236,20 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
           );
         })}
       </ul>
+      <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+        Select an item to mark it complete. Your progress is saved to your project dashboard.
+      </p>
+      {checkedCount === documents.length && documents.length > 0 && (
+        <p className="text-xs text-emerald-600 mt-2 font-medium">
+          Checklist complete. You are ready to submit your application. Final approval is determined by the city's building department.
+        </p>
+      )}
       {showSavePrompt && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
           <LogIn className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-xs font-semibold text-blue-800 mb-0.5">Save your checklist</p>
-            <p className="text-xs text-blue-600 mb-2">Create a free account to save your progress and come back anytime.</p>
+            <p className="text-xs text-blue-600 mb-2">Start a project to save this checklist and track your progress.</p>
             <button
               onClick={() => base44.auth.redirectToLogin(window.location.href)}
               className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
@@ -352,7 +360,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               <div>
                 <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
                   <Info className="w-4 h-4 text-indigo-500" />
-                  Requirements
+                  Permit Requirements
                 </h4>
                 <ul className="space-y-2">
                   {current.typical_requirements.map((req, i) => (
@@ -407,7 +415,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 else window.location.href = "/ProjectDashboard";
               })}
             >
-              Save this checklist →
+              Start My Project
             </div>
           )}
 
@@ -449,7 +457,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-sm font-semibold text-green-800 transition-colors"
           >
             <FolderPlus className="w-4 h-4" />
-            Add to my project
+            Add to My Project
           </button>
 
           {/* Florida Building Code Requirements */}

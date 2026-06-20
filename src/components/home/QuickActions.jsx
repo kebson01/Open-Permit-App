@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Map, DollarSign, BookOpen, Building } from "lucide-react";
 
 const actions = [
-  { label: "Permit Guide", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "Tap a home area to find permits", color: "bg-blue-50 border-blue-100 text-blue-600" },
+  { label: "Permit Checklist", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "View required documents and track your progress", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Fee Calculator", icon: DollarSign, page: "FeeCalculator", emoji: "💵", desc: "Estimate permit costs", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Permit Types", icon: BookOpen, page: "PermitInfo", emoji: "📘", desc: "What docs & steps are needed", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Property Search", icon: Building, page: "PropertyGuide", emoji: "🏗️", desc: "Look up any Broward parcel", color: "bg-blue-50 border-blue-100 text-blue-600" },

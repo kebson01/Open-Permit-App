@@ -157,8 +157,8 @@ export default function HomeDashboard() {
                 <User className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#737781]" style={{ fontFamily: BODY }}>Guide</p>
-                <p className="text-base font-extrabold" style={{ fontFamily: HEADING, color: "#191c1e" }}>Permit Guide</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#737781]" style={{ fontFamily: BODY }}>Checklist</p>
+                <p className="text-base font-extrabold" style={{ fontFamily: HEADING, color: "#191c1e" }}>Permit Checklist</p>
               </div>
             </Link>
 

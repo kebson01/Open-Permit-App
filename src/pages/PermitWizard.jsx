@@ -22,8 +22,8 @@ const TOOLS = [
   },
   {
     icon: BookOpen,
-    title: "Visual Permit Guide",
-    description: "Interactive map-based guide to identify exactly which permits apply to your project area.",
+    title: "Visual Permit Checklist",
+    description: "Review the documents and requirements needed for your permit. Mark each item complete as you prepare it.",
     link: "/PermitGuide",
     badge: "Interactive",
     badgeColor: "bg-blue-100 text-blue-700",

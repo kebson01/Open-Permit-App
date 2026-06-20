@@ -61,7 +61,7 @@ export default function CitySelector() {
               className="text-white rounded-xl h-10 font-semibold text-sm"
               style={{ backgroundColor: "#0D2B5E" }}
             >
-              Permit Guide
+              Permit Checklist
             </Button>
             <Button
               onClick={() => goTo("FeeCalculator")}

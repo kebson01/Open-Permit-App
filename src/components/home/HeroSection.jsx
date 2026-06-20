@@ -41,7 +41,7 @@ export default function HeroSection() {
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
             >
               <Map className="w-4 h-4" />
-              Visual Permit Guide
+              Visual Permit Checklist
             </Link>
             <Link
               to={createPageUrl("FeeCalculator")}

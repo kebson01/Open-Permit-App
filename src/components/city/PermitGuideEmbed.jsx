@@ -36,7 +36,7 @@ export default function PermitGuideEmbed({ city }) {
         <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
           <Home className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-xl font-bold text-gray-800">Visual Permit Guide</h2>
+        <h2 className="text-xl font-bold text-gray-800">Visual Permit Checklist</h2>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-5 items-center">
