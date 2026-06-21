@@ -484,12 +484,36 @@ export default function MyProjects() {
   const createProject = async () => {
     if (!newProject.name || !currentUser) return;
     setCreating(true);
-    const p = await db.Project.create({ ...newProject, owner_email: currentUser.email, status: "planning", created_at: new Date().toISOString() });
-    setProjects(prev => [p, ...prev]);
-    setShowNewForm(false);
-    setNewProject({ name: "", project_type: "remodel", city_name: "Weston", property_address: "" });
-    setCreating(false);
-    setSelected(p);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          name: newProject.name,
+          property_address: newProject.property_address,
+          project_type: newProject.project_type,
+          city_name: newProject.city_name,
+          owner_email: user?.email || currentUser.email,
+          status: "planning",
+        })
+        .select()
+        .single();
+      if (error) {
+        console.error("Project create error:", error);
+        alert("Could not create project: " + error.message);
+        setCreating(false);
+        return;
+      }
+      setProjects(prev => [data, ...prev]);
+      setShowNewForm(false);
+      setNewProject({ name: "", project_type: "remodel", city_name: "Weston", property_address: "" });
+      setSelected(data);
+    } catch (err) {
+      console.error("Project create error:", err);
+      alert("Could not create project: " + (err?.message || "Unknown error"));
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (selected) {
