@@ -13,28 +13,39 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-// ── Low-level REST helper ────────────────────────────────────────────────────
-async function supabaseQuery(table, { filters, select, order, limit, offset, userToken } = {}) {
-  const params = new URLSearchParams();
-  if (select) params.set('select', select);
-  if (order) params.set('order', order);
-  if (limit) params.set('limit', String(limit));
-  if (offset) params.set('offset', String(offset));
+// ── Low-level helper (via supabase client — carries user session token) ───────
+async function supabaseQuery(table, { filters, select, order, limit, offset } = {}) {
+  let query = supabase.from(table).select(select || '*');
   if (filters) {
     filters.split('&').forEach(f => {
       const eqIdx = f.indexOf('=');
-      if (eqIdx !== -1) params.set(f.slice(0, eqIdx), f.slice(eqIdx + 1));
+      if (eqIdx === -1) return;
+      const col = f.slice(0, eqIdx);
+      const val = f.slice(eqIdx + 1);
+      if (col === 'or') {
+        query = query.or(val);
+      } else {
+        const opIdx = val.indexOf('.');
+        const op = val.slice(0, opIdx);
+        const v = val.slice(opIdx + 1);
+        query = query.filter(col, op, v);
+      }
     });
   }
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${userToken || SUPABASE_ANON_KEY}`,
-      Accept: 'application/json',
-    },
-  });
-  if (!res.ok) throw new Error(`Supabase error ${res.status}: ${res.statusText}`);
-  return res.json();
+  if (order) {
+    order.split(',').forEach(o => {
+      const [col, dir] = o.split('.');
+      query = query.order(col, { ascending: dir !== 'desc' });
+    });
+  }
+  if (offset !== undefined && limit !== undefined) {
+    query = query.range(offset, offset + limit - 1);
+  } else if (limit) {
+    query = query.limit(limit);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(`Supabase error: ${error.message}`);
+  return data;
 }
 
 // ── Named query helpers ──────────────────────────────────────────────────────

@@ -4,77 +4,54 @@
  * Auth still uses base44.auth.* (unchanged).
  */
 
-const SUPABASE_URL = 'https://gbknnjidqpmjrwlooluw.supabase.co';
+import { supabase } from '@/lib/supabaseClient';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68';
 
 // ── Generic REST helpers ───────────────────────────────────────────────────────
 
 async function rest(table, { filters = {}, select = '*', order, limit, offset } = {}) {
-  const params = new URLSearchParams();
-  params.set('select', select);
-  if (order) params.set('order', order);
-  if (limit) params.set('limit', String(limit));
-  if (offset) params.set('offset', String(offset));
-  Object.entries(filters).forEach(([k, v]) => params.set(k, v));
-
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      Accept: 'application/json',
-    },
+  let query = supabase.from(table).select(select);
+  Object.entries(filters).forEach(([k, v]) => {
+    if (k === 'or') {
+      query = query.or(v);
+    } else {
+      const opIdx = v.indexOf('.');
+      const op = v.slice(0, opIdx);
+      const val = v.slice(opIdx + 1);
+      query = query.filter(k, op, val);
+    }
   });
-  if (!res.ok) throw new Error(`Supabase REST ${res.status}: ${res.statusText}`);
-  return res.json();
+  if (order) {
+    order.split(',').forEach(o => {
+      const [col, dir] = o.split('.');
+      query = query.order(col, { ascending: dir !== 'desc' });
+    });
+  }
+  if (offset !== undefined && limit !== undefined) {
+    query = query.range(offset, offset + limit - 1);
+  } else if (limit) {
+    query = query.limit(limit);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(`Supabase error: ${error.message}`);
+  return data;
 }
 
 async function restInsert(table, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Supabase INSERT ${res.status}: ${err}`);
-  }
-  const rows = await res.json();
+  const { data: rows, error } = await supabase.from(table).insert(data).select();
+  if (error) throw new Error(`Supabase INSERT: ${error.message}`);
   return Array.isArray(rows) ? rows[0] : rows;
 }
 
 async function restUpdate(table, id, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Supabase PATCH ${res.status}: ${err}`);
-  }
-  const rows = await res.json();
+  const { data: rows, error } = await supabase.from(table).update(data).eq('id', id).select();
+  if (error) throw new Error(`Supabase PATCH: ${error.message}`);
   return Array.isArray(rows) ? rows[0] : rows;
 }
 
 async function restDelete(table, id) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'DELETE',
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-  });
-  if (!res.ok) throw new Error(`Supabase DELETE ${res.status}`);
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) throw new Error(`Supabase DELETE: ${error.message}`);
 }
 
 // ── Permit type table map ──────────────────────────────────────────────────────
