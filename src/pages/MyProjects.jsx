@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import {
   Plus, Loader2, ArrowRight, Calendar, MapPin,
-  FileText, Search, CheckCircle2, Home, LayoutDashboard, FolderOpen
+  FileText, Search, CheckCircle2, Home, LayoutDashboard, FolderOpen, Trash2
 } from "lucide-react";
 
 const PRIMARY = "#1353d8";
@@ -54,7 +54,7 @@ function getImage(type) {
   return STOCK_IMAGES[type] || STOCK_IMAGES.other;
 }
 
-function ProjectCard({ project, onClick }) {
+function ProjectCard({ project, onClick, onDelete }) {
   const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.planning;
   const progress = project.progress_pct || 0;
   const catLabel = CATEGORY_LABELS[project.project_type] || "PROJECT";
@@ -62,9 +62,9 @@ function ProjectCard({ project, onClick }) {
   const isCompleted = project.status === "completed";
 
   return (
-    <button
+    <div
       onClick={() => onClick(project)}
-      className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex"
+      className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex cursor-pointer"
     >
       {/* Thumbnail */}
       <div className="relative w-28 h-28 shrink-0">
@@ -78,9 +78,18 @@ function ProjectCard({ project, onClick }) {
       <div className="flex-1 p-4 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className="font-bold text-gray-900 text-sm leading-tight truncate">{project.name}</p>
-          <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${st.bg} ${st.text}`}>
-            {st.label.toUpperCase()}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${st.bg} ${st.text}`}>
+              {st.label.toUpperCase()}
+            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(project); }}
+              className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              aria-label="Delete project"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <p className="text-xs text-gray-400 mt-1 truncate">
@@ -104,7 +113,7 @@ function ProjectCard({ project, onClick }) {
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -481,6 +490,20 @@ export default function MyProjects() {
     setLoading(false);
   };
 
+  const deleteProject = async (project) => {
+    if (!window.confirm("Delete this project? This action cannot be undone.")) return;
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", project.id);
+    if (error) {
+      alert("Could not delete: " + error.message);
+      return;
+    }
+    setProjects(prev => prev.filter(p => p.id !== project.id));
+    alert("Project deleted");
+  };
+
   const createProject = async () => {
     if (!newProject.name || !currentUser) return;
     setCreating(true);
@@ -632,7 +655,7 @@ export default function MyProjects() {
           </div>
         ) : (
           <div className="space-y-3">
-            {projects.map(p => <ProjectCard key={p.id} project={p} onClick={setSelected} />)}
+            {projects.map(p => <ProjectCard key={p.id} project={p} onClick={setSelected} onDelete={deleteProject} />)}
           </div>
         )}
       </div>
