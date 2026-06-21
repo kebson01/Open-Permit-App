@@ -61,7 +61,7 @@ export default function AddToProjectModal({ permitName, onClose }) {
               <FolderOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />
               <p className="text-sm text-gray-500 mb-3">You don't have any projects yet.</p>
               <a
-                href="/ProjectDashboard"
+                href="/MyProjects"
                 className="px-5 py-2 rounded-xl text-sm font-semibold text-white inline-block"
                 style={{ background: "#3B82F6" }}
               >

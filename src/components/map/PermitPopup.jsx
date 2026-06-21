@@ -412,7 +412,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
               onClick={() => base44.auth.isAuthenticated().then(a => {
                 if (!a) base44.auth.redirectToLogin(window.location.href);
-                else window.location.href = "/ProjectDashboard";
+                else window.location.href = "/MyProjects";
               })}
             >
               Start My Project
