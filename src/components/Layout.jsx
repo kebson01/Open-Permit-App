@@ -126,7 +126,12 @@ export default function Layout({ children, currentPageName }) {
       >
         <div className="max-w-[1280px] mx-auto px-6 h-full flex items-center gap-6">
           {/* Logo */}
-          <Link to="/" className="shrink-0" style={{ textDecoration: "none" }}>
+          <Link to="/" className="shrink-0 flex items-center gap-2" style={{ textDecoration: "none" }}>
+            <img
+              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+              alt="Open Permit"
+              className="h-8 w-8 object-contain"
+            />
             <span className="font-extrabold text-xl tracking-tight" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
               OpenPermit
             </span>
