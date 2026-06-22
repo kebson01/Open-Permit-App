@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Camera, Loader2, Sparkles, X, RotateCcw } from "lucide-react";
+import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
 
@@ -8,7 +8,8 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const uploadInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -35,7 +36,8 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
     setPhoto(null);
     setAnalysis(null);
     setError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
   };
 
   return (
@@ -59,25 +61,45 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
       <div className="p-5 space-y-4">
         {/* Upload area */}
         {!photo && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full flex flex-col items-center justify-center gap-3 py-8 border-2 border-dashed border-blue-200 rounded-2xl text-blue-500 hover:border-blue-400 hover:bg-blue-50 transition-colors"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
               <Camera className="w-7 h-7 text-blue-600" />
             </div>
-            <div className="text-center">
-              <p className="font-semibold text-blue-700">Take or Upload a Photo</p>
-              <p className="text-xs text-blue-400 mt-1">Roof, window, A/C, pool, fence, or any home area</p>
+            <p className="font-semibold text-blue-700 mb-1">Take or Upload a Photo</p>
+            <p className="text-xs text-blue-400 mb-4">Roof, window, A/C, pool, fence, or any home area</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" />
+                Take Photo
+              </button>
+              <button
+                onClick={() => uploadInputRef.current?.click()}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Photo
+              </button>
             </div>
-          </button>
+          </div>
         )}
 
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <input
+          ref={uploadInputRef}
+          type="file"
+          accept="image/*"
           onChange={handleFileChange}
           className="hidden"
         />

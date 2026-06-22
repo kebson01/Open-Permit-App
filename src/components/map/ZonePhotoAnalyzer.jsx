@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Camera, Loader2, X } from "lucide-react";
+import { Camera, Loader2, X, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
 
@@ -8,7 +8,8 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const uploadInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -35,7 +36,8 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
     setPhoto(null);
     setAnalysis(null);
     setError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
   };
 
   return (
@@ -43,20 +45,38 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
       <p className="text-xs text-blue-500">Upload a photo of your {permitName} area for personalized guidance</p>
 
       {!photo && (
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-blue-200 rounded-xl text-blue-500 hover:border-blue-400 hover:bg-blue-50 transition-colors text-sm font-medium"
-        >
-          <Camera className="w-4 h-4" />
-          Take or Upload Photo
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+          >
+            <Camera className="w-4 h-4" />
+            Take Photo
+          </button>
+          <button
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+          >
+            <Upload className="w-4 h-4" />
+            Upload Photo
+          </button>
+        </div>
       )}
 
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/*"
         onChange={handleFileChange}
         className="hidden"
       />
