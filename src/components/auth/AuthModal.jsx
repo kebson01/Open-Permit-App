@@ -13,9 +13,9 @@ export default function AuthModal({ onClose }) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <img
-            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/15cefa1cd_image_d3d70f9d.png"
-            alt="OpenPermit"
-            className="h-8 w-auto"
+            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+            alt="Open Permit"
+            className="h-10 w-auto"
           />
           {onClose && (
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
