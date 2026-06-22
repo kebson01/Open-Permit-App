@@ -74,23 +74,20 @@ function PropertyDetail({ property, onBack }) {
   const navigate = useNavigate();
 
   const handleStartApplication = () => {
-    navigate('/ApplyForPermit', {
-      state: {
-        prefilledProperty: {
-          folio_number: property.FOLIO_NUMBER || property.folio_number,
-          full_address: property.full_address,
-          owner_name: property.NAME_LINE_1 || property.owner_name,
-          situs_city: property.SITUS_CITY || property.situs_city || property.city_name,
-          beds: property.BEDS || property.beds,
-          baths: property.BATHS || property.baths,
-          year_built: property.BLDG_YEAR_BUILT || property.year_built,
-          total_sqft: property.BLDG_TOT_SQ_FOOTAGE || property.total_sqft,
-          homestead_flag: property.HOMESTEAD_FLAG || property.homestead_flag,
-          city_name: property.SITUS_CITY || property.situs_city || property.city_name,
-        },
-        prefilledCity: property.SITUS_CITY || property.situs_city || property.city_name,
-      }
-    });
+    const prefillData = {
+      folio_number: property.FOLIO_NUMBER || property.folio_number,
+      full_address: property.full_address,
+      owner_name: property.NAME_LINE_1 || property.owner_name,
+      situs_city: property.SITUS_CITY || property.situs_city || property.city_name,
+      beds: property.BEDS || property.beds,
+      baths: property.BATHS || property.baths,
+      year_built: property.BLDG_YEAR_BUILT || property.year_built,
+      total_sqft: property.BLDG_TOT_SQ_FOOTAGE || property.total_sqft,
+      homestead_flag: property.HOMESTEAD_FLAG || property.homestead_flag,
+      city_name: property.SITUS_CITY || property.situs_city || property.city_name,
+    };
+    sessionStorage.setItem('op_prefill_property', JSON.stringify(prefillData));
+    window.location.href = '/ApplyForPermit';
   };
 
   const [tab, setTab]           = useState("overview");

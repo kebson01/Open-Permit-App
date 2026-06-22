@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2,
   Search, Home, Wrench, Shield, ExternalLink, AlertTriangle, FileText
@@ -183,8 +183,6 @@ function hasGuidedQuestions(permitName, questionsAvailable) {
 }
 
 export default function ApplyForPermit() {
-  const location = useLocation();
-
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
@@ -208,17 +206,23 @@ export default function ApplyForPermit() {
   }, []);
 
   useEffect(() => {
-    const prefilledProperty = location.state?.prefilledProperty;
-    const prefilledCityCode = location.state?.prefilledCity;
-    if (prefilledProperty) {
-      setSelectedProperty(prefilledProperty);
-    }
-    if (prefilledCityCode) {
-      const cityName = BCPA_CODE_TO_CITY[prefilledCityCode] || prefilledCityCode;
-      const validCities = Object.values(BCPA_CODE_TO_CITY);
-      if (validCities.includes(cityName)) {
-        setSelectedCity(cityName);
+    try {
+      const raw = sessionStorage.getItem('op_prefill_property');
+      if (raw) {
+        const prefilled = JSON.parse(raw);
+        setSelectedProperty(prefilled);
+        const cityCode = prefilled.situs_city;
+        if (cityCode) {
+          const cityName = BCPA_CODE_TO_CITY[cityCode] || cityCode;
+          const validCities = Object.values(BCPA_CODE_TO_CITY);
+          if (validCities.includes(cityName)) {
+            setSelectedCity(cityName);
+          }
+        }
+        sessionStorage.removeItem('op_prefill_property');
       }
+    } catch (e) {
+      console.error('Failed to load prefill data:', e);
     }
   }, []);
 
