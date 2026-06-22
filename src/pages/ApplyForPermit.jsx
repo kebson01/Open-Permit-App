@@ -131,21 +131,6 @@ const BCPA_CODE_TO_CITY = {
   PK: 'Parkland', TM: 'Tamarac', WM: 'Wilton Manors',
 };
 
-const BROWARD_CITIES = [
-  'Weston', 'Coral Springs', 'Fort Lauderdale', 'Hollywood', 'Cooper City', 'Sunrise',
-  'Dania Beach', 'Davie', 'Deerfield Beach', 'Hallandale Beach', 'Lauderdale Lakes',
-  'Lauderdale-by-the-Sea', 'Lighthouse Point', 'Margate', 'Miramar', 'North Lauderdale',
-  'Oakland Park', 'Parkland', 'Pembroke Pines', 'Pompano Beach', 'Tamarac', 'Wilton Manors'
-];
-
-function resolveCityName(rawCity) {
-  if (!rawCity) return null;
-  const mapped = BCPA_CODE_TO_CITY[rawCity.toUpperCase()];
-  if (mapped) return mapped;
-  const match = BROWARD_CITIES.find(c => c.toLowerCase() === rawCity.toLowerCase());
-  return match || null;
-}
-
 const STEP_LABELS = ["Setup", "Permit Type", "Application", "Review", "Submit"];
 
 function ProgressBar({ currentStep }) {
@@ -199,16 +184,13 @@ function hasGuidedQuestions(permitName, questionsAvailable) {
 
 export default function ApplyForPermit() {
   const location = useLocation();
-  const prefilledProperty = location.state?.prefilledProperty;
-  const prefilledCity = location.state?.prefilledCity;
-  const initialCity = resolveCityName(prefilledCity) || "Weston";
 
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState("homeowner");
-  const [selectedCity, setSelectedCity] = useState(initialCity);
-  const [selectedProperty, setSelectedProperty] = useState(prefilledProperty || null);
+  const [selectedCity, setSelectedCity] = useState("Weston");
+  const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -223,6 +205,21 @@ export default function ApplyForPermit() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user || null)).catch(() => {}).finally(() => setAuthLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const prefilledProperty = location.state?.prefilledProperty;
+    const prefilledCityCode = location.state?.prefilledCity;
+    if (prefilledProperty) {
+      setSelectedProperty(prefilledProperty);
+    }
+    if (prefilledCityCode) {
+      const cityName = BCPA_CODE_TO_CITY[prefilledCityCode] || prefilledCityCode;
+      const validCities = Object.values(BCPA_CODE_TO_CITY);
+      if (validCities.includes(cityName)) {
+        setSelectedCity(cityName);
+      }
+    }
   }, []);
 
   const resetAll = () => {
@@ -313,7 +310,7 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
               <button onClick={handleSearch} disabled={searchLoading} className="px-4 py-2.5 rounded-lg bg-[#004ac6] text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-1.5 shrink-0">{searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}</button>
             </div>
             {searchError && <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">{searchError}</p>}
-            {propertyResults.length > 0 && (<div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto shadow-sm">{propertyResults.map(p => (<button key={p.folio_number} onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); }} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="font-bold text-sm text-gray-900">{p.full_address}</p><p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p><p className="text-xs font-mono text-gray-400 mt-0.5">{p.folio_number}</p></div><span className="text-xs text-gray-400 shrink-0 mt-0.5">{p.city_name}</span></div></button>))}</div>)}
+            {propertyResults.length > 0 && (<div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto shadow-sm">{propertyResults.map(p => (<button key={p.folio_number} onClick={() => { setSelectedProperty(p); setPropertyResults([]); setPropertySearch(""); const cityCode = p.situs_city || p.SITUS_CITY; if (cityCode) { const cityName = BCPA_CODE_TO_CITY[cityCode] || cityCode; const validCities = Object.values(BCPA_CODE_TO_CITY); if (validCities.includes(cityName)) { setSelectedCity(cityName); } } }} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="font-bold text-sm text-gray-900">{p.full_address}</p><p className="text-xs text-gray-500 mt-0.5">{p.owner_name}</p><p className="text-xs font-mono text-gray-400 mt-0.5">{p.folio_number}</p></div><span className="text-xs text-gray-400 shrink-0 mt-0.5">{p.city_name}</span></div></button>))}</div>)}
           </div>
         )}
       </Card>

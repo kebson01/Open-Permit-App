@@ -72,6 +72,27 @@ function SearchBar({ onSelect }) {
 // ── Property detail view (unchanged logic, restyled) ────────────────────────
 function PropertyDetail({ property, onBack }) {
   const navigate = useNavigate();
+
+  const handleStartApplication = () => {
+    navigate('/ApplyForPermit', {
+      state: {
+        prefilledProperty: {
+          folio_number: property.FOLIO_NUMBER || property.folio_number,
+          full_address: property.full_address,
+          owner_name: property.NAME_LINE_1 || property.owner_name,
+          situs_city: property.SITUS_CITY || property.situs_city || property.city_name,
+          beds: property.BEDS || property.beds,
+          baths: property.BATHS || property.baths,
+          year_built: property.BLDG_YEAR_BUILT || property.year_built,
+          total_sqft: property.BLDG_TOT_SQ_FOOTAGE || property.total_sqft,
+          homestead_flag: property.HOMESTEAD_FLAG || property.homestead_flag,
+          city_name: property.SITUS_CITY || property.situs_city || property.city_name,
+        },
+        prefilledCity: property.SITUS_CITY || property.situs_city || property.city_name,
+      }
+    });
+  };
+
   const [tab, setTab]           = useState("overview");
   const [permits, setPermits]   = useState([]);
   const [guides, setGuides]     = useState([]);
@@ -142,12 +163,7 @@ function PropertyDetail({ property, onBack }) {
           </div>
         </div>
         <button
-          onClick={() => navigate('/ApplyForPermit', {
-            state: {
-              prefilledProperty: property,
-              prefilledCity: property.city_name,
-            }
-          })}
+          onClick={handleStartApplication}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-bold text-sm"
           style={{ background: PRIMARY }}
         >
