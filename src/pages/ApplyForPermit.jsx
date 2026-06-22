@@ -200,6 +200,7 @@ export default function ApplyForPermit() {
   const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [confirmationNumber, setConfirmationNumber] = useState("");
+  const [preselectPermit, setPreselectPermit] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user || null)).catch(() => {}).finally(() => setAuthLoading(false));
@@ -224,6 +225,12 @@ export default function ApplyForPermit() {
     } catch (e) {
       console.error('Failed to load prefill data:', e);
     }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const permitParam = params.get("permit");
+    if (permitParam) setPreselectPermit(permitParam);
   }, []);
 
   const resetAll = () => {
@@ -254,7 +261,7 @@ export default function ApplyForPermit() {
       </div>
       <div className="max-w-2xl mx-auto px-4 pt-5">
         {currentStep === 1 && (<Step1 selectedRole={selectedRole} setSelectedRole={setSelectedRole} selectedCity={selectedCity} setSelectedCity={setSelectedCity} selectedProperty={selectedProperty} setSelectedProperty={setSelectedProperty} onNext={() => setCurrentStep(2)} />)}
-        {currentStep === 2 && (<Step2 selectedCity={selectedCity} selectedPermit={selectedPermit} setSelectedPermit={setSelectedPermit} onBack={() => setCurrentStep(1)} onNext={() => setCurrentStep(3)} />)}
+        {currentStep === 2 && (<Step2 selectedCity={selectedCity} selectedPermit={selectedPermit} setSelectedPermit={setSelectedPermit} preselectPermit={preselectPermit} onBack={() => setCurrentStep(1)} onNext={() => setCurrentStep(3)} />)}
         {currentStep === 3 && (<Step3 selectedCity={selectedCity} selectedPermit={selectedPermit} selectedProperty={selectedProperty} currentUser={currentUser} questions={questions} setQuestions={setQuestions} answers={answers} setAnswers={setAnswers} currentSectionIndex={currentSectionIndex} setCurrentSectionIndex={setCurrentSectionIndex} onBack={() => setCurrentStep(2)} onNext={() => setCurrentStep(4)} />)}
         {currentStep === 4 && (<Step4 selectedCity={selectedCity} selectedPermit={selectedPermit} questions={questions} answers={answers} feeRule={feeRule} setFeeRule={setFeeRule} calculatedFee={calculatedFee} onBack={() => setCurrentStep(3)} onNext={() => setCurrentStep(5)} />)}
         {currentStep === 5 && (<Step5 selectedRole={selectedRole} selectedCity={selectedCity} selectedPermit={selectedPermit} selectedProperty={selectedProperty} questions={questions} answers={answers} feeRule={feeRule} calculatedFee={calculatedFee} currentUser={currentUser} guideId={guideId} setGuideId={setGuideId} portalChecked={portalChecked} setPortalChecked={setPortalChecked} submitting={submitting} setSubmitting={setSubmitting} submitError={submitError} setSubmitError={setSubmitError} submitted={submitted} setSubmitted={setSubmitted} confirmationNumber={confirmationNumber} setConfirmationNumber={setConfirmationNumber} onBack={() => setCurrentStep(4)} onReset={resetAll} />)}
@@ -323,7 +330,7 @@ function Step1({ selectedRole, setSelectedRole, selectedCity, setSelectedCity, s
   );
 }
 
-function Step2({ selectedCity, selectedPermit, setSelectedPermit, onBack, onNext }) {
+function Step2({ selectedCity, selectedPermit, setSelectedPermit, preselectPermit, onBack, onNext }) {
   const [permitTypes, setPermitTypes] = useState([]);
   const [questionsAvailable, setQuestionsAvailable] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -339,6 +346,10 @@ function Step2({ selectedCity, selectedPermit, setSelectedPermit, onBack, onNext
         if (e1) throw e1;
         setPermitTypes(pts || []);
         setQuestionsAvailable(new Set((qs || []).map(q => q.permit_type_name || "")));
+        if (preselectPermit && !selectedPermit) {
+          const match = (pts || []).find(p => p.name && p.name.toLowerCase().includes(preselectPermit.toLowerCase()));
+          if (match) setSelectedPermit(match);
+        }
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     load();

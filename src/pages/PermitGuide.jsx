@@ -382,7 +382,7 @@ export default function PermitGuide() {
               <Camera className="w-4 h-4" /> Upload or Take Photo
             </button>
           ) : (
-            <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} />
+            <StandalonePhotoAnalyzer onClose={() => setShowPhotoAnalyzer(false)} permits={allPermits} city={city} />
           )}
         </div>
 

@@ -428,7 +428,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 <span className="ml-auto text-blue-200 text-xs">New</span>
               </div>
               <div className="p-3">
-                <ZonePhotoAnalyzer permitName={current.name} permitDescription={current.description} />
+                <ZonePhotoAnalyzer permitName={current.name} permitDescription={current.description} cityName={city} />
               </div>
             </div>
           </div>
