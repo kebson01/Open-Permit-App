@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import * as db from "@/lib/db";
-import { BookOpen, Search, ChevronDown, ChevronRight, ExternalLink, Loader2, FileText, Filter } from "lucide-react";
+import { BookOpen, Search, ChevronDown, ChevronRight, ExternalLink, Loader2, FileText, Filter, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CITY_ORDER = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
 
@@ -147,21 +148,25 @@ export default function BuildingCodes() {
             Browse local building codes, zoning rules, and city ordinances for South Florida municipalities.
           </p>
 
-          {/* City tabs */}
-          <div className="flex gap-2 flex-wrap">
-            {cities.map(c => (
-              <button
-                key={c.id}
-                onClick={() => handleCityChange(c)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                  selectedCity?.id === c.id
-                    ? "bg-white text-blue-900 shadow-md"
-                    : "bg-white/10 text-white/80 hover:bg-white/20 border border-white/10"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
+          {/* City dropdown */}
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-200 shrink-0" />
+            <Select
+              value={selectedCity?.id}
+              onValueChange={(val) => {
+                const c = cities.find(c => c.id === val);
+                if (c) handleCityChange(c);
+              }}
+            >
+              <SelectTrigger className="w-56 bg-white/95 border-white/20 text-blue-900 font-semibold text-sm rounded-xl">
+                <SelectValue placeholder="Select a city..." />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
