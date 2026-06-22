@@ -20,7 +20,7 @@ const TOOLS_ITEMS = [
   { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
   { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
   { label: "Property Search",   path: "/PropertyGuide",    icon: Search },
-  { label: "Private Providers", path: "/providers",        icon: ShieldCheck },
+  { label: "Licensed Professional Search", path: "/providers",        icon: ShieldCheck },
 ];
 
 export default function Layout({ children, currentPageName }) {
