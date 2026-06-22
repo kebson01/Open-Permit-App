@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Loader2, Check, Copy, CheckCircle2,
   Search, Home, Wrench, Shield, ExternalLink, AlertTriangle, FileText
@@ -122,6 +122,30 @@ const CITY_PERMIT_TABLES = {
   "Wilton Manors": "wilton_manors_permit_types",
 };
 
+const BCPA_CODE_TO_CITY = {
+  WS: 'Weston', CS: 'Coral Springs', HW: 'Hollywood', FL: 'Fort Lauderdale',
+  SR: 'Sunrise', CC: 'Cooper City', PE: 'Pembroke Pines', PB: 'Pompano Beach',
+  MR: 'Miramar', DV: 'Davie', DB: 'Dania Beach', DF: 'Deerfield Beach',
+  HB: 'Hallandale Beach', LL: 'Lauderdale Lakes', LS: 'Lauderdale-by-the-Sea',
+  LP: 'Lighthouse Point', MG: 'Margate', NL: 'North Lauderdale', OP: 'Oakland Park',
+  PK: 'Parkland', TM: 'Tamarac', WM: 'Wilton Manors',
+};
+
+const BROWARD_CITIES = [
+  'Weston', 'Coral Springs', 'Fort Lauderdale', 'Hollywood', 'Cooper City', 'Sunrise',
+  'Dania Beach', 'Davie', 'Deerfield Beach', 'Hallandale Beach', 'Lauderdale Lakes',
+  'Lauderdale-by-the-Sea', 'Lighthouse Point', 'Margate', 'Miramar', 'North Lauderdale',
+  'Oakland Park', 'Parkland', 'Pembroke Pines', 'Pompano Beach', 'Tamarac', 'Wilton Manors'
+];
+
+function resolveCityName(rawCity) {
+  if (!rawCity) return null;
+  const mapped = BCPA_CODE_TO_CITY[rawCity.toUpperCase()];
+  if (mapped) return mapped;
+  const match = BROWARD_CITIES.find(c => c.toLowerCase() === rawCity.toLowerCase());
+  return match || null;
+}
+
 const STEP_LABELS = ["Setup", "Permit Type", "Application", "Review", "Submit"];
 
 function ProgressBar({ currentStep }) {
@@ -174,12 +198,17 @@ function hasGuidedQuestions(permitName, questionsAvailable) {
 }
 
 export default function ApplyForPermit() {
+  const location = useLocation();
+  const prefilledProperty = location.state?.prefilledProperty;
+  const prefilledCity = location.state?.prefilledCity;
+  const initialCity = resolveCityName(prefilledCity) || "Weston";
+
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState("homeowner");
-  const [selectedCity, setSelectedCity] = useState("Weston");
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(initialCity);
+  const [selectedProperty, setSelectedProperty] = useState(prefilledProperty || null);
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});

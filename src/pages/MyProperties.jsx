@@ -71,6 +71,7 @@ function SearchBar({ onSelect }) {
 
 // ── Property detail view (unchanged logic, restyled) ────────────────────────
 function PropertyDetail({ property, onBack }) {
+  const navigate = useNavigate();
   const [tab, setTab]           = useState("overview");
   const [permits, setPermits]   = useState([]);
   const [guides, setGuides]     = useState([]);
@@ -140,13 +141,18 @@ function PropertyDetail({ property, onBack }) {
             <button onClick={onBack} className="text-xs text-teal-600 font-semibold underline mt-1">Clear</button>
           </div>
         </div>
-        <Link
-          to={`/ApplyForPermit?folio=${property.folio_number}&city=${encodeURIComponent(property.city_name || "")}`}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-bold text-sm no-underline"
+        <button
+          onClick={() => navigate('/ApplyForPermit', {
+            state: {
+              prefilledProperty: property,
+              prefilledCity: property.city_name,
+            }
+          })}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-bold text-sm"
           style={{ background: PRIMARY }}
         >
           <FileText className="w-4 h-4" /> Start Permit Application
-        </Link>
+        </button>
       </div>
 
       <div className="px-4 pt-4 max-w-lg mx-auto">
