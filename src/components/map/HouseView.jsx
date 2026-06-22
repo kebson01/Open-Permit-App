@@ -5,7 +5,7 @@ import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
 const IMAGES = {
   front:               "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
   back:                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/3119749c5_BackView.png",
-  eagle:               "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4422873fc_EagleEyeView.png",
+  eagle:               "https://media.base44.com/images/public/69ac5571087590fc03d44b73/ba18f0e8a_EagleEyeView2.png",
   commercial:          "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
   commercial_building: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
 };
@@ -13,7 +13,7 @@ const IMAGES = {
 const IMAGE_DIMS = {
   front:               { w: 1375, h: 750 },
   back:                { w: 1380, h: 768 },
-  eagle:               { w: 1366, h: 768 },
+  eagle:               { w: 1377, h: 750 },
   commercial:          { w: 1400, h: 760 },
   commercial_building: { w: 1400, h: 760 },
 };
@@ -73,20 +73,30 @@ const BACK_ZONES = [
 ];
 
 const EAGLE_ZONES = [
-  { id: "roof_e",     label: "Roof / Re-Roof",            desc: "Roofing replacement or repair",                points: "0,0 751,0 751,346 0,346",                color: "rgba(239,68,68,0.15)",   stroke: "#ef4444" },
-  { id: "kitchen",    label: "Residential Remodel",       desc: "Kitchen remodel / interior renovation",        points: "765,92 1012,92 1012,230 765,230",        color: "rgba(245,158,11,0.28)",  stroke: "#f59e0b" },
-  { id: "greatroom",  label: "Residential Remodel",       desc: "Great room / living area renovation",          points: "464,92 765,92 765,261 464,261",          color: "rgba(245,158,11,0.2)",   stroke: "#f59e0b" },
-  { id: "bathroom_e", label: "Plumbing",                  desc: "Bathroom plumbing / fixture installation",     points: "1011,92 1203,92 1203,215 1011,215",      color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  { id: "bedroom1",   label: "Residential Remodel",       desc: "Bedroom renovation",                           points: "82,92 383,92 383,230 82,230",            color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "bedroom2",   label: "Residential Remodel",       desc: "Bedroom renovation",                           points: "27,353 382,353 382,522 27,522",          color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
-  { id: "balcony_e",  label: "Residential Addition",      desc: "Upper balcony / deck addition",                points: "464,15 1011,15 1011,107 464,107",        color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
-  { id: "driveway_e", label: "Driveway (Paver)",          desc: "Paver driveway installation",                  points: "1025,77 1366,77 1366,368 1025,368",      color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
-  { id: "pool_e",     label: "Pool & Spa",                desc: "New swimming pool / spa installation",         points: "820,476 1366,476 1366,768 820,768",      color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
-  { id: "pdeck_e",    label: "Pool Deck",                 desc: "Pool deck construction",                       points: "751,422 1366,422 1366,768 751,768",      color: "rgba(245,158,11,0.15)",  stroke: "#f59e0b" },
-  { id: "ac_e",       label: "A/C Replacement",           desc: "Air conditioning change-out (≤5 tons)",        points: "0,353 109,353 109,430 0,430",            color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
-  { id: "panel_e",    label: "Electrical Service",        desc: "Panel upgrade, service change",                points: "491,322 573,322 573,384 491,384",        color: "rgba(234,179,8,0.48)",   stroke: "#eab308" },
-  { id: "fence_e",    label: "Fence / Gate",              desc: "Fence and gate installation",                  points: "0,0 55,0 55,768 0,768",                  color: "rgba(34,197,94,0.25)",   stroke: "#22c55e" },
-  { id: "lawn_e",     label: "Irrigation System",         desc: "Landscape / sprinkler system",                 points: "55,599 765,599 765,768 55,768",          color: "rgba(16,185,129,0.22)",  stroke: "#10b981" },
+  { id: "bedroom1",   label: "Residential Remodel",  desc: "Bedroom renovation",                       points: "346,159 449,159 449,260 346,260",        color: "rgba(245,158,11,0.20)",  stroke: "#f59e0b" },
+  { id: "bath1",      label: "Plumbing",             desc: "Bathroom plumbing / fixture installation",  points: "449,158 492,158 492,247 449,247",        color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "bath2",      label: "Plumbing",             desc: "Bathroom plumbing / fixture installation",  points: "336,266 391,266 391,336 336,336",        color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "closet",     label: "Residential Remodel",  desc: "Closet / interior renovation",              points: "393,288 449,288 449,338 393,338",        color: "rgba(245,158,11,0.18)",  stroke: "#f59e0b" },
+  { id: "garage",     label: "Residential Remodel",  desc: "Garage conversion / remodel",               points: "333,345 492,345 492,503 333,503",        color: "rgba(245,158,11,0.20)",  stroke: "#f59e0b" },
+  { id: "familyroom", label: "Residential Remodel",  desc: "Great room / living area renovation",       points: "500,228 661,228 661,390 500,390",       color: "rgba(245,158,11,0.22)",  stroke: "#f59e0b" },
+  { id: "dining",     label: "Residential Remodel",  desc: "Dining area renovation",                   points: "500,390 630,390 630,518 500,518",       color: "rgba(245,158,11,0.20)",  stroke: "#f59e0b" },
+  { id: "kitchen",    label: "Residential Remodel",  desc: "Kitchen remodel / interior renovation",     points: "663,230 775,230 775,392 663,392",       color: "rgba(245,158,11,0.28)",  stroke: "#f59e0b" },
+  { id: "laundry",    label: "Plumbing",             desc: "Laundry room plumbing",                     points: "816,161 876,161 876,240 816,240",        color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "bedroom2",   label: "Residential Remodel",  desc: "Bedroom renovation",                       points: "780,238 871,238 871,353 780,353",       color: "rgba(245,158,11,0.20)",  stroke: "#f59e0b" },
+  { id: "bath3",      label: "Plumbing",             desc: "Bathroom plumbing / fixture installation",  points: "763,412 873,412 873,518 763,518",        color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "bath4",      label: "Plumbing",             desc: "Bathroom plumbing / fixture installation",  points: "806,358 872,358 872,410 806,410",        color: "rgba(6,182,212,0.32)",   stroke: "#06b6d4" },
+  { id: "pool_e",     label: "Pool & Spa",           desc: "New swimming pool / spa installation",      points: "896,137 895,256 1038,256 1038,288 1094,287 1094,136", color: "rgba(6,182,212,0.32)", stroke: "#06b6d4" },
+  { id: "patio1",     label: "Patio / Slab",         desc: "Paver patio or concrete slab",              points: "862,79 881,271 903,275 903,336 1038,332 1034,261 898,257 893,138 1092,140 1139,77", color: "rgba(245,158,11,0.18)", stroke: "#f59e0b" },
+  { id: "patio2",     label: "Patio / Slab",          desc: "Paver patio or concrete slab",             points: "1139,77 1139,327 1039,328 1038,288 1094,285 1094,141", color: "rgba(245,158,11,0.18)", stroke: "#f59e0b" },
+  { id: "roof_e",     label: "Roof / Re-Roof",        desc: "Roofing replacement or repair",            points: "881,266 904,270 904,523 878,521",       color: "rgba(239,68,68,0.18)",   stroke: "#ef4444" },
+  { id: "balcony1",   label: "Residential Addition",  desc: "Balcony / deck addition",                 points: "502,156 500,227 659,230 658,162",       color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  { id: "balcony2",   label: "Residential Addition",  desc: "Balcony / deck addition",                  points: "661,106 865,106 865,157 661,157",       color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  { id: "balcony3",   label: "Residential Addition",  desc: "Balcony / deck addition",                  points: "641,474 760,474 760,514 641,514",       color: "rgba(99,102,241,0.28)",  stroke: "#6366f1" },
+  { id: "ac_e",       label: "A/C Replacement",       desc: "Air conditioning change-out (≤5 tons)",     points: "904,424 939,424 939,498 904,498",       color: "rgba(14,165,233,0.4)",   stroke: "#0ea5e9" },
+  { id: "driveway_e", label: "Driveway (Paver)",      desc: "Paver driveway installation",              points: "368,505 505,505 505,731 368,731",       color: "rgba(107,114,128,0.28)", stroke: "#6b7280" },
+  { id: "walkway_e",  label: "Walkway / Sidewalk",     desc: "Concrete paths and sidewalk",              points: "671,534 667,564 508,561 504,596 670,592 671,730 721,730 722,535", color: "rgba(156,163,175,0.35)", stroke: "#9ca3af" },
+  { id: "sidewalk_e", label: "Walkway / Sidewalk",     desc: "Public sidewalk / curb installation",      points: "3,675 1373,679 1377,707 -1,706",        color: "rgba(156,163,175,0.28)", stroke: "#9ca3af" },
+  { id: "fence_e",    label: "Fence / Gate",           desc: "Fence and gate installation",              points: "171,672 179,21 1200,21 1209,679 1189,672 1179,46 204,39 199,668", color: "rgba(34,197,94,0.25)", stroke: "#22c55e" },
 ];
 
 const COMMERCIAL_ZONES = [
@@ -118,11 +128,10 @@ const LEGENDS = {
   ],
   eagle: [
     { label: "Roof / Re-Roof", color: "#ef4444" }, { label: "Residential Remodel", color: "#f59e0b" },
-    { label: "Plumbing", color: "#06b6d4" }, { label: "Electrical Service", color: "#eab308" },
-    { label: "A/C Replacement", color: "#0ea5e9" }, { label: "Residential Addition", color: "#6366f1" },
-    { label: "Pool & Spa", color: "#06b6d4" }, { label: "Pool Deck", color: "#f59e0b" },
-    { label: "Driveway", color: "#6b7280" }, { label: "Fence / Gate", color: "#22c55e" },
-    { label: "Irrigation System", color: "#10b981" },
+    { label: "Plumbing", color: "#06b6d4" }, { label: "A/C Replacement", color: "#0ea5e9" },
+    { label: "Residential Addition", color: "#6366f1" }, { label: "Pool & Spa", color: "#06b6d4" },
+    { label: "Patio / Slab", color: "#f59e0b" }, { label: "Driveway (Paver)", color: "#6b7280" },
+    { label: "Walkway / Sidewalk", color: "#9ca3af" }, { label: "Fence / Gate", color: "#22c55e" },
   ],
   commercial: [
     { label: "EV Charging Station", color: "#22c55e" }, { label: "Light Pole / Utility", color: "#eab308" },
