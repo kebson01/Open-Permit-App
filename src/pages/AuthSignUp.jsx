@@ -157,7 +157,7 @@ export default function AuthSignUp() {
         {/* Google Button */}
         <button
           onClick={async () => {
-            const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/", queryParams: { access_type: "offline", prompt: "consent" } } });
+            const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
             if (error) setError(error.message);
           }}
           style={{ background: "white", border: "1px solid #dadce0", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", cursor: "pointer", fontSize: 14, fontWeight: 500, color: "#3c4043" }}

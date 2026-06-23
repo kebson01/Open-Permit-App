@@ -1,11 +1,10 @@
 import { X } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 
-// This modal redirects to Base44's built-in login page.
-// It does NOT use Supabase auth.
+// This modal triggers Supabase Google OAuth (not Base44 native login).
 export default function AuthModal({ onClose }) {
-  const handleLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
   };
 
   return (
