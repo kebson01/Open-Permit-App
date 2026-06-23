@@ -5,7 +5,7 @@ import {
   Calculator, ShieldCheck, BookOpen, Search, Menu, X,
   User, LogOut, Wrench
 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 
@@ -24,7 +24,8 @@ const TOOLS_ITEMS = [
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const { user, signOut, loading: authLoading, displayName, firstName, initial } = useAuth();
+  const [user, setUser]               = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [toolsOpen, setToolsOpen]     = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -34,6 +35,20 @@ export default function Layout({ children, currentPageName }) {
   const toolsRef    = useRef(null);
   const accountRef  = useRef(null);
   const location    = useLocation();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user || authLoading) return;
@@ -75,7 +90,10 @@ export default function Layout({ children, currentPageName }) {
 
   const isActive = (path) => location.pathname === path || currentPageName === path.replace("/", "");
 
-  const isAdmin = user?.role === "admin";
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+  const firstName   = displayName.split(" ")[0];
+  const initial     = displayName[0]?.toUpperCase() || "U";
+  const isAdmin     = user?.user_metadata?.role === "admin" || user?.app_metadata?.role === "admin";
 
   if (currentPageName === "CityPortalPublic") return <>{children}</>;
 
@@ -207,7 +225,7 @@ export default function Layout({ children, currentPageName }) {
                       </Link>
                       <div style={{ borderTop: "1px solid #e6e8ea", margin: "4px 0" }} />
                       <button
-                        onClick={async () => { await signOut(); setAccountOpen(false); }}
+                        onClick={async () => { await supabase.auth.signOut(); setAccountOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm"
                         style={{ fontFamily: FONTS.nav, color: "#ba1a1a" }}
                         onMouseEnter={e => e.currentTarget.style.background = "#ffdad6"}
@@ -292,7 +310,7 @@ export default function Layout({ children, currentPageName }) {
                       <ShieldCheck className="w-4 h-4" /> Admin
                     </Link>
                   )}
-                  <button onClick={async () => { await signOut(); setMobileOpen(false); }}
+                  <button onClick={async () => { await supabase.auth.signOut(); setMobileOpen(false); }}
                     className="w-full flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#ba1a1a] hover:bg-[#ffdad6]"
                     style={{ fontFamily: FONTS.nav }}>
                     <LogOut className="w-4 h-4" /> Sign Out

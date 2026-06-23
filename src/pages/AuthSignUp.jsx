@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
-import { base44 } from "@/api/base44Client";
 import { Loader2, CheckCircle2, Home, Wrench, Shield } from "lucide-react";
 
 const PRIMARY = "#1A56DB";
@@ -157,8 +156,9 @@ export default function AuthSignUp() {
 
         {/* Google Button */}
         <button
-          onClick={() => {
-            base44.auth.redirectToLogin(window.location.href);
+          onClick={async () => {
+            const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+            if (error) setError(error.message);
           }}
           style={{ background: "white", border: "1px solid #dadce0", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", cursor: "pointer", fontSize: 14, fontWeight: 500, color: "#3c4043" }}
           onMouseEnter={e => { e.currentTarget.style.background = "#f8f9fa"; e.currentTarget.style.borderColor = "#c6c6c6"; }}
