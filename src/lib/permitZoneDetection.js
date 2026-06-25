@@ -64,20 +64,23 @@ const ZONE_SCHEMA = {
             type: "string",
             description: "Brief, plain-language reason a permit is (or isn't) needed.",
           },
-          box: {
-            type: "object",
+          polygon: {
+            type: "array",
             description:
-              "Bounding box around the feature, as fractions of the image (0=left/top, 1=right/bottom).",
-            properties: {
-              x: { type: "number", description: "Left edge, 0-1." },
-              y: { type: "number", description: "Top edge, 0-1." },
-              w: { type: "number", description: "Width, 0-1." },
-              h: { type: "number", description: "Height, 0-1." },
+              "Ordered points tracing the OUTLINE of the feature as you see it, going clockwise. Each point is a fraction of the image (x: 0=left, 1=right; y: 0=top, 1=bottom). Use 4-10 points that hug the actual visible edges of the object — not a loose rectangle.",
+            minItems: 3,
+            maxItems: 12,
+            items: {
+              type: "object",
+              properties: {
+                x: { type: "number", description: "Horizontal position, 0-1." },
+                y: { type: "number", description: "Vertical position, 0-1." },
+              },
+              required: ["x", "y"],
             },
-            required: ["x", "y", "w", "h"],
           },
         },
-        required: ["label", "permit_required", "box"],
+        required: ["label", "permit_required", "polygon"],
       },
     },
   },
@@ -86,8 +89,9 @@ const ZONE_SCHEMA = {
 
 /**
  * Detect permit-relevant zones in a photo and return them with normalized
- * bounding boxes, so the UI can draw interactive highlights directly on the
- * user's own image (the AI equivalent of the static HouseView diagram).
+ * outline polygons, so the UI can draw interactive highlights that hug the
+ * shape of each feature directly on the user's own image (the AI equivalent of
+ * the static HouseView diagram).
  *
  * @param {File} file  The image captured/uploaded by the user.
  * @param {string} [cityName]  City used to scope wording (defaults to Broward County).
@@ -101,33 +105,39 @@ export async function detectPermitZones(file, cityName) {
   const prompt = `You are a Florida (${cityName || "Broward County"}) building-permit assistant.
 Look at this photo of a property and identify every visible structure or feature that maps to one of these permit categories: ${PERMIT_ZONE_LABELS.join(", ")}.
 
-For each one, return a tight bounding box around it using fractions of the image width and height (x, y are the top-left corner; w, h are the size — all between 0 and 1). Only include features you can actually see in the photo. Do not invent zones. If a feature type appears multiple times (e.g. several windows), return a separate entry for each instance. Set permit_required based on typical Florida/${cityName || "Broward County"} rules (remember Broward is a High Velocity Hurricane Zone). Keep notes to one short sentence.`;
+For each one, trace a tight polygon around the feature's actual visible outline using points expressed as fractions of the image width and height (x and y between 0 and 1, ordered clockwise). Hug the real edges of the object — for example, follow the waterline of a pool or the frame of a window — rather than drawing a loose rectangle. Use 4-10 points per feature. Only include features you can actually see in the photo. Do not invent zones. If a feature type appears multiple times (e.g. several windows), return a separate entry for each instance. Set permit_required based on typical Florida/${cityName || "Broward County"} rules (remember Broward is a High Velocity Hurricane Zone). Keep notes to one short sentence.`;
 
   const result = await invokeLLM({
     prompt,
     response_json_schema: ZONE_SCHEMA,
     image_base64: base64,
     image_media_type: mediaType,
-    max_tokens: 2048,
+    max_tokens: 3072,
   });
 
   const zones = Array.isArray(result?.zones) ? result.zones : [];
-  // Defensively clamp boxes into [0,1] so a stray value can't break the overlay.
   const clamp = (n) => Math.min(1, Math.max(0, Number(n) || 0));
+
   const cleaned = zones
-    .filter((z) => z && z.box && z.label)
-    .map((z) => ({
-      label: z.label,
-      permit_required: !!z.permit_required,
-      note: z.note || "",
-      box: {
-        x: clamp(z.box.x),
-        y: clamp(z.box.y),
-        w: clamp(z.box.w),
-        h: clamp(z.box.h),
-      },
-    }))
-    .filter((z) => z.box.w > 0.01 && z.box.h > 0.01);
+    .filter((z) => z && z.label)
+    .map((z) => {
+      // Prefer a traced polygon; fall back to a rectangle derived from a box
+      // so a zone never disappears if the model returns the older shape.
+      let points = Array.isArray(z.polygon)
+        ? z.polygon.filter((p) => p && p.x != null && p.y != null).map((p) => ({ x: clamp(p.x), y: clamp(p.y) }))
+        : [];
+      if (points.length < 3 && z.box) {
+        const x = clamp(z.box.x), y = clamp(z.box.y), w = clamp(z.box.w), h = clamp(z.box.h);
+        points = [
+          { x, y },
+          { x: x + w, y },
+          { x: x + w, y: y + h },
+          { x, y: y + h },
+        ];
+      }
+      return { label: z.label, permit_required: !!z.permit_required, note: z.note || "", polygon: points };
+    })
+    .filter((z) => z.polygon.length >= 3);
 
   return { what_i_see: result?.what_i_see || "", zones: cleaned };
 }

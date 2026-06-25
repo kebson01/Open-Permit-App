@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 
@@ -33,14 +33,41 @@ const hexToRgba = (hex, a) => {
   return `rgba(${r},${g},${b},${a})`;
 };
 
+const bbox = (poly) => {
+  const xs = poly.map((p) => p.x);
+  const ys = poly.map((p) => p.y);
+  return { minX: Math.min(...xs), minY: Math.min(...ys), cx: (Math.min(...xs) + Math.max(...xs)) / 2 };
+};
+
 /**
- * Draws AI-detected permit zones as interactive highlights over the user's own
- * photo. Mirrors the HouseView tap-to-reveal interaction: tap a box to see the
- * permit detail and jump straight into the application.
+ * Draws AI-detected permit zones as interactive, shape-tracing highlights over
+ * the user's own photo. Mirrors the HouseView interaction: outlines show by
+ * default; tapping/hovering a zone reveals its fill, label, and detail.
  */
 export default function PhotoZoneOverlay({ photo, zones = [], city }) {
   const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
   const [showZones, setShowZones] = useState(true);
+  const imgRef = useRef(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  const measure = useCallback(() => {
+    const el = imgRef.current;
+    if (el && el.clientWidth) setSize({ w: el.clientWidth, h: el.clientHeight });
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const el = imgRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
 
   if (!photo) return null;
 
@@ -49,46 +76,80 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
   return (
     <div className="space-y-3">
       <div className="relative w-full rounded-xl overflow-hidden bg-gray-900 select-none">
-        <img src={photo} alt="Your property" className="w-full max-h-80 object-contain" draggable={false} />
+        <img
+          ref={imgRef}
+          src={photo}
+          alt="Your property"
+          className="block w-full max-h-80 object-contain"
+          draggable={false}
+          onLoad={measure}
+        />
 
-        {zones.map((z, i) => {
-          const color = colorFor(z.label);
-          const isActive = selected === i;
-          const visible = showZones || isActive;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setSelected(isActive ? null : i)}
-              className="absolute rounded-md transition-all"
-              style={{
-                left: `${z.box.x * 100}%`,
-                top: `${z.box.y * 100}%`,
-                width: `${z.box.w * 100}%`,
-                height: `${z.box.h * 100}%`,
-                border: `2px solid ${visible ? color : "transparent"}`,
-                background: isActive ? hexToRgba(color, 0.28) : visible ? hexToRgba(color, 0.14) : "transparent",
-                boxShadow: isActive ? `0 0 0 2px ${hexToRgba(color, 0.5)}` : "none",
-              }}
-            >
-              {visible && (
-                <span
-                  className="absolute -top-6 left-0 whitespace-nowrap text-[10px] font-semibold text-white px-1.5 py-0.5 rounded shadow"
-                  style={{ background: color }}
-                >
-                  {z.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {size.w > 0 && (
+          <svg
+            className="absolute inset-0"
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${size.w} ${size.h}`}
+            preserveAspectRatio="none"
+            style={{ pointerEvents: "none" }}
+          >
+            {zones.map((z, i) => {
+              const color = colorFor(z.label);
+              const isActive = selected === i || hovered === i;
+              const visible = showZones || isActive;
+              const pts = z.polygon.map((p) => `${p.x * size.w},${p.y * size.h}`).join(" ");
+              return (
+                <g key={i} style={{ pointerEvents: "auto", cursor: "pointer" }}>
+                  {/* Wide invisible hit area */}
+                  <polygon points={pts} fill="transparent" stroke="transparent" strokeWidth={14} />
+                  <polygon
+                    points={pts}
+                    fill={isActive ? hexToRgba(color, 0.3) : visible ? hexToRgba(color, 0.08) : "transparent"}
+                    stroke={visible ? color : "transparent"}
+                    strokeWidth={isActive ? 3 : 2}
+                    strokeDasharray={isActive ? "0" : "6,4"}
+                    strokeLinejoin="round"
+                    style={{ transition: "fill 0.15s, stroke 0.15s" }}
+                    onClick={() => setSelected(selected === i ? null : i)}
+                    onMouseEnter={() => setHovered(i)}
+                    onMouseLeave={() => setHovered((h) => (h === i ? null : h))}
+                  />
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
+        {/* Labels (HTML, crisp) only for the active zone to avoid clutter */}
+        {size.w > 0 &&
+          zones.map((z, i) => {
+            const isActive = selected === i || hovered === i;
+            if (!isActive) return null;
+            const { minX, minY, cx } = bbox(z.polygon);
+            const color = colorFor(z.label);
+            return (
+              <span
+                key={`lbl-${i}`}
+                className="absolute z-10 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-white px-2 py-0.5 rounded shadow pointer-events-none"
+                style={{
+                  left: `${cx * 100}%`,
+                  top: `${minY * 100}%`,
+                  transform: "translate(-50%, -120%)",
+                  background: color,
+                }}
+              >
+                {z.label}
+              </span>
+            );
+          })}
 
         {/* Toggle + hint */}
         {zones.length > 0 && (
           <>
             <button
               onClick={() => setShowZones((s) => !s)}
-              className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-black/55 backdrop-blur-sm rounded-lg text-white text-xs font-medium"
+              className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-black/55 backdrop-blur-sm rounded-lg text-white text-xs font-medium z-10"
             >
               {showZones ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
               {showZones ? "Hide" : "Show"}
