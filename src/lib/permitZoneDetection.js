@@ -67,9 +67,9 @@ const ZONE_SCHEMA = {
           polygon: {
             type: "array",
             description:
-              "Ordered points tracing the OUTLINE of the feature as you see it, going clockwise. Each point is a fraction of the image (x: 0=left, 1=right; y: 0=top, 1=bottom). Use 4-10 points that hug the actual visible edges of the object — not a loose rectangle.",
-            minItems: 3,
-            maxItems: 12,
+              "Ordered points tracing the OUTLINE of the feature as you see it, going clockwise. Each point is a fraction of the image (x: 0=left, 1=right; y: 0=top, 1=bottom). Use 6-16 points placed ON the object's actual edges, with extra points along curved or angled edges so the outline hugs the real silhouette. Do NOT draw a loose rectangle or a convex outline that bulges past the object, and do NOT include surrounding sky, wall, grass, or neighboring objects.",
+            minItems: 4,
+            maxItems: 18,
             items: {
               type: "object",
               properties: {
@@ -105,7 +105,7 @@ export async function detectPermitZones(file, cityName) {
   const prompt = `You are a Florida (${cityName || "Broward County"}) building-permit assistant.
 Look at this photo of a property and identify every visible structure or feature that maps to one of these permit categories: ${PERMIT_ZONE_LABELS.join(", ")}.
 
-For each one, trace a tight polygon around the feature's actual visible outline using points expressed as fractions of the image width and height (x and y between 0 and 1, ordered clockwise). Hug the real edges of the object — for example, follow the waterline of a pool or the frame of a window — rather than drawing a loose rectangle. Use 4-10 points per feature. Only include features you can actually see in the photo. Do not invent zones. If a feature type appears multiple times (e.g. several windows), return a separate entry for each instance. Set permit_required based on typical Florida/${cityName || "Broward County"} rules (remember Broward is a High Velocity Hurricane Zone). Keep notes to one short sentence.`;
+For each one, trace a TIGHT polygon that hugs the feature's actual visible outline, using points expressed as fractions of the image width and height (x and y between 0 and 1, ordered clockwise). Put every point directly on the object's edge and add extra points along curved or angled edges (e.g. follow the slope of a roofline, the waterline of a pool, or the frame of a window). Use 6-16 points per feature. Do NOT draw a loose rectangle, do NOT draw a convex outline that bulges past the object, and do NOT include any surrounding sky, wall, grass, or neighboring objects inside the polygon. Only include features you can actually see in the photo. Do not invent zones. If a feature type appears multiple times (e.g. several windows), return a separate entry for each instance. Set permit_required based on typical Florida/${cityName || "Broward County"} rules (remember Broward is a High Velocity Hurricane Zone). Keep notes to one short sentence.`;
 
   const result = await invokeLLM({
     prompt,
