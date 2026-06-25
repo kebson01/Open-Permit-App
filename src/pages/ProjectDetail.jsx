@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import {
   ArrowLeft, Loader2, Edit2, Save, X, Send,
@@ -241,7 +241,7 @@ export default function ProjectDetail() {
   const [saving, setSaving]         = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(user => { if (user) setCurrentUser(user); }).catch(() => {});
+    getCurrentUser().then(user => { if (user) setCurrentUser(user); }).catch(() => {});
   }, []);
 
   useEffect(() => {

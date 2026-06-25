@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/ai";
 import * as db from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, Calculator, Loader2, AlertCircle } from "lucide-react";
@@ -41,7 +41,7 @@ export default function ProjectFeeEstimate({ project }) {
       ? `Technology fee: $${surcharge.technology_admin || 0}/permit, Board of Rules: $${surcharge.board_of_rules_rate || 0}/$1000`
       : "No surcharges configured.";
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeLLM({
       prompt: `You are a permit fee estimator for ${project.city_name}, Florida.
 
 Project: ${project.project_type?.replace(/_/g, " ")} - "${project.name}"

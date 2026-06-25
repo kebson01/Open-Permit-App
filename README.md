@@ -1,39 +1,44 @@
-**Welcome to your Base44 project** 
+# Open Permit
 
-**About**
+Building permits, simplified — apply, track, and submit permits across Broward County, Florida.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+A standalone Vite + React application backed by Supabase (database, auth, and Edge Functions). AI features are powered by the Anthropic API through Supabase Edge Functions.
 
-This project contains everything you need to run your app locally.
+## Getting started
 
-**Edit the code in your local development environment**
+**Prerequisites:** Node.js 18+ and npm.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+1. Clone the repository and navigate into it.
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Create an `.env.local` file with your Supabase project credentials:
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_anon_key
+   ```
+4. Run the app:
+   ```
+   npm run dev
+   ```
 
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+## Build
 
 ```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+npm run build      # outputs to dist/
+npm run preview    # serve the production build locally
 ```
 
-Run the app: `npm run dev`
+## Backend
 
-**Publish your changes**
+- **Database & Auth:** Supabase. The app role is stored in the user's `user_metadata`.
+- **Edge Functions** (`supabase/functions/`): `invoke-llm`, `agent-chat`, `project-ai-assistant`,
+  `open-permit-ai`, `extract-permit-from-pdf`, and `invite-user`. The AI functions call the
+  Anthropic API and require an `ANTHROPIC_API_KEY` secret set on the Supabase project. The
+  `invite-user` function additionally uses the project's service-role key (injected automatically).
 
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Deploy a function with the Supabase CLI:
+```
+supabase functions deploy <name>
+```

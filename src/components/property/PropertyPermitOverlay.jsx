@@ -66,9 +66,9 @@ const LABEL_TO_KEYWORDS = {
 };
 
 const IMAGES = {
-  front:      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
-  back:       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/3119749c5_BackView.png",
-  eagle:      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4422873fc_EagleEyeView.png",
+  front:      "/property/FrontView.png",
+  back:       "/property/BackView.png",
+  eagle:      "/property/EagleEyeView.png",
 };
 
 const IMAGE_DIMS = {

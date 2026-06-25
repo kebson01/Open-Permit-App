@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/ai";
 import * as db from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -54,7 +54,7 @@ export default function ProjectExpertBriefing({ project }) {
       ? `Tech/Admin fee: $${surcharge.technology_admin || 0}/permit, Board of Rules: $${surcharge.board_of_rules_rate || 0}/$1000`
       : "";
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeLLM({
       prompt: `You are an expert building permit consultant for ${project.city_name}, Florida (Broward County). 
 A user has started a project and needs your expert guidance. Analyze their project and provide a complete briefing.
 

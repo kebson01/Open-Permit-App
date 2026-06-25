@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Sparkles } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import AIResponseCard from "./AIResponseCard";
 
 const PAGE_PROMPTS = {
@@ -125,10 +125,8 @@ export default function AIDrawer({ open, onClose, currentPageName, initialMessag
 
     const history = messages.slice(-8).map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
 
-    const response = await base44.functions.invoke("openPermitAI", {
-      message: content,
-      history,
-      pageName: pageDisplay,
+    const response = await supabase.functions.invoke("open-permit-ai", {
+      body: { message: content, history, pageName: pageDisplay },
     });
 
     const data = response.data;

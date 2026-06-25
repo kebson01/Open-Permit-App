@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
 
 const IMAGES = {
-  front:               "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ecd30d709_FrontView.png",
-  back:                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/3119749c5_BackView.png",
-  eagle:               "https://media.base44.com/images/public/69ac5571087590fc03d44b73/ba18f0e8a_EagleEyeView2.png",
-  commercial:          "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
-  commercial_building: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/add3d106a_commercialProperty.png",
+  front:               "/property/FrontView.png",
+  back:                "/property/BackView.png",
+  eagle:               "/property/EagleEyeView2.png",
+  commercial:          "/property/commercialProperty.png",
+  commercial_building: "/property/commercialProperty.png",
 };
 
 const IMAGE_DIMS = {

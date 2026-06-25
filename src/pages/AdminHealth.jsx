@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import { CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 
@@ -16,7 +16,7 @@ export default function AdminHealth() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    getCurrentUser().then(u => {
       setCurrentUser(u);
       if (u?.role === "admin") loadData();
       else setLoading(false);

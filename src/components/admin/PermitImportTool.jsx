@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { Loader2, Download, Check, X, Plus, Trash2, ExternalLink, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -334,7 +334,7 @@ export default function PermitImportTool() {
     setPreviewData(null);
     setImportSuccess(false);
 
-    const res = await base44.functions.invoke("extractPermitFromPDF", { pdfUrl: pdfUrl.trim(), city });
+    const res = await supabase.functions.invoke("extract-permit-from-pdf", { body: { pdfUrl: pdfUrl.trim(), city } });
     const data = res.data;
 
     if (data?.error) {

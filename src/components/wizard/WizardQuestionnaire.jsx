@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/ai";
 import { db } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -129,7 +129,7 @@ export default function WizardQuestionnaire({ intro, onNext, onBack }) {
         }
       } catch {}
 
-      const results = await base44.integrations.Core.InvokeLLM({
+      const results = await invokeLLM({
         prompt: `You are an expert permit consultant for Florida municipalities. Based on the following project details, determine exactly what permits are needed.
 
 PROJECT DESCRIPTION: "${description}"

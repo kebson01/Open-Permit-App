@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { inviteUser } from "@/lib/ai";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, UserPlus, CheckCircle2 } from "lucide-react";
@@ -14,14 +14,7 @@ export default function InviteCityAdminModal({ city, onClose }) {
     if (!email.trim()) return;
     setSending(true);
     setError("");
-    await base44.users.inviteUser(email.trim(), "city_admin");
-    // After invite, we can't set city_name directly since the user doesn't exist yet.
-    // We send an email note as a reminder.
-    await base44.integrations.Core.SendEmail({
-      to: email.trim(),
-      subject: `You've been invited to manage ${city.name} permits`,
-      body: `You've been invited as a city administrator for ${city.name}.\n\nOnce you log in, your account will need to be assigned to "${city.name}" by the system administrator.\n\nPlease contact your admin after logging in to complete setup.`,
-    });
+    await inviteUser(email.trim(), "city_admin", { city_name: city.name });
     setSending(false);
     setSent(true);
   };

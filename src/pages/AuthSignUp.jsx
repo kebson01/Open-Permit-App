@@ -65,7 +65,7 @@ export default function AuthSignUp() {
       <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <div className="text-center mb-6">
           <img
-            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+            src="/icon-master.png"
             alt="Open Permit"
             className="h-20 w-20 object-contain mx-auto mb-3"
           />

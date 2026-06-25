@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { agentChat } from "@/lib/ai";
 import { Sparkles, Send, Globe, ChevronDown, ChevronUp } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
@@ -46,18 +46,18 @@ Homestead: ${p.HOMESTEAD_FLAG === "Y" ? "Yes" : "No"}${flags}${permitHistory}`;
 
 export default function PropertyAIChat({ property, permits = [] }) {
   const [expanded, setExpanded] = useState(false);
-  const [conversation, setConversation] = useState(null);
+  const [context, setContext] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [initializing, setInitializing] = useState(false);
   const messagesEndRef = useRef(null);
 
   const shortAddress = property.full_address?.split(",")[0] || [property.SITUS_STREET_NUMBER, property.SITUS_STREET_NAME].filter(Boolean).join(" ");
 
   useEffect(() => {
-    if (expanded && !conversation && !initializing) {
-      initConversation();
+    if (expanded && !context) {
+      const ctx = buildPropertyContext(property, permits);
+      setContext(`${ctx}\n\nYou are advising on this specific property. When answering questions, always reference this property's details and search the web for the most current zoning and permit information for ${property.city_name || property.SITUS_CITY || "Broward County"}, Florida.`);
     }
   }, [expanded, permits.length]);
 
@@ -65,59 +65,27 @@ export default function PropertyAIChat({ property, permits = [] }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const initConversation = async () => {
-    setInitializing(true);
-    const ctx = buildPropertyContext(property, permits);
-    const conv = await base44.agents.createConversation({
-      agent_name: "property_permit_consultant",
-      metadata: {
-        name: `${shortAddress} — Permit Consultation`,
-        description: ctx,
-      },
-    });
-
-    // Send initial context message silently
-    await base44.agents.addMessage(conv, {
-      role: "user",
-      content: `[SYSTEM CONTEXT - do not show this to the user, just acknowledge it internally]\n${ctx}\n\nYou are now advising on this specific property. When answering questions, always reference this property's details and search the web for the most current zoning and permit information for ${property.city_name || property.SITUS_CITY || "Broward County"}, Florida.`,
-    });
-
-    setConversation(conv);
-    setInitializing(false);
-
-    // Subscribe to updates
-    base44.agents.subscribeToConversation(conv.id, (data) => {
-      const visibleMessages = data.messages.filter(
-        m => !m.content?.startsWith("[SYSTEM CONTEXT")
-      );
-      setMessages(visibleMessages);
-    });
-  };
-
   const send = async (text) => {
     const userText = text || input.trim();
-    if (!userText || loading || !conversation) return;
+    if (!userText || loading || !context) return;
     setInput("");
+    const next = [...messages, { role: "user", content: userText }];
+    setMessages(next);
     setLoading(true);
-
-    await base44.agents.addMessage(conversation, {
-      role: "user",
-      content: userText,
-    });
-
+    try {
+      const { reply } = await agentChat({ messages: next, context });
+      setMessages([...next, { role: "assistant", content: reply }]);
+    } catch (err) {
+      setMessages([...next, { role: "assistant", content: `Sorry, something went wrong: ${err.message}` }]);
+    }
     setLoading(false);
   };
 
-  const handleSuggestedQuestion = async (q) => {
-    if (!conversation) return;
-    setLoading(true);
-    setInput("");
-    await base44.agents.addMessage(conversation, { role: "user", content: q });
-    setLoading(false);
-  };
+  const handleSuggestedQuestion = (q) => send(q);
 
-  const visibleMessages = messages.filter(m => m.role === "user" || m.role === "assistant");
-  const isReady = conversation && !initializing;
+  const visibleMessages = messages;
+  const initializing = expanded && !context;
+  const isReady = !!context;
   const hasChat = visibleMessages.length > 0;
 
   return (

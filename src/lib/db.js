@@ -1,7 +1,6 @@
 /**
  * lib/db.js — Supabase data layer
  * All table/view names and column names match the actual Supabase schema.
- * Auth still uses base44.auth.* (unchanged).
  */
 
 import { supabase } from '@/lib/supabaseClient';

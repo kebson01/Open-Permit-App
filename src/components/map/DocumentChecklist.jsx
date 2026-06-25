@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CheckSquare, Square, LogIn } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { isAuthenticated, redirectToLogin } from "@/lib/auth";
 
 const DOC_EXPLANATIONS = {
   "BCUBPA": "Broward County's standard permit application form. Download it from the Broward County website.",
@@ -28,7 +28,7 @@ export default function DocumentChecklist({ documents, permitName }) {
     setChecked(next);
     // Show save prompt after checking any item (only once per session)
     if (next[doc] && !showSavePrompt) {
-      base44.auth.isAuthenticated().then(authed => {
+      isAuthenticated().then(authed => {
         if (!authed) setShowSavePrompt(true);
       });
     }
@@ -81,7 +81,7 @@ export default function DocumentChecklist({ documents, permitName }) {
             <p className="text-xs font-semibold text-blue-800 mb-0.5">Save your checklist</p>
             <p className="text-xs text-blue-600 mb-2">Create a free account to save your progress and come back anytime.</p>
             <button
-              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              onClick={() => redirectToLogin()}
               className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
             >
               Sign up / Log in →

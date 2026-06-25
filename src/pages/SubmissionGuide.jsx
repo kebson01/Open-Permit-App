@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser, redirectToLogin } from "@/lib/auth";
 import * as db from "@/lib/db";
 import { Link } from "react-router-dom";
 import {
@@ -50,7 +50,7 @@ export default function SubmissionGuidePage() {
   const [guestEmail, setGuestEmail] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    getCurrentUser().then(u => {
       if (u) { setCurrentUser(u); setMode("app"); loadGuides(u.email); }
     }).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
@@ -78,7 +78,7 @@ export default function SubmissionGuidePage() {
 
   const handleGuideUpdate = (updated) => setActiveGuide(updated);
 
-  const switchToAppMode = () => base44.auth.redirectToLogin(window.location.href);
+  const switchToAppMode = () => redirectToLogin();
 
   const handleModeChange = (val) => {
     if (val === "app" && !currentUser) { switchToAppMode(); return; }
@@ -134,7 +134,7 @@ export default function SubmissionGuidePage() {
                   <Callout variant="info" title="Save your info for next time">
                     Create a free account to auto-fill your next application instantly.
                     <div className="mt-2">
-                      <Btn variant="secondary" size="sm" onClick={() => base44.auth.redirectToLogin(window.location.href)}>
+                      <Btn variant="secondary" size="sm" onClick={() => redirectToLogin()}>
                         <LogIn className="w-3.5 h-3.5" /> Create Free Account →
                       </Btn>
                     </div>

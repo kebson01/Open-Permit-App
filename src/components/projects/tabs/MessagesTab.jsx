@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/ai";
 import * as db from "@/lib/db";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, Loader2, EyeOff } from "lucide-react";
@@ -50,7 +50,7 @@ export default function MessagesTab({ project, currentUser, mode }) {
 
   const generateUpdate = async () => {
     setGenerating(true);
-    const res = await base44.integrations.Core.InvokeLLM({
+    const res = await invokeLLM({
       prompt: `Draft a brief friendly project status update message from a contractor to their homeowner client.
 Project: "${project.name}" | Status: ${project.status?.replace(/_/g, " ")} | City: ${project.city_name}
 ${project.progress_pct ? `Progress: ${project.progress_pct}%` : ""}

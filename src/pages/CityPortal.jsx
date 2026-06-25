@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Shield, Phone, MapPin, Globe, Calendar, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
@@ -14,7 +14,7 @@ export default function CityPortal() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setCurrentUser);
+    getCurrentUser().then(setCurrentUser);
   }, []);
 
   const cityName = currentUser?.city_name;

@@ -1,50 +1,38 @@
 import { useState, useRef, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { agentChat } from "@/lib/ai";
 import { MessageCircle, Send, X, Sparkles, ChevronDown } from "lucide-react";
 
 export default function WizardAIAssistant({ context }) {
   const [open, setOpen] = useState(false);
-  const [conv, setConv] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [initializing, setInitializing] = useState(false);
   const endRef = useRef(null);
+
+  const chatContext = context
+    ? `${context}\n\nYou are a permit assistant helping the user understand what permits they need. Reference the above project context when answering. Search the web for current local requirements.`
+    : "You are a permit assistant helping the user understand what permits they need. Search the web for current local requirements.";
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    if (open && !conv && !initializing) initChat();
-  }, [open]);
-
-  const initChat = async () => {
-    setInitializing(true);
-    const c = await base44.agents.createConversation({
-      agent_name: "property_permit_consultant",
-      metadata: { name: "Permit Wizard Assistant", description: context || "Permit guidance" },
-    });
-    if (context) {
-      await base44.agents.addMessage(c, {
-        role: "user",
-        content: `[SYSTEM CONTEXT - internal only]\n${context}\n\nYou are a permit assistant helping the user understand what permits they need. Reference the above project context when answering. Search the web for current local requirements.`,
-      });
-    }
-    base44.agents.subscribeToConversation(c.id, (data) => {
-      const visible = data.messages.filter(m => !m.content?.startsWith("[SYSTEM CONTEXT"));
-      setMessages(visible);
-    });
-    setConv(c);
-    setInitializing(false);
-  };
+  const conv = open;
+  const initializing = false;
 
   const send = async () => {
     const text = input.trim();
-    if (!text || loading || !conv) return;
+    if (!text || loading) return;
     setInput("");
+    const next = [...messages, { role: "user", content: text }];
+    setMessages(next);
     setLoading(true);
-    await base44.agents.addMessage(conv, { role: "user", content: text });
+    try {
+      const { reply } = await agentChat({ messages: next, context: chatContext });
+      setMessages([...next, { role: "assistant", content: reply }]);
+    } catch (err) {
+      setMessages([...next, { role: "assistant", content: `Sorry, something went wrong: ${err.message}` }]);
+    }
     setLoading(false);
   };
 

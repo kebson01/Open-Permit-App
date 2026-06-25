@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { inviteUser } from "@/lib/ai";
+import { updateCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import { X, Loader2, Home, Briefcase, ArrowRight } from "lucide-react";
 
@@ -25,7 +26,7 @@ function RoleStep({ onSelect }) {
 
   const handleContinue = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ role: selected });
+    await updateCurrentUser({ role: selected });
     onSelect(selected);
   };
 
@@ -118,7 +119,7 @@ function ProjectForm({ user, isContractor, onClose, onCreated }) {
 
     // Invite client if contractor checked the box and provided an email
     if (isContractor && form.invite_client && form.client_email) {
-      await base44.users.inviteUser(form.client_email, "user").catch(() => {});
+      await inviteUser(form.client_email, "user").catch(() => {});
     }
 
     setSaving(false);

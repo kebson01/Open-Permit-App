@@ -12,7 +12,7 @@ export default function AuthModal({ onClose }) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <img
-            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+            src="/icon-master.png"
             alt="Open Permit"
             className="h-10 w-auto"
           />

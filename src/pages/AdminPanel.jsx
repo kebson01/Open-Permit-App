@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser } from "@/lib/auth";
 import AdminCities from "@/components/admin/panel/AdminCities";
 import AdminFeeRules from "@/components/admin/panel/AdminFeeRules";
 import AdminDataStatus from "@/components/admin/panel/AdminDataStatus";
@@ -21,7 +21,7 @@ export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(user => {
+    getCurrentUser().then(user => {
       if (!user) { navigate("/"); return; }
       if (user.role !== "admin" && user.role !== "city_admin") { navigate("/"); return; }
       setCurrentUser(user);

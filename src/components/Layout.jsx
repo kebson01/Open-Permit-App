@@ -128,7 +128,7 @@ export default function Layout({ children, currentPageName }) {
           {/* Logo */}
           <Link to="/" className="shrink-0 flex items-center gap-2" style={{ textDecoration: "none" }}>
             <img
-              src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+              src="/icon-master.png"
               alt="Open Permit"
               className="h-8 w-8 object-contain"
             />

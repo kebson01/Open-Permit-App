@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import AddToProjectModal from "./AddToProjectModal";
 import FBCSection from "./FBCSection";
-import { base44 } from "@/api/base44Client";
+import { isAuthenticated, redirectToLogin } from "@/lib/auth";
 
 const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
@@ -113,38 +113,38 @@ function ReadyToApply({ city }) {
 }
 
 const PERMIT_IMAGES = {
-  "Roof / Re-Roof":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4058cd09e_Roof.jpg",
-  "Solar Panels":           "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/0ef7ed7bf_SolarPanels.jpg",
-  "Window Replacement":     "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/adbab0caf_WindowReplacement.jpg",
-  "Door Replacement":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/e890b882d_DoorReplacement.jpg",
-  "Garage Door":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/23075520a_GarageDoor.jpg",
-  "A/C Replacement":        "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/e34f517e0_ACReplacement.jpg",
-  "Electrical Service":     "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/c4f31fc38_ElectricalService.jpg",
-  "Pool & Spa":             "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/23ee4533a_PoolSpa.jpg",
-  "Pool Equipment":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/f38045c95_PoolEquipment.jpg",
-  "Pool Deck":              "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/23ee4533a_PoolSpa.jpg",
-  "Driveway (Paver)":       "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/fda47a212_DrivewayWalkway.jpg",
-  "Driveway / Walkway":     "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/fda47a212_DrivewayWalkway.jpg",
-  "Walkway / Sidewalk":     "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/fda47a212_DrivewayWalkway.jpg",
-  "Fence / Gate":           "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/4aaa3c9d9_FenceGate.jpg",
-  "Patio / Slab":           "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/fd832098f_PatioSlab.jpg",
-  "Covered Patio":          "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d79df9024_CoveredPatio.jpg",
-  "Pergola":                "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/05d77140e_Pergola.jpg",
+  "Roof / Re-Roof":         "/permits/Roof.jpg",
+  "Solar Panels":           "/permits/SolarPanels.jpg",
+  "Window Replacement":     "/permits/WindowReplacement.jpg",
+  "Door Replacement":       "/permits/DoorReplacement.jpg",
+  "Garage Door":            "/permits/GarageDoor.jpg",
+  "A/C Replacement":        "/permits/ACReplacement.jpg",
+  "Electrical Service":     "/permits/ElectricalService.jpg",
+  "Pool & Spa":             "/permits/PoolSpa.jpg",
+  "Pool Equipment":         "/permits/PoolEquipment.jpg",
+  "Pool Deck":              "/permits/PoolSpa.jpg",
+  "Driveway (Paver)":       "/permits/DrivewayWalkway.jpg",
+  "Driveway / Walkway":     "/permits/DrivewayWalkway.jpg",
+  "Walkway / Sidewalk":     "/permits/DrivewayWalkway.jpg",
+  "Fence / Gate":           "/permits/FenceGate.jpg",
+  "Patio / Slab":           "/permits/PatioSlab.jpg",
+  "Covered Patio":          "/permits/CoveredPatio.jpg",
+  "Pergola":                "/permits/Pergola.jpg",
   "Residential Remodel":    "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&q=80",
   "Residential Addition":   "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80",
   "Plumbing":               "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
   "Irrigation System":      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
-  "HVAC / Mechanical":      "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/e34f517e0_ACReplacement.jpg",
-  "Sign Permit":            "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/989d5c998_SignPermit.jpg",
+  "HVAC / Mechanical":      "/permits/ACReplacement.jpg",
+  "Sign Permit":            "/permits/SignPermit.jpg",
   "Parking Lot / Paving":   "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=600&q=80",
   "EV Charging Station":    "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600&q=80",
-  "Light Pole / Utility":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/db4cdd086_LightPoleUtility.jpg",
-  "Sidewalk / Curb":        "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/42a12b803_SidewalkCurb.jpg",
-  "Asphalt / Milling & Paving": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/823c36c44_AsphaltMillingPaving.jpg",
-  "Seal Coat & Striping":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/942ef8984_SealCoatStriping.jpg",
-  "Pavement / Earthwork":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/5c06ae79a_PavementEarthwork.jpg",
-  "Utility Boring":         "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/ac952087e_UtilityBoring.jpg",
-  "Underground Drainage":   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69ac5571087590fc03d44b73/d1e8ec28d_UndergroundDrainage.jpg",
+  "Light Pole / Utility":   "/permits/LightPoleUtility.jpg",
+  "Sidewalk / Curb":        "/permits/SidewalkCurb.jpg",
+  "Asphalt / Milling & Paving": "/permits/AsphaltMillingPaving.jpg",
+  "Seal Coat & Striping":   "/permits/SealCoatStriping.jpg",
+  "Pavement / Earthwork":   "/permits/PavementEarthwork.jpg",
+  "Utility Boring":         "/permits/UtilityBoring.jpg",
+  "Underground Drainage":   "/permits/UndergroundDrainage.jpg",
 };
 
 const CITY_NOC_THRESHOLD = {
@@ -184,7 +184,7 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
     const next = { ...checked, [doc]: !checked[doc] };
     setChecked(next);
     if (next[doc] && !showSavePrompt) {
-      base44.auth.isAuthenticated().then(authed => {
+      isAuthenticated().then(authed => {
         if (!authed) setShowSavePrompt(true);
       });
     }
@@ -251,7 +251,7 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
             <p className="text-xs font-semibold text-blue-800 mb-0.5">Save your checklist</p>
             <p className="text-xs text-blue-600 mb-2">Start a project to save this checklist and track your progress.</p>
             <button
-              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              onClick={() => redirectToLogin()}
               className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
             >
               Sign up / Log in →
@@ -410,8 +410,8 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             <div
               className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white text-center cursor-pointer hover:opacity-90 transition-opacity"
               style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
-              onClick={() => base44.auth.isAuthenticated().then(a => {
-                if (!a) base44.auth.redirectToLogin(window.location.href);
+              onClick={() => isAuthenticated().then(a => {
+                if (!a) redirectToLogin();
                 else window.location.href = "/MyProjects";
               })}
             >

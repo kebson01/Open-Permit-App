@@ -31,7 +31,7 @@ export default function SignIn() {
         {/* Logo */}
         <div className="text-center mb-6">
           <img
-            src="https://media.base44.com/images/public/69ac5571087590fc03d44b73/b44f9c52a_icon-master.png"
+            src="/icon-master.png"
             alt="Open Permit"
             className="h-20 w-20 object-contain mx-auto mb-3"
           />

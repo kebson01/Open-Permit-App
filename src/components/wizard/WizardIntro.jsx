@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/ai";
 import { Sparkles, Loader2, ArrowRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +29,7 @@ export default function WizardIntro({ onNext }) {
     setLoading(true);
 
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await invokeLLM({
         prompt: `A homeowner or contractor described their construction/renovation project as: "${text}"
 
 Analyze this and return a JSON object with:

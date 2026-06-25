@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default function AdminCityManager() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(user => {
+    getCurrentUser().then(user => {
       if (user) setCurrentUser(user);
     }).catch(() => {});
   }, []);

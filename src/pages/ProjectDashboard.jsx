@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { getCurrentUser, updateCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
 import AuthModal from "@/components/auth/AuthModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,7 +66,7 @@ export default function ProjectDashboard() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(user => {
+    getCurrentUser().then(user => {
       if (user) setCurrentUser(user);
       else setCurrentUser(null);
     }).catch(() => setCurrentUser(null)).finally(() => setAuthLoading(false));
@@ -74,7 +74,7 @@ export default function ProjectDashboard() {
 
   const handleRoleSelect = async (role) => {
     setRoleSelecting(true);
-    await base44.auth.updateMe({ role });
+    await updateCurrentUser({ role });
     setCurrentUser(prev => ({ ...prev, role }));
     setRoleSelecting(false);
   };

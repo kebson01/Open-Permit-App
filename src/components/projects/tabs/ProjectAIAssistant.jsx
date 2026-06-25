@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { Sparkles, Send, Loader2, RotateCcw, Map } from "lucide-react";
 
 // Map project types to property type and optional zone hint
@@ -57,7 +57,8 @@ export default function ProjectAIAssistant({ project, mode = "homeowner" }) {
     setMessages(newMessages);
     setLoading(true);
 
-    const response = await base44.functions.invoke("projectAIAssistant", {
+    const response = await supabase.functions.invoke("project-ai-assistant", {
+      body: {
       messages: newMessages,
       projectContext: {
         name: project.name,
@@ -75,6 +76,7 @@ export default function ProjectAIAssistant({ project, mode = "homeowner" }) {
         })() : "",
       },
       mode,
+      },
     });
 
     const reply = response.data?.reply || "Sorry, I couldn't get a response. Please try again.";
