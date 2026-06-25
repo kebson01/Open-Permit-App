@@ -22,8 +22,8 @@ async function callFn(name, body) {
  * Returns the result directly: a parsed object when response_json_schema is
  * provided, otherwise a plain string.
  */
-export function invokeLLM({ prompt, response_json_schema, add_context_from_internet, model } = {}) {
-  return callFn("invoke-llm", { prompt, response_json_schema, add_context_from_internet, model });
+export function invokeLLM({ prompt, response_json_schema, add_context_from_internet, model, image_base64, image_media_type, max_tokens } = {}) {
+  return callFn("invoke-llm", { prompt, response_json_schema, add_context_from_internet, model, image_base64, image_media_type, max_tokens });
 }
 
 /**

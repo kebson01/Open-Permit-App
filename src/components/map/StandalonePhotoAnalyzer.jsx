@@ -1,12 +1,15 @@
 import React, { useState, useRef } from "react";
 import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
+import { detectPermitZones } from "@/lib/permitZoneDetection";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
+import PhotoZoneOverlay from "./PhotoZoneOverlay";
 
 export default function StandalonePhotoAnalyzer({ onClose, permits = [], city }) {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [zones, setZones] = useState(null);
   const [error, setError] = useState(null);
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -21,20 +24,30 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
 
     setLoading(true);
     setAnalysis(null);
+    setZones(null);
     setError(null);
-    try {
-      const data = await analyzePermitPhoto(file, city);
-      setAnalysis(data);
-    } catch (err) {
-      setError(err.message || "Could not analyze photo. Please try again.");
-    } finally {
-      setLoading(false);
+    // Detect zones (for the on-photo overlay) and run the full analysis in
+    // parallel. Zone detection is best-effort — a failure there must not block
+    // the textual results.
+    const [analysisRes, zonesRes] = await Promise.allSettled([
+      analyzePermitPhoto(file, city),
+      detectPermitZones(file, city),
+    ]);
+
+    if (zonesRes.status === "fulfilled") setZones(zonesRes.value.zones);
+    if (analysisRes.status === "fulfilled") {
+      setAnalysis(analysisRes.value);
+    } else if (zonesRes.status !== "fulfilled") {
+      // Only surface an error if neither call produced anything useful.
+      setError(analysisRes.reason?.message || "Could not analyze photo. Please try again.");
     }
+    setLoading(false);
   };
 
   const reset = () => {
     setPhoto(null);
     setAnalysis(null);
+    setZones(null);
     setError(null);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -104,8 +117,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
           className="hidden"
         />
 
-        {/* Photo preview */}
-        {photo && (
+        {/* Photo preview — plain image while loading or before zones resolve.
+            Once zones are detected, the interactive overlay (below) shows the
+            photo instead, so we hide this to avoid a duplicate image. */}
+        {photo && (loading || zones === null) && (
           <div className="relative rounded-xl overflow-hidden">
             <img src={photo} alt="Uploaded" className="w-full h-48 object-cover" />
             {!loading && (
@@ -118,6 +133,11 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
               </button>
             )}
           </div>
+        )}
+
+        {/* Interactive AI zone overlay on the user's own photo */}
+        {photo && !loading && zones !== null && (
+          <PhotoZoneOverlay photo={photo} zones={zones} city={city} />
         )}
 
         {/* Loading */}
@@ -142,17 +162,16 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
         )}
 
         {/* Results */}
-        {analysis && !loading && (
-          <>
-            <PhotoAnalysisResults analysis={analysis} city={city} />
-            <button
-              onClick={reset}
-              className="w-full py-2.5 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-            >
-              <Camera className="w-4 h-4" />
-              Analyze Another Photo
-            </button>
-          </>
+        {analysis && !loading && <PhotoAnalysisResults analysis={analysis} city={city} />}
+
+        {!loading && (analysis || zones !== null) && (
+          <button
+            onClick={reset}
+            className="w-full py-2.5 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Camera className="w-4 h-4" />
+            Analyze Another Photo
+          </button>
         )}
       </div>
     </div>
