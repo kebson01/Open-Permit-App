@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
 import { detectPermitZones } from "@/lib/permitZoneDetection";
+import { segmentZones, SAM_ENABLED } from "@/lib/permitZoneSegmentation";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
 import PhotoZoneOverlay from "./PhotoZoneOverlay";
 
@@ -34,7 +35,15 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
       detectPermitZones(file, city),
     ]);
 
-    if (zonesRes.status === "fulfilled") setZones(zonesRes.value.zones);
+    if (zonesRes.status === "fulfilled") {
+      let detected = zonesRes.value.zones;
+      setZones(detected);
+      // Optionally refine the rough zones into pixel-accurate SAM masks. This is
+      // best-effort and falls back to the polygons it was given.
+      if (SAM_ENABLED && detected.length) {
+        try { setZones(await segmentZones(file, detected)); } catch { /* keep polygons */ }
+      }
+    }
     if (analysisRes.status === "fulfilled") {
       setAnalysis(analysisRes.value);
     } else if (zonesRes.status !== "fulfilled") {

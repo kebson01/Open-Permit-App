@@ -70,3 +70,23 @@ Deploy a function with the Supabase CLI:
 ```
 supabase functions deploy <name>
 ```
+
+### AI Smart Check photo zones (and optional SAM segmentation)
+
+The AI Smart Check on the Permit Checklist page detects permit-relevant features
+in an uploaded photo and highlights them. By default it uses a vision LLM
+(`invoke-llm`) that returns labeled outline **polygons** — tight, but estimated.
+
+For pixel-accurate "molded" highlights that hug each object, there is an optional
+**SAM segmentation** prototype (`segment-zones` Edge Function → Replicate SAM 2):
+the LLM finds/labels each feature, SAM carves the exact mask. It is **off by
+default and not deployed**. To trial it:
+
+1. Deploy the function: `supabase functions deploy segment-zones`
+2. Set secrets on the project: `REPLICATE_API_TOKEN` and `REPLICATE_SAM_VERSION`
+   (the version hash of a box-promptable SAM 2 image model).
+3. Build the frontend with `VITE_USE_SAM=true`.
+
+Note: the Replicate model input/output mapping in `segment-zones/index.ts` is
+marked for verification against the live model on first run; failures degrade
+gracefully back to the LLM polygons.

@@ -85,6 +85,31 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
           onLoad={measure}
         />
 
+        {/* Pixel-accurate molded fill — used when a zone carries a SAM mask
+            (data URL). Tints the exact object shape; polygons are the fallback. */}
+        {zones.map((z, i) =>
+          z.mask ? (
+            <div
+              key={`mask-${i}`}
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundColor: colorFor(z.label),
+                WebkitMaskImage: `url(${z.mask})`,
+                maskImage: `url(${z.mask})`,
+                WebkitMaskSize: "100% 100%",
+                maskSize: "100% 100%",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                opacity: selected === i || hovered === i ? 0.55 : showZones ? 0.32 : 0,
+                transition: "opacity 0.15s",
+                pointerEvents: "none",
+              }}
+            />
+          ) : null
+        )}
+
         {size.w > 0 && (
           <svg
             className="absolute inset-0"
@@ -105,8 +130,8 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
                   <polygon points={pts} fill="transparent" stroke="transparent" strokeWidth={14} />
                   <polygon
                     points={pts}
-                    fill={isActive ? hexToRgba(color, 0.3) : visible ? hexToRgba(color, 0.08) : "transparent"}
-                    stroke={visible ? color : "transparent"}
+                    fill={z.mask ? "transparent" : isActive ? hexToRgba(color, 0.3) : visible ? hexToRgba(color, 0.08) : "transparent"}
+                    stroke={z.mask ? "transparent" : visible ? color : "transparent"}
                     strokeWidth={isActive ? 3 : 2}
                     strokeDasharray={isActive ? "0" : "6,4"}
                     strokeLinejoin="round"
