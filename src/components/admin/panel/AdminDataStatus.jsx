@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
+import { SUPABASE_URL as SB_URL, SUPABASE_ANON_KEY as SB_KEY } from "@/lib/supabase";
 import { Loader2, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 
-const SB_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 const SB_HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
 
 function CountBadge({ count, required = false }) {

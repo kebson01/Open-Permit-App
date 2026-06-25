@@ -1,4 +1,5 @@
 import React from "react";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
@@ -8,8 +9,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const SUPABASE_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 
 async function fetchPermitTypesFromSupabase() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/weston_permit_types?select=*`, {
