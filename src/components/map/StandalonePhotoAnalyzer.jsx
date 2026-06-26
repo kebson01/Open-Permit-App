@@ -131,7 +131,7 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
             photo instead, so we hide this to avoid a duplicate image. */}
         {photo && (loading || zones === null) && (
           <div className="relative rounded-xl overflow-hidden">
-            <img src={photo} alt="Uploaded" className="w-full h-48 object-cover" />
+            <img src={photo} alt="Uploaded" className="block w-full" />
             {!loading && (
               <button
                 onClick={reset}

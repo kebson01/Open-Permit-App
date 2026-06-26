@@ -80,7 +80,7 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
           ref={imgRef}
           src={photo}
           alt="Your property"
-          className="block w-full max-h-80 object-contain"
+          className="block w-full"
           draggable={false}
           onLoad={measure}
         />
