@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
+import { SUPABASE_URL as SB_URL, SUPABASE_ANON_KEY as SB_KEY } from "@/lib/supabase";
 import { Plus, Pencil, Trash2, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SB_URL = "https://gbknnjidqpmjrwlooluw.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdia25uamlkcXBtanJ3bG9vbHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NTQzNDIsImV4cCI6MjA5MDIzMDM0Mn0.qwDACgXe3hesxBRQOzP53Hdc44z_UOka1_uYQScyi68";
 const SB_HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, "Content-Type": "application/json" };
 
 const CATEGORIES = ["building", "mechanical", "electrical", "plumbing", "engineering"];

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { SUPABASE_URL } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { X, Camera, MapPin, Ruler } from "lucide-react";
 
-const AR_TOOLS_URL = "https://gbknnjidqpmjrwlooluw.supabase.co/functions/v1/ar-tools";
+const AR_TOOLS_URL = `${SUPABASE_URL}/functions/v1/ar-tools`;
 
 // ── Permission Screen ─────────────────────────────────────────────────────────
 function PermissionScreen({ onEnable, onClose }) {
