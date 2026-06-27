@@ -1,19 +1,24 @@
 import React, { useState, useRef } from "react";
 import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
+import { detectPermitZones, identifyPointPermit } from "@/lib/permitZoneDetection";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
+import PhotoZoneOverlay from "./PhotoZoneOverlay";
 
 export default function StandalonePhotoAnalyzer({ onClose, permits = [], city }) {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [zones, setZones] = useState(null);
   const [error, setError] = useState(null);
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
+  const fileRef = useRef(null); // kept so edit-mode can re-query areas of this photo
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    fileRef.current = file;
 
     const reader = new FileReader();
     reader.onload = (ev) => setPhoto(ev.target.result);
@@ -21,23 +26,35 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
 
     setLoading(true);
     setAnalysis(null);
+    setZones(null);
     setError(null);
-    try {
-      setAnalysis(await analyzePermitPhoto(file, city));
-    } catch (err) {
-      setError(err.message || "Could not analyze photo. Please try again.");
-    } finally {
-      setLoading(false);
+    // Auto-detect markers and run the full analysis in parallel; each is
+    // best-effort so one failing doesn't block the other.
+    const [analysisRes, zonesRes] = await Promise.allSettled([
+      analyzePermitPhoto(file, city),
+      detectPermitZones(file, city),
+    ]);
+    if (zonesRes.status === "fulfilled") setZones(zonesRes.value.zones);
+    if (analysisRes.status === "fulfilled") {
+      setAnalysis(analysisRes.value);
+    } else if (zonesRes.status !== "fulfilled") {
+      setError(analysisRes.reason?.message || "Could not analyze photo. Please try again.");
     }
+    setLoading(false);
   };
 
   const reset = () => {
     setPhoto(null);
     setAnalysis(null);
+    setZones(null);
     setError(null);
+    fileRef.current = null;
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
   };
+
+  // Edit mode: identify whatever is under a dropped/added marker.
+  const identifyArea = (point) => identifyPointPermit(fileRef.current, point, city);
 
   return (
     <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden">
@@ -90,10 +107,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
         <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
         <input ref={uploadInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-        {/* Photo preview — context only; the value is the info below */}
-        {photo && (
+        {/* Plain preview while detecting; replaced by the interactive overlay after */}
+        {photo && (loading || zones === null) && (
           <div className="relative rounded-xl overflow-hidden bg-gray-900">
-            <img src={photo} alt="Uploaded" className="block w-full max-h-64 object-contain" />
+            <img src={photo} alt="Uploaded" className="block w-full max-h-72 object-contain" />
             {!loading && (
               <button
                 onClick={reset}
@@ -104,6 +121,11 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
               </button>
             )}
           </div>
+        )}
+
+        {/* Feature 1 (auto markers) + Feature 2 (drag/add to check an area) */}
+        {photo && !loading && zones !== null && (
+          <PhotoZoneOverlay photo={photo} zones={zones} city={city} onIdentifyArea={identifyArea} />
         )}
 
         {/* Loading */}
@@ -127,10 +149,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        {/* Results — the permit-item info list */}
+        {/* Detailed analysis cards */}
         {analysis && !loading && <PhotoAnalysisResults analysis={analysis} city={city} />}
 
-        {analysis && !loading && (
+        {!loading && (analysis || zones !== null) && (
           <button
             onClick={reset}
             className="w-full py-2.5 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
