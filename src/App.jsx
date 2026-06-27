@@ -44,6 +44,7 @@ import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
 import PermitWizard from './pages/PermitWizard.jsx';
 import ARTools from './pages/ARTools.jsx';
+import CameraScan from './pages/CameraScan.jsx';
 import SubmissionGuide from './pages/SubmissionGuide';
 
 const LayoutWrapper = ({ children, currentPageName }) =>
@@ -103,6 +104,7 @@ function App() {
             <Route path="/ProjectDetail" element={<LayoutWrapper currentPageName="ProjectDetail"><ProjectDetail /></LayoutWrapper>} />
             <Route path="/PermitWizard" element={<LayoutWrapper currentPageName="PermitWizard"><PermitWizard /></LayoutWrapper>} />
             <Route path="/ar-tools" element={<LayoutWrapper currentPageName="ARTools"><ARTools /></LayoutWrapper>} />
+            <Route path="/CameraScan" element={<LayoutWrapper currentPageName="CameraScan"><CameraScan /></LayoutWrapper>} />
 
             {/* ── CATCH ALL ── */}
             <Route path="*" element={<PageNotFound />} />
