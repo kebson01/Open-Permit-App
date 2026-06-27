@@ -6,10 +6,15 @@
 // Supabase Edge Function. No Base44 dependency.
 //
 // Adjust the import below to wherever your Supabase client lives.
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const MIN_CONFIDENCE = 0.45;
+
+const hexA = (hex, a) => {
+  const h = hex.replace("#", "");
+  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
+};
 
 export default function CameraPermitScan() {
   const videoRef = useRef(null);
@@ -17,8 +22,11 @@ export default function CameraPermitScan() {
   const streamRef = useRef(null);
   const inFlight = useRef(false);
   const coords = useRef(null);
+  const frozenB64 = useRef(null); // the captured frame we query against
 
   const [ready, setReady] = useState(false);
+  const [frozen, setFrozen] = useState(null); // dataURL still shown over the live feed
+  const [marker, setMarker] = useState(null); // { x, y } normalized 0-1
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -54,7 +62,8 @@ export default function CameraPermitScan() {
     };
   }, []);
 
-  const captureBase64 = useCallback(() => {
+  // Capture the current video frame (downscaled) as { dataUrl, base64 }.
+  const captureFrame = () => {
     const v = videoRef.current, c = canvasRef.current;
     if (!v || !c || !v.videoWidth) return null;
     const maxW = 1024;
@@ -62,19 +71,18 @@ export default function CameraPermitScan() {
     c.width = v.videoWidth * scale;
     c.height = v.videoHeight * scale;
     c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.7).split(",")[1]; // strip data: prefix
-  }, []);
+    const dataUrl = c.toDataURL("image/jpeg", 0.7);
+    return { dataUrl, base64: dataUrl.split(",")[1] };
+  };
 
-  const scan = useCallback(async () => {
-    if (inFlight.current) return;
-    const image = captureBase64();
-    if (!image) return;
+  const runLookup = async (base64, point) => {
     inFlight.current = true;
     setLoading(true);
     setError(null);
+    setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("camera-permit-lookup", {
-        body: { image, mediaType: "image/jpeg", ...(coords.current || {}) },
+        body: { image: base64, mediaType: "image/jpeg", point, ...(coords.current || {}) },
       });
       if (error) throw error;
       setResult(data);
@@ -84,40 +92,97 @@ export default function CameraPermitScan() {
       setLoading(false);
       inFlight.current = false;
     }
-  }, [captureBase64]);
+  };
+
+  // Tap the live view (or the frozen still) to drop a lightball on that item.
+  const handleTap = (e) => {
+    if (!ready || inFlight.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+
+    let base64 = frozenB64.current;
+    if (!frozen) {
+      const cap = captureFrame();
+      if (!cap) return;
+      frozenB64.current = cap.base64;
+      base64 = cap.base64;
+      setFrozen(cap.dataUrl); // freeze the frame so the marker stays put
+    }
+    setMarker({ x, y });
+    runLookup(base64, { x, y });
+  };
+
+  const reset = () => {
+    frozenB64.current = null;
+    setFrozen(null);
+    setMarker(null);
+    setResult(null);
+    setError(null);
+  };
 
   const lowConfidence = result?.detected && result.detected.confidence < MIN_CONFIDENCE;
+  const permitNeeded = (result?.permits?.length || 0) > 0;
+  const ballColor = loading ? "#f59e0b" : result ? (permitNeeded ? "#ef4444" : "#22c55e") : "#f59e0b";
 
   return (
     <div className="mx-auto max-w-md p-4">
-      <div className="relative overflow-hidden rounded-2xl bg-black aspect-[3/4]">
-        <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
+      <div
+        onClick={handleTap}
+        className="relative w-full overflow-hidden rounded-2xl bg-black select-none"
+        style={{ cursor: ready ? "crosshair" : "default" }}
+      >
+        <video ref={videoRef} playsInline muted className="block w-full" />
+        {frozen && <img src={frozen} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         <canvas ref={canvasRef} className="hidden" />
+
+        {/* Lightball marker */}
+        {marker && (
+          <span
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${marker.x * 100}%`, top: `${marker.y * 100}%` }}
+          >
+            <span className="relative block h-5 w-5">
+              <span className="absolute inset-0 rounded-full animate-ping" style={{ background: hexA(ballColor, 0.55) }} />
+              <span
+                className="absolute inset-0 rounded-full border-2 border-white"
+                style={{ background: ballColor, boxShadow: `0 0 14px 4px ${hexA(ballColor, 0.9)}` }}
+              />
+            </span>
+          </span>
+        )}
+
         {loading && (
-          <div className="absolute inset-0 grid place-items-center bg-black/40 text-white">
+          <div className="absolute inset-0 grid place-items-center bg-black/30 text-white">
             <div className="animate-pulse text-sm">Identifying…</div>
           </div>
         )}
-        {/* viewfinder reticle */}
-        <div className="pointer-events-none absolute inset-8 rounded-xl border-2 border-white/70" />
+
+        {!frozen && ready && (
+          <div className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-xs text-white/90 drop-shadow">
+            Tap the item you want to check
+          </div>
+        )}
       </div>
 
-      <div className="mt-3">
+      {frozen ? (
         <button
-          onClick={scan}
-          disabled={!ready || loading}
-          className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white disabled:opacity-50"
+          onClick={reset}
+          disabled={loading}
+          className="mt-3 w-full rounded-xl border border-gray-300 py-3 font-medium text-gray-700 disabled:opacity-50"
         >
-          {loading ? "Scanning…" : "Scan item"}
+          Scan another item
         </button>
-        <p className="mt-2 text-center text-xs text-gray-500">
-          Point at an item, then tap to identify it and see permit info for your location.
+      ) : (
+        <p className="mt-3 text-center text-xs text-gray-500">
+          Point the camera, then tap an item to drop a lightball and see its permit info.
         </p>
-      </div>
+      )}
 
       {error && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-      {result && <Results result={result} lowConfidence={lowConfidence} />}
+      {result && !loading && <Results result={result} lowConfidence={lowConfidence} />}
     </div>
   );
 }
