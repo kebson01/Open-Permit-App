@@ -1,9 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Map, DollarSign, BookOpen, Building } from "lucide-react";
+import { Map, DollarSign, BookOpen, Building, Camera } from "lucide-react";
 
 const actions = [
+  { label: "Scan an Item", icon: Camera, page: "CameraScan", emoji: "📷", desc: "Point your camera for instant permit info", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Permit Checklist", icon: Map, page: "PermitGuide", emoji: "🏠", desc: "View required documents and track your progress", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Fee Calculator", icon: DollarSign, page: "FeeCalculator", emoji: "💵", desc: "Estimate permit costs", color: "bg-blue-50 border-blue-100 text-blue-600" },
   { label: "Permit Types", icon: BookOpen, page: "PermitInfo", emoji: "📘", desc: "What docs & steps are needed", color: "bg-blue-50 border-blue-100 text-blue-600" },
@@ -12,7 +13,7 @@ const actions = [
 
 export default function QuickActions() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {actions.map((action) => (
         <Link
           key={action.label}
