@@ -80,13 +80,19 @@ const DETECT_SCHEMA = {
  * UI can drop a marker on it.
  * @returns {Promise<{ what_i_see?: string, zones: Array }>}
  */
-export async function detectPermitZones(file, cityName) {
+export async function detectPermitZones(file, cityName, permitTypes = []) {
   if (!file) return { zones: [] };
   const { base64, mediaType } = await fileToBase64WithType(file);
 
+  const names = [...new Set((permitTypes || []).map((p) => p?.name).filter(Boolean))].slice(0, 80);
+  const permitContext = names.length
+    ? `These are the permits ${cityName || "this city"} issues — only flag an item if it matches one of these: ${names.join(", ")}.`
+    : `Use typical Florida/${cityName || "Broward County"} permit rules (Broward is a High Velocity Hurricane Zone).`;
+
   const prompt = `You are a Florida (${cityName || "Broward County"}) building-permit assistant.
-Scan the ENTIRE photo — interior or exterior — and identify every notable building feature, including ones that may NOT need a permit. Be thorough and don't skip the obvious: windows, doors, flooring, the ceiling and recessed/ceiling lighting, cabinets, countertops, major appliances (range, dishwasher, refrigerator), sinks and plumbing fixtures, HVAC/vents, electrical panels, plus exterior items (roof, garage, pool, fence, driveway, etc.).
-For each item return: item_name (plain words), the closest permit category from this list or "Other" (${PERMIT_ZONE_LABELS.join(", ")}), permit_required, a one-sentence note, and its center POINT as fractions of the image (x: 0 is far left, 1 is far right; y: 0 is the top, 1 is the bottom) located directly on the item. Only include items you can actually see; return a separate entry per instance. Set permit_required by typical Florida/${cityName || "Broward County"} rules (Broward is a High Velocity Hurricane Zone) — note that cosmetic work like flooring, cabinets, countertops, and painting usually does NOT need a permit, while structural, electrical, plumbing, mechanical, roofing, windows, and doors usually do.`;
+Scan the ENTIRE photo (interior or exterior) and find ONLY the items that REQUIRE a building permit in ${cityName || "this city"}. ${permitContext}
+Do NOT include anything that does not need a permit — skip flooring, cabinets, countertops, paint, decor, furniture, and plug-in appliances. Look carefully so you don't miss permit-relevant items like windows, doors, roofing, A/C, water heaters, electrical panels, recessed lighting, sinks/plumbing fixtures, pools, fences, etc.
+For each qualifying item return: item_name (plain words), the closest permit category from this list or "Other" (${PERMIT_ZONE_LABELS.join(", ")}), permit_required (always true), a one-sentence note on why it needs a permit, and its center POINT as fractions of the image (x: 0 far left..1 far right; y: 0 top..1 bottom) located on the item. Only include items you can actually see; one entry per instance. Return an empty list if nothing in the photo needs a permit.`;
 
   const result = await invokeLLM({
     prompt,
@@ -97,11 +103,11 @@ For each item return: item_name (plain words), the closest permit category from 
   });
 
   const zones = (Array.isArray(result?.zones) ? result.zones : [])
-    .filter((z) => z && z.label && z.point && z.point.x != null && z.point.y != null)
+    .filter((z) => z && z.label && z.permit_required && z.point && z.point.x != null && z.point.y != null)
     .map((z) => ({
       item_name: z.item_name || z.label,
       label: z.label,
-      permit_required: !!z.permit_required,
+      permit_required: true,
       note: z.note || "",
       point: { x: clamp01(z.point.x), y: clamp01(z.point.y) },
     }));
@@ -128,13 +134,15 @@ const POINT_SCHEMA = {
  * @param {string} [cityName]
  * @returns {Promise<{item_name:string,label:string,permit_required:boolean,note:string}>}
  */
-export async function identifyPointPermit(file, point, cityName) {
+export async function identifyPointPermit(file, point, cityName, permitTypes = []) {
   const { base64, mediaType } = await fileToBase64WithType(file);
   const px = clamp01(point?.x).toFixed(3);
   const py = clamp01(point?.y).toFixed(3);
+  const names = [...new Set((permitTypes || []).map((p) => p?.name).filter(Boolean))].slice(0, 80);
+  const permitContext = names.length ? ` Permits ${cityName || "this city"} issues: ${names.join(", ")}.` : "";
 
   const prompt = `You are a Florida (${cityName || "Broward County"}) building-permit assistant.
-A user dropped a marker on this photo at the point x=${px}, y=${py} (fractions of the image: x 0=left..1=right, y 0=top..1=bottom). Look closely at exactly that spot and identify the building feature/item located there. Return what it is (item_name), the closest permit category (label, or "Other" if none fits), whether replacing or installing it typically requires a permit in ${cityName || "Broward County"} (a High Velocity Hurricane Zone), and a one-sentence note. If there is no clear permit-relevant item at that point, set label to "Other", permit_required false, and say so in the note.`;
+A user dropped a marker on this photo at the point x=${px}, y=${py} (fractions of the image: x 0=left..1=right, y 0=top..1=bottom). Look closely at exactly that spot and identify the building feature/item located there. Return what it is (item_name), the closest permit category (label, or "Other" if none fits), whether replacing or installing it requires a permit in ${cityName || "Broward County"} (a High Velocity Hurricane Zone), and a one-sentence note.${permitContext} Base permit_required on this city's rules. If there is no clear permit-relevant item at that point, or it's cosmetic (flooring, paint, cabinets, decor), set permit_required false and say so in the note.`;
 
   const r = await invokeLLM({
     prompt,

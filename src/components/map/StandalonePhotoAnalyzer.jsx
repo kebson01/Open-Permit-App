@@ -32,7 +32,7 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
     // best-effort so one failing doesn't block the other.
     const [analysisRes, zonesRes] = await Promise.allSettled([
       analyzePermitPhoto(file, city),
-      detectPermitZones(file, city),
+      detectPermitZones(file, city, permits),
     ]);
     if (zonesRes.status === "fulfilled") setZones(zonesRes.value.zones);
     if (analysisRes.status === "fulfilled") {
@@ -54,7 +54,7 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
   };
 
   // Edit mode: identify whatever is under a dropped/added marker.
-  const identifyArea = (point) => identifyPointPermit(fileRef.current, point, city);
+  const identifyArea = (point) => identifyPointPermit(fileRef.current, point, city, permits);
 
   return (
     <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden">
