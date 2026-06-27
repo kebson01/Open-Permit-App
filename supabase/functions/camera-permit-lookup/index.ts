@@ -44,6 +44,26 @@ const DETECT_SCHEMA = {
     inspections_required: { type: 'array', items: { type: 'string' } },
     typical_timeline: { type: 'string', description: 'Rough turnaround, e.g. "1-2 weeks".' },
     no_permit_reason: { type: 'string', description: 'If permit_likely is false, why not. Empty otherwise.' },
+    alternatives: {
+      type: 'array',
+      description: 'Other plausible items at the SAME spot whose permit outcome DIFFERS from the main detection (e.g. the window itself when the main guess is the blinds). Empty when the item is unambiguous. Fill each one out fully.',
+      items: {
+        type: 'object',
+        properties: {
+          item_label: { type: 'string' },
+          work_type: { type: 'string' },
+          permit_likely: { type: 'boolean' },
+          permit_id: { type: 'string' },
+          contractor_category: { type: 'string' },
+          summary: { type: 'string' },
+          documents_needed: { type: 'array', items: { type: 'string' } },
+          typical_requirements: { type: 'array', items: { type: 'string' } },
+          inspections_required: { type: 'array', items: { type: 'string' } },
+          typical_timeline: { type: 'string' },
+        },
+        required: ['item_label', 'work_type', 'permit_likely'],
+      },
+    },
   },
   required: ['item_label', 'confidence', 'permit_likely'],
 }
@@ -199,6 +219,7 @@ Call record_detection for the permit-relevant item the user is asking about.
 - Set permit_id ONLY to an id from the list above that clearly matches; otherwise leave it empty.
 - contractor_category must be the closest match from the provided list.
 - Always fill documents_needed / typical_requirements / inspections_required / typical_timeline from Florida Building Code general knowledge, even when the city has no specific permit on file.
+- DISAMBIGUATE: if the spot could reasonably be more than one thing with DIFFERENT permit outcomes — e.g. window blinds/coverings (usually NO permit) vs the window itself (permit required for replacement), a light fixture vs the electrical, a faucet vs the plumbing rough-in — put your single best guess as the main detection and list the other plausible interpretation(s) in 'alternatives', each fully filled out, so the user can pick which they mean. Whenever a no-permit item overlaps a permit-requiring one (or vice-versa), include both.
 - If nothing permit-relevant is visible, set work_type empty and permit_likely false. Keep all text brief.`
 
     let det: any
@@ -209,7 +230,7 @@ Call record_detection for the permit-relevant item the user is asking about.
         headers: { 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1200,
+          max_tokens: 1600,
           system: sys,
           tools: [{ name: 'record_detection', description: 'Record the identified item and its permit guidance.', input_schema: DETECT_SCHEMA }],
           tool_choice: { type: 'tool', name: 'record_detection' },
@@ -246,21 +267,33 @@ Call record_detection for the permit-relevant item the user is asking about.
       })
     }
 
-    // 5. Build the permit entry — DB fee rules (authoritative) + AI guidance.
-    const dbMatch = det.permit_id ? feeRules.find((p) => p.permit_id === det.permit_id) : null
-    const categoryFees = dbMatch
-      ? feeRules.filter((p) => p.category === dbMatch.category)
-      : []
-    const permit = {
-      permit_type_id: dbMatch?.permit_id || det.contractor_category || det.work_type,
-      name: dbMatch?.permit_name || det.work_type,
-      description: det.summary || '',
-      typical_timeline: det.typical_timeline || '',
-      documents_needed: det.documents_needed || [],
-      typical_requirements: det.typical_requirements || [],
-      inspections_required: det.inspections_required || [],
-      fee_rules: categoryFees,
+    // 5. Build a permit entry from a detection — DB fee rules + AI guidance.
+    const buildPermit = (d: any) => {
+      const dbMatch = d.permit_id ? feeRules.find((p) => p.permit_id === d.permit_id) : null
+      const categoryFees = dbMatch ? feeRules.filter((p) => p.category === dbMatch.category) : []
+      return {
+        permit_type_id: dbMatch?.permit_id || d.contractor_category || d.work_type,
+        name: dbMatch?.permit_name || d.work_type,
+        description: d.summary || '',
+        typical_timeline: d.typical_timeline || '',
+        documents_needed: d.documents_needed || [],
+        typical_requirements: d.typical_requirements || [],
+        inspections_required: d.inspections_required || [],
+        fee_rules: categoryFees,
+      }
     }
+
+    // Other plausible items at the same spot, so the UI can ask which they meant.
+    const alternatives = (Array.isArray(det.alternatives) ? det.alternatives : [])
+      .filter((a: any) => a && a.work_type && a.item_label)
+      .slice(0, 3)
+      .map((a: any) => ({
+        item_label: a.item_label,
+        work_type: a.work_type,
+        permit_required: a.permit_likely !== false,
+        contractor_category: a.contractor_category || '',
+        permit: buildPermit(a),
+      }))
 
     // Contractors are NOT fetched here — they're loaded on demand (opt-in) via
     // the `mode: 'contractors'` path above, keeping the scan fast.
@@ -274,7 +307,8 @@ Call record_detection for the permit-relevant item the user is asking about.
       supported,
       contractor_category: det.contractor_category || '',
       message: supported ? undefined : `${city} isn't fully onboarded yet — showing general Florida Building Code guidance. Confirm specifics with the ${city} Building Department${cityRow?.building_department_phone ? ` (${cityRow.building_department_phone})` : ''}.`,
-      permits: [permit],
+      permits: [buildPermit(det)],
+      alternatives,
     })
   } catch (err: any) {
     console.error('Error:', err.message)
