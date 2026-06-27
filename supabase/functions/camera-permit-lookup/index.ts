@@ -142,6 +142,30 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json()
+
+    // ── Contractors (opt-in: fetched only when the user asks) ──────────────────
+    if (body.mode === 'contractors') {
+      const category = body.contractor_category
+      if (!category) return json({ contractors: [] })
+      const { data: pros } = await sb.rpc('search_professionals', {
+        p_query: null, p_type: 'contractor', p_category: category,
+        p_active_only: true, p_statewide_only: false, p_limit: 8,
+      })
+      const contractors = (pros || []).map((c: any) => ({
+        name: c.name,
+        license_type: c.category || category,
+        license: c.license_number || '',
+        city: c.city || '',
+        expires: c.expiration_date || '',
+      }))
+      return json({
+        contractors,
+        external_contractor_lookup: contractors.length === 0
+          ? `No ${category} contractors on file yet. Search the Provider Directory or your city's licensed-contractor list.`
+          : undefined,
+      })
+    }
+
     const { image, mediaType, lat, lng } = body
     if (!image || image.length < 100) return json({ error: 'No image. Try again.' }, 400)
 
@@ -184,7 +208,7 @@ The user pointed their camera at one item. Call record_detection for the single 
         method: 'POST',
         headers: { 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 1200,
           system: sys,
           tools: [{ name: 'record_detection', description: 'Record the identified item and its permit guidance.', input_schema: DETECT_SCHEMA }],
@@ -236,30 +260,8 @@ The user pointed their camera at one item. Call record_detection for the single 
       fee_rules: categoryFees,
     }
 
-    // 6. Contractors who do this work, from the Provider Directory RPC.
-    let contractors: any[] = []
-    if (det.contractor_category) {
-      const { data: pros } = await sb.rpc('search_professionals', {
-        p_query: null,
-        p_type: 'contractor',
-        p_category: det.contractor_category,
-        p_active_only: true,
-        p_statewide_only: false,
-        p_limit: 8,
-      })
-      contractors = (pros || []).map((c: any) => ({
-        name: c.name,
-        license_type: c.category || det.contractor_category,
-        license: c.license_number || '',
-        city: c.city || '',
-        expires: c.expiration_date || '',
-      }))
-    }
-
-    const external_contractor_lookup = contractors.length === 0 && det.contractor_category
-      ? `No ${det.contractor_category} contractors on file yet. Search the Provider Directory or your city's licensed-contractor list.`
-      : undefined
-
+    // Contractors are NOT fetched here — they're loaded on demand (opt-in) via
+    // the `mode: 'contractors'` path above, keeping the scan fast.
     return json({
       detected: {
         item_label: det.item_label,
@@ -268,11 +270,9 @@ The user pointed their camera at one item. Call record_detection for the single 
       },
       city,
       supported,
+      contractor_category: det.contractor_category || '',
       message: supported ? undefined : `${city} isn't fully onboarded yet — showing general Florida Building Code guidance. Confirm specifics with the ${city} Building Department${cityRow?.building_department_phone ? ` (${cityRow.building_department_phone})` : ''}.`,
       permits: [permit],
-      contractors,
-      verified_contractors: [],
-      external_contractor_lookup,
     })
   } catch (err: any) {
     console.error('Error:', err.message)

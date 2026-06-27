@@ -123,7 +123,27 @@ export default function CameraPermitScan() {
 }
 
 function Results({ result, lowConfidence }) {
-  const { detected, city, supported, permits = [], contractors = [], verified_contractors = [], external_contractor_lookup, message } = result;
+  const { detected, city, supported, permits = [], message, contractor_category } = result;
+
+  // Contractor contacts are opt-in — fetched only when the user asks.
+  const [pros, setPros] = useState(null); // null = not requested yet
+  const [proExt, setProExt] = useState(null);
+  const [proLoading, setProLoading] = useState(false);
+
+  const loadContractors = async () => {
+    setProLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("camera-permit-lookup", {
+        body: { mode: "contractors", city, contractor_category },
+      });
+      setPros(data?.contractors || []);
+      setProExt(data?.external_contractor_lookup || null);
+    } catch {
+      setPros([]);
+    } finally {
+      setProLoading(false);
+    }
+  };
 
   return (
     <div className="mt-4 space-y-4">
@@ -162,29 +182,32 @@ function Results({ result, lowConfidence }) {
         </div>
       ))}
 
-      {(contractors.length > 0 || verified_contractors.length > 0 || external_contractor_lookup) && (
+      {/* Contractors — opt-in: ask before showing contact info */}
+      {detected?.work_type && contractor_category && (
         <div className="rounded-xl border border-gray-200 p-4">
           <h4 className="font-semibold">Licensed contractors</h4>
-
-          {verified_contractors.map((c, i) => (
-            <div key={`v${i}`} className="mt-2 flex items-center justify-between border-b border-gray-100 pb-2">
-              <div>
-                <p className="text-sm font-medium">{c.company_name} <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] text-green-700">Verified</span></p>
-                <p className="text-xs text-gray-500">{c.license_type} {c.license_number}</p>
+          {pros === null ? (
+            <>
+              <p className="mt-1 text-sm text-gray-600">
+                Want to see {contractor_category.toLowerCase()} contractors who can do this work?
+              </p>
+              <button
+                onClick={loadContractors}
+                disabled={proLoading}
+                className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {proLoading ? "Loading…" : "See contractor contacts"}
+              </button>
+            </>
+          ) : pros.length > 0 ? (
+            pros.map((c, i) => (
+              <div key={i} className="mt-2 border-b border-gray-100 pb-2">
+                <p className="text-sm font-medium">{c.name}</p>
+                <p className="text-xs text-gray-500">{c.license_type} {c.license} · {c.city} · exp {c.expires}</p>
               </div>
-              {c.phone && <a href={`tel:${c.phone}`} className="text-sm text-blue-600">Call</a>}
-            </div>
-          ))}
-
-          {contractors.map((c, i) => (
-            <div key={`c${i}`} className="mt-2 border-b border-gray-100 pb-2">
-              <p className="text-sm font-medium">{c.name}</p>
-              <p className="text-xs text-gray-500">{c.license_type} {c.license} · {c.city} · exp {c.expires}</p>
-            </div>
-          ))}
-
-          {external_contractor_lookup && (
-            <p className="mt-2 text-sm text-gray-700">{external_contractor_lookup}</p>
+            ))
+          ) : (
+            <p className="mt-2 text-sm text-gray-700">{proExt || "No contractors on file yet."}</p>
           )}
         </div>
       )}
