@@ -71,25 +71,10 @@ Deploy a function with the Supabase CLI:
 supabase functions deploy <name>
 ```
 
-### AI Smart Check photo markers (and optional object grounding)
+### AI Smart Check photo analysis
 
-The AI Smart Check on the Permit Checklist page detects permit-relevant items in
-an uploaded photo and drops a marker on each. By default a vision LLM
-(`invoke-llm`) returns each item's center **point** — fast, but only estimated,
-so a marker can land near (not exactly on) its item. Markers are **draggable**,
-so a user can nudge any marker onto the right spot.
-
-For accurate automatic placement, there is an optional **object grounding**
-prototype (`ground-objects` Edge Function → Replicate Grounding DINO): the LLM
-finds/labels items, the grounding model returns the real object's coordinates,
-and the marker is placed at that box center. It is **off by default and not
-deployed**. To trial it:
-
-1. Deploy the function: `supabase functions deploy ground-objects`
-2. Set secrets on the project: `REPLICATE_API_TOKEN` and
-   `REPLICATE_GROUNDING_VERSION` (a Grounding DINO model version hash).
-3. Build the frontend with `VITE_USE_GROUNDING=true`.
-
-Note: the Replicate model input/output mapping in `ground-objects/index.ts` is
-marked for verification against the live model on first run; failures degrade
-gracefully back to the LLM points.
+The AI Smart Check on the Permit Checklist page lets a user upload or take a
+photo; the `ar-tools` Edge Function identifies the property and analyzes the
+image, and the UI shows the uploaded photo plus a list of permit-item cards
+(what was seen, which items need permits and why, fees, red flags, and next
+steps).

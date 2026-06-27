@@ -1,16 +1,12 @@
 import React, { useState, useRef } from "react";
 import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
-import { detectPermitZones } from "@/lib/permitZoneDetection";
-import { groundZones, GROUNDING_ENABLED } from "@/lib/permitZoneGrounding";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
-import PhotoZoneOverlay from "./PhotoZoneOverlay";
 
 export default function StandalonePhotoAnalyzer({ onClose, permits = [], city }) {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [zones, setZones] = useState(null);
   const [error, setError] = useState(null);
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -25,38 +21,19 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
 
     setLoading(true);
     setAnalysis(null);
-    setZones(null);
     setError(null);
-    // Detect zones (for the on-photo overlay) and run the full analysis in
-    // parallel. Zone detection is best-effort — a failure there must not block
-    // the textual results.
-    const [analysisRes, zonesRes] = await Promise.allSettled([
-      analyzePermitPhoto(file, city),
-      detectPermitZones(file, city),
-    ]);
-
-    if (zonesRes.status === "fulfilled") {
-      let detected = zonesRes.value.zones;
-      setZones(detected);
-      // Optionally refine marker positions with a real object-grounding model.
-      // Best-effort: falls back to the LLM's estimated points on any failure.
-      if (GROUNDING_ENABLED && detected.length) {
-        try { setZones(await groundZones(file, detected)); } catch { /* keep AI points */ }
-      }
+    try {
+      setAnalysis(await analyzePermitPhoto(file, city));
+    } catch (err) {
+      setError(err.message || "Could not analyze photo. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    if (analysisRes.status === "fulfilled") {
-      setAnalysis(analysisRes.value);
-    } else if (zonesRes.status !== "fulfilled") {
-      // Only surface an error if neither call produced anything useful.
-      setError(analysisRes.reason?.message || "Could not analyze photo. Please try again.");
-    }
-    setLoading(false);
   };
 
   const reset = () => {
     setPhoto(null);
     setAnalysis(null);
-    setZones(null);
     setError(null);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -110,28 +87,13 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
           </div>
         )}
 
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <input
-          ref={uploadInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
+        <input ref={uploadInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-        {/* Photo preview — plain image while loading or before zones resolve.
-            Once zones are detected, the interactive overlay (below) shows the
-            photo instead, so we hide this to avoid a duplicate image. */}
-        {photo && (loading || zones === null) && (
-          <div className="relative rounded-xl overflow-hidden">
-            <img src={photo} alt="Uploaded" className="block w-full" />
+        {/* Photo preview — context only; the value is the info below */}
+        {photo && (
+          <div className="relative rounded-xl overflow-hidden bg-gray-900">
+            <img src={photo} alt="Uploaded" className="block w-full max-h-64 object-contain" />
             {!loading && (
               <button
                 onClick={reset}
@@ -142,11 +104,6 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
               </button>
             )}
           </div>
-        )}
-
-        {/* Interactive AI zone overlay on the user's own photo */}
-        {photo && !loading && zones !== null && (
-          <PhotoZoneOverlay photo={photo} zones={zones} city={city} />
         )}
 
         {/* Loading */}
@@ -170,10 +127,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        {/* Results */}
+        {/* Results — the permit-item info list */}
         {analysis && !loading && <PhotoAnalysisResults analysis={analysis} city={city} />}
 
-        {!loading && (analysis || zones !== null) && (
+        {analysis && !loading && (
           <button
             onClick={reset}
             className="w-full py-2.5 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
