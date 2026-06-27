@@ -6,3 +6,11 @@ import '@/index.css'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
 )
+
+// Register the PWA service worker (production only, to avoid interfering with
+// Vite's dev HMR). Enables "Add to Home Screen" / install on mobile.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
