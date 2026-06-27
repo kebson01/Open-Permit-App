@@ -30,12 +30,15 @@ const hexToRgba = (hex, a) => {
   return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 };
 
-// Marker sits at the center of the detected feature.
+// Marker position: prefer the AI's explicit center point; fall back to the
+// centroid of a polygon if that's all a zone has.
 const centerOf = (polygon = []) => {
+  if (!polygon.length) return { x: 0.5, y: 0.5 };
   const xs = polygon.map((p) => p.x);
   const ys = polygon.map((p) => p.y);
   return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
 };
+const markerOf = (z) => (z.point && z.point.x != null ? z.point : centerOf(z.polygon || []));
 
 /**
  * Places a glowing marker on each AI-detected feature in the user's photo.
@@ -58,7 +61,7 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
 
           {/* Glowing markers */}
           {zones.map((z, i) => {
-            const c = centerOf(z.polygon);
+            const c = markerOf(z);
             const color = colorFor(z.label);
             const isActive = shown === i;
             return (
@@ -96,7 +99,7 @@ export default function PhotoZoneOverlay({ photo, zones = [], city }) {
         {/* Popover — sibling of the clipped box, so it is never cut off */}
         {shown !== null && zones[shown] && (() => {
           const z = zones[shown];
-          const c = centerOf(z.polygon);
+          const c = markerOf(z);
           const below = c.y < 0.32;
           const leftPct = Math.min(82, Math.max(18, c.x * 100));
           return (
