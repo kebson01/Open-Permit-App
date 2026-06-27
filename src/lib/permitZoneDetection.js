@@ -21,6 +21,16 @@ export const PERMIT_ZONE_LABELS = [
   "Residential Remodel",
   "Residential Addition",
   "Plumbing",
+  // Interior / finish items (common in kitchen & remodel photos)
+  "Flooring",
+  "Ceiling / Drywall",
+  "Recessed Lighting",
+  "Kitchen Cabinets",
+  "Countertop",
+  "Appliance Install",
+  "Water Heater",
+  "HVAC / Ductwork",
+  "Bathroom Remodel",
 ];
 
 function fileToBase64WithType(file) {
@@ -47,7 +57,8 @@ const DETECT_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          label: { type: "string", description: "Permit category.", enum: PERMIT_ZONE_LABELS },
+          item_name: { type: "string", description: "What the item is, in plain words (e.g. 'Kitchen window', 'Tile flooring', 'Recessed ceiling lights')." },
+          label: { type: "string", description: "Closest permit category, or 'Other'.", enum: [...PERMIT_ZONE_LABELS, "Other"] },
           permit_required: { type: "boolean" },
           note: { type: "string", description: "Brief reason a permit is (or isn't) needed." },
           point: {
@@ -57,7 +68,7 @@ const DETECT_SCHEMA = {
             required: ["x", "y"],
           },
         },
-        required: ["label", "permit_required", "point"],
+        required: ["item_name", "label", "permit_required", "point"],
       },
     },
   },
@@ -74,8 +85,8 @@ export async function detectPermitZones(file, cityName) {
   const { base64, mediaType } = await fileToBase64WithType(file);
 
   const prompt = `You are a Florida (${cityName || "Broward County"}) building-permit assistant.
-Identify every visible item in this property photo that maps to one of these permit categories: ${PERMIT_ZONE_LABELS.join(", ")}.
-For each, return its center POINT as fractions of the image (x: 0 is far left, 1 is far right; y: 0 is the top, 1 is the bottom) located directly on the item. Only include items you can actually see; do not invent items; return a separate entry per instance. Set permit_required by typical Florida/${cityName || "Broward County"} rules (Broward is a High Velocity Hurricane Zone). Keep notes to one short sentence.`;
+Scan the ENTIRE photo — interior or exterior — and identify every notable building feature, including ones that may NOT need a permit. Be thorough and don't skip the obvious: windows, doors, flooring, the ceiling and recessed/ceiling lighting, cabinets, countertops, major appliances (range, dishwasher, refrigerator), sinks and plumbing fixtures, HVAC/vents, electrical panels, plus exterior items (roof, garage, pool, fence, driveway, etc.).
+For each item return: item_name (plain words), the closest permit category from this list or "Other" (${PERMIT_ZONE_LABELS.join(", ")}), permit_required, a one-sentence note, and its center POINT as fractions of the image (x: 0 is far left, 1 is far right; y: 0 is the top, 1 is the bottom) located directly on the item. Only include items you can actually see; return a separate entry per instance. Set permit_required by typical Florida/${cityName || "Broward County"} rules (Broward is a High Velocity Hurricane Zone) — note that cosmetic work like flooring, cabinets, countertops, and painting usually does NOT need a permit, while structural, electrical, plumbing, mechanical, roofing, windows, and doors usually do.`;
 
   const result = await invokeLLM({
     prompt,
@@ -88,6 +99,7 @@ For each, return its center POINT as fractions of the image (x: 0 is far left, 1
   const zones = (Array.isArray(result?.zones) ? result.zones : [])
     .filter((z) => z && z.label && z.point && z.point.x != null && z.point.y != null)
     .map((z) => ({
+      item_name: z.item_name || z.label,
       label: z.label,
       permit_required: !!z.permit_required,
       note: z.note || "",

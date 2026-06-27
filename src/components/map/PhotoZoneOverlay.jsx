@@ -22,6 +22,15 @@ const ZONE_COLORS = {
   "Residential Remodel": "#f59e0b",
   "Residential Addition": "#6366f1",
   "Plumbing": "#06b6d4",
+  "Flooring": "#a16207",
+  "Ceiling / Drywall": "#94a3b8",
+  "Recessed Lighting": "#eab308",
+  "Kitchen Cabinets": "#84cc16",
+  "Countertop": "#10b981",
+  "Appliance Install": "#0ea5e9",
+  "Water Heater": "#f43f5e",
+  "HVAC / Ductwork": "#0ea5e9",
+  "Bathroom Remodel": "#f59e0b",
 };
 
 const isPermitCategory = (label) => Object.prototype.hasOwnProperty.call(ZONE_COLORS, label);
@@ -53,7 +62,7 @@ export default function PhotoZoneOverlay({ photo, zones = [], city, onIdentifyAr
         id: `ai-${i}`,
         source: "ai",
         point: z.point || { x: 0.5, y: 0.5 },
-        item_name: z.label,
+        item_name: z.item_name || z.label,
         label: z.label,
         permit_required: !!z.permit_required,
         note: z.note || "",
