@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Home, Building2, FileText, FolderOpen, ChevronDown,
   Calculator, ShieldCheck, BookOpen, Search, Menu, X,
-  User, LogOut, Wrench
+  User, LogOut, Wrench, Camera
 } from "lucide-react";
+import InstallAppButton from "@/components/InstallAppButton";
 import { supabase } from "@/lib/supabaseClient";
 import * as db from "@/lib/db";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
@@ -16,6 +17,7 @@ const FONTS = {
 };
 
 const TOOLS_ITEMS = [
+  { label: "Live Camera Scan",  path: "/CameraScan",       icon: Camera },
   { label: "Fee Calculator",    path: "/FeeCalculator",    icon: Calculator },
   { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
   { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
@@ -182,6 +184,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Right side (desktop) */}
           <div className="hidden md:flex items-center gap-3 ml-auto">
+            <InstallAppButton />
             {isAdmin && (
               <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-[#424750] hover:bg-[#f2f4f6] transition-colors"
                 style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
@@ -266,6 +269,9 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile dropdown */}
         {mobileOpen && (
           <div className="md:hidden border-t border-[#c3c6d1] bg-white pb-3 shadow-lg">
+            <div className="px-3 py-2 border-b border-[#eceef0]" onClick={() => setMobileOpen(false)}>
+              <InstallAppButton />
+            </div>
             {[
               { to: "/", label: "Home", icon: Home },
               { to: "/PermitGuide", label: "Permit Checklist", icon: BookOpen },
