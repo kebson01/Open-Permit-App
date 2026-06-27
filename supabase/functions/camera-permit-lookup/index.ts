@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { image, mediaType, lat, lng } = body
+    const { image, mediaType, lat, lng, point } = body
     if (!image || image.length < 100) return json({ error: 'No image. Try again.' }, 400)
 
     // 1. Resolve city from GPS (best effort — falls back to Broward County).
@@ -195,7 +195,7 @@ City: ${cityRow?.name || city}${supported ? '' : ' (not yet fully onboarded — 
 Permits available in this city (permit_id|name|category):
 ${permitCtx || 'None on file — use general Florida Building Code knowledge.'}
 
-The user pointed their camera at one item. Call record_detection for the single most prominent permit-relevant item.
+Call record_detection for the permit-relevant item the user is asking about.
 - Set permit_id ONLY to an id from the list above that clearly matches; otherwise leave it empty.
 - contractor_category must be the closest match from the provided list.
 - Always fill documents_needed / typical_requirements / inspections_required / typical_timeline from Florida Building Code general knowledge, even when the city has no specific permit on file.
@@ -215,7 +215,9 @@ The user pointed their camera at one item. Call record_detection for the single 
           tool_choice: { type: 'tool', name: 'record_detection' },
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
-            { type: 'text', text: `Identify the main item. Location: ${gm?.results?.[0]?.formatted_address || prop?.full_address || city}.` },
+            { type: 'text', text: point
+              ? `The user dropped a marker at x=${Number(point.x).toFixed(3)}, y=${Number(point.y).toFixed(3)} (fractions of the image: x 0=left..1=right, y 0=top..1=bottom). Identify the item located at EXACTLY that spot — not the most prominent item. Location: ${gm?.results?.[0]?.formatted_address || prop?.full_address || city}.`
+              : `Identify the main item. Location: ${gm?.results?.[0]?.formatted_address || prop?.full_address || city}.` },
           ] }],
         }),
       })
