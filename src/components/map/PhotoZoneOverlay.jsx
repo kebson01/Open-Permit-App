@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 // Colors mirror the static HouseView diagram so detected zones feel consistent.
 const ZONE_COLORS = {
@@ -27,202 +27,117 @@ const ZONE_COLORS = {
 const colorFor = (label) => ZONE_COLORS[label] || "#3b82f6";
 const hexToRgba = (hex, a) => {
   const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${a})`;
+  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 };
 
-const bbox = (poly) => {
-  const xs = poly.map((p) => p.x);
-  const ys = poly.map((p) => p.y);
-  return { minX: Math.min(...xs), minY: Math.min(...ys), cx: (Math.min(...xs) + Math.max(...xs)) / 2 };
+// Marker sits at the center of the detected feature.
+const centerOf = (polygon = []) => {
+  const xs = polygon.map((p) => p.x);
+  const ys = polygon.map((p) => p.y);
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
 };
 
 /**
- * Draws AI-detected permit zones as interactive, shape-tracing highlights over
- * the user's own photo. Mirrors the HouseView interaction: outlines show by
- * default; tapping/hovering a zone reveals its fill, label, and detail.
+ * Places a glowing marker on each AI-detected feature in the user's photo.
+ * Hovering or tapping a marker reveals what it is and its permit info.
  */
 export default function PhotoZoneOverlay({ photo, zones = [], city }) {
-  const [selected, setSelected] = useState(null);
-  const [hovered, setHovered] = useState(null);
-  const [showZones, setShowZones] = useState(true);
-  const imgRef = useRef(null);
-  const [size, setSize] = useState({ w: 0, h: 0 });
-
-  const measure = useCallback(() => {
-    const el = imgRef.current;
-    if (el && el.clientWidth) setSize({ w: el.clientWidth, h: el.clientHeight });
-  }, []);
-
-  useEffect(() => {
-    measure();
-    const el = imgRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [measure]);
+  const [hover, setHover] = useState(null);
+  const [pinned, setPinned] = useState(null);
 
   if (!photo) return null;
 
-  const sel = selected !== null ? zones[selected] : null;
+  const shown = hover !== null ? hover : pinned;
 
   return (
     <div className="space-y-3">
-      <div className="relative w-full rounded-xl overflow-hidden bg-gray-900 select-none">
-        <img
-          ref={imgRef}
-          src={photo}
-          alt="Your property"
-          className="block w-full"
-          draggable={false}
-          onLoad={measure}
-        />
+      {/* Outer wrapper is NOT clipped, so the popover can extend past the photo */}
+      <div className="relative w-full select-none">
+        <div className="relative w-full rounded-xl overflow-hidden bg-gray-900">
+          <img src={photo} alt="Your property" className="block w-full" draggable={false} />
 
-        {/* Pixel-accurate molded fill — used when a zone carries a SAM mask
-            (data URL). Tints the exact object shape; polygons are the fallback. */}
-        {zones.map((z, i) =>
-          z.mask ? (
-            <div
-              key={`mask-${i}`}
-              aria-hidden
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundColor: colorFor(z.label),
-                WebkitMaskImage: `url(${z.mask})`,
-                maskImage: `url(${z.mask})`,
-                WebkitMaskSize: "100% 100%",
-                maskSize: "100% 100%",
-                WebkitMaskRepeat: "no-repeat",
-                maskRepeat: "no-repeat",
-                opacity: selected === i || hovered === i ? 0.55 : showZones ? 0.32 : 0,
-                transition: "opacity 0.15s",
-                pointerEvents: "none",
-              }}
-            />
-          ) : null
-        )}
-
-        {size.w > 0 && (
-          <svg
-            className="absolute inset-0"
-            width="100%"
-            height="100%"
-            viewBox={`0 0 ${size.w} ${size.h}`}
-            preserveAspectRatio="none"
-            style={{ pointerEvents: "none" }}
-          >
-            {zones.map((z, i) => {
-              const color = colorFor(z.label);
-              const isActive = selected === i || hovered === i;
-              const visible = showZones || isActive;
-              const pts = z.polygon.map((p) => `${p.x * size.w},${p.y * size.h}`).join(" ");
-              return (
-                <g key={i} style={{ pointerEvents: "auto", cursor: "pointer" }}>
-                  {/* Wide invisible hit area */}
-                  <polygon points={pts} fill="transparent" stroke="transparent" strokeWidth={14} />
-                  <polygon
-                    points={pts}
-                    fill={z.mask ? "transparent" : isActive ? hexToRgba(color, 0.3) : visible ? hexToRgba(color, 0.08) : "transparent"}
-                    stroke={z.mask ? "transparent" : visible ? color : "transparent"}
-                    strokeWidth={isActive ? 3 : 2}
-                    strokeDasharray={isActive ? "0" : "6,4"}
-                    strokeLinejoin="round"
-                    style={{ transition: "fill 0.15s, stroke 0.15s" }}
-                    onClick={() => setSelected(selected === i ? null : i)}
-                    onMouseEnter={() => setHovered(i)}
-                    onMouseLeave={() => setHovered((h) => (h === i ? null : h))}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-        )}
-
-        {/* Labels (HTML, crisp) only for the active zone to avoid clutter */}
-        {size.w > 0 &&
-          zones.map((z, i) => {
-            const isActive = selected === i || hovered === i;
-            if (!isActive) return null;
-            const { minX, minY, cx } = bbox(z.polygon);
+          {/* Glowing markers */}
+          {zones.map((z, i) => {
+            const c = centerOf(z.polygon);
             const color = colorFor(z.label);
+            const isActive = shown === i;
             return (
-              <span
-                key={`lbl-${i}`}
-                className="absolute z-10 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-white px-2 py-0.5 rounded shadow pointer-events-none"
-                style={{
-                  left: `${cx * 100}%`,
-                  top: `${minY * 100}%`,
-                  transform: "translate(-50%, -120%)",
-                  background: color,
-                }}
+              <button
+                key={i}
+                type="button"
+                aria-label={z.label}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover((h) => (h === i ? null : h))}
+                onClick={() => setPinned((p) => (p === i ? null : i))}
+                className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%`, zIndex: isActive ? 15 : 10 }}
               >
-                {z.label}
-              </span>
+                <span className="absolute inset-0 rounded-full animate-ping" style={{ background: hexToRgba(color, 0.55) }} />
+                <span
+                  className="absolute inset-0 rounded-full border-2 border-white"
+                  style={{
+                    background: color,
+                    boxShadow: `0 0 12px 3px ${hexToRgba(color, isActive ? 0.95 : 0.8)}`,
+                    transform: isActive ? "scale(1.25)" : "scale(1)",
+                    transition: "transform 0.15s",
+                  }}
+                />
+              </button>
             );
           })}
 
-        {/* Toggle + hint */}
-        {zones.length > 0 && (
-          <>
-            <button
-              onClick={() => setShowZones((s) => !s)}
-              className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-black/55 backdrop-blur-sm rounded-lg text-white text-xs font-medium z-10"
-            >
-              {showZones ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-              {showZones ? "Hide" : "Show"}
-            </button>
-            <div className="absolute bottom-2 left-3 text-white/70 text-[11px] pointer-events-none">
-              Tap a highlighted area for details
+          {zones.length > 0 && (
+            <div className="absolute bottom-2 left-3 text-white/80 text-[11px] pointer-events-none drop-shadow">
+              Hover or tap a marker for details
             </div>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Popover — sibling of the clipped box, so it is never cut off */}
+        {shown !== null && zones[shown] && (() => {
+          const z = zones[shown];
+          const c = centerOf(z.polygon);
+          const below = c.y < 0.32;
+          const leftPct = Math.min(82, Math.max(18, c.x * 100));
+          return (
+            <div
+              className="absolute z-20 w-64 rounded-xl bg-white shadow-xl border border-gray-200 p-3"
+              style={{ left: `${leftPct}%`, top: `${c.y * 100}%`, transform: `translate(-50%, ${below ? "16px" : "calc(-100% - 16px)"})` }}
+              onMouseEnter={() => setHover(shown)}
+              onMouseLeave={() => setHover((h) => (h === shown ? null : h))}
+            >
+              <div className="flex items-center gap-x-2 gap-y-1 mb-1 flex-wrap">
+                <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: colorFor(z.label) }} />
+                <p className="text-sm font-bold text-gray-900">{z.label}</p>
+                <span
+                  className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                    z.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {z.permit_required ? "Permit Required" : "No Permit"}
+                </span>
+              </div>
+              {z.note && <p className="text-xs text-gray-600 leading-snug">{z.note}</p>}
+              {z.permit_required && (
+                <Link
+                  to={`/ApplyForPermit?permit=${encodeURIComponent(z.label)}&city=${encodeURIComponent(city || "")}`}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg no-underline hover:opacity-90 transition-opacity"
+                  style={{ background: "#003466" }}
+                >
+                  Start this Permit <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {zones.length === 0 ? (
         <p className="text-xs text-gray-400 text-center">No permit zones were detected in this photo.</p>
       ) : (
         <p className="text-[11px] text-gray-400 text-center">
-          {zones.length} permit zone{zones.length === 1 ? "" : "s"} detected — tap any highlight to learn more
+          {zones.length} permit item{zones.length === 1 ? "" : "s"} detected — hover or tap a marker to learn more
         </p>
-      )}
-
-      {/* Selected zone detail */}
-      {sel && (
-        <div
-          className={`rounded-xl p-3 border ${sel.permit_required ? "border-red-200 bg-red-50/60" : "border-green-200 bg-green-50/60"}`}
-        >
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: colorFor(sel.label) }} />
-              <p className="text-sm font-bold text-gray-900 truncate">{sel.label}</p>
-            </div>
-            <span
-              className={`text-[11px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                sel.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-              }`}
-            >
-              {sel.permit_required ? "Permit Required" : "No Permit Needed"}
-            </span>
-          </div>
-          {sel.note && <p className="text-xs text-gray-600">{sel.note}</p>}
-          {sel.permit_required && (
-            <Link
-              to={`/ApplyForPermit?permit=${encodeURIComponent(sel.label)}&city=${encodeURIComponent(city || "")}`}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg no-underline hover:opacity-90 transition-opacity"
-              style={{ background: "#003466" }}
-            >
-              Start this Permit <ArrowRight className="w-3 h-3" />
-            </Link>
-          )}
-        </div>
       )}
     </div>
   );
