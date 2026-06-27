@@ -60,8 +60,8 @@ real backend. The Supabase URL/key are read from env vars (`VITE_SUPABASE_URL` /
 ## Backend
 
 - **Database & Auth:** Supabase. The app role is stored in the user's `user_metadata`.
-- **Edge Functions** (`supabase/functions/`): `invoke-llm`, `ar-tools`, `agent-chat`,
-  `project-ai-assistant`, `open-permit-ai`, `extract-permit-from-pdf`, and `invite-user`.
+- **Edge Functions** (`supabase/functions/`): `invoke-llm`, `ar-tools`, `camera-permit-lookup`,
+  `agent-chat`, `project-ai-assistant`, `open-permit-ai`, `extract-permit-from-pdf`, and `invite-user`.
   The AI functions call the Anthropic API and require an `ANTHROPIC_API_KEY` secret set on
   the Supabase project. The `invite-user` function additionally uses the project's
   service-role key (injected automatically).
