@@ -124,7 +124,16 @@ export default function CameraPermitScan() {
 
   const lowConfidence = result?.detected && result.detected.confidence < MIN_CONFIDENCE;
   const permitNeeded = (result?.permits?.length || 0) > 0;
-  const ballColor = loading ? "#f59e0b" : result ? (permitNeeded ? "#ef4444" : "#22c55e") : "#f59e0b";
+  const ambiguous = (result?.alternatives?.length || 0) > 0;
+  const ballColor = loading
+    ? "#f59e0b"
+    : result
+      ? ambiguous
+        ? "#f59e0b"
+        : permitNeeded
+          ? "#ef4444"
+          : "#22c55e"
+      : "#f59e0b";
 
   return (
     <div className="mx-auto max-w-md p-4">
@@ -188,18 +197,47 @@ export default function CameraPermitScan() {
 }
 
 function Results({ result, lowConfidence }) {
-  const { detected, city, supported, permits = [], message, contractor_category } = result;
+  const { detected, city, supported, permits = [], message, contractor_category, alternatives = [] } = result;
 
-  // Contractor contacts are opt-in — fetched only when the user asks.
-  const [pros, setPros] = useState(null); // null = not requested yet
+  // Selectable interpretations of the tapped spot: primary first, then alternatives.
+  const options = [];
+  if (detected?.work_type) {
+    options.push({
+      item_label: detected.item_label,
+      work_type: detected.work_type,
+      confidence: detected.confidence,
+      permit_required: permits.length > 0,
+      contractor_category,
+      permit: permits[0] || null,
+    });
+  }
+  (alternatives || []).forEach((a) => {
+    if (!a?.work_type) return;
+    options.push({
+      item_label: a.item_label,
+      work_type: a.work_type,
+      confidence: null,
+      permit_required: a.permit_required,
+      contractor_category: a.contractor_category,
+      permit: a.permit || null,
+    });
+  });
+
+  const [picked, setPicked] = useState(0);
+  const opt = options[picked] || options[0] || null;
+
+  // Contractor contacts are opt-in — reset when the chosen interpretation changes.
+  const [pros, setPros] = useState(null);
   const [proExt, setProExt] = useState(null);
   const [proLoading, setProLoading] = useState(false);
+  useEffect(() => { setPros(null); setProExt(null); }, [picked]);
 
   const loadContractors = async () => {
+    if (!opt?.contractor_category) return;
     setProLoading(true);
     try {
       const { data } = await supabase.functions.invoke("camera-permit-lookup", {
-        body: { mode: "contractors", city, contractor_category },
+        body: { mode: "contractors", city, contractor_category: opt.contractor_category },
       });
       setPros(data?.contractors || []);
       setProExt(data?.external_contractor_lookup || null);
@@ -210,51 +248,84 @@ function Results({ result, lowConfidence }) {
     }
   };
 
+  if (!opt) {
+    return (
+      <div className="mt-4">
+        <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">{message || "No permit-relevant item identified."}</p>
+      </div>
+    );
+  }
+
+  const p = opt.permit;
+
   return (
     <div className="mt-4 space-y-4">
-      {detected?.work_type ? (
-        <div className="rounded-xl border border-gray-200 p-4">
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-lg font-semibold capitalize">{detected.item_label}</h3>
-            <span className="text-xs text-gray-500">{Math.round((detected.confidence || 0) * 100)}% sure</span>
+      {/* Disambiguation — ask which item they meant */}
+      {options.length > 1 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm font-semibold text-amber-900">A few things are here — which did you mean?</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {options.map((o, i) => (
+              <button
+                key={i}
+                onClick={() => setPicked(i)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  picked === i ? "border-[#003466] bg-[#003466] text-white" : "border-gray-300 bg-white text-gray-700"
+                }`}
+              >
+                {o.item_label}
+                <span className={picked === i ? "ml-1.5 text-white/80" : `ml-1.5 ${o.permit_required ? "text-red-600" : "text-green-600"}`}>
+                  · {o.permit_required ? "Permit" : "No permit"}
+                </span>
+              </button>
+            ))}
           </div>
-          <p className="text-sm text-gray-600">{detected.work_type}{city ? ` · ${city}` : ""}</p>
-          {lowConfidence && (
-            <p className="mt-2 text-sm text-amber-700">Not fully sure this is right — try moving closer or rescanning.</p>
-          )}
         </div>
-      ) : (
-        <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">{message || "No permit-relevant item identified."}</p>
       )}
+
+      {/* Selected interpretation */}
+      <div className="rounded-xl border border-gray-200 p-4">
+        <div className="flex items-baseline justify-between">
+          <h3 className="text-lg font-semibold capitalize">{opt.item_label}</h3>
+          {opt.confidence != null && <span className="text-xs text-gray-500">{Math.round((opt.confidence || 0) * 100)}% sure</span>}
+        </div>
+        <p className="text-sm text-gray-600">{opt.work_type}{city ? ` · ${city}` : ""}</p>
+        <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${opt.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+          {opt.permit_required ? "Permit Required" : "No Permit Needed"}
+        </span>
+        {!opt.permit_required && p?.description && <p className="mt-2 text-sm text-gray-600">{p.description}</p>}
+        {picked === 0 && lowConfidence && (
+          <p className="mt-2 text-sm text-amber-700">Not fully sure this is right — try moving closer or rescanning.</p>
+        )}
+      </div>
 
       {supported === false && message && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{message}</p>
       )}
 
-      {permits.map((p) => (
-        <div key={p.permit_type_id} className="rounded-xl border border-gray-200 p-4">
+      {/* Permit detail (only when a permit is needed) */}
+      {opt.permit_required && p && (
+        <div className="rounded-xl border border-gray-200 p-4">
           <h4 className="font-semibold">{p.name}</h4>
           {p.description && <p className="mt-1 text-sm text-gray-600">{p.description}</p>}
           {p.typical_timeline && <p className="mt-1 text-xs text-gray-500">Typical timeline: {p.typical_timeline}</p>}
-
           <List title="Documents needed" items={p.documents_needed} />
           <List title="Requirements" items={p.typical_requirements} />
           <List title="Inspections" items={p.inspections_required} />
-
           {p.fee_rules?.length > 0 && (
             <p className="mt-2 text-xs text-gray-500">{p.fee_rules.length} fee rule(s) apply — see the Fee Calculator for an exact estimate.</p>
           )}
         </div>
-      ))}
+      )}
 
       {/* Contractors — opt-in: ask before showing contact info */}
-      {detected?.work_type && contractor_category && (
+      {opt.permit_required && opt.contractor_category && (
         <div className="rounded-xl border border-gray-200 p-4">
           <h4 className="font-semibold">Licensed contractors</h4>
           {pros === null ? (
             <>
               <p className="mt-1 text-sm text-gray-600">
-                Want to see {contractor_category.toLowerCase()} contractors who can do this work?
+                Want to see {opt.contractor_category.toLowerCase()} contractors who can do this work?
               </p>
               <button
                 onClick={loadContractors}
