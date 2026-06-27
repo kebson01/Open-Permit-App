@@ -71,22 +71,25 @@ Deploy a function with the Supabase CLI:
 supabase functions deploy <name>
 ```
 
-### AI Smart Check photo zones (and optional SAM segmentation)
+### AI Smart Check photo markers (and optional object grounding)
 
-The AI Smart Check on the Permit Checklist page detects permit-relevant features
-in an uploaded photo and highlights them. By default it uses a vision LLM
-(`invoke-llm`) that returns labeled outline **polygons** — tight, but estimated.
+The AI Smart Check on the Permit Checklist page detects permit-relevant items in
+an uploaded photo and drops a marker on each. By default a vision LLM
+(`invoke-llm`) returns each item's center **point** — fast, but only estimated,
+so a marker can land near (not exactly on) its item. Markers are **draggable**,
+so a user can nudge any marker onto the right spot.
 
-For pixel-accurate "molded" highlights that hug each object, there is an optional
-**SAM segmentation** prototype (`segment-zones` Edge Function → Replicate SAM 2):
-the LLM finds/labels each feature, SAM carves the exact mask. It is **off by
-default and not deployed**. To trial it:
+For accurate automatic placement, there is an optional **object grounding**
+prototype (`ground-objects` Edge Function → Replicate Grounding DINO): the LLM
+finds/labels items, the grounding model returns the real object's coordinates,
+and the marker is placed at that box center. It is **off by default and not
+deployed**. To trial it:
 
-1. Deploy the function: `supabase functions deploy segment-zones`
-2. Set secrets on the project: `REPLICATE_API_TOKEN` and `REPLICATE_SAM_VERSION`
-   (the version hash of a box-promptable SAM 2 image model).
-3. Build the frontend with `VITE_USE_SAM=true`.
+1. Deploy the function: `supabase functions deploy ground-objects`
+2. Set secrets on the project: `REPLICATE_API_TOKEN` and
+   `REPLICATE_GROUNDING_VERSION` (a Grounding DINO model version hash).
+3. Build the frontend with `VITE_USE_GROUNDING=true`.
 
-Note: the Replicate model input/output mapping in `segment-zones/index.ts` is
+Note: the Replicate model input/output mapping in `ground-objects/index.ts` is
 marked for verification against the live model on first run; failures degrade
-gracefully back to the LLM polygons.
+gracefully back to the LLM points.

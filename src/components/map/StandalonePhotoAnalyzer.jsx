@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Camera, Loader2, Sparkles, X, RotateCcw, Upload } from "lucide-react";
 import { analyzePermitPhoto } from "@/lib/permitPhotoAnalysis";
 import { detectPermitZones } from "@/lib/permitZoneDetection";
-import { segmentZones, SAM_ENABLED } from "@/lib/permitZoneSegmentation";
+import { groundZones, GROUNDING_ENABLED } from "@/lib/permitZoneGrounding";
 import PhotoAnalysisResults from "./PhotoAnalysisResults";
 import PhotoZoneOverlay from "./PhotoZoneOverlay";
 
@@ -38,10 +38,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
     if (zonesRes.status === "fulfilled") {
       let detected = zonesRes.value.zones;
       setZones(detected);
-      // Optionally refine the rough zones into pixel-accurate SAM masks. This is
-      // best-effort and falls back to the polygons it was given.
-      if (SAM_ENABLED && detected.length) {
-        try { setZones(await segmentZones(file, detected)); } catch { /* keep polygons */ }
+      // Optionally refine marker positions with a real object-grounding model.
+      // Best-effort: falls back to the LLM's estimated points on any failure.
+      if (GROUNDING_ENABLED && detected.length) {
+        try { setZones(await groundZones(file, detected)); } catch { /* keep AI points */ }
       }
     }
     if (analysisRes.status === "fulfilled") {
