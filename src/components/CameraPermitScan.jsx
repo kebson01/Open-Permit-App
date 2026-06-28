@@ -224,13 +224,42 @@ function Results({ result, lowConfidence }) {
   });
 
   const [picked, setPicked] = useState(0);
-  const opt = options[picked] || options[0] || null;
+  const baseOpt = options[picked] || options[0] || null;
 
   // Contractor contacts are opt-in — reset when the chosen interpretation changes.
   const [pros, setPros] = useState(null);
   const [proExt, setProExt] = useState(null);
   const [proLoading, setProLoading] = useState(false);
   useEffect(() => { setPros(null); setProExt(null); }, [picked]);
+
+  // Alternatives ship lightweight (no checklist) to keep the scan fast; fetch the
+  // full requirements only when the user actually picks one.
+  const [detailById, setDetailById] = useState({});
+  const [detailLoading, setDetailLoading] = useState(false);
+  useEffect(() => {
+    const o = options[picked];
+    if (picked === 0 || !o?.permit_required || !o?.work_type) return;
+    const pm = o.permit || {};
+    const hasDetail = pm.documents_needed?.length || pm.typical_requirements?.length || pm.inspections_required?.length;
+    if (hasDetail || detailById[picked]) return;
+    let cancelled = false;
+    setDetailLoading(true);
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("camera-permit-lookup", {
+          body: { mode: "detail", item_label: o.item_label, work_type: o.work_type, city },
+        });
+        if (!cancelled && data) setDetailById((m) => ({ ...m, [picked]: data }));
+      } catch { /* leave checklist empty */ }
+      finally { if (!cancelled) setDetailLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [picked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Merge any lazily-loaded checklist into the picked option's permit.
+  const opt = baseOpt && detailById[picked]
+    ? { ...baseOpt, permit: { ...baseOpt.permit, ...detailById[picked] } }
+    : baseOpt;
 
   const loadContractors = async () => {
     if (!opt?.contractor_category) return;
@@ -309,6 +338,7 @@ function Results({ result, lowConfidence }) {
           <h4 className="font-semibold">{p.name}</h4>
           {p.description && <p className="mt-1 text-sm text-gray-600">{p.description}</p>}
           {p.typical_timeline && <p className="mt-1 text-xs text-gray-500">Typical timeline: {p.typical_timeline}</p>}
+          {detailLoading && picked !== 0 && <p className="mt-2 text-xs text-gray-400">Loading requirements…</p>}
           <List title="Documents needed" items={p.documents_needed} />
           <List title="Requirements" items={p.typical_requirements} />
           <List title="Inspections" items={p.inspections_required} />

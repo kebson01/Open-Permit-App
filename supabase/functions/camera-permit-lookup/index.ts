@@ -46,7 +46,7 @@ const DETECT_SCHEMA = {
     no_permit_reason: { type: 'string', description: 'If permit_likely is false, why not. Empty otherwise.' },
     alternatives: {
       type: 'array',
-      description: 'Other plausible items at the SAME spot whose permit outcome DIFFERS from the main detection (e.g. the window itself when the main guess is the blinds). Empty when the item is unambiguous. Fill each one out fully.',
+      description: 'Other plausible items at the SAME spot whose permit outcome DIFFERS from the main detection (e.g. the window itself when the main guess is the blinds). Empty when the item is unambiguous. Keep each one SHORT — just enough to label the choice; full detail is fetched only if the user picks it.',
       items: {
         type: 'object',
         properties: {
@@ -55,11 +55,7 @@ const DETECT_SCHEMA = {
           permit_likely: { type: 'boolean' },
           permit_id: { type: 'string' },
           contractor_category: { type: 'string' },
-          summary: { type: 'string' },
-          documents_needed: { type: 'array', items: { type: 'string' } },
-          typical_requirements: { type: 'array', items: { type: 'string' } },
-          inspections_required: { type: 'array', items: { type: 'string' } },
-          typical_timeline: { type: 'string' },
+          summary: { type: 'string', description: 'One short sentence on this interpretation.' },
         },
         required: ['item_label', 'work_type', 'permit_likely'],
       },
@@ -186,6 +182,42 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // ── Detail (opt-in: full checklist for a picked alternative) ───────────────
+    // Text-only + tiny output, so it's far faster than re-running the vision call.
+    if (body.mode === 'detail') {
+      const { item_label, work_type, city: dCity } = body
+      if (!work_type || !claudeKey) return json({ documents_needed: [], typical_requirements: [], inspections_required: [], typical_timeline: '' })
+      const DETAIL_SCHEMA = {
+        type: 'object',
+        properties: {
+          documents_needed: { type: 'array', items: { type: 'string' } },
+          typical_requirements: { type: 'array', items: { type: 'string' } },
+          inspections_required: { type: 'array', items: { type: 'string' } },
+          typical_timeline: { type: 'string' },
+        },
+        required: ['documents_needed', 'typical_requirements', 'inspections_required'],
+      }
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 600,
+            system: `You are a Broward County, Florida building-permit expert (HVHZ, 170mph wind). Give typical Florida Building Code permit requirements for the work below in ${dCity || 'Broward County'}. Be brief and specific.`,
+            tools: [{ name: 'record_detail', description: 'Record the permit checklist.', input_schema: DETAIL_SCHEMA }],
+            tool_choice: { type: 'tool', name: 'record_detail' },
+            messages: [{ role: 'user', content: `Work: ${work_type}${item_label ? ` (item: ${item_label})` : ''}.` }],
+          }),
+        })
+        const d = await res.json()
+        const tool = (d.content || []).find((b: any) => b.type === 'tool_use')
+        return json(tool?.input || { documents_needed: [], typical_requirements: [], inspections_required: [], typical_timeline: '' })
+      } catch {
+        return json({ documents_needed: [], typical_requirements: [], inspections_required: [], typical_timeline: '' })
+      }
+    }
+
     const { image, mediaType, lat, lng, point } = body
     if (!image || image.length < 100) return json({ error: 'No image. Try again.' }, 400)
 
@@ -230,7 +262,7 @@ Call record_detection for the permit-relevant item the user is asking about.
         headers: { 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1600,
+          max_tokens: 1100,
           system: sys,
           tools: [{ name: 'record_detection', description: 'Record the identified item and its permit guidance.', input_schema: DETECT_SCHEMA }],
           tool_choice: { type: 'tool', name: 'record_detection' },
