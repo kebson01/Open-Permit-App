@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Home, Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
   Building2, Sparkles, Camera, HardHat, Layers, Bell,
-  LayoutDashboard, FolderOpen, CheckCircle2, ChevronRight
+  LayoutDashboard, FolderOpen, ChevronRight
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCities } from "@/hooks/useCities";
+import { useCities, parseServices } from "@/hooks/useCities";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
@@ -147,7 +147,7 @@ export default function PermitGuide() {
 
   const { cities, loading: citiesLoading } = useCities();
   const permitCities = cities.filter(c => {
-    const svcs = Array.isArray(c.enabled_services) ? c.enabled_services : (typeof c.enabled_services === "string" ? JSON.parse(c.enabled_services || "[]") : []);
+    const svcs = parseServices(c.enabled_services);
     return svcs.includes("permit_types") || svcs.includes("permit_guide") || svcs.length === 0;
   });
   const CITIES     = urlCity ? [urlCity] : permitCities.map(c => c.name);

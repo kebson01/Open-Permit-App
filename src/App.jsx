@@ -39,6 +39,11 @@ import ProviderDashboard from './pages/ProviderDashboard';
 import AdminPanel from './pages/AdminPanel.jsx';
 import AdminHealth from './pages/AdminHealth.jsx';
 import AdminPermitRecords from './pages/AdminPermitRecords.jsx';
+import AdminCityManager from './pages/AdminCityManager.jsx';
+
+// City portals
+import CityPortal from './pages/CityPortal.jsx';
+import CityPortalPublic from './pages/CityPortalPublic.jsx';
 
 // Legacy / other
 import ProjectDetail from './pages/ProjectDetail.jsx';
@@ -88,6 +93,12 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/admin/health" element={<LayoutWrapper currentPageName="AdminHealth"><ProtectedRoute><AdminHealth /></ProtectedRoute></LayoutWrapper>} />
             <Route path="/AdminPermitRecords" element={<LayoutWrapper currentPageName="AdminPermitRecords"><ProtectedRoute><AdminPermitRecords /></ProtectedRoute></LayoutWrapper>} />
+            {/* City manager (admin + city_admin; each page does its own role gating) */}
+            <Route path="/admin-city-manager" element={<LayoutWrapper currentPageName="AdminCityManager"><ProtectedRoute><AdminCityManager /></ProtectedRoute></LayoutWrapper>} />
+            <Route path="/city-portal" element={<LayoutWrapper currentPageName="CityPortal"><ProtectedRoute><CityPortal /></ProtectedRoute></LayoutWrapper>} />
+
+            {/* ── PUBLIC CITY PORTAL (standalone, white-label — no app chrome/auth) ── */}
+            <Route path="/CityPortalPublic" element={<CityPortalPublic />} />
 
             {/* ── PROJECTS & TOOLS ── */}
             <Route path="/tools/exemption-checker" element={<LayoutWrapper currentPageName="ExemptionChecker"><ExemptionCheckerV2 /></LayoutWrapper>} />

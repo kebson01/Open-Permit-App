@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import * as db from "@/lib/db";
+import { parseServices } from "@/hooks/useCities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Map, Calculator, Search, Sparkles, ClipboardList, Layers, BookOpen, ExternalLink } from "lucide-react";
@@ -38,6 +39,8 @@ export default function CityFormModal({ city, onClose, onSaved }) {
   const [form, setForm] = useState({
     ...defaults,
     ...city,
+    // Normalize to an array so toggles never spread a JSON string into chars.
+    enabled_services: parseServices(city?.enabled_services),
   });
   const [saving, setSaving] = useState(false);
 
@@ -51,7 +54,8 @@ export default function CityFormModal({ city, onClose, onSaved }) {
     setSaving(true);
     // Auto-generate slug from name if not set
     const slug = form.slug || form.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const data = { ...form, slug };
+    // Persist enabled_services as a JSON string (the column is text).
+    const data = { ...form, slug, enabled_services: JSON.stringify(form.enabled_services || []) };
     if (city?.id) {
       await db.City.update(city.id, data);
     } else {

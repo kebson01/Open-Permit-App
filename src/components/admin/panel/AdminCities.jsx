@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { SUPABASE_URL as SB_URL, SUPABASE_ANON_KEY as SB_KEY } from "@/lib/supabase";
+import { parseServices } from "@/hooks/useCities";
 import { Pencil, ExternalLink, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,7 @@ function EditModal({ city, feeRuleCount, onClose, onSaved }) {
     building_department_address: city.building_department_address || "",
     portal_url: city.portal_url || "",
     fee_source: city.fee_source || "",
-    enabled_services: city.enabled_services || [],
+    enabled_services: parseServices(city.enabled_services),
   });
   const [saving, setSaving] = useState(false);
 
@@ -37,10 +38,12 @@ function EditModal({ city, feeRuleCount, onClose, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
+    // enabled_services is a text column — persist it as a JSON string.
+    const payload = { ...form, enabled_services: JSON.stringify(form.enabled_services || []) };
     await fetch(`${SB_URL}/rest/v1/cities?id=eq.${city.id}`, {
       method: "PATCH",
       headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
     onSaved();

@@ -56,11 +56,17 @@ export default function AdminCityManager() {
   }
 
   const isSuperAdmin = currentUser.role === "admin";
+  // Scope a city_admin to their own city. Prefer assigned_city_id, but fall back
+  // to city_name since the invite flow sets city_name (not the id) on the user.
   const cityAdminAssignedCity = currentUser.assigned_city_id;
-  
+  const cityAdminCityName = currentUser.city_name;
+
   let filtered = cities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
-  if (!isSuperAdmin && cityAdminAssignedCity) {
-    filtered = filtered.filter(c => c.id === cityAdminAssignedCity);
+  if (!isSuperAdmin && (cityAdminAssignedCity || cityAdminCityName)) {
+    filtered = filtered.filter(c =>
+      c.id === cityAdminAssignedCity ||
+      (cityAdminCityName && c.name?.toLowerCase() === cityAdminCityName.toLowerCase())
+    );
   }
 
   return (
