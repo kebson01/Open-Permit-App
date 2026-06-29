@@ -27,6 +27,7 @@ export async function getCurrentUser() {
     full_name: meta.full_name || user.email?.split("@")[0] || "",
     role: meta.role || "user",
     city_name: meta.city_name || null,
+    assigned_city_id: meta.assigned_city_id || null,
   };
 }
 

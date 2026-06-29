@@ -95,7 +95,9 @@ export default function Layout({ children, currentPageName }) {
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const firstName   = displayName.split(" ")[0];
   const initial     = displayName[0]?.toUpperCase() || "U";
-  const isAdmin     = user?.user_metadata?.role === "admin" || user?.app_metadata?.role === "admin";
+  const role        = user?.user_metadata?.role || user?.app_metadata?.role;
+  const isAdmin     = role === "admin";
+  const isCityAdmin = role === "city_admin";
 
   if (currentPageName === "CityPortalPublic") return <>{children}</>;
 
@@ -188,6 +190,12 @@ export default function Layout({ children, currentPageName }) {
               <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-[#424750] hover:bg-[#f2f4f6] transition-colors"
                 style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
                 Admin
+              </Link>
+            )}
+            {(isAdmin || isCityAdmin) && (
+              <Link to="/admin-city-manager" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-[#424750] hover:bg-[#f2f4f6] transition-colors"
+                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                City Manager
               </Link>
             )}
 
@@ -310,6 +318,13 @@ export default function Layout({ children, currentPageName }) {
                       className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
                       style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
                       <ShieldCheck className="w-4 h-4" /> Admin
+                    </Link>
+                  )}
+                  {(isAdmin || isCityAdmin) && (
+                    <Link to="/admin-city-manager" onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
+                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
+                      <Building2 className="w-4 h-4" /> City Manager
                     </Link>
                   )}
                   <button onClick={async () => { await supabase.auth.signOut(); setMobileOpen(false); }}

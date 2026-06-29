@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import * as db from "@/lib/db";
+import { parseServices } from "@/hooks/useCities";
 import { Building2, Calculator, Map, AlertCircle, ExternalLink } from "lucide-react";
 import FeeCalculatorEmbed from "@/components/city/FeeCalculatorEmbed";
 import PermitGuideEmbed from "@/components/city/PermitGuideEmbed";
+
+// Services that have an embeddable portal view. Others (property_search,
+// ai_assistant, etc.) are enabled flags but have no standalone embed yet.
+const PORTAL_TABS = ["permit_guide", "fee_calculator"];
 
 export default function CityPortalPublic() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -18,9 +23,9 @@ export default function CityPortalPublic() {
       // Match by slug first, then fallback to name match
       const found = all.find(c => c.slug === slug) || all.find(c => c.name?.toLowerCase().replace(/\s+/g, "-") === slug) || null;
       setCity(found);
-      if (found?.enabled_services?.length > 0) {
-        setActiveTab(found.enabled_services[0]);
-      }
+      // Land on the first enabled service that actually has a portal view.
+      const tabs = parseServices(found?.enabled_services).filter(s => PORTAL_TABS.includes(s));
+      if (tabs.length > 0) setActiveTab(tabs[0]);
       setLoading(false);
     });
   }, [slug]);
@@ -47,7 +52,8 @@ export default function CityPortalPublic() {
     );
   }
 
-  const services = city.enabled_services || [];
+  const services = parseServices(city.enabled_services);
+  const portalTabs = services.filter(s => PORTAL_TABS.includes(s));
 
   if (services.length === 0) {
     return (
@@ -88,9 +94,9 @@ export default function CityPortalPublic() {
           </div>
 
           {/* Tabs */}
-          {services.length > 1 && (
+          {portalTabs.length > 1 && (
             <div className="flex gap-2 mt-5">
-              {services.includes("permit_guide") && (
+              {portalTabs.includes("permit_guide") && (
                 <button
                   onClick={() => setActiveTab("permit_guide")}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
@@ -102,7 +108,7 @@ export default function CityPortalPublic() {
                   <Map className="w-4 h-4" /> Visual Permit Guide
                 </button>
               )}
-              {services.includes("fee_calculator") && (
+              {portalTabs.includes("fee_calculator") && (
                 <button
                   onClick={() => setActiveTab("fee_calculator")}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
@@ -123,6 +129,15 @@ export default function CityPortalPublic() {
       <div className="max-w-5xl mx-auto px-4 py-6">
         {activeTab === "permit_guide" && <PermitGuideEmbed city={city} />}
         {activeTab === "fee_calculator" && <FeeCalculatorEmbed city={city} />}
+        {portalTabs.length === 0 && (
+          <div className="text-center py-12">
+            <Building2 className="w-10 h-10 text-blue-300 mx-auto mb-3" />
+            <p className="text-gray-700 text-sm">
+              This portal is enabled but its services aren&apos;t available as an embedded view yet.
+              {city.portal_url && <> Visit the <a href={city.portal_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">city portal</a> directly.</>}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

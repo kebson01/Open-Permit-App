@@ -62,11 +62,22 @@ export function cityUsesBrowardCounty(city) {
   return (city.fee_source || "").includes("Broward County Building Division");
 }
 
+/**
+ * Normalize a city's enabled_services into a string[]. The column is stored as
+ * a JSON-string in a text column, but may also arrive as a real array — handle
+ * both so callers never have to. Returns [] on anything unparseable.
+ */
+export function parseServices(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try { const v = JSON.parse(value || "[]"); return Array.isArray(v) ? v : []; }
+    catch { return []; }
+  }
+  return [];
+}
+
 /** Check if a city has a given service enabled */
 export function cityHasService(city, service) {
   if (!city) return false;
-  const services = Array.isArray(city.enabled_services)
-    ? city.enabled_services
-    : (typeof city.enabled_services === "string" ? JSON.parse(city.enabled_services || "[]") : []);
-  return services.includes(service);
+  return parseServices(city.enabled_services).includes(service);
 }

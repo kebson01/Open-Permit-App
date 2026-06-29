@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Shield, Phone, MapPin, Globe, Calendar, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2, Shield, Phone, MapPin, Globe, Calendar, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
 import CityFormModal from "@/components/admin/CityFormModal.jsx";
