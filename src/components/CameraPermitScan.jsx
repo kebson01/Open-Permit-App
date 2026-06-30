@@ -22,6 +22,7 @@ export default function CameraPermitScan() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [hint, setHint] = useState("");
 
   // Start camera + grab location once
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function CameraPermitScan() {
     setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("camera-permit-lookup", {
-        body: { image, mediaType: "image/jpeg", ...(coords.current || {}) },
+        body: { image, mediaType: "image/jpeg", hint: hint.trim() || undefined, ...(coords.current || {}) },
       });
       if (error) throw error;
       setResult(data);
@@ -84,7 +85,7 @@ export default function CameraPermitScan() {
       setLoading(false);
       inFlight.current = false;
     }
-  }, [captureBase64]);
+  }, [captureBase64, hint]);
 
   const lowConfidence = result?.detected && result.detected.confidence < MIN_CONFIDENCE;
 
@@ -103,6 +104,21 @@ export default function CameraPermitScan() {
       </div>
 
       <div className="mt-3">
+        <label htmlFor="scan-hint" className="mb-1 block text-xs font-medium text-gray-600">
+          What are you planning? <span className="font-normal text-gray-400">(optional, improves accuracy)</span>
+        </label>
+        <input
+          id="scan-hint"
+          type="text"
+          value={hint}
+          onChange={(e) => setHint(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") scan(); }}
+          placeholder="e.g. window replacement, replace glass door…"
+          className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      <div className="mt-3">
         <button
           onClick={scan}
           disabled={!ready || loading}
@@ -111,7 +127,7 @@ export default function CameraPermitScan() {
           {loading ? "Scanning…" : "Scan item"}
         </button>
         <p className="mt-2 text-center text-xs text-gray-500">
-          Point at an item, then tap to identify it and see permit info for your location.
+          Point at the item and tap. Add a note above (like “replace glass door”) so the AI focuses on the right thing.
         </p>
       </div>
 

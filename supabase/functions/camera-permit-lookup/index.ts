@@ -143,6 +143,7 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json()
     const { image, mediaType, lat, lng } = body
+    const hint = typeof body.hint === 'string' ? body.hint.trim().slice(0, 200) : ''
     if (!image || image.length < 100) return json({ error: 'No image. Try again.' }, 400)
 
     // 1. Resolve city from GPS (best effort — falls back to Broward County).
@@ -166,16 +167,22 @@ Deno.serve(async (req: Request) => {
 
     // 3. Vision: identify the item and produce permit guidance.
     const permitCtx = feeRules.map((p) => `${p.permit_id}|${p.permit_name}|${p.category}`).join('\n')
+    const hintBlock = hint
+      ? `\nThe user TOLD YOU what they are looking at and want to do: "${hint}".
+This is your PRIMARY instruction. Identify and analyze THAT item, even if other objects (blinds, curtains, furniture, screens, frames) are larger or more eye-catching in the photo. For example, if they say "window" but blinds cover it, analyze the window; if they say "glass door" but it is closed, still treat it as a door. Use their wording to set work_type. Only override them if their described item is genuinely not present in the image.`
+      : `\nNo description was given. Identify the single most prominent permit-relevant item near the CENTER of the frame (inside the viewfinder box). Prefer the building element itself (window, door, panel, fixture) over removable coverings like blinds or curtains.`
+
     const sys = `You are a Broward County, Florida building-permit expert (HVHZ, 170mph wind).
 City: ${cityRow?.name || city}${supported ? '' : ' (not yet fully onboarded — give general Florida Building Code / Broward County guidance)'}
 Permits available in this city (permit_id|name|category):
 ${permitCtx || 'None on file — use general Florida Building Code knowledge.'}
+${hintBlock}
 
-The user pointed their camera at one item. Call record_detection for the single most prominent permit-relevant item.
+Call record_detection once for the item described above.
 - Set permit_id ONLY to an id from the list above that clearly matches; otherwise leave it empty.
 - contractor_category must be the closest match from the provided list.
 - Always fill documents_needed / typical_requirements / inspections_required / typical_timeline from Florida Building Code general knowledge, even when the city has no specific permit on file.
-- If nothing permit-relevant is visible, set work_type empty and permit_likely false. Keep all text brief.`
+- If the user gave no description and nothing permit-relevant is visible, set work_type empty and permit_likely false. Keep all text brief.`
 
     let det: any
     try {
@@ -191,7 +198,7 @@ The user pointed their camera at one item. Call record_detection for the single 
           tool_choice: { type: 'tool', name: 'record_detection' },
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
-            { type: 'text', text: `Identify the main item. Location: ${gm?.results?.[0]?.formatted_address || prop?.full_address || city}.` },
+            { type: 'text', text: `${hint ? `I want to: "${hint}". Analyze that item in this photo.` : 'Identify the main item in this photo.'} Location: ${gm?.results?.[0]?.formatted_address || prop?.full_address || city}.` },
           ] }],
         }),
       })
