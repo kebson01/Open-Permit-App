@@ -30,6 +30,7 @@ export default function CameraPermitScan() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [hint, setHint] = useState(""); // optional user intent, e.g. "replace glass door"
 
   // Start camera + grab location once
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function CameraPermitScan() {
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("camera-permit-lookup", {
-        body: { image: base64, mediaType: "image/jpeg", point, ...(coords.current || {}) },
+        body: { image: base64, mediaType: "image/jpeg", point, hint: hint.trim() || undefined, ...(coords.current || {}) },
       });
       if (error) throw error;
       setResult(data);
@@ -175,6 +176,19 @@ export default function CameraPermitScan() {
         )}
       </div>
 
+      {/* Optional intent — steers the AI to the item you mean (e.g. window vs blinds) */}
+      <div className="mt-3">
+        <input
+          id="scan-hint"
+          type="text"
+          value={hint}
+          onChange={(e) => setHint(e.target.value)}
+          disabled={loading}
+          placeholder="Optional: what do you want to do? e.g. replace glass door"
+          className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:border-[#003466] focus:outline-none focus:ring-1 focus:ring-[#003466] disabled:opacity-50"
+        />
+      </div>
+
       {frozen ? (
         <button
           onClick={reset}
@@ -185,7 +199,7 @@ export default function CameraPermitScan() {
         </button>
       ) : (
         <p className="mt-3 text-center text-xs text-gray-500">
-          Point the camera, then tap an item to drop a lightball and see its permit info.
+          Add a note above if you like, then tap the item to drop a lightball and see its permit info.
         </p>
       )}
 
