@@ -259,14 +259,14 @@ export default function HomeDashboard() {
           <div>
             <span className="text-lg font-extrabold" style={{ fontFamily: HEADING, color: PRIMARY }}>OpenPermit</span>
             <p className="text-sm text-[#424750] mt-1 max-w-xs" style={{ fontFamily: BODY }}>
-              © 2024 OpenPermit Municipal Services. All rights reserved.
+              © {new Date().getFullYear()} OpenPermit Municipal Services. All rights reserved.
             </p>
           </div>
           <div className="flex flex-wrap gap-4 md:gap-6">
-            <a href="#" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Privacy Policy</a>
-            <a href="#" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Terms of Service</a>
-            <a href="#" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Accessibility</a>
-            <a href="#" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Contact Support</a>
+            <Link to="/privacy" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Privacy Policy</Link>
+            <Link to="/terms" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Terms of Service</Link>
+            <Link to="/accessibility" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Accessibility</Link>
+            <a href="mailto:support@open-permit.com" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: BODY }}>Contact Support</a>
           </div>
         </footer>
       </div>
