@@ -52,6 +52,11 @@ import ARTools from './pages/ARTools.jsx';
 import CameraScan from './pages/CameraScan.jsx';
 import SubmissionGuide from './pages/SubmissionGuide';
 
+// Legal / info
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
+import TermsOfService from './pages/TermsOfService.jsx';
+import Accessibility from './pages/Accessibility.jsx';
+
 const LayoutWrapper = ({ children, currentPageName }) =>
   <Layout currentPageName={currentPageName}>{children}</Layout>;
 
@@ -78,6 +83,9 @@ function App() {
             <Route path="/BuildingCodes" element={<LayoutWrapper currentPageName="BuildingCodes"><BuildingCodes /></LayoutWrapper>} />
             <Route path="/PropertyGuide" element={<LayoutWrapper currentPageName="PropertyGuide"><PropertyGuide /></LayoutWrapper>} />
             <Route path="/PermitGuide" element={<LayoutWrapper currentPageName="PermitGuide"><PermitGuide /></LayoutWrapper>} />
+            <Route path="/privacy" element={<LayoutWrapper currentPageName="PrivacyPolicy"><PrivacyPolicy /></LayoutWrapper>} />
+            <Route path="/terms" element={<LayoutWrapper currentPageName="TermsOfService"><TermsOfService /></LayoutWrapper>} />
+            <Route path="/accessibility" element={<LayoutWrapper currentPageName="Accessibility"><Accessibility /></LayoutWrapper>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/login" element={<AuthSignIn />} />
             <Route path="/auth/login" element={<AuthSignIn />} />
