@@ -29,3 +29,9 @@ dist-ssr
 *.sw?
 
 .env
+
+# Claude Code local config
+.claude/
+
+# Supabase CLI local cache
+supabase/.temp/
