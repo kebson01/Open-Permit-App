@@ -28,12 +28,6 @@ export default function LegalPage({ title, lastUpdated, children }) {
           </p>
         )}
 
-        {/* Starter-content notice — remove once legally reviewed. */}
-        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" style={{ fontFamily: BODY }}>
-          This is a starter template and has not been reviewed by an attorney. Have legal counsel
-          review and adapt it before relying on it.
-        </div>
-
         <div className="legal-prose mt-6 space-y-5 text-[15px] leading-relaxed text-[#333]" style={{ fontFamily: BODY }}>
           {children}
         </div>

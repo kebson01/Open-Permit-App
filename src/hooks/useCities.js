@@ -20,6 +20,13 @@ export async function loadCities() {
       _cachedCities = Array.isArray(data) ? data : [];
       _fetchPromise = null;
       return _cachedCities;
+    })
+    .catch(err => {
+      // Network error or paused/unreachable backend: don't cache the failure,
+      // so a later call can retry. Return [] so callers stop showing "Loading…".
+      console.error("Failed to load cities:", err);
+      _fetchPromise = null;
+      return [];
     });
 
   return _fetchPromise;
