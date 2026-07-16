@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 
 const TABLE = "weston_permit_records";
 const PAGE_SIZE = 50;
-const TOTAL_COUNT = 138190;
+const TOTAL_COUNT = 138193;
 
 const MODULES = ["Building", "Enforcement", "Planning", "Estoppel", "BusinessTax", "Engineering", "Landscaping", "RentalHousing"];
 const NORMALIZED_STATUSES = ["Completed", "In Review", "Active", "Cancelled", "Inactive", "Denied", "Unknown"];
