@@ -5,25 +5,30 @@ import { Input } from "@/components/ui/input";
 
 const TABLE = "weston_permit_records";
 const PAGE_SIZE = 50;
-const TOTAL_COUNT = 116873;
+const TOTAL_COUNT = 138190;
 
-const MODULES = ["Building", "Planning", "Engineering", "Enforcement", "Landscaping"];
-const NORMALIZED_STATUSES = ["Completed", "Active", "In Review", "Expired", "Cancelled"];
+const MODULES = ["Building", "Enforcement", "Planning", "Estoppel", "BusinessTax", "Engineering", "Landscaping", "RentalHousing"];
+const NORMALIZED_STATUSES = ["Completed", "In Review", "Active", "Cancelled", "Inactive", "Denied", "Unknown"];
 
 const STATUS_NORMALIZED_STYLES = {
   "Completed":  { bg: "#DCFCE7", color: "#166534" },
   "Active":     { bg: "#EFF6FF", color: "#1D4ED8" },
   "In Review":  { bg: "#FFFBEB", color: "#92400E" },
-  "Expired":    { bg: "#F1F5F9", color: "#475569" },
   "Cancelled":  { bg: "#FEF2F2", color: "#991B1B" },
+  "Inactive":   { bg: "#F1F5F9", color: "#475569" },
+  "Denied":     { bg: "#FEE2E2", color: "#991B1B" },
+  "Unknown":    { bg: "#F1F5F9", color: "#475569" },
 };
 
 const MODULE_COLORS = {
-  Building:     "bg-blue-100 text-blue-700",
-  Planning:     "bg-purple-100 text-purple-700",
-  Engineering:  "bg-orange-100 text-orange-700",
-  Enforcement:  "bg-red-100 text-red-700",
-  Landscaping:  "bg-green-100 text-green-700",
+  Building:      "bg-blue-100 text-blue-700",
+  Planning:      "bg-purple-100 text-purple-700",
+  Engineering:   "bg-orange-100 text-orange-700",
+  Enforcement:   "bg-red-100 text-red-700",
+  Landscaping:   "bg-green-100 text-green-700",
+  Estoppel:      "bg-teal-100 text-teal-700",
+  BusinessTax:   "bg-amber-100 text-amber-700",
+  RentalHousing: "bg-pink-100 text-pink-700",
 };
 
 async function fetchRecords({ page, search, filterModule, filterStatus }) {
