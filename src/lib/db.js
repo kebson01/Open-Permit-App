@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { CITY_PERMIT_TYPE_TABLE as PERMIT_TYPE_TABLE } from '@/lib/cityConfig';
 
 // ── Generic REST helpers ───────────────────────────────────────────────────────
 
@@ -52,15 +53,8 @@ async function restDelete(table, id) {
   if (error) throw new Error(`Supabase DELETE: ${error.message}`);
 }
 
-// ── Permit type table map ──────────────────────────────────────────────────────
-const PERMIT_TYPE_TABLE = {
-  'Weston':          'weston_permit_types',
-  'Coral Springs':   'coral_springs_permit_types',
-  'Fort Lauderdale': 'fort_lauderdale_permit_types',
-  'Hollywood':       'hollywood_permit_types',
-  'Cooper City':     'cooper_city_permit_types',
-  'Sunrise':         'sunrise_permit_types',
-};
+// Permit-type table map lives in @/lib/cityConfig (imported above as
+// PERMIT_TYPE_TABLE) so every consumer shares one 22-city source of truth.
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CITIES
@@ -83,14 +77,14 @@ export const City = {
 // ══════════════════════════════════════════════════════════════════════════════
 export const PermitType = {
   filter: async (filters = {}) => {
-    const cityName = filters.city_name;
+    let cityName = filters.city_name;
     if (filters.city_id && !cityName) {
       const cities = await rest('cities', { filters: { id: `eq.${filters.city_id}` }, limit: 1 });
       if (!cities || cities.length === 0) return [];
-      const table = PERMIT_TYPE_TABLE[cities[0].name] || 'weston_permit_types';
-      return rest(table, { order: 'category.asc,name.asc' });
+      cityName = cities[0].name;
     }
-    const table = PERMIT_TYPE_TABLE[cityName] || 'weston_permit_types';
+    const table = PERMIT_TYPE_TABLE[cityName];
+    if (!table) return []; // city has no permit-type data loaded yet
     const f = {};
     if (filters.category) f.category = `eq.${filters.category}`;
     return rest(table, { filters: f, order: 'category.asc,name.asc' });

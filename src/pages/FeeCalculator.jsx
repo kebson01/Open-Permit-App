@@ -10,15 +10,6 @@ import { Link } from "react-router-dom";
 
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
-const CITY_PORTAL_URLS = {
-  "Weston": "https://www.westonfl.org/Permits",
-  "Coral Springs": "https://www.coralsprings.gov/Government/Departments/Building/Online-Permitting-eTrakit/Apply-for-Online-Permit",
-  "Hollywood": "https://aca-prod.accela.com/HOLLYWOOD/Default.aspx",
-  "Fort Lauderdale": "https://lauderbuild.fortlauderdale.gov/",
-  "Cooper City": "https://coopercity.gov/?SEC=AD7C348E-C110-425A-B91C-2CA5769BF937",
-  "Sunrise": "https://sunrisefl.gov/openforbusiness",
-};
-
 const CITY_NOTES = {
   "Weston": "NOC required if job value over $2,500. Fees effective October 2025.",
   "Coral Springs": "NOC required if job value over $5,000.",
@@ -430,9 +421,9 @@ export default function FeeCalculator() {
               </div>
             </div>
 
-            {/* Download / Portal links */}
-            {CITY_PORTAL_URLS[city] && (
-              <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer"
+            {/* Download / Portal links — portal_url comes from the city record in Supabase */}
+            {cityObj?.portal_url && (
+              <a href={cityObj.portal_url} target="_blank" rel="noopener noreferrer"
                 className="block w-full text-center py-3.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-[#a9c5e0] hover:text-[#003466] transition-all no-underline">
                 View City Fee Schedule PDF ↗
               </a>

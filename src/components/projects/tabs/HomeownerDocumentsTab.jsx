@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import * as db from "@/lib/db";
+import { CITY_PERMIT_TYPE_TABLE } from "@/lib/cityConfig";
 import { CheckSquare, Square, MessageCircle, ExternalLink, Map } from "lucide-react";
-
-
-const CITY_PERMIT_TABLES = {
-  "Weston": "weston_permit_types",
-  "Coral Springs": "coral_springs_permit_types",
-  "Fort Lauderdale": "fort_lauderdale_permit_types",
-  "Hollywood": "hollywood_permit_types",
-  "Cooper City": "cooper_city_permit_types",
-};
 
 const DOCUMENT_INFO = {
   "Permit Application Form": { explanation: "Broward County's standard permit application form.", where: "Download at your city's building department website." },
@@ -65,7 +57,7 @@ export default function HomeownerDocumentsTab({ project, onUpdate }) {
       new_construction: "structure",
     };
     const zone = mapProjectTypeToZone[project.project_type] || null;
-    const table = CITY_PERMIT_TABLES[project.city_name] || "weston_permit_types";
+    const table = CITY_PERMIT_TYPE_TABLE[project.city_name] || "weston_permit_types";
 
     const query = zone
       ? `${SUPABASE_URL}/rest/v1/${table}?map_zone=eq.${zone}&select=name,documents_needed`

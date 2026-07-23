@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import * as db from "@/lib/db";
+import { CITY_PERMIT_TYPE_TABLE } from "@/lib/cityConfig";
 import { CheckSquare, Square, Download, UserCheck } from "lucide-react";
-
-
-const CITY_PERMIT_TABLES = {
-  "Weston": "weston_permit_types",
-  "Coral Springs": "coral_springs_permit_types",
-  "Fort Lauderdale": "fort_lauderdale_permit_types",
-  "Hollywood": "hollywood_permit_types",
-  "Cooper City": "cooper_city_permit_types",
-};
 
 const PERMIT_CATEGORY_COLORS = {
   building:    "bg-blue-100 text-blue-700",
@@ -31,7 +23,7 @@ export default function ContractorDocumentsTab({ project, onUpdate }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const table = CITY_PERMIT_TABLES[project.city_name] || "weston_permit_types";
+    const table = CITY_PERMIT_TYPE_TABLE[project.city_name] || "weston_permit_types";
     fetch(`${SUPABASE_URL}/rest/v1/${table}?select=name,documents_needed,category`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     })
