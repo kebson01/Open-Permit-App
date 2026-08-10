@@ -62,10 +62,12 @@ export function useAuthProvider() {
       setUser(session?.user ?? null);
 
       if (event === "SIGNED_IN" && session) {
-        supabase.rpc("claim_guest_guides", {
-          p_email: session.user.email,
-          p_user_id: session.user.id,
-        }).catch(() => {});
+        Promise.resolve(
+          supabase.rpc("claim_guest_guides", {
+            p_email: session.user.email,
+            p_user_id: session.user.id,
+          })
+        ).catch(() => {});
 
         const path = window.location.pathname;
         if (path === "/login" || path === "/auth/login" || path === "/signup" || path === "/auth/signup") {

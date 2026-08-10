@@ -270,6 +270,25 @@ function ProfessionalCard({ professional, onRequest }) {
   const statusStyle = STATUS_STYLES[professional.status] || STATUS_STYLES.active;
   const location = [professional.city, professional.state].filter(Boolean).join(", ");
 
+  // On-demand phone lookup (Yelp). Fetched live for display only — not stored.
+  const [lookup, setLookup] = useState({ loading: false, done: false, result: null });
+  const findPhone = async () => {
+    setLookup({ loading: true, done: false, result: null });
+    const { data, error } = await supabase.functions.invoke("provider-contact-lookup", {
+      body: {
+        name: professional.secondary || professional.name,
+        address: professional.address || "",
+        city: professional.city || "",
+        state: professional.state || "FL",
+      },
+    });
+    setLookup({
+      loading: false,
+      done: true,
+      result: error ? { found: false, message: "Lookup failed — try the web search instead." } : data,
+    });
+  };
+
   // Service-area badge
   const statewide = professional.operates_statewide;
   const serviceAreaNote = professional.service_area_note || (
@@ -377,6 +396,43 @@ function ProfessionalCard({ professional, onRequest }) {
               style={{ fontSize: 12, color: PRIMARY, fontFamily: FF, textDecoration: "none" }}>
               {professional.website.replace(/^https?:\/\//, "")}
             </a>
+          </div>
+        )}
+
+        {/* On-demand phone lookup — only when we don't already have a number */}
+        {!professional.phone && (
+          <div style={{ marginTop: 2 }}>
+            {!lookup.done && (
+              <button
+                onClick={findPhone}
+                disabled={lookup.loading}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa", borderRadius: 8, padding: "5px 11px", fontSize: 11, fontWeight: 700, fontFamily: FF, cursor: lookup.loading ? "default" : "pointer" }}
+              >
+                {lookup.loading
+                  ? <><Loader2 className="w-3 h-3 animate-spin" /> Looking up…</>
+                  : <><Phone className="w-3 h-3" /> Find phone (Yelp)</>}
+              </button>
+            )}
+            {lookup.done && lookup.result?.found && (
+              <div className="flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5" style={{ color: "#059669", flexShrink: 0 }} />
+                <a href={`tel:${lookup.result.phone || lookup.result.display_phone}`}
+                  style={{ fontSize: 12, color: "#059669", fontWeight: 700, fontFamily: FF, textDecoration: "none" }}>
+                  {lookup.result.display_phone || lookup.result.phone}
+                </a>
+                {lookup.result.yelp_url && (
+                  <a href={lookup.result.yelp_url} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 11, color: PRIMARY, fontFamily: FF, textDecoration: "none" }}>
+                    (Yelp)
+                  </a>
+                )}
+              </div>
+            )}
+            {lookup.done && !lookup.result?.found && (
+              <p style={{ fontSize: 11, color: "#9ca3af", fontFamily: FF, margin: 0 }}>
+                {lookup.result?.message || "No phone found."} Try the web search below.
+              </p>
+            )}
           </div>
         )}
       </div>
