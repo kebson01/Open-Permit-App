@@ -20,8 +20,16 @@ export const C = {
   brand:     "#003466",
   brandInk:  "#00203f",  // pressed / hover
   brandSoft: "#e7eef6",
+
+  // These two are referenced from Tailwind classes rather than from JS —
+  // `hover:bg-[#d8e4ef]`, `border-[#c3d3e2]` — because arbitrary-value classes
+  // are parsed at build time and cannot read a constant, and `hover:` has no
+  // inline-style equivalent. They are declared here anyway so the palette has
+  // one definition to change: grep the hex to find every literal.
+  //   #d8e4ef — hover state for a brandSoft surface
+  //   #c3d3e2 — tinted border: dropzones, chips that should read as "ours"
   brandSoftHover: "#d8e4ef",
-  brandLine: "#c3d3e2",  // tinted border — dropzones, chips that read as "ours"
+  brandLine: "#c3d3e2",
 
   // Verdict colours, shared with the camera scan so a green here and a green
   // there mean the same thing.
