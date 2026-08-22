@@ -204,7 +204,7 @@ export default function ResultPermitRequired({ answers, cityInfo, currentUser, o
       </div>
 
       {/* Primary CTA */}
-      <Link to="/ApplyForPermit"
+      <Link to="/PermitGuide"
         style={{ display: "block", textAlign: "center", background: PRIMARY, color: "white", padding: "15px", borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: "none", fontFamily: "'Manrope', sans-serif", letterSpacing: "-0.01em" }}>
         Start My Permit Application →
       </Link>

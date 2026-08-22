@@ -1,6 +1,6 @@
 import {
   Paintbrush, Wrench, Trees, Fence, Package, Sun, Home, Square,
-  Snowflake, Flame, Zap, Waves, SunMedium, Bolt, Shield, PlusSquare, Building2
+  Snowflake, Flame, Zap, Waves, SunMedium, Shield, PlusSquare, Building2
 } from "lucide-react";
 
 const PRIMARY = "#004ac6";

@@ -25,10 +25,9 @@ export default function AdminHealth() {
 
   const loadData = async () => {
     setLoading(true);
-    const [questions, feeRules, guides, ...permitTypesArrays] = await Promise.all([
+    const [questions, feeRules, ...permitTypesArrays] = await Promise.all([
       db.CityApplicationQuestion.filter({}),
       db.FeeRule.list(),
-      db.SubmissionGuide.list(),
       ...CITIES.map(city => db.PermitType.filter({ city_name: city })),
     ]);
 
@@ -44,15 +43,8 @@ export default function AdminHealth() {
     const orphanPermitTypes = 0;
     const orphanFeeRules = Array.isArray(feeRules) ? feeRules.filter(r => !r.city_name).length : 0;
 
-    // Guide phase/status breakdown
-    const phaseMap = {};
-    const statusMap = {};
-    guides.forEach(g => {
-      phaseMap[g.phase || "unknown"] = (phaseMap[g.phase || "unknown"] || 0) + 1;
-      statusMap[g.overall_status || "unknown"] = (statusMap[g.overall_status || "unknown"] || 0) + 1;
-    });
 
-    setData({ perCity, orphanPermitTypes, orphanFeeRules, guides: guides.length, phaseMap, statusMap });
+    setData({ perCity, orphanPermitTypes, orphanFeeRules });
     setLoading(false);
   };
 
@@ -166,37 +158,6 @@ export default function AdminHealth() {
                   {data.orphanFeeRules}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{data.orphanFeeRules === 0 ? "All fee rules are city-assigned ✓" : "These should be assigned to a city"}</p>
-              </div>
-            </div>
-
-            {/* Submission guides breakdown */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-bold text-gray-800 text-sm mb-4">Submission Guides ({data.guides} total)</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">By Phase</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(data.phaseMap).map(([phase, count]) => (
-                      <div key={phase} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
-                        <span className="text-sm text-gray-700 capitalize">{phase.replace(/_/g, " ")}</span>
-                        <span className="text-sm font-bold text-gray-900">{count}</span>
-                      </div>
-                    ))}
-                    {Object.keys(data.phaseMap).length === 0 && <p className="text-sm text-gray-400">No guides yet</p>}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">By Status</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(data.statusMap).map(([status, count]) => (
-                      <div key={status} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
-                        <span className="text-sm text-gray-700 capitalize">{status.replace(/_/g, " ")}</span>
-                        <span className="text-sm font-bold text-gray-900">{count}</span>
-                      </div>
-                    ))}
-                    {Object.keys(data.statusMap).length === 0 && <p className="text-sm text-gray-400">No guides yet</p>}
-                  </div>
-                </div>
               </div>
             </div>
 

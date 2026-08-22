@@ -14,20 +14,10 @@ const PAGE_PROMPTS = {
     "How long does permit review take?",
     "Do I need a contractor for this permit?",
   ],
-  PropertyGuide: [
-    "What does an expired permit mean?",
-    "How do I resolve an open code case?",
-    "Can I renovate a property with an expired permit?",
-  ],
   FeeCalculator: [
     "Why is my fee so high?",
     "Are there any fee exemptions?",
     "What's included in the technology fee?",
-  ],
-  ProjectDashboard: [
-    "What's my next step?",
-    "What documents am I missing?",
-    "How do I add my contractor?",
   ],
 };
 
@@ -40,10 +30,7 @@ const DEFAULT_PROMPTS = [
 const PAGE_DISPLAY_NAMES = {
   Home: "Home",
   PermitGuide: "Visual Permit Guide",
-  PropertyGuide: "Property Search",
   FeeCalculator: "Fee Calculator",
-  ProjectDashboard: "My Projects",
-  ProjectDetail: "Project Details",
 };
 
 const LOADING_STEPS = [

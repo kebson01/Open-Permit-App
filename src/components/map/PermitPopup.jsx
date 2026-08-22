@@ -2,12 +2,10 @@ import React, { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, LogIn, FolderPlus, Phone, MapPin, Globe, CheckCheck, Wind } from "lucide-react";
+import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, ClipboardList, Clock, Sparkles, Phone, MapPin, Globe, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
-import AddToProjectModal from "./AddToProjectModal";
 import FBCSection from "./FBCSection";
-import { isAuthenticated, redirectToLogin } from "@/lib/auth";
 
 const SUPABASE_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
@@ -177,17 +175,8 @@ function getDocExplanations(city) {
 function DocumentsSection({ documents, plainEnglishMap, city }) {
   const DOC_EXPLANATIONS = getDocExplanations(city);
   const [checked, setChecked] = useState({});
-  const [showSavePrompt, setShowSavePrompt] = useState(false);
 
-  const toggle = (doc) => {
-    const next = { ...checked, [doc]: !checked[doc] };
-    setChecked(next);
-    if (next[doc] && !showSavePrompt) {
-      isAuthenticated().then(authed => {
-        if (!authed) setShowSavePrompt(true);
-      });
-    }
-  };
+  const toggle = (doc) => setChecked(prev => ({ ...prev, [doc]: !prev[doc] }));
 
   const checkedCount = Object.values(checked).filter(Boolean).length;
 
@@ -243,32 +232,15 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
           Checklist complete. You are ready to submit your application. Final approval is determined by the city's building department.
         </p>
       )}
-      {showSavePrompt && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-          <LogIn className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-blue-800 mb-0.5">Save your checklist</p>
-            <p className="text-xs text-blue-600 mb-2">Start a project to save this checklist and track your progress.</p>
-            <button
-              onClick={() => redirectToLogin()}
-              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Sign up / Log in →
-            </button>
-          </div>
-          <button onClick={() => setShowSavePrompt(false)} className="text-blue-400 hover:text-blue-600 text-xs">✕</button>
-        </div>
-      )}
     </div>
   );
 }
 
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   const [activeIdx, setActiveIdx] = useState(0);
-  const [showAddToProject, setShowAddToProject] = useState(false);
   const [plainEnglishMap, setPlainEnglishMap] = useState({});
 
-  useEffect(() => { setActiveIdx(0); setShowAddToProject(false); }, [permit]);
+  useEffect(() => { setActiveIdx(0); }, [permit]);
 
   useEffect(() => {
     fetchPlainEnglishDocs().then(rows => {
@@ -404,19 +376,6 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             )}
           </div>
 
-          {/* Save checklist CTA for logged-in users */}
-          {(hasDocuments || hasRequirements) && (
-            <div
-              className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white text-center cursor-pointer hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}
-              onClick={() => isAuthenticated().then(a => {
-                if (!a) redirectToLogin();
-                else window.location.href = "/MyProjects";
-              })}
-            >
-              Start My Project
-            </div>
-          )}
 
           {/* AI Photo Analysis */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-[2px]">
@@ -450,14 +409,6 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
             </Link>
           </div>
 
-          {/* Add to my project */}
-          <button
-            onClick={() => setShowAddToProject(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-sm font-semibold text-green-800 transition-colors"
-          >
-            <FolderPlus className="w-4 h-4" />
-            Add to My Project
-          </button>
 
           {/* Florida Building Code Requirements */}
           <hr className="border-gray-100" />
@@ -469,12 +420,6 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
       </div>
     </div>
 
-    {showAddToProject && (
-      <AddToProjectModal
-        permitName={current.name}
-        onClose={() => setShowAddToProject(false)}
-      />
-    )}
     </>
   );
 }

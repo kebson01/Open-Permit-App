@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, Phone, ExternalLink, RefreshCw, Save, Loader2 } from "lucide-react";
+import { AlertTriangle, Phone, ExternalLink, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 const PRIMARY = "#004ac6";
@@ -225,7 +225,7 @@ export default function ResultMayNeedPermit({ answers, cityInfo, currentUser, on
             📞 Call to Verify
           </a>
         )}
-        <Link to="/ApplyForPermit"
+        <Link to="/PermitGuide"
           style={{ flex: 1, minWidth: 140, display: "block", textAlign: "center", background: "white", color: PRIMARY, border: `2px solid ${PRIMARY}`, padding: "12px 16px", borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
           Start Application Anyway
         </Link>

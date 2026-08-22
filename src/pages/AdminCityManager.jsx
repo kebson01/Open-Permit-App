@@ -4,8 +4,7 @@ import * as db from "@/lib/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, Plus, Pencil, Trash2, ChevronDown, ChevronUp, Shield, Users, Copy } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { Building2, Plus, Pencil, Trash2, ChevronDown, ChevronUp, Shield, Users } from "lucide-react";
 import CityFormModal from "@/components/admin/CityFormModal.jsx";
 import CityFeeRulesPanel from "@/components/admin/CityFeeRulesPanel.jsx";
 import CityPermitTypesPanel from "@/components/admin/CityPermitTypesPanel.jsx";
@@ -139,20 +138,6 @@ export default function AdminCityManager() {
                     <p className="text-sm text-gray-500">{city.county} County, {city.state}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {city.slug && (
-                      <button
-                        className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors"
-                        onClick={() => {
-                          const pagePath = createPageUrl(`CityPortalPublic?slug=${city.slug}`);
-                          const url = `${window.location.origin}${pagePath}`;
-                          navigator.clipboard.writeText(url);
-                          alert("Portal URL copied:\n" + url);
-                        }}
-                        title="Copy portal URL"
-                      >
-                        <Copy className="w-3 h-3" /> Copy URL
-                      </button>
-                    )}
                     {isSuperAdmin && (
                       <>
                         <Button

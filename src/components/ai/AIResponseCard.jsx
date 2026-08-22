@@ -228,13 +228,6 @@ export default function AIResponseCard({ structured }) {
           >
             {portal_label || "Apply Online →"}
           </a>
-          <a
-            href="/ProjectDashboard"
-            className="flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition-colors"
-            style={{ color: "#0F172A" }}
-          >
-            Save to My Project
-          </a>
         </div>
       )}
 
