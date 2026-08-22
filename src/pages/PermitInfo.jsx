@@ -9,6 +9,8 @@ import {
 import { motion } from "framer-motion";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
 import { useCities } from "@/hooks/useCities";
+import CountyRules from "@/components/CountyRules";
+import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
 
 /** Link helper so the city always travels with the reader. */
 const infoUrl = (permitName, city) =>
@@ -213,6 +215,8 @@ function PermitDetailView({ permit, city }) {
         ))}
       </div>
 
+      <div className="mb-8"><CountyRulesForPermit permit={permit} /></div>
+
       <div className="mb-8"><Disclaimer city={city} /></div>
 
       {/* CTA */}
@@ -238,6 +242,23 @@ function PermitDetailView({ permit, city }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** County-level rules that bear on this permit, attributed to their source. */
+function CountyRulesForPermit({ permit }) {
+  const { rules } = useCountyRules();
+  const applicable = rulesForPermit(rules, {
+    category: permit.category,
+    mapZone: permit.map_zone,
+    name: permit.name,
+  });
+
+  return (
+    <CountyRules
+      rules={applicable}
+      intro="Your city sets the requirements above. These apply across Broward County on top of them — each links to the authority that issued it."
+    />
   );
 }
 

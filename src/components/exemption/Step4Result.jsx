@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import CountyRules from "@/components/CountyRules";
+import { useCountyRules, rulesForExemption } from "@/lib/countyRules";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -267,6 +269,19 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
   const contact = CITY_CONTACTS[answers.city] || {};
 
+  function CountyRulesBlock() {
+    const { rules } = useCountyRules();
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <CountyRules
+          rules={rulesForExemption(rules)}
+          heading="What the county says about exemptions"
+          intro="This answer is a guide. These are Broward County's own rules on what is exempt and what happens if you skip a permit — each links to the source."
+        />
+      </div>
+    );
+  }
+
   function CityContact() {
     return (
       <div style={{ background: '#f8f9ff', border: '1px solid #e0e4f0', borderRadius: 10, padding: 14, marginBottom: 8 }}>
@@ -313,7 +328,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
             ⚠ Even exempt work must comply with building codes. HOA approval may still be required. Always verify with your city before starting work.
           </div>
         </div>
-        <CityContact />
+        <CountyRulesBlock /><CityContact />
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           <button onClick={onReset} style={{ flex: 1, background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>↩ Check Another Project</button>
           {currentUser && !saved && (
@@ -344,7 +359,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
             ⚠ Always verify with your city building department before starting. Exemptions do not override HOA rules or deed restrictions.
           </div>
         </div>
-        <CityContact />
+        <CountyRulesBlock /><CityContact />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
           <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
@@ -396,7 +411,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
           </div>
         </div>
 
-        <CityContact />
+        <CountyRulesBlock /><CityContact />
 
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
@@ -470,7 +485,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         </div>
       )}
 
-      <CityContact />
+      <CountyRulesBlock /><CityContact />
 
       {/* CTAs */}
       <div style={{ marginTop: 16 }}>
