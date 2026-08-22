@@ -67,7 +67,7 @@ export default function PhotoAnalysisResults({ analysis, city }) {
             {s.fee_explanation && <p className="text-xs text-gray-600 mt-1">💰 {s.fee_explanation}</p>}
             {hvhz && <p className="text-xs text-amber-700 mt-1">⚡ {hvhz}</p>}
             {s.noc_required && (
-              <p className="text-xs text-gray-500 mt-1">📋 NOC required if over {s.noc_threshold || "$2,500"}</p>
+              <p className="text-xs text-gray-500 mt-1">📋 {s.noc_threshold ? `NOC required if over ${s.noc_threshold}` : "A Notice of Commencement may be required — check the threshold with your city"}</p>
             )}
             {s.already_permitted && (
               <p className="text-xs text-green-600 mt-1">✅ {s.permit_history_note || "This work appears to already have a permit on file"}</p>

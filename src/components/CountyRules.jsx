@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Landmark, ChevronDown, ExternalLink } from "lucide-react";
+import { Landmark, ChevronDown, ExternalLink, AlertTriangle } from "lucide-react";
+import { freshness, verifiedLabel, daysSinceVerified } from "@/lib/countyRules";
 
 const PRIMARY = "#003466";
 
@@ -31,6 +32,33 @@ export default function CountyRules({ rules = [], heading = "What Broward County
         {rules.map(rule => <Rule key={rule.requirement_id} rule={rule} />)}
       </div>
     </section>
+  );
+}
+
+/**
+ * Shown when an entry has gone long enough without a re-check that the reader
+ * should not lean on it. Silent while the entry is fresh — a badge on every
+ * rule would train people to ignore it.
+ */
+function StaleFlag({ rule }) {
+  const state = freshness(rule);
+  if (state === "fresh") return null;
+
+  const days = daysSinceVerified(rule);
+  const label = state === "unknown"
+    ? "Re-check date unknown"
+    : state === "stale"
+      ? `Not re-checked in ${Math.floor(days / 30)} months`
+      : "Due for a re-check";
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold"
+      style={{ background: "#fdf1e0", color: "#9a5b06" }}
+      title="Confirm this against the source before relying on it."
+    >
+      <AlertTriangle className="h-3 w-3" /> {label}
+    </span>
   );
 }
 
@@ -87,12 +115,13 @@ function Rule({ rule }) {
             <span>Effective {rule.effective_date}</span>
           </>
         )}
-        {rule.last_verified && (
+        {verifiedLabel(rule) && (
           <>
             <span aria-hidden="true">·</span>
-            <span>Checked {rule.last_verified}</span>
+            <span>Checked {verifiedLabel(rule)}</span>
           </>
         )}
+        <StaleFlag rule={rule} />
         {rule.source_url && (
           <a
             href={rule.source_url}

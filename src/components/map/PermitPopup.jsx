@@ -6,6 +6,8 @@ import { X, FileText, Calculator, ExternalLink, CheckSquare, Square, Info, Clipb
 import { Button } from "@/components/ui/button";
 import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import FBCSection from "./FBCSection";
+import CountyRules from "@/components/CountyRules";
+import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
 
 const SUPABASE_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
@@ -64,6 +66,17 @@ const CITY_APPLY_INFO = {
     note: "All applications must be notarized. Hold Harmless Agreement required for drainage easements.",
   },
 };
+
+function CountyRulesForPermit({ permit }) {
+  const { rules } = useCountyRules();
+  if (!permit) return null;
+  return (
+    <CountyRules
+      rules={rulesForPermit(rules, { category: permit.category, mapZone: permit.map_zone, name: permit.name })}
+      intro="Countywide rules that apply on top of your city's. Each links to the authority that issued it."
+    />
+  );
+}
 
 function ReadyToApply({ city }) {
   const info = CITY_APPLY_INFO[city] || CITY_APPLY_INFO["Weston"];
@@ -153,11 +166,14 @@ const CITY_NOC_THRESHOLD = {
 };
 
 function getDocExplanations(city) {
-  const nocThreshold = CITY_NOC_THRESHOLD[city] || "$2,500";
+  const known = CITY_NOC_THRESHOLD[city];
+  const overThreshold = known
+    ? `on projects over ${known}`
+    : `once the job passes the threshold ${city || "your city"} sets`;
   return {
     "BCUBPA": "Broward County's standard permit application form. Download from the Broward County website.",
     "Broward County Uniform Building Permit Application": "Broward County's standard permit application form. Download from the Broward County website.",
-    "Notice of Commencement": `A legal notice filed before work begins on projects over ${nocThreshold}. Your contractor typically handles this.`,
+    "Notice of Commencement": `A legal notice filed before work begins ${overThreshold}. Your contractor typically handles this.`,
     "Product Approval": "Manufacturer documentation showing the product meets Florida Building Code wind resistance requirements.",
     "Signed and Sealed Plans": "Architectural or engineering drawings stamped by a licensed professional.",
     "Energy Calculations": "A report showing your project meets Florida's energy efficiency requirements.",
@@ -168,7 +184,7 @@ function getDocExplanations(city) {
     "Electrical Plans": "Diagrams of the electrical wiring and panel layout for the project.",
     "Manufacturer's Specifications": "Technical documents from the product manufacturer showing installation requirements.",
     "Homeowner Affidavit": "A signed statement confirming you are the owner and will occupy the home.",
-    "NOC": `Notice of Commencement — a legal notice filed before work begins on projects over ${nocThreshold}.`,
+    "NOC": `Notice of Commencement — a legal notice filed before work begins ${overThreshold}.`,
   };
 }
 
@@ -413,6 +429,9 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           {/* Florida Building Code Requirements */}
           <hr className="border-gray-100" />
           <FBCSection permitName={current.name} />
+
+          {/* County rules, attributed to the authority that issued them */}
+          <CountyRulesForPermit permit={current} />
 
           {/* Ready to Apply */}
           <ReadyToApply city={city} />
