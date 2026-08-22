@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 const FONTS = {
   h: "'Manrope', system-ui, sans-serif",
   b: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -29,7 +29,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#FAF8FF" }}>
-      <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+      <div className="w-full max-w-[420px] bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
         <div className="text-center">
           <img
             src="/icon-master.png"
@@ -68,7 +68,7 @@ export default function ForgotPassword() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5" style={{ fontFamily: FONTS.b }}>Email address</label>
                 <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
                   placeholder="you@email.com"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#004ac6]"
+                  className="w-full border border-[#dde4eb] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#003466]"
                   style={{ fontFamily: FONTS.b }} autoComplete="email" />
               </div>
 

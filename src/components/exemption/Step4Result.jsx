@@ -286,9 +286,9 @@ export default function Step4Result({ answers, currentUser, onReset }) {
     return (
       <div style={{ background: '#f8f9ff', border: '1px solid #e0e4f0', borderRadius: 10, padding: 14, marginBottom: 8 }}>
         <div style={{ fontWeight: 600, fontSize: 13, color: '#0d1c2e', marginBottom: 6 }}>{answers.city} Building Department</div>
-        <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>📞 <a href={`tel:${contact.phone}`} style={{ color: '#004ac6' }}>{contact.phone}</a></div>
+        <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>📞 <a href={`tel:${contact.phone}`} style={{ color: '#003466' }}>{contact.phone}</a></div>
         <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 3 }}>📍 {contact.address}</div>
-        <div style={{ fontSize: 12, marginBottom: 3 }}>🌐 <a href={contact.portal} target="_blank" rel="noopener noreferrer" style={{ color: '#004ac6' }}>{contact.portal}</a></div>
+        <div style={{ fontSize: 12, marginBottom: 3 }}>🌐 <a href={contact.portal} target="_blank" rel="noopener noreferrer" style={{ color: '#003466' }}>{contact.portal}</a></div>
         <div style={{ fontSize: 12, color: '#6b7280' }}>🕐 {contact.hours}</div>
       </div>
     );
@@ -361,7 +361,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         </div>
         <CountyRulesBlock /><CityContact />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
+          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
           <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
@@ -414,7 +414,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         <CountyRulesBlock /><CityContact />
 
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
+          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
           <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
@@ -447,17 +447,17 @@ export default function Step4Result({ answers, currentUser, onReset }) {
       </div>
 
       {/* Fee estimate */}
-      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderLeft: '4px solid #004ac6', borderRadius: 10, padding: 16, marginBottom: 12 }}>
+      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderLeft: '4px solid #003466', borderRadius: 10, padding: 16, marginBottom: 12 }}>
         <div style={{ fontWeight: 600, fontSize: 14, color: '#0d1c2e', marginBottom: 6 }}>Estimated Fee — {answers.city}</div>
         {fee ? (
           <div>
             <div style={{ fontSize: 13, color: '#374151' }}>{fee.label}</div>
-            {fee.total && <div style={{ fontSize: 18, fontWeight: 700, color: '#004ac6', marginTop: 4 }}>Estimated: ${fee.total.toFixed(2)}</div>}
+            {fee.total && <div style={{ fontSize: 18, fontWeight: 700, color: '#003466', marginTop: 4 }}>Estimated: ${fee.total.toFixed(2)}</div>}
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Estimate only. Final fees determined at submission.</div>
           </div>
         ) : (
           <div style={{ fontSize: 13, color: '#6b7280' }}>
-            Use our <button onClick={() => navigate('/FeeCalculator')} style={{ color: '#004ac6', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0 }}>Fee Calculator</button> for an exact estimate.
+            Use our <button onClick={() => navigate('/FeeCalculator')} style={{ color: '#003466', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0 }}>Fee Calculator</button> for an exact estimate.
           </div>
         )}
       </div>
@@ -489,7 +489,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
       {/* CTAs */}
       <div style={{ marginTop: 16 }}>
-        <button onClick={() => navigate('/PermitGuide')} style={{ width: '100%', background: '#004ac6', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+        <button onClick={() => navigate('/PermitGuide')} style={{ width: '100%', background: '#003466', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
           Start My Permit Application →
         </button>
         <div style={{ display: 'flex', gap: 8 }}>

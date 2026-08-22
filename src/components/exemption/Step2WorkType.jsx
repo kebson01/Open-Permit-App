@@ -3,7 +3,7 @@ import {
   Snowflake, Flame, Zap, Waves, SunMedium, Shield, PlusSquare, Building2
 } from "lucide-react";
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 
 const WORK_GROUPS = [
   {

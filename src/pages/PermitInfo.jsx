@@ -1,17 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
 import {
   FileText, CheckCircle, Clock, ClipboardList, AlertTriangle,
-  MapPin, Calculator, Map, ArrowRight, Building2, SearchX
+  MapPin, Calculator, Map, ArrowRight, SearchX
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
-import { useCities } from "@/hooks/useCities";
 import CountyRules from "@/components/CountyRules";
 import DocumentList from "@/components/DocumentList";
 import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
+import CityBar from "@/components/CityBar";
+import { C, F, T } from "@/lib/theme";
 
 /** Link helper so the city always travels with the reader. */
 const infoUrl = (permitName, city) =>
@@ -19,9 +20,14 @@ const infoUrl = (permitName, city) =>
   `?permit=${encodeURIComponent(permitName)}&city=${encodeURIComponent(city)}`;
 
 export default function PermitInfo() {
-  const urlParams  = new URLSearchParams(window.location.search);
-  const permitName = urlParams.get("permit");
-  const city       = resolveCity(urlParams.get("city"));
+  // useSearchParams, not window.location.search. Reading the URL directly meant
+  // this component subscribed to nothing in the router, so React never
+  // re-rendered it when the query string changed — tapping a permit in the list
+  // updated the address bar and left the page showing the list. The old city
+  // switcher appeared to work only because it forced a full page reload.
+  const [searchParams] = useSearchParams();
+  const permitName = searchParams.get("permit");
+  const city       = resolveCity(searchParams.get("city"));
 
   React.useEffect(() => { rememberCity(city); }, [city]);
 
@@ -44,43 +50,33 @@ export default function PermitInfo() {
   return <GeneralPermitInfo permits={permits} isLoading={isLoading} city={city} />;
 }
 
-/** Shown on every view so the reader always knows whose rules these are. */
-function CityBadge({ city }) {
+/**
+ * The page's own CityBadge and CitySwitcher are gone — three widgets answering
+ * "whose rules are these?" on one page, none of them the one the rest of the
+ * app uses. CityBar replaces all three.
+ *
+ * Switching city drops any `permit` param: a permit named in one municipality
+ * may not exist under that name in another, so the new city's list is the
+ * honest place to land rather than a "not found" for a permit nobody asked
+ * about. This used to force a whole page reload; now that the page subscribes
+ * to the router it can update in place.
+ */
+function PermitInfoCityBar({ city }) {
+  const [, setSearchParams] = useSearchParams();
   return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#eef3fa] rounded-full text-xs font-semibold text-[#003466]">
-      <Building2 className="w-3.5 h-3.5" />
-      {city}
-    </div>
-  );
-}
-
-function CitySwitcher({ city }) {
-  const { cities } = useCities();
-
-  // Every city is listed. Ones without loaded data land on the empty state
-  // above, which names their building department rather than going silent.
-  if (cities.length === 0) return null;
-
-  return (
-    <label className="flex items-center gap-2 text-sm text-gray-500">
-      <span className="whitespace-nowrap">Showing rules for</span>
-      <select
-        value={city}
-        onChange={e => {
-          rememberCity(e.target.value);
-          window.location.search = `?city=${encodeURIComponent(e.target.value)}`;
-        }}
-        className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-gray-800 bg-white focus:border-[#003466] focus:outline-none focus:ring-1 focus:ring-[#003466]"
-      >
-        {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-      </select>
-    </label>
+    <CityBar
+      value={city}
+      onChange={(name) => {
+        rememberCity(name);
+        setSearchParams({ city: name });
+      }}
+    />
   );
 }
 
 function Disclaimer({ city }) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+    <div className="bg-red-50 border border-red-200 rounded-xl p-5">
       <div className="flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
         <div>
@@ -98,8 +94,10 @@ function Disclaimer({ city }) {
 
 function PermitNotFound({ permitName, city, permits }) {
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
+    <div style={{ background: C.ground, fontFamily: F.body, minHeight: "100vh" }}>
+      <PermitInfoCityBar city={city} />
+      <div className="mx-auto max-w-[720px] px-4 py-10">
+      <div className="bg-white rounded-xl border border-[#dde4eb] p-8 text-center shadow-sm">
         <SearchX className="w-12 h-12 text-gray-300 mx-auto mb-4" />
         <h1 className="text-2xl font-extrabold text-gray-800 tracking-tight">
           {city} doesn&rsquo;t list &ldquo;{permitName}&rdquo;
@@ -123,9 +121,7 @@ function PermitNotFound({ permitName, city, permits }) {
             Open the Permit Guide
           </Link>
         </div>
-        <div className="mt-6 flex justify-center">
-          <CitySwitcher city={city} />
-        </div>
+      </div>
       </div>
     </div>
   );
@@ -155,26 +151,23 @@ function PermitDetailView({ permit, city }) {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div style={{ background: C.ground, fontFamily: F.body, minHeight: "100vh" }}>
+      <PermitInfoCityBar city={city} />
+      <div className="mx-auto max-w-[900px] px-4 py-6 sm:px-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full text-xs font-medium text-[#2c5282]">
-            <FileText className="w-3.5 h-3.5" />
-            Permit Information
-          </div>
-          <CityBadge city={city} />
-        </div>
-        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">{permit.name}</h1>
-        <p className="text-gray-500 mt-2 max-w-2xl">
-          Requirements as {city} lists them. Other cities differ — check the city above.
+      <div className="mb-7">
+        <h1 style={{ fontFamily: F.head, fontSize: T.display, fontWeight: 800, letterSpacing: "-0.02em", color: C.ink }}>
+          {permit.name}
+        </h1>
+        <p className="mt-1.5 max-w-2xl" style={{ color: C.muted, fontSize: T.small, lineHeight: 1.6 }}>
+          Requirements as {city} lists them. Other cities differ — change the city at the top of
+          the page to see theirs.
         </p>
-        <div className="mt-4"><CitySwitcher city={city} /></div>
       </div>
 
       {/* Description */}
       {permit.description && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-[#dde4eb] p-6 mb-6 shadow-sm">
           <p className="text-gray-600 leading-relaxed">{permit.description}</p>
           {permit.typical_timeline && (
             <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
@@ -193,7 +186,7 @@ function PermitDetailView({ permit, city }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+            className="bg-white rounded-xl border border-[#dde4eb] p-6 shadow-sm"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl ${card.color} flex items-center justify-center`}>
@@ -224,26 +217,27 @@ function PermitDetailView({ permit, city }) {
       <div className="mb-8"><Disclaimer city={city} /></div>
 
       {/* CTA */}
-      <div className="rounded-2xl p-8 text-center" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+      <div className="rounded-xl p-8 text-center" style={{ background: "#003466" }}>
         <h2 className="text-2xl font-bold text-white mb-2">Ready to Get Started?</h2>
         <p className="text-blue-200 text-sm mb-6">Choose your next step to begin the permitting process</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link to={createPageUrl("PermitGuide") + `?city=${encodeURIComponent(city)}`}>
-            <button className="px-6 py-2.5 bg-white text-[#2c5282] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
+            <button className="px-6 py-2.5 bg-white text-[#003466] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
               <Map className="w-4 h-4" /> Visual Permit Guide
             </button>
           </Link>
           <Link to={createPageUrl("CameraScan")}>
-            <button className="px-6 py-2.5 bg-white text-[#2c5282] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
+            <button className="px-6 py-2.5 bg-white text-[#003466] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
               <MapPin className="w-4 h-4" /> Scan an Item
             </button>
           </Link>
           <Link to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(permit.name)}&city=${encodeURIComponent(city)}`}>
-            <button className="px-6 py-2.5 bg-white text-[#2c5282] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
+            <button className="px-6 py-2.5 bg-white text-[#003466] rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
               <Calculator className="w-4 h-4" /> Calculate Fees
             </button>
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -287,10 +281,11 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-8">
-        <div className="mb-4"><CityBadge city={city} /></div>
-        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+    <div style={{ background: C.ground, fontFamily: F.body, minHeight: "100vh" }}>
+      <PermitInfoCityBar city={city} />
+      <div className="mx-auto max-w-[900px] px-4 py-6 sm:px-6">
+      <div className="mb-7">
+        <h1 style={{ fontFamily: F.head, fontSize: T.display, fontWeight: 800, letterSpacing: "-0.02em", color: C.ink }}>
           Permits in {city}
         </h1>
         <p className="text-gray-500 mt-2">
@@ -300,13 +295,12 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
               ? `We don't have ${city}'s permit types on file yet.`
               : `${permits.length} permit type${permits.length === 1 ? "" : "s"} on file. Open one to see its requirements, documents and inspections.`}
         </p>
-        <div className="mt-4"><CitySwitcher city={city} /></div>
       </div>
 
       {isLoading ? (
         <div className="text-center py-12 text-gray-400">Loading permit types...</div>
       ) : permits.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+        <div className="text-center py-16 bg-white rounded-xl border border-[#dde4eb]">
           <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-gray-600 mb-2">
             No permit data for {city} yet
@@ -329,9 +323,9 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
                   <Link
                     key={permit.id}
                     to={infoUrl(permit.name, city)}
-                    className="group bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-lg hover:border-blue-200 transition-all no-underline"
+                    className="group bg-white rounded-xl border border-[#dde4eb] p-5 hover:shadow-lg hover:border-blue-200 transition-all no-underline"
                   >
-                    <h3 className="font-bold text-gray-800 group-hover:text-[#2c5282] transition-colors flex items-center gap-2">
+                    <h3 className="font-bold text-gray-800 group-hover:text-[#003466] transition-colors flex items-center gap-2">
                       {permit.name}
                       <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </h3>
@@ -351,6 +345,7 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
       )}
 
       {permits.length > 0 && <div className="mt-10"><Disclaimer city={city} /></div>}
+      </div>
     </div>
   );
 }

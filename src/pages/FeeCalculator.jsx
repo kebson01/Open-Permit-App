@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   Calculator, Info, Loader2,
-  Check, ChevronDown, Save
+  Check, Save
 } from "lucide-react";
 import { useCities, cityHasFeeData } from "@/hooks/useCities";
-import { Link } from "react-router-dom";
+import CityBar from "@/components/CityBar";
+import { C, F, T, RADIUS } from "@/lib/theme";
 
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
@@ -142,7 +143,7 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
 export default function FeeCalculator() {
   const urlParams  = new URLSearchParams(window.location.search);
   const urlCity    = urlParams.get("city") || "";
-  const { cities, loading: citiesLoading } = useCities();
+  const { cities } = useCities();
   const [city, setCity]           = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
   const [feeRules, setFeeRules]   = useState([]);
   const [surcharge, setSurcharge] = useState(null);
@@ -152,7 +153,6 @@ export default function FeeCalculator() {
   const [constructionCost, setConstructionCost] = useState("");
   const [results, setResults]     = useState(null);
   const [copied, setCopied]       = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
 
   const cityObj   = cities.find(c => c.name === city) || null;
   const hasFeeData = cityHasFeeData(cityObj);
@@ -201,59 +201,32 @@ export default function FeeCalculator() {
   const stateFeeItems   = results?.breakdown.filter(i => i.isState && i.amount > 0) || [];
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] pb-24">
-      {/* Header */}
-      <div className="bg-white px-5 pt-12 pb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Link to="/" className="no-underline">
-            <div className="flex items-center gap-1.5 text-[#003466] font-bold text-lg">
-              <span className="font-extrabold text-xl no-underline" style={{ color: "#003466", fontFamily: "'Hanken Grotesk', sans-serif" }}>OpenPermit</span>
-            </div>
-          </Link>
-        </div>
-        <h1 className="text-2xl font-extrabold text-gray-900">Permit Cost Estimator</h1>
-        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-          Calculate estimated regulatory fees for your next renovation project across major municipalities.
+    <div className="pb-24" style={{ background: C.ground, minHeight: "100vh", fontFamily: F.body, color: C.ink }}>
+      {/* This page carried a second "OpenPermit" wordmark below the real one in
+          the app header, and its own bespoke city dropdown — the fourth
+          different city selector in the app. Both are now the shared bar. */}
+      <CityBar value={city} onChange={setCity} />
+
+      <div className="mx-auto max-w-[720px] px-4 pt-5">
+        <h1 style={{ fontFamily: F.head, fontSize: T.title, fontWeight: 800, letterSpacing: "-0.02em" }}>
+          Estimate the fee
+        </h1>
+        <p className="mt-1" style={{ color: C.muted, fontSize: T.small, lineHeight: 1.55 }}>
+          What {city} is likely to charge in regulatory fees for your project. An estimate — the
+          building department sets the final figure.
         </p>
       </div>
 
-      <div className="px-4 py-5 space-y-5">
-        {/* City Selector */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select City</p>
-          <div className="relative">
-            <button
-              onClick={() => setShowCityPicker(!showCityPicker)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-800"
-            >
-              <span>{city || "Select a city..."}</span>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCityPicker ? "rotate-180" : ""}`} />
-            </button>
-            {showCityPicker && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
-                {citiesLoading ? (
-                  <div className="p-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-[#003466]" /></div>
-                ) : cities.map(c => (
-                  <button key={c.name}
-                    onClick={() => { setCity(c.name); setShowCityPicker(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-[#eaf1f8] border-b border-gray-50 last:border-0 transition-colors ${city === c.name ? "text-[#003466] font-semibold bg-[#eaf1f8]" : "text-gray-700"}`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-            )}
+      <div className="mx-auto max-w-[720px] space-y-5 px-4 py-5">
+        {CITY_NOTES[city] && (
+          <div className="flex items-start gap-2 px-3 py-2.5" style={{ background: C.brandSoft, borderRadius: RADIUS }}>
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: C.brand }} aria-hidden="true" />
+            <p style={{ color: C.brand, fontSize: T.caption, lineHeight: 1.6 }}>{CITY_NOTES[city]}</p>
           </div>
-          {CITY_NOTES[city] && (
-            <div className="mt-3 flex items-start gap-2 bg-[#eaf1f8] rounded-xl px-3 py-2">
-              <Info className="w-3.5 h-3.5 text-[#003466] mt-0.5 shrink-0" />
-              <p className="text-xs text-[#003466]">{CITY_NOTES[city]}</p>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Permit Type Category Grid */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="bg-white rounded-xl border border-[#dde4eb] shadow-sm p-4">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Permit Type</p>
           <div className="grid grid-cols-2 gap-2">
             {PERMIT_CATEGORIES.map(cat => {
@@ -263,10 +236,10 @@ export default function FeeCalculator() {
                 <button key={cat.key}
                   onClick={() => { setActiveCategory(cat.key); setSelectedRule(null); setResults(null); }}
                   disabled={!hasRules && !loadingRules}
-                  className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl border-2 transition-all text-center ${
+                  className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl border-2 transition-all text-center ${
                     isActive ? "border-[#003466] bg-[#003466] text-white shadow-sm" :
                     hasRules ? "border-gray-200 bg-white text-gray-700 hover:border-[#a9c5e0]" :
-                    "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                    "border-[#dde4eb] bg-gray-50 text-gray-300 cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xl">{cat.icon}</span>
@@ -315,7 +288,7 @@ export default function FeeCalculator() {
 
         {/* Project Value Input */}
         {selectedRule && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white rounded-xl border border-[#dde4eb] shadow-sm p-4">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Estimated Project Value ($)</p>
             <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
               <span className="px-4 py-3 bg-gray-50 text-gray-500 font-semibold border-r border-gray-200">$</span>
@@ -336,7 +309,7 @@ export default function FeeCalculator() {
         {/* Fee Breakdown */}
         {results && (
           <>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="bg-white rounded-xl border border-[#dde4eb] shadow-sm p-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Estimated Fee Breakdown</p>
               <div className="space-y-2">
                 {cityFeeItems.map((item, i) => (
@@ -358,7 +331,7 @@ export default function FeeCalculator() {
             </div>
 
             {/* Grand Total */}
-            <div className="bg-[#eaf1f8] rounded-2xl border border-[#cfe0f0] p-5">
+            <div className="bg-[#eaf1f8] rounded-xl border border-[#cfe0f0] p-5">
               <p className="text-sm font-extrabold text-gray-900 mb-3">Estimated Total</p>
               <div className="space-y-1.5 mb-4">
                 {results.cityFees > 0 && (
@@ -412,7 +385,7 @@ export default function FeeCalculator() {
             {/* Download / Portal links */}
             {CITY_PORTAL_URLS[city] && (
               <a href={CITY_PORTAL_URLS[city]} target="_blank" rel="noopener noreferrer"
-                className="block w-full text-center py-3.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-[#a9c5e0] hover:text-[#003466] transition-all no-underline">
+                className="block w-full text-center py-3.5 rounded-xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 hover:border-[#a9c5e0] hover:text-[#003466] transition-all no-underline">
                 View City Fee Schedule PDF ↗
               </a>
             )}
@@ -421,7 +394,7 @@ export default function FeeCalculator() {
 
         {/* Empty state */}
         {!selectedRule && !loadingRules && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <div className="bg-white rounded-xl border border-[#dde4eb] shadow-sm p-8 text-center">
             <Calculator className="w-10 h-10 text-gray-200 mx-auto mb-3" />
             <p className="text-sm font-semibold text-gray-500">Select a permit type above to see your fee estimate.</p>
           </div>

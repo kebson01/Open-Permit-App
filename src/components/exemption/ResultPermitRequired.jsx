@@ -4,7 +4,7 @@ import { XCircle, Save, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { ContactCard } from "./ResultMayNeedPermit";
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 
 const RULES = {
   hvac: {
@@ -150,7 +150,7 @@ export default function ResultPermitRequired({ answers, cityInfo, currentUser, o
 
       {/* Fee estimate */}
       {(feeEstimate || !isWeston) && (
-        <div style={{ background: "white", border: "1px solid #e8eaf0", borderLeft: "4px solid #004ac6", borderRadius: 14, padding: "18px 20px", boxShadow: "0 1px 6px rgba(15,23,42,0.06)" }}>
+        <div style={{ background: "white", border: "1px solid #e8eaf0", borderLeft: "4px solid #003466", borderRadius: 14, padding: "18px 20px", boxShadow: "0 1px 6px rgba(15,23,42,0.06)" }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, color: "#191B23", fontFamily: "'Manrope', sans-serif", marginBottom: 10 }}>
             Estimated Permit Fee — {answers.city}
           </h3>

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Download, X, Share } from "lucide-react";
 
+import { C, F } from "@/lib/theme";
+
 const DISMISS_KEY = "op-install-dismissed";
-const PRIMARY = "#003466";
-const FONT = "'Public Sans', system-ui, sans-serif";
+const PRIMARY = C.brand;
+// This asked for 'Public Sans', which index.html never loads — so it had been
+// silently falling back to system-ui all along.
+const FONT = F.body;
 
 // Themed, mobile-only "Install" banner. Detects a phone and proactively asks to
 // add the app to the home screen. On Android/Chrome it fires the native install

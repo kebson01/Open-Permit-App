@@ -27,7 +27,7 @@ export default function AuthSignIn() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F6FA" }}>
-      <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="w-full max-w-[420px] bg-white rounded-xl shadow-sm border border-gray-100 p-8">
         <div className="text-center mb-6">
           <img
             src="/icon-master.png"
@@ -47,7 +47,7 @@ export default function AuthSignIn() {
             <input
               type="email" required value={email} onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+              className="w-full border border-[#dde4eb] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400"
             />
           </div>
           <div>
@@ -60,7 +60,7 @@ export default function AuthSignIn() {
             <input
               type="password" required value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+              className="w-full border border-[#dde4eb] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400"
             />
           </div>
 

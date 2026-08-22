@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Phone, ExternalLink, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 
 const CITY_RULES = {
   Weston: [

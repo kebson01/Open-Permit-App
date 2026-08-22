@@ -1,4 +1,4 @@
-const PRIMARY = "#004ac6";
+const PRIMARY = "#003466";
 
 function YesNo({ value, onChange }) {
   return (

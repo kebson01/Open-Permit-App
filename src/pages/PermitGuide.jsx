@@ -4,7 +4,6 @@ import { Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
   Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight,
   Phone, ExternalLink, Info
 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCities, cityUsesBrowardCounty } from "@/hooks/useCities";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
 import HouseView from "../components/map/HouseView";
@@ -142,12 +141,7 @@ export default function PermitGuide() {
   const urlPropertyType = urlParams.get("propertyType") || "residential";
   const urlZone        = urlParams.get("zone") || "";
 
-  const { cities, loading: citiesLoading } = useCities();
-  // Every city is selectable: those without loaded data get CityNotCovered,
-  // which still hands the reader their building department's phone and portal.
-  const permitCities = cities;
-  const CITIES     = urlCity ? [urlCity] : permitCities.map(c => c.name);
-  const singleCity = !!urlCity;
+  const { cities } = useCities();
 
   const [propertyType, setPropertyType]   = useState(urlPropertyType);
   const [commercialSubtype, setCommercialSubtype] = useState(null);
@@ -223,7 +217,10 @@ export default function PermitGuide() {
       {/* The page used to open with a second "OpenPermit" wordmark sitting an
           inch below the real one in the app header, a bell that did nothing,
           and a third city selector. City now comes from the shared bar. */}
-      {!singleCity && <CityBar value={city} onChange={(val) => { setCity(val); rememberCity(val); }} />}
+      {/* Always shown, even when a ?city= param pinned one. Arriving from a
+          coverage link used to hide the switcher entirely, which left the
+          reader in that city with no way out. */}
+      <CityBar value={city} onChange={(val) => { setCity(val); rememberCity(val); }} />
 
       <div className="mx-auto max-w-[900px] px-4 pt-5">
         <h1 style={{ fontFamily: F.head, fontSize: T.title, fontWeight: 800, letterSpacing: "-0.02em" }}>
