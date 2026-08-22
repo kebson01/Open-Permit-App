@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
 import {
   FileText, CheckCircle, Clock, ClipboardList, AlertTriangle,
-  MapPin, Calculator, Map, ArrowRight, Link as LinkIcon
+  MapPin, Calculator, Map, ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
 

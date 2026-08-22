@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
-  Calculator, MapPin, Info, RotateCcw, ExternalLink,
-  Phone, Mail, Clock, Loader2, Printer, ClipboardCopy,
-  Check, ChevronDown, Save, Home, LayoutDashboard, FolderOpen
+  Calculator, Info, Loader2,
+  Check, ChevronDown, Save
 } from "lucide-react";
-import { useCities, cityHasFeeData, cityUsesBrowardCounty } from "@/hooks/useCities";
+import { useCities, cityHasFeeData } from "@/hooks/useCities";
 import { Link } from "react-router-dom";
 
 const SB_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
@@ -139,26 +138,6 @@ function calculateSunriseFee(rule, constructionCost, roofSqFt) {
   return { total, cityFees, stateFees, breakdown };
 }
 
-function BottomNav() {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around py-2 z-50">
-      <Link to="/" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <Home className="w-5 h-5 text-gray-400 mt-1.5" />
-        <span className="text-xs text-gray-400">Home</span>
-      </Link>
-      <Link to="/FeeCalculator" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#d5e3ff" }}>
-        <LayoutDashboard className="w-4 h-4" style={{ color: "#003466" }} />
-        </div>
-        <span className="text-xs font-semibold" style={{ color: "#003466" }}>Dashboard</span>
-      </Link>
-      <Link to="/MyProjects" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <FolderOpen className="w-5 h-5 text-gray-400 mt-1.5" />
-        <span className="text-xs text-gray-400">Projects</span>
-      </Link>
-    </div>
-  );
-}
 
 export default function FeeCalculator() {
   const urlParams  = new URLSearchParams(window.location.search);
@@ -449,7 +428,6 @@ export default function FeeCalculator() {
         )}
       </div>
 
-      <BottomNav />
     </div>
   );
 }

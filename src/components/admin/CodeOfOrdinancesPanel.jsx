@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
-import { Plus, Search, Pencil, Trash2, ExternalLink, X, Check } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 const CATEGORIES = [
   { value: "zoning", label: "Zoning" },

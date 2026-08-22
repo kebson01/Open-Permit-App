@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import * as db from "@/lib/db";
 import { Loader2, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const ROLE_STYLES = {
   admin:      { bg: "bg-red-100",    text: "text-red-700" },

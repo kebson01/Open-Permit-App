@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Home, Building2, FileText, FolderOpen, ChevronDown,
-  Calculator, ShieldCheck, BookOpen, Search, Menu, X,
-  User, LogOut, Wrench, Camera
-} from "lucide-react";
+import { Home, BookOpen, Camera, Ruler, Menu, X } from "lucide-react";
 import InstallPrompt from "@/components/InstallPrompt";
-import { supabase } from "@/lib/supabaseClient";
-import * as db from "@/lib/db";
-import OnboardingModal from "@/components/onboarding/OnboardingModal";
 
 const PRIMARY = "#003466";
 const FONTS = {
@@ -16,64 +9,25 @@ const FONTS = {
   nav:  "'Public Sans', system-ui, sans-serif",
 };
 
-const TOOLS_ITEMS = [
-  { label: "Live Camera Scan",  path: "/CameraScan",       icon: Camera },
-  { label: "Fee Calculator",    path: "/FeeCalculator",    icon: Calculator },
-  { label: "Exemption Checker", path: "/ExemptionChecker", icon: ShieldCheck },
-  { label: "Building Codes",    path: "/BuildingCodes",    icon: BookOpen },
-  { label: "Property Search",   path: "/PropertyGuide",    icon: Search },
-  { label: "Licensed Professional Search", path: "/providers",        icon: ShieldCheck },
+// The whole app. Everything else is reached from inside a permit.
+const NAV_ITEMS = [
+  { to: "/",            label: "Home",         icon: Home },
+  { to: "/PermitGuide", label: "Permit Guide", icon: BookOpen },
+  { to: "/CameraScan",  label: "Scan an Item", icon: Camera },
+  { to: "/ar-tools",    label: "AR View",      icon: Ruler },
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const [user, setUser]               = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [mobileOpen, setMobileOpen]   = useState(false);
-  const [toolsOpen, setToolsOpen]     = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [navVisible, setNavVisible]   = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const toolsRef    = useRef(null);
-  const accountRef  = useRef(null);
   const location    = useLocation();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setAuthLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setAuthLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user || authLoading) return;
-    if (localStorage.getItem("op_role")) return;
-    const email = user.email;
-    const timeout = new Promise(resolve => setTimeout(resolve, 3000));
-    const check = db.UserOnboarding.filter({ user_email: email });
-    Promise.race([check, timeout]).then(records => {
-      if (!records || records.length === 0) { setShowOnboarding(true); return; }
-      const ob = records[0];
-      if (ob.is_complete || ob.is_skipped) {
-        localStorage.setItem("op_role", ob.role || "skipped");
-      } else {
-        setShowOnboarding(true);
-      }
-    }).catch(() => setShowOnboarding(true));
-  }, [user, authLoading]);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       if (y < 10) setNavVisible(true);
-      else if (y > lastScrollY.current) { setNavVisible(false); setMobileOpen(false); setToolsOpen(false); setAccountOpen(false); }
+      else if (y > lastScrollY.current) { setNavVisible(false); setMobileOpen(false); }
       else setNavVisible(true);
       lastScrollY.current = y;
     };
@@ -81,25 +35,8 @@ export default function Layout({ children, currentPageName }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (toolsRef.current && !toolsRef.current.contains(e.target)) setToolsOpen(false);
-      if (accountRef.current && !accountRef.current.contains(e.target)) setAccountOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const isActive = (path) => location.pathname === path || currentPageName === path.replace("/", "");
-
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-  const firstName   = displayName.split(" ")[0];
-  const initial     = displayName[0]?.toUpperCase() || "U";
-  const role        = user?.user_metadata?.role || user?.app_metadata?.role;
-  const isAdmin     = role === "admin";
-  const isCityAdmin = role === "city_admin";
-
-  if (currentPageName === "CityPortalPublic") return <>{children}</>;
+  const isActive = (path) =>
+    location.pathname === path || currentPageName === path.replace("/", "");
 
   const NavLink = ({ to, children: ch }) => (
     <Link
@@ -116,8 +53,6 @@ export default function Layout({ children, currentPageName }) {
     </Link>
   );
 
-  const currentUserForOnboarding = user ? { email: user.email, full_name: displayName } : null;
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* NAV */}
@@ -131,11 +66,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-[1280px] mx-auto px-6 h-full flex items-center gap-6">
           {/* Logo */}
           <Link to="/" className="shrink-0 flex items-center gap-2" style={{ textDecoration: "none" }}>
-            <img
-              src="/icon-master.png"
-              alt="Open Permit"
-              className="h-8 w-8 object-contain"
-            />
+            <img src="/icon-master.png" alt="Open Permit" className="h-8 w-8 object-contain" />
             <span className="font-extrabold text-xl tracking-tight" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
               OpenPermit
             </span>
@@ -145,122 +76,9 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Primary Nav (desktop) */}
           <div className="hidden md:flex items-center gap-1 flex-1">
-            <NavLink to="/">Home</NavLink>
-            <NavLink to="/PermitGuide">
-              <span title="View the required documents and requirements for your permit, and track your progress.">Permit Checklist</span>
-            </NavLink>
-            <NavLink to="/MyProperties">My Properties</NavLink>
-            {user && <NavLink to="/ApplyForPermit">Apply for Permit</NavLink>}
-            {user && <NavLink to="/MyProjects">My Projects</NavLink>}
-
-            {/* Tools dropdown */}
-            <div className="relative" ref={toolsRef}>
-              <button
-                onClick={() => setToolsOpen(p => !p)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                  toolsOpen ? "text-[#003466]" : "text-[#424750] hover:text-[#003466]"
-                }`}
-                style={{ fontFamily: FONTS.nav }}
-              >
-                Tools <ChevronDown className={`w-3.5 h-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
-              </button>
-              {toolsOpen && (
-                <div className="absolute top-full left-0 mt-1.5 w-52 bg-white rounded-xl py-1 z-50" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: "1px solid #c3c6d1" }}>
-                  {TOOLS_ITEMS.map(item => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setToolsOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors"
-                      style={{ fontFamily: FONTS.nav, textDecoration: "none", color: "#424750" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f2f4f6"}
-                      onMouseLeave={e => e.currentTarget.style.background = ""}
-                    >
-                      <item.icon className="w-4 h-4" style={{ color: PRIMARY }} /> {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right side (desktop) */}
-          <div className="hidden md:flex items-center gap-3 ml-auto">
-            {isAdmin && (
-              <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-[#424750] hover:bg-[#f2f4f6] transition-colors"
-                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                Admin
-              </Link>
-            )}
-            {(isAdmin || isCityAdmin) && (
-              <Link to="/admin-city-manager" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-[#424750] hover:bg-[#f2f4f6] transition-colors"
-                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                City Manager
-              </Link>
-            )}
-
-            {!authLoading && (
-              user ? (
-                <div className="relative" ref={accountRef}>
-                  <button
-                    onClick={() => setAccountOpen(p => !p)}
-                    className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full text-sm font-semibold hover:bg-[#f2f4f6] transition-colors"
-                    style={{ fontFamily: FONTS.nav, border: "1px solid #c3c6d1" }}
-                  >
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: PRIMARY }}>
-                      {initial}
-                    </div>
-                    <span className="max-w-[90px] truncate" style={{ color: "#191c1e" }}>{firstName}</span>
-                    <ChevronDown className="w-3 h-3" style={{ color: "#737781" }} />
-                  </button>
-                  {accountOpen && (
-                    <div className="absolute right-0 mt-1.5 w-56 bg-white rounded-xl py-1 z-50" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.05)", border: "1px solid #c3c6d1" }}>
-                      <div className="px-4 py-3 border-b border-[#e6e8ea]">
-                        <p className="text-sm font-semibold text-[#191c1e] truncate" style={{ fontFamily: FONTS.nav }}>{displayName}</p>
-                        <p className="text-xs text-[#737781] truncate" style={{ fontFamily: FONTS.nav }}>{user.email}</p>
-                      </div>
-                      <Link to="/MyAccount" onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm"
-                        style={{ fontFamily: FONTS.nav, textDecoration: "none", color: "#424750" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#f2f4f6"}
-                        onMouseLeave={e => e.currentTarget.style.background = ""}>
-                        <User className="w-4 h-4" style={{ color: "#424750" }} /> My Account
-                      </Link>
-                      <Link to="/MyProjects" onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm"
-                        style={{ fontFamily: FONTS.nav, textDecoration: "none", color: "#424750" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#f2f4f6"}
-                        onMouseLeave={e => e.currentTarget.style.background = ""}>
-                        <FolderOpen className="w-4 h-4" style={{ color: "#424750" }} /> My Projects
-                      </Link>
-                      <div style={{ borderTop: "1px solid #e6e8ea", margin: "4px 0" }} />
-                      <button
-                        onClick={async () => { await supabase.auth.signOut(); setAccountOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm"
-                        style={{ fontFamily: FONTS.nav, color: "#ba1a1a" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#ffdad6"}
-                        onMouseLeave={e => e.currentTarget.style.background = ""}
-                      >
-                        <LogOut className="w-4 h-4" /> Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link to="/login"
-                    className="px-4 py-2 rounded-lg font-semibold text-sm transition-colors hover:bg-[#f2f4f6]"
-                    style={{ fontFamily: FONTS.nav, color: PRIMARY, textDecoration: "none" }}>
-                    Sign In
-                  </Link>
-                  <Link to="/signup"
-                    className="px-4 py-2 rounded-lg font-semibold text-sm text-white transition-opacity hover:opacity-90"
-                    style={{ background: PRIMARY, fontFamily: FONTS.nav, textDecoration: "none" }}>
-                    Get Started
-                  </Link>
-                </div>
-              )
-            )}
+            {NAV_ITEMS.map(item => (
+              <NavLink key={item.to} to={item.to}>{item.label}</NavLink>
+            ))}
           </div>
 
           {/* Mobile hamburger */}
@@ -276,78 +94,13 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile dropdown */}
         {mobileOpen && (
           <div className="md:hidden border-t border-[#c3c6d1] bg-white pb-3 shadow-lg">
-            {[
-              { to: "/", label: "Home", icon: Home },
-              { to: "/PermitGuide", label: "Permit Checklist", icon: BookOpen },
-              { to: "/MyProperties", label: "My Properties", icon: Building2 },
-              ...(user ? [
-                { to: "/ApplyForPermit", label: "Apply for Permit", icon: FileText },
-                { to: "/MyProjects", label: "My Projects", icon: FolderOpen },
-              ] : []),
-            ].map(item => (
+            {NAV_ITEMS.map(item => (
               <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b border-[#eceef0] hover:bg-[#f2f4f6]"
                 style={{ fontFamily: FONTS.nav, color: isActive(item.to) ? PRIMARY : "#424750", textDecoration: "none" }}>
                 <item.icon className="w-4 h-4" /> {item.label}
               </Link>
             ))}
-            <div className="px-5 pt-2 pb-1">
-              <p className="text-xs font-bold text-[#737781] uppercase tracking-wider mb-1">Tools</p>
-            </div>
-            {TOOLS_ITEMS.map(item => (
-              <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
-                style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                <item.icon className="w-4 h-4" /> {item.label}
-              </Link>
-            ))}
-            <div className="border-t border-[#c3c6d1] mt-2 pt-2">
-              {user ? (
-                <>
-                  <div className="px-5 py-2">
-                    <p className="text-xs font-semibold text-[#191c1e]">{displayName}</p>
-                    <p className="text-xs text-[#737781]">{user.email}</p>
-                  </div>
-                  <Link to="/MyAccount" onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
-                    style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                    <User className="w-4 h-4" /> My Account
-                  </Link>
-                  {isAdmin && (
-                    <Link to="/admin" onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
-                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                      <ShieldCheck className="w-4 h-4" /> Admin
-                    </Link>
-                  )}
-                  {(isAdmin || isCityAdmin) && (
-                    <Link to="/admin-city-manager" onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm text-[#424750] hover:bg-[#f2f4f6]"
-                      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}>
-                      <Building2 className="w-4 h-4" /> City Manager
-                    </Link>
-                  )}
-                  <button onClick={async () => { await supabase.auth.signOut(); setMobileOpen(false); }}
-                    className="w-full flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#ba1a1a] hover:bg-[#ffdad6]"
-                    style={{ fontFamily: FONTS.nav }}>
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
-                </>
-              ) : (
-                <div className="px-5 py-2 flex flex-col gap-2">
-                  <Link to="/login" onClick={() => setMobileOpen(false)}
-                    className="w-full text-center py-2.5 rounded-xl border border-[#c3c6d1] text-sm font-bold no-underline"
-                    style={{ fontFamily: FONTS.nav, color: PRIMARY, textDecoration: "none" }}>
-                    Sign In
-                  </Link>
-                  <Link to="/signup" onClick={() => setMobileOpen(false)}
-                    className="w-full text-center py-2.5 rounded-xl text-sm font-bold text-white no-underline"
-                    style={{ background: PRIMARY, fontFamily: FONTS.nav, textDecoration: "none" }}>
-                    Get Started
-                  </Link>
-                </div>
-              )}
-            </div>
           </div>
         )}
       </nav>
@@ -355,19 +108,24 @@ export default function Layout({ children, currentPageName }) {
       {/* MAIN */}
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
 
+      {/* FOOTER */}
+      <footer className="border-t border-[#c3c6d1] bg-white mt-8">
+        <div className="max-w-[1280px] mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <p className="text-sm text-[#737781]" style={{ fontFamily: FONTS.nav }}>
+            © {new Date().getFullYear()} OpenPermit Municipal Services. All rights reserved.
+          </p>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link to="/privacy" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Privacy Policy</Link>
+            <Link to="/terms" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Terms of Service</Link>
+            <Link to="/accessibility" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Accessibility</Link>
+            <a href="mailto:support@open-permit.com" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Contact Support</a>
+          </div>
+        </div>
+      </footer>
+
       {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-[#c3c6d1] flex">
-        {[
-          { to: "/", label: "Home", icon: Home },
-          { to: "/MyProperties", label: "Properties", icon: Building2 },
-          ...(user ? [
-            { to: "/ApplyForPermit", label: "Apply", icon: FileText },
-            { to: "/MyProjects", label: "Projects", icon: FolderOpen },
-          ] : [
-            { to: "/signup", label: "Sign Up", icon: User },
-          ]),
-          { to: "/FeeCalculator", label: "Tools", icon: Wrench },
-        ].map(item => {
+        {NAV_ITEMS.map(item => {
           const active = isActive(item.to);
           return (
             <Link key={item.to} to={item.to}
@@ -379,14 +137,6 @@ export default function Layout({ children, currentPageName }) {
           );
         })}
       </nav>
-
-      {showOnboarding && currentUserForOnboarding && (
-        <OnboardingModal
-          currentUser={currentUserForOnboarding}
-          onComplete={() => setShowOnboarding(false)}
-          onSkip={() => setShowOnboarding(false)}
-        />
-      )}
 
       <InstallPrompt />
     </div>

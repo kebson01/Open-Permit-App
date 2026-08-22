@@ -96,12 +96,6 @@ export default function AuthSignIn() {
           Continue with Google
         </button>
 
-        <p className="text-center text-sm text-gray-500 mt-5">
-          Don't have an account?{" "}
-          <Link to="/signup" className="font-semibold" style={{ color: PRIMARY, textDecoration: "none" }}>
-            Sign up
-          </Link>
-        </p>
       </div>
     </div>
   );

@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Home, Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
-  Building2, Sparkles, Camera, HardHat, Layers, Bell,
-  LayoutDashboard, FolderOpen, ChevronRight
+import { Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
+  Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCities, parseServices } from "@/hooks/useCities";
@@ -16,7 +14,6 @@ import OrdinancesPanel from "../components/map/OrdinancesPanel";
 import AIDrawer from "../components/ai/AIDrawer";
 import RoofingSubtype from "../components/permits/RoofingSubtype";
 import PrivateProviderStep from "../components/permits/PrivateProviderStep";
-import { Link } from "react-router-dom";
 
 const ZONE_INFO = {
   "Roof / Re-Roof": "Required for any roof replacement or repair over 25% of roof area. In Broward County (HVHZ), all roofing must meet 170mph wind resistance standards.",
@@ -118,26 +115,6 @@ const PERMIT_LIFECYCLE_STEPS = [
   { n: 3, title: "Review & Pay",  desc: "City engineer review and fee processing." },
 ];
 
-function BottomNav() {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around py-2 z-50">
-      <Link to="/" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <Home className="w-5 h-5 text-gray-400 mt-1.5" />
-        <span className="text-xs text-gray-400">Home</span>
-      </Link>
-      <Link to="/ApplyForPermit" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <div className="w-8 h-8 rounded-xl bg-[#cfe0f0] flex items-center justify-center">
-          <LayoutDashboard className="w-4 h-4 text-[#003466]" />
-        </div>
-        <span className="text-xs font-semibold text-[#003466]">Dashboard</span>
-      </Link>
-      <Link to="/MyProjects" className="flex flex-col items-center gap-1 px-4 py-1 no-underline">
-        <FolderOpen className="w-5 h-5 text-gray-400 mt-1.5" />
-        <span className="text-xs text-gray-400">Projects</span>
-      </Link>
-    </div>
-  );
-}
 
 export default function PermitGuide() {
   const urlParams      = new URLSearchParams(window.location.search);
@@ -438,7 +415,6 @@ export default function PermitGuide() {
         </div>
       )}
 
-      <BottomNav />
     </div>
   );
 }

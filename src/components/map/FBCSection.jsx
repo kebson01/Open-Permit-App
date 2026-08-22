@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import { ChevronDown, ChevronUp, BookOpen, Shield, Hash } from "lucide-react";
 

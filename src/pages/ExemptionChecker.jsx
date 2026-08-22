@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { ChevronDown, ChevronUp, Info, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import StepProgress from "@/components/exemption/StepProgress";
 import Step1CityProperty from "@/components/exemption/Step1CityProperty";
 import Step2WorkType from "@/components/exemption/Step2WorkType";

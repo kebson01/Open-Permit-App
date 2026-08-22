@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import AIDrawer from "../components/ai/AIDrawer";
 import {
   ChevronRight, MapPin, Send, ShieldCheck, BookOpen,
-  Calculator, Search, Layers, Timer, Wrench, Zap, ExternalLink
+  Calculator, Camera, Zap, ExternalLink
 } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
 
@@ -16,10 +16,10 @@ const LAW_CARDS = [
 ];
 
 const TOOLS = [
-  { icon: ShieldCheck, title: "Exception Checker",  sub: "See if your project qualifies for a waiver",  page: "ExemptionChecker" },
-  { icon: BookOpen,    title: "Visual Permit Checklist", sub: "View required documents and track your progress",      page: "PermitGuide" },
-  { icon: Calculator,  title: "Fee Calculator",      sub: "Estimate city and county permit costs",       page: "FeeCalculator" },
-  { icon: Search,      title: "Property Search",     sub: "Check historical permits by address",         page: "PropertyGuide" },
+  { icon: BookOpen,    title: "Visual Permit Guide", sub: "Point at part of a house to see what it needs", page: "PermitGuide" },
+  { icon: Camera,      title: "Scan an Item",        sub: "Point your camera at it for instant permit info", page: "CameraScan" },
+  { icon: ShieldCheck, title: "Exemption Checker",   sub: "See if your project needs a permit at all",     page: "ExemptionChecker" },
+  { icon: Calculator,  title: "Fee Calculator",      sub: "Estimate city and county permit costs",         page: "FeeCalculator" },
 ];
 
 const STEPS = [
@@ -125,7 +125,7 @@ export default function Home() {
               className="shrink-0 flex items-center gap-1.5 m-1 px-4 py-2.5 text-white text-sm font-bold transition-opacity hover:opacity-90 active:scale-[0.98]"
               style={{ background: PRIMARY, borderRadius: 7, fontFamily: FONTS.headline, whiteSpace: "nowrap" }}
             >
-              Find Permits For You Project
+              Find Permits For Your Project
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -197,7 +197,7 @@ export default function Home() {
           Coverage by City
         </h2>
         <p className="text-center text-xs mb-6" style={{ color: "#6b7280", fontFamily: FONTS.body }}>
-          Guided applications available for all 6 cities. Weston also includes full historical permit records.
+          Permit requirements available for all 6 cities. Weston also includes full historical permit records.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
@@ -210,7 +210,7 @@ export default function Home() {
           ].map(city => (
             <Link
               key={city.name}
-              to={`/ApplyForPermit`}
+              to={`/PermitGuide?city=${encodeURIComponent(city.name)}`}
               className="flex items-start gap-3 p-4 transition-all"
               style={{ background: "#fff", borderRadius: 10, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", textDecoration: "none", border: "1px solid #e8eaf0" }}
               onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,74,198,0.12)"}

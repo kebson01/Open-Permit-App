@@ -352,7 +352,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         <CityContact />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
-          <button onClick={() => navigate('/ApplyForPermit')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Start Application Anyway</button>
+          <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
       </div>
@@ -405,7 +405,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#004ac6', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
-          <button onClick={() => navigate('/ApplyForPermit')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Start Application Anyway</button>
+          <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
       </div>
@@ -479,7 +479,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
       {/* CTAs */}
       <div style={{ marginTop: 16 }}>
-        <button onClick={() => navigate('/ApplyForPermit')} style={{ width: '100%', background: '#004ac6', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+        <button onClick={() => navigate('/PermitGuide')} style={{ width: '100%', background: '#004ac6', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
           Start My Permit Application →
         </button>
         <div style={{ display: 'flex', gap: 8 }}>

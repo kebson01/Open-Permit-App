@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
 import * as db from "@/lib/db";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Download, Upload, FileJson, Trash2, CheckCircle2, AlertCircle,
+  Download, Upload, FileJson, CheckCircle2, AlertCircle,
   Settings2, ChevronDown, ChevronUp, Plus, Pencil
 } from "lucide-react";
 
