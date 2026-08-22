@@ -12,7 +12,7 @@ export async function loadCities() {
   if (_fetchPromise) return _fetchPromise;
 
   _fetchPromise = fetch(
-    `${SUPABASE_URL}/rest/v1/cities?select=name,slug,building_department_phone,portal_url,fee_source,enabled_services,permit_type_count&order=name.asc`,
+    `${SUPABASE_URL}/rest/v1/cities?select=name,slug,building_department_phone,portal_url,fee_source,enabled_services,permit_type_count,ordinance_url,ordinance_platform&order=name.asc`,
     { headers: SB_HEADERS }
   )
     .then(r => r.json())

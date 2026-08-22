@@ -17,8 +17,8 @@ export default function PhotoAnalysisResults({ analysis, city }) {
     <div className="space-y-3">
       {/* Property identified */}
       {analysis.property_found && analysis.property && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5">
-          <p className="text-[11px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">📍 Property Identified</p>
+        <div className="bg-[#e7eef6] border border-[#c3d3e2] rounded-xl px-3 py-2.5">
+          <p className="text-[11px] font-bold text-[#003466] uppercase tracking-wide mb-0.5">📍 Property Identified</p>
           <p className="text-sm font-semibold text-gray-900 leading-snug">{analysis.property.full_address}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             Folio: {analysis.property.folio_number}
@@ -111,9 +111,9 @@ export default function PhotoAnalysisResults({ analysis, city }) {
 
       {/* Next steps */}
       {a.next_steps && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-          <p className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wide mb-1">Next Steps</p>
-          <p className="text-sm text-indigo-800">{a.next_steps}</p>
+        <div className="bg-[#e7eef6] border border-[#c3d3e2] rounded-xl p-3">
+          <p className="text-[11px] font-semibold text-[#5c6b7a] uppercase tracking-wide mb-1">Next Steps</p>
+          <p className="text-sm text-[#003466]">{a.next_steps}</p>
         </div>
       )}
 

@@ -90,20 +90,20 @@ export default function FBCSection({ permitName }) {
   if (!permitName) return null;
 
   return (
-    <div className="rounded-xl border border-indigo-100 overflow-hidden">
+    <div className="rounded-xl border border-[#c3d3e2] overflow-hidden">
       {/* Toggle header */}
       <button
         onClick={handleToggle}
-        className="w-full flex items-center justify-between px-4 py-3 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-[#e7eef6] hover:bg-[#d8e4ef] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-          <span className="text-sm font-semibold text-indigo-800">Florida Building Code Requirements</span>
+          <BookOpen className="w-4 h-4 text-[#003466] flex-shrink-0" />
+          <span className="text-sm font-semibold text-[#003466]">Florida Building Code Requirements</span>
         </div>
         {open ? (
-          <ChevronUp className="w-4 h-4 text-indigo-500" />
+          <ChevronUp className="w-4 h-4 text-[#5c6b7a]" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-indigo-500" />
+          <ChevronDown className="w-4 h-4 text-[#5c6b7a]" />
         )}
       </button>
 
@@ -111,7 +111,7 @@ export default function FBCSection({ permitName }) {
         <div className="bg-white px-4 py-3 space-y-4">
           {loading && (
             <div className="flex items-center gap-2 py-2">
-              <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-[#c3d3e2] border-t-[#003466] rounded-full animate-spin" />
               <span className="text-xs text-gray-400">Loading FBC sections...</span>
             </div>
           )}
@@ -130,7 +130,7 @@ export default function FBCSection({ permitName }) {
                 {/* Section header */}
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-indigo-800 uppercase tracking-wide">
+                    <p className="text-xs font-bold text-[#003466] uppercase tracking-wide">
                       FBC {section.edition || ""} · {section.volume || ""}
                     </p>
                     <p className="text-sm font-semibold text-gray-800 leading-snug">
@@ -160,7 +160,7 @@ export default function FBCSection({ permitName }) {
                   <ul className="space-y-1">
                     {keyReqs.map((req, j) => (
                       <li key={j} className="flex items-start gap-1.5 text-xs text-gray-700">
-                        <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <span className="w-1 h-1 rounded-full bg-[#003466] mt-1.5 flex-shrink-0" />
                         {req}
                       </li>
                     ))}
@@ -173,7 +173,7 @@ export default function FBCSection({ permitName }) {
                     {keyNums.map((num, j) => (
                       <span
                         key={j}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-xs font-medium text-indigo-700"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#e7eef6] border border-[#c3d3e2] text-xs font-medium text-[#003466]"
                       >
                         <Hash className="w-2.5 h-2.5" />
                         {num}
@@ -188,7 +188,7 @@ export default function FBCSection({ permitName }) {
                     href={section.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 underline mt-1"
+                    className="inline-flex items-center gap-1 text-xs text-[#003466] hover:text-[#003466] underline mt-1"
                   >
                     View in FBC →
                   </a>

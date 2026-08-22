@@ -20,6 +20,8 @@ export const C = {
   brand:     "#003466",
   brandInk:  "#00203f",  // pressed / hover
   brandSoft: "#e7eef6",
+  brandSoftHover: "#d8e4ef",
+  brandLine: "#c3d3e2",  // tinted border — dropzones, chips that read as "ours"
 
   // Verdict colours, shared with the camera scan so a green here and a green
   // there mean the same thing.

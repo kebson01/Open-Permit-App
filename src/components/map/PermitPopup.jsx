@@ -9,6 +9,8 @@ import FBCSection from "./FBCSection";
 import CountyRules from "@/components/CountyRules";
 import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
 import { useDocumentExplainers, explainDocument } from "@/lib/documentExplainers";
+import { useCities } from "@/hooks/useCities";
+import { C, F, T } from "@/lib/theme";
 
 const SUPABASE_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
@@ -79,45 +81,80 @@ function CountyRulesForPermit({ permit }) {
   );
 }
 
+/**
+ * Where and how to actually file, for the city on screen.
+ *
+ * This used to read `CITY_APPLY_INFO[city] || CITY_APPLY_INFO["Weston"]`, so a
+ * reader in any of the 26 cities not in that table was handed Weston's portal,
+ * Weston's street address and Weston's phone number under their own city's
+ * name — an answer confident enough to act on and wrong enough to waste a trip.
+ *
+ * Details now come from `cities`, which covers all 31. The hardcoded table is
+ * kept only for the office hours it carries, which the table in the database
+ * does not have; it is never a fallback for a different city's contact details.
+ * Anything unknown is omitted rather than substituted.
+ */
 function ReadyToApply({ city }) {
-  const info = CITY_APPLY_INFO[city] || CITY_APPLY_INFO["Weston"];
+  const { cities } = useCities();
+  const row = city ? cities.find(c => c.name === city) : null;
+  const extra = (city && CITY_APPLY_INFO[city]) || null;
+
+  const portal  = row?.portal_url || extra?.portalUrl || "";
+  const address = row?.building_department_address || extra?.address || "";
+  const phone   = row?.building_department_phone || extra?.phone || "";
+  const hours   = extra?.hours || "";
+  const mapsUrl = address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : "";
+
+  const rowCls = "flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white no-underline bg-white/10 hover:bg-white/20 transition-colors";
 
   return (
-    <div className="rounded-xl p-4 space-y-2" style={{ background: "#0F3575" }}>
+    <div className="rounded-xl p-4 space-y-2" style={{ background: C.brand }}>
       <div>
-        <p className="text-white font-bold text-base">Ready to apply?</p>
-        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-          Once you have all your documents, here's how to submit:
+        <p className="text-white" style={{ fontFamily: F.head, fontSize: T.body, fontWeight: 700 }}>
+          Ready to apply?
+        </p>
+        <p className="mt-0.5" style={{ color: "rgba(255,255,255,0.75)", fontSize: T.caption }}>
+          {portal || address || phone
+            ? `Once you have your documents, here's how to submit to ${city}:`
+            : `We don't have ${city || "this city"}'s filing details on file — contact their building department directly.`}
         </p>
       </div>
-      <a
-        href={info.portalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        style={{ background: "#3B82F6" }}
-      >
-        <Globe className="w-4 h-4" /> Apply Online →
-      </a>
-      <a
-        href={info.mapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
-      >
-        <MapPin className="w-4 h-4 flex-shrink-0" />
-        <span>Visit in Person — {info.address}</span>
-      </a>
-      <a
-        href={`tel:${info.phoneRaw}`}
-        className="flex items-center gap-2 w-full py-2 px-3 rounded-lg text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
-      >
-        <Phone className="w-4 h-4 flex-shrink-0" />
-        <span>Call Building Dept — {info.phone}</span>
-      </a>
-      <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.55)" }}>Office hours: {info.hours}</p>
-      {info.note && (
-        <p className="text-xs text-center italic px-1" style={{ color: "rgba(255,255,255,0.65)" }}>{info.note}</p>
+
+      {portal && (
+        <a
+          href={portal}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-white no-underline transition-opacity hover:opacity-90"
+          style={{ background: "rgba(255,255,255,0.18)", fontFamily: F.head, fontSize: T.small, fontWeight: 700 }}
+        >
+          <Globe className="w-4 h-4" aria-hidden="true" /> Apply online
+        </a>
+      )}
+
+      {address && (
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={rowCls}>
+          <MapPin className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>Visit in person — {address}</span>
+        </a>
+      )}
+
+      {phone && (
+        <a href={`tel:${phone.replace(/[^0-9]/g, "")}`} className={rowCls}>
+          <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>Call the building department — {phone}</span>
+        </a>
+      )}
+
+      {hours && (
+        <p className="text-center" style={{ color: "rgba(255,255,255,0.55)", fontSize: T.caption }}>
+          Office hours: {hours}
+        </p>
+      )}
+      {extra?.note && (
+        <p className="text-center italic px-1" style={{ color: "rgba(255,255,255,0.65)", fontSize: T.caption }}>
+          {extra.note}
+        </p>
       )}
     </div>
   );
@@ -202,11 +239,11 @@ function DocumentsSection({ documents, city }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
-          <FileText className="w-4 h-4 text-blue-600" />
+          <FileText className="w-4 h-4 text-[#003466]" />
           Required Documents
         </h4>
         {checkedCount > 0 && (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#e7eef6] text-[#003466]">
             {checkedCount}/{documents.length} ready
           </span>
         )}
@@ -223,12 +260,12 @@ function DocumentsSection({ documents, city }) {
               <div className={`flex-1 transition-opacity ${checked[doc] ? "opacity-50" : ""}`}>
                 {pe ? (
                   <>
-                    <p className={`text-sm font-semibold leading-snug ${checked[doc] ? "line-through" : ""}`} style={{ color: "#0F172A" }}>{pe.plain_name}</p>
-                    <p className="text-xs italic mt-0.5" style={{ color: "#64748B" }}>{doc}</p>
-                    {pe.plain_description && <p className="text-xs mt-0.5" style={{ color: "#475569" }}>{pe.plain_description}</p>}
-                    {pe.where_to_get && <p className="text-xs mt-0.5 font-medium" style={{ color: "#3B82F6", fontSize: 11 }}>Where to get it: {pe.where_to_get}</p>}
+                    <p className={`text-sm font-semibold leading-snug ${checked[doc] ? "line-through" : ""}`} style={{ color: C.ink }}>{pe.plain_name}</p>
+                    <p className="text-xs italic mt-0.5" style={{ color: C.faint }}>{doc}</p>
+                    {pe.plain_description && <p className="text-xs mt-0.5" style={{ color: C.muted }}>{pe.plain_description}</p>}
+                    {pe.where_to_get && <p className="text-xs mt-0.5 font-medium" style={{ color: C.brand, fontSize: 11 }}>Where to get it: {pe.where_to_get}</p>}
                     {pe.download_url && (
-                      <a href={pe.download_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-xs font-semibold" style={{ color: "#3B82F6", fontSize: 11 }}>Download form →</a>
+                      <a href={pe.download_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-xs font-semibold" style={{ color: C.brand, fontSize: 11 }}>Download form →</a>
                     )}
                   </>
                 ) : (
@@ -276,12 +313,12 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+        <div className="px-5 py-4 flex items-start justify-between rounded-t-2xl sticky top-0 z-10" style={{ background: C.brand }}>
           <div className="flex-1 pr-3">
             <h3 className="text-white font-bold text-lg leading-snug">{current.name}</h3>
             <div className="flex items-center gap-1.5 mt-1.5">
-              <Clock className="w-3.5 h-3.5 text-blue-300 flex-shrink-0" />
-              <span className="text-blue-200 text-xs">
+              <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "rgba(255,255,255,0.6)" }} aria-hidden="true" />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
                 {current.typical_timeline || "Typically 2–5 business days for review"}
               </span>
             </div>
@@ -310,7 +347,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 key={p.id || i}
                 onClick={() => setActiveIdx(i)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  i === activeIdx ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  i === activeIdx ? "bg-[#003466] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {p.name}
@@ -321,9 +358,9 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
 
         <div className="p-5 space-y-5">
           {/* HVHZ Callout — always shown for all Broward permits */}
-          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-blue-50">
-            <Wind className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-blue-800 leading-relaxed">
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-[#c3d3e2] bg-[#e7eef6]">
+            <Wind className="w-4 h-4 text-[#003466] mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-[#003466] leading-relaxed">
               <span className="font-bold">📍 HVHZ — High Velocity Hurricane Zone:</span> All Broward County properties require products rated for 170+ mph winds. All exterior work must have current <strong>Florida Product Approval</strong>.
             </p>
           </div>
@@ -339,13 +376,13 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               <hr className="border-gray-100" />
               <div>
                 <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
-                  <Info className="w-4 h-4 text-indigo-500" />
+                  <Info className="w-4 h-4 text-[#5c6b7a]" />
                   Permit Requirements
                 </h4>
                 <ul className="space-y-2">
                   {current.typical_requirements.map((req, i) => (
                     <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#003466] mt-2 flex-shrink-0" />
                       {req}
                     </li>
                   ))}
@@ -387,12 +424,16 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
 
 
           {/* AI Photo Analysis */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-[2px]">
-            <div className="bg-white rounded-[10px] overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-                <span className="text-white text-xs font-bold tracking-wide uppercase">AI Photo Analysis</span>
-                <span className="ml-auto text-blue-200 text-xs">New</span>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${C.line}` }}>
+            <div style={{ background: C.surface }}>
+              <div className="px-4 py-2 flex items-center gap-2" style={{ background: C.brand }}>
+                <Sparkles className="w-3.5 h-3.5 text-white" aria-hidden="true" />
+                <span
+                  className="text-white uppercase"
+                  style={{ fontFamily: F.head, fontSize: T.caption, fontWeight: 700, letterSpacing: "0.06em" }}
+                >
+                  Photo analysis
+                </span>
               </div>
               <div className="p-3">
                 <ZonePhotoAnalyzer permitName={current.name} permitDescription={current.description} cityName={city} />
@@ -405,7 +446,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
               to={createPageUrl("FeeCalculator") + `?permit=${encodeURIComponent(current.name)}&city=${encodeURIComponent(city || "")}`}
               className="flex-1"
             >
-              <Button className="w-full text-white rounded-xl" style={{ background: "linear-gradient(135deg, #0D2B5E 0%, #0F3575 100%)" }}>
+              <Button className="w-full text-white rounded-xl" style={{ background: C.brand }}>
                 <Calculator className="w-4 h-4 mr-2" />
                 Calculate Fee
               </Button>

@@ -57,16 +57,18 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
   const identifyArea = (point) => identifyPointPermit(fileRef.current, point, city, permits);
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden">
+    <div className="bg-white rounded-xl border border-[#c3d3e2] shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-5 py-4 flex items-center justify-between">
+      <div className="bg-[#003466] px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm">AI Photo Analysis</p>
-            <p className="text-blue-200 text-xs">Upload a photo — AI identifies your permit needs</p>
+            <p className="text-white font-bold text-sm">Photo analysis</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+              Upload a photo and we&rsquo;ll suggest what it likely needs
+            </p>
           </div>
         </div>
         <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
@@ -78,16 +80,16 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
         {/* Upload area */}
         {!photo && (
           <div className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
-              <Camera className="w-7 h-7 text-blue-600" />
+            <div className="w-14 h-14 rounded-2xl bg-[#e7eef6] flex items-center justify-center mx-auto mb-3">
+              <Camera className="w-7 h-7 text-[#003466]" />
             </div>
-            <p className="font-semibold text-blue-700 mb-1">Take or Upload a Photo</p>
-            <p className="text-xs text-blue-400 mb-4">Roof, window, A/C, pool, fence, or any home area</p>
+            <p className="font-semibold text-[#003466] mb-1">Take or Upload a Photo</p>
+            <p className="text-xs text-[#5c6b7a] mb-4">Roof, window, A/C, pool, fence, or any home area</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => cameraInputRef.current?.click()}
                 disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#c3d3e2] bg-[#e7eef6] hover:bg-[#d8e4ef] text-[#003466] font-semibold text-sm transition-colors disabled:opacity-50"
               >
                 <Camera className="w-4 h-4" />
                 Take Photo
@@ -95,7 +97,7 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
               <button
                 onClick={() => uploadInputRef.current?.click()}
                 disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#c3d3e2] bg-[#e7eef6] hover:bg-[#d8e4ef] text-[#003466] font-semibold text-sm transition-colors disabled:opacity-50"
               >
                 <Upload className="w-4 h-4" />
                 Upload Photo
@@ -132,10 +134,10 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
         {loading && (
           <div className="flex flex-col items-center gap-3 py-6">
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-full bg-[#e7eef6] flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-[#003466]" />
               </div>
-              <Loader2 className="absolute inset-0 w-12 h-12 animate-spin text-blue-400" />
+              <Loader2 className="absolute inset-0 w-12 h-12 animate-spin text-[#5c6b7a]" />
             </div>
             <div className="text-center">
               <p className="font-semibold text-gray-700 text-sm">Analyzing your photo...</p>
@@ -155,7 +157,7 @@ export default function StandalonePhotoAnalyzer({ onClose, permits = [], city })
         {!loading && (analysis || zones !== null) && (
           <button
             onClick={reset}
-            className="w-full py-2.5 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 border border-[#c3d3e2] text-[#003466] rounded-xl text-sm font-medium hover:bg-[#e7eef6] transition-colors flex items-center justify-center gap-2"
           >
             <Camera className="w-4 h-4" />
             Analyze Another Photo

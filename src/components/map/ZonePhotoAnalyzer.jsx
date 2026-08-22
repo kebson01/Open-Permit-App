@@ -42,14 +42,14 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-blue-500">Upload a photo of your {permitName} area for personalized guidance</p>
+      <p className="text-xs text-[#5c6b7a]">Upload a photo of your {permitName} area for personalized guidance</p>
 
       {!photo && (
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#c3d3e2] bg-[#e7eef6] hover:bg-[#d8e4ef] text-[#003466] font-semibold text-sm transition-colors disabled:opacity-50"
           >
             <Camera className="w-4 h-4" />
             Take Photo
@@ -57,7 +57,7 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
           <button
             onClick={() => uploadInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#c3d3e2] bg-[#e7eef6] hover:bg-[#d8e4ef] text-[#003466] font-semibold text-sm transition-colors disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
             Upload Photo
@@ -96,7 +96,7 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
       )}
 
       {loading && (
-        <div className="flex items-center gap-2 text-blue-600 text-sm py-1">
+        <div className="flex items-center gap-2 text-[#003466] text-sm py-1">
           <Loader2 className="w-4 h-4 animate-spin" />
           Analyzing your photo with AI...
         </div>
@@ -107,7 +107,7 @@ export default function ZonePhotoAnalyzer({ permitName, permitDescription, cityN
       {analysis && !loading && (
         <>
           <PhotoAnalysisResults analysis={analysis} city={cityName} />
-          <button onClick={reset} className="text-xs text-blue-500 underline">Analyze a different photo</button>
+          <button onClick={reset} className="text-xs text-[#5c6b7a] underline">Analyze a different photo</button>
         </>
       )}
     </div>
