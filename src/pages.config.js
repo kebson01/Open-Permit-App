@@ -7,6 +7,7 @@
  * THE ONLY EDITABLE VALUE: mainPage
  */
 import PropertyLookup from './pages/PropertyLookup';
+import Contractors from './pages/Contractors';
 import CameraScan from './pages/CameraScan';
 import ExemptionChecker from './pages/ExemptionChecker';
 import FeeCalculator from './pages/FeeCalculator';
@@ -18,6 +19,7 @@ import __Layout from './components/Layout';
 
 export const PAGES = {
     "PropertyLookup": PropertyLookup,
+    "Contractors": Contractors,
     "CameraScan": CameraScan,
     "ExemptionChecker": ExemptionChecker,
     "FeeCalculator": FeeCalculator,
