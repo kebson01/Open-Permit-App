@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
   Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCities, parseServices } from "@/hooks/useCities";
+import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
 import PermitsPanel from "../components/map/PermitsPanel";
@@ -57,34 +57,6 @@ const LABEL_TO_MAP_ZONE = {
   "Utility Boring": "structure",
 };
 
-const SB_HEADERS = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  Prefer: "count=none",
-  Range: "0-999",
-};
-
-const _cityTableCache = {};
-async function getPermitTable(cityName) {
-  if (_cityTableCache[cityName]) return _cityTableCache[cityName];
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/cities?name=eq.${encodeURIComponent(cityName)}&select=permit_table_name&limit=1`, { headers: SB_HEADERS });
-  const data = await res.json();
-  const table = (Array.isArray(data) && data[0]?.permit_table_name) || `${cityName.toLowerCase().replace(/ /g, "_")}_permit_types`;
-  _cityTableCache[cityName] = table;
-  return table;
-}
-
-async function fetchPermitTypes(city = "Weston") {
-  const table = await getPermitTable(city);
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=category,name`, { headers: SB_HEADERS });
-  const data = await res.json();
-  return (Array.isArray(data) ? data : []).map(p => ({
-    ...p,
-    typical_requirements: typeof p.typical_requirements === "string" ? JSON.parse(p.typical_requirements) : (p.typical_requirements || []),
-    documents_needed:     typeof p.documents_needed === "string"     ? JSON.parse(p.documents_needed)     : (p.documents_needed || []),
-    inspections_required: typeof p.inspections_required === "string" ? JSON.parse(p.inspections_required) : (p.inspections_required || []),
-  }));
-}
 
 const PROPERTY_TYPES = [
   { value: "residential", label: "Single-Family" },
@@ -137,7 +109,7 @@ export default function PermitGuide() {
   const [showHighlights, setShowHighlights]   = useState(true);
   const [panelOpen, setPanelOpen]             = useState(!!urlZone);
   const [selectedPermit, setSelectedPermit]   = useState(null);
-  const [city, setCity]                       = useState(urlCity || sessionStorage.getItem("selectedCity") || "Weston");
+  const [city, setCity]                       = useState(resolveCity(urlCity));
   const [showPhotoAnalyzer, setShowPhotoAnalyzer] = useState(false);
   const [ordinancesPanelOpen, setOrdinancesPanelOpen] = useState(false);
   const [aiOpen, setAiOpen]                   = useState(false);
@@ -232,7 +204,7 @@ export default function PermitGuide() {
         {!singleCity && (
           <div className="flex items-center gap-2 mt-3">
             <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <Select value={city} onValueChange={(val) => { setCity(val); sessionStorage.setItem("selectedCity", val); }}>
+            <Select value={city} onValueChange={(val) => { setCity(val); rememberCity(val); }}>
               <SelectTrigger className="h-8 text-xs rounded-xl border-gray-200 bg-gray-50 w-44">
                 <SelectValue placeholder="Choose city..." />
               </SelectTrigger>

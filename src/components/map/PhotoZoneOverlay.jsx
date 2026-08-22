@@ -219,7 +219,7 @@ export default function PhotoZoneOverlay({ photo, zones = [], city, onIdentifyAr
                   {m.note && <p className="text-xs text-gray-600 leading-snug">{m.note}</p>}
                   {m.permit_required && isPermitCategory(m.label) && (
                     <Link
-                      to={`/PermitInfo?permit=${encodeURIComponent(m.label)}`}
+                      to={`/PermitInfo?permit=${encodeURIComponent(m.label)}&city=${encodeURIComponent(city || "")}`}
                       className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg no-underline hover:opacity-90 transition-opacity"
                       style={{ background: "#003466" }}
                     >
