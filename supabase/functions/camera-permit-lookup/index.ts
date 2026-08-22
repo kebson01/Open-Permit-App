@@ -28,6 +28,36 @@ const CONTRACTOR_CATEGORIES = [
   'Irrigation', 'Electrical', 'Alarm', 'Engineering / Design', 'Architecture',
 ]
 
+// Trades the app treats as always needing a permit (mirrors ALWAYS_PERMIT in
+// src/lib/exemptionLogic.js). A photograph cannot tell a like-for-like swap from
+// a new installation, and that distinction is usually what decides the answer —
+// so for these the scan must not return a bare "no permit needed". It asks the
+// question that decides it instead. Without this the scan and the Exemption
+// Checker can give opposite answers for the same job.
+const REGULATED_TRADES: Array<{ test: RegExp; trade: string; question: string }> = [
+  { test: /water heater|plumb|sewer|drain|backflow|irrigation/i, trade: 'plumbing',
+    question: 'Is this a like-for-like replacement in the same spot, or does it involve new or relocated pipework?' },
+  { test: /a\/?c\b|air condition|hvac|mechanical|furnace|duct|mini.?split/i, trade: 'mechanical',
+    question: 'Is this a like-for-like changeout, or new or relocated equipment or ductwork?' },
+  { test: /solar|photovoltaic/i, trade: 'solar',
+    question: 'Solar almost always needs electrical and structural permits — is any panel, rail or wiring being added or moved?' },
+  { test: /pool|spa|hot tub/i, trade: 'pool',
+    question: 'Is this equipment being swapped like-for-like, or new construction, new plumbing or new wiring?' },
+  { test: /electric|panel|outlet|wiring|circuit|light fixture|ceiling fan|generator|ev charg/i, trade: 'electrical',
+    question: 'Is this replacing an existing fixture on wiring that is already there, or adding one where there was not one before?' },
+  { test: /roof|shingle|tile re-?roof/i, trade: 'roofing',
+    question: 'Is this a small repair, or replacing a section of the roof covering?' },
+  { test: /window|exterior door|shutter|garage door/i, trade: 'openings',
+    question: 'Is the glass or hardware being serviced only, or is the whole unit being replaced?' },
+  { test: /structur|load.?bearing|framing|truss/i, trade: 'structural',
+    question: 'Does any structural element change, or is this finish work only?' },
+];
+
+function regulatedTrade(...text: string[]) {
+  const joined = text.filter(Boolean).join(' ')
+  return REGULATED_TRADES.find((t) => t.test.test(joined)) || null
+}
+
 // Structured output the model must fill. Forcing tool use guarantees valid JSON.
 const DETECT_SCHEMA = {
   type: 'object',
@@ -291,9 +321,28 @@ ${hint ? `The user TOLD YOU what they want to do: "${hint}". Treat this as the p
       })
     }
 
-    // 4. No permit-relevant item found.
+    // 4. No permit needed — but only say so outright when the work is not in a
+    //    regulated trade. Otherwise the honest answer is "it depends", plus the
+    //    question that decides it.
     if (!det.work_type || det.permit_likely === false) {
+      const regulated = det.work_type
+        ? regulatedTrade(det.work_type, det.item_label, det.contractor_category)
+        : null
+
+      if (regulated) {
+        return json({
+          verdict: 'depends',
+          detected: { item_label: det.item_label, work_type: det.work_type, confidence: det.confidence ?? 0 },
+          city, supported,
+          trade: regulated.trade,
+          deciding_question: regulated.question,
+          message: det.no_permit_reason || det.summary || '',
+          permits: [], contractors: [], verified_contractors: [],
+        })
+      }
+
       return json({
+        verdict: 'none',
         detected: det.item_label ? { item_label: det.item_label, work_type: det.work_type || '', confidence: det.confidence ?? 0 } : null,
         city, supported,
         message: det.no_permit_reason || det.summary || 'No permit-relevant item identified. Try pointing at a specific fixture, structure, or system.',
@@ -332,6 +381,7 @@ ${hint ? `The user TOLD YOU what they want to do: "${hint}". Treat this as the p
     // Contractors are NOT fetched here — they're loaded on demand (opt-in) via
     // the `mode: 'contractors'` path above, keeping the scan fast.
     return json({
+      verdict: 'permit',
       detected: {
         item_label: det.item_label,
         work_type: det.work_type,
