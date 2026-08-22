@@ -325,9 +325,13 @@ ${hint ? `The user TOLD YOU what they want to do: "${hint}". Treat this as the p
     //    regulated trade. Otherwise the honest answer is "it depends", plus the
     //    question that decides it.
     if (!det.work_type || det.permit_likely === false) {
-      const regulated = det.work_type
-        ? regulatedTrade(det.work_type, det.item_label, det.contractor_category)
-        : null
+      // Do NOT key this on work_type. The prompt tells the model to blank
+      // work_type whenever it decides nothing is permit-relevant, so that field
+      // is empty in exactly the case this guard exists to catch. The item label
+      // and the model's own reasoning are what carry the trade here.
+      const regulated = regulatedTrade(
+        det.work_type, det.item_label, det.contractor_category, det.no_permit_reason, det.summary,
+      )
 
       if (regulated) {
         return json({

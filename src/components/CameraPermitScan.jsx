@@ -222,10 +222,10 @@ function Results({ result, lowConfidence }) {
 
   // Selectable interpretations of the tapped spot: primary first, then alternatives.
   const options = [];
-  if (detected?.work_type) {
+  if (detected?.item_label || detected?.work_type) {
     options.push({
       item_label: detected.item_label,
-      work_type: detected.work_type,
+      work_type: detected.work_type || "",
       confidence: detected.confidence,
       permit_required: permits.length > 0,
       contractor_category,
@@ -300,8 +300,9 @@ function Results({ result, lowConfidence }) {
 
   if (!opt) {
     return (
-      <div className="mt-4">
+      <div className="mt-4 space-y-4">
         <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">{message || "No permit-relevant item identified."}</p>
+        <ConfirmWithCity city={city} permitFound={false} />
       </div>
     );
   }
@@ -343,13 +344,18 @@ function Results({ result, lowConfidence }) {
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-600">{opt.work_type}{city ? ` · ${city}` : ""}</p>
+        <p className="text-sm text-gray-600">
+          {[opt.work_type, city].filter(Boolean).join(" · ")}
+        </p>
         <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${
           dependsOnScope ? "bg-amber-100 text-amber-800" : opt.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
         }`}>
           {dependsOnScope ? "Depends on the work" : opt.permit_required ? "Permit Required" : "No Permit Needed"}
         </span>
         {!opt.permit_required && p?.description && <p className="mt-2 text-sm text-gray-600">{p.description}</p>}
+        {!opt.permit_required && message && (
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">{message}</p>
+        )}
         {dependsOnScope && deciding_question && (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="text-sm font-semibold text-amber-900">This one turns on the scope</p>
