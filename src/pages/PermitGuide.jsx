@@ -410,7 +410,7 @@ export default function PermitGuide() {
         city={city} onAskAI={(msg) => { setAiInitialMessage(msg); setAiOpen(true); }}
       />
 
-      <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitChecklist" initialMessage={aiInitialMessage} />
+      <AIDrawer open={aiOpen} onClose={() => setAiOpen(false)} currentPageName="PermitGuide" initialMessage={aiInitialMessage} />
 
       {zoneInfoPanel && !selectedPermit && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">

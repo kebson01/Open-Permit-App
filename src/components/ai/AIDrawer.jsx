@@ -2,11 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import AIResponseCard from "./AIResponseCard";
+import { resolveCity } from "@/lib/permitTypes";
 
-const PAGE_PROMPTS = {
+// The example questions name a city, so they have to name the reader's own —
+// a Margate user being shown "...in Weston?" is the same wrong assumption
+// that ran through the rest of the app.
+const PAGE_PROMPTS = (city) => ({
   Home: [
     "What permits do I need to remodel my bathroom?",
-    "How much does a roofing permit cost in Weston?",
+    `How much does a roofing permit cost in ${city}?`,
     "What documents do I need for a pool permit?",
   ],
   PermitGuide: [
@@ -19,11 +23,11 @@ const PAGE_PROMPTS = {
     "Are there any fee exemptions?",
     "What's included in the technology fee?",
   ],
-};
+});
 
-const DEFAULT_PROMPTS = [
+const DEFAULT_PROMPTS = (city) => [
   "What permits do I need to remodel my bathroom?",
-  "How much does a roofing permit cost in Weston?",
+  `How much does a roofing permit cost in ${city}?`,
   "What documents do I need for a pool permit?",
 ];
 
@@ -78,7 +82,8 @@ export default function AIDrawer({ open, onClose, currentPageName, initialMessag
   const inputRef = useRef(null);
   const initialSent = useRef(false);
 
-  const suggestions = PAGE_PROMPTS[currentPageName] || DEFAULT_PROMPTS;
+  const askCity = resolveCity();
+  const suggestions = PAGE_PROMPTS(askCity)[currentPageName] || DEFAULT_PROMPTS(askCity);
   const pageDisplay = PAGE_DISPLAY_NAMES[currentPageName] || currentPageName || "General";
 
   useEffect(() => {
