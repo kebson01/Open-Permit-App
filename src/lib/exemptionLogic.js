@@ -65,9 +65,9 @@ export function calculateResult(answers) {
   // ── AWNING / SUNSHADE ──
   if (workType === "awning_sunshade") {
     if (cost < 2500) {
-      return { verdict: "EXEMPT", reason: "Low-cost awnings and sunshades under $2,500 are generally exempt from permit requirements in Florida.", code: "FBC-R R105.2" };
+      return { verdict: "MAY_NEED_PERMIT", reason: "Small awnings and sunshades are sometimes exempt, but the threshold varies by city and we can't confirm one for yours. Check with your building department.", code: "Local ordinance" };
     }
-    return { verdict: "MAY_NEED_PERMIT", reason: "Awnings and sunshades over $2,500 may require a permit. Verify with your city building department.", code: "Local ordinance" };
+    return { verdict: "MAY_NEED_PERMIT", reason: "Awnings and sunshades generally require a permit. Verify with your city building department.", code: "Local ordinance" };
   }
 
   // ── FENCE / GATE ──
@@ -124,15 +124,12 @@ export function calculateResult(answers) {
     return { verdict: "PERMIT_REQUIRED", reason: reasons[workType] || "This type of work requires a building permit.", code: "FBC-R R105.1" };
   }
 
-  // ── HB 837 LIKELY EXEMPT (catch-all) ──
-  const nonPermitWork = !["hvac", "water_heater", "electrical", "pool_spa", "solar", "generator", "room_addition", "structural"].includes(workType);
-  if (cost > 0 && cost < 2500 && propertyType === "single_family" && nonPermitWork) {
-    return {
-      verdict: "LIKELY_EXEMPT",
-      reason: "Florida HB 837 (effective July 1, 2024) provides that projects under $2,500 for single-family residential homes may not require a building permit. However, this does NOT apply to electrical, plumbing, mechanical, or structural work.",
-      code: "HB 837 (2024)",
-    };
-  }
+  // A low-cost, non-trade catch-all used to return LIKELY_EXEMPT here, citing
+  // "Florida HB 837 (effective July 1, 2024)". HB 837 (2023) is the Civil
+  // Remedies act — tort reform — and has nothing to do with permits. No
+  // verified statute sets a general dollar threshold for permit exemption, so
+  // the branch is gone rather than re-cited: a wrong "you're exempt" is the
+  // most expensive answer this app can give.
 
   return { verdict: "MAY_NEED_PERMIT", reason: "Based on the information provided, we cannot confirm exemption status. Please verify with your local building department.", code: "FBC-R R105" };
 }

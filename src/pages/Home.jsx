@@ -8,11 +8,22 @@ import {
 } from "lucide-react";
 import { useCities } from "@/hooks/useCities";
 
+// Each of these previously cited a bill number and effective date. Verified
+// against flsenate.gov and leg.state.fl.us:
+//   - "HB 837 – Permit Exemptions (eff. July 1 2024)" — HB 837 (2023) is the
+//     Civil Remedies act, effective March 24 2023. Not a permit statute.
+//   - "Private Providers (HB 635)" — the mechanism is real and lives at
+//     FS 553.791, but that bill number and the "10–15 business days" figure
+//     could not be confirmed.
+//   - "Permit Expiration – 180 Days" — contradicted by cities we cover;
+//     Sunrise requires an approved inspection every 90 days.
+// What remains is limited to what a primary source supports. Anything needing
+// a bill number or a dollar threshold is deliberately absent until reviewed.
 const LAW_CARDS = [
-  { emoji: "✓", title: "HB 837 – Permit Exemptions", body: "Projects under $2,500 for single-family homes may no longer require a permit (Effective July 1, 2024)." },
-  { emoji: "🏠", title: "Roof Partial Repair Rule", body: "Only the damaged portion may need repair if the rest of the roof meets 2023 FBC re-roofing rules." },
-  { emoji: "👤", title: "Private Providers (HB 635)", body: "Homeowners can use licensed private providers to speed up plan reviews to 10–15 business days." },
-  { emoji: "⏱", title: "Permit Expiration – 180 Days", body: "Permits must remain active. No inspections within 180 days may result in expiration and new fees." },
+  { emoji: "📄", title: "Notice of Commencement", body: "Florida requires an NOC before the first inspection when the contract is over $5,000 — except HVAC repair or replacement under $15,000 (FS 713.135). Some cities require one sooner.", source: "Fla. Stat. 713.135" },
+  { emoji: "👤", title: "You Can Use a Private Provider", body: "Florida lets you hire a licensed private provider to do plans review and inspections instead of waiting on the city, and the city must reduce its fees when you do.", source: "Fla. Stat. 553.791" },
+  { emoji: "🔨", title: "You Can Be Your Own Contractor", body: "Owners of a single-family home may act as their own contractor on a residence they will occupy. You must appear in person, sign a disclosure statement, and personally supervise the work on site — and selling within a year of completion voids the exemption.", source: "Fla. Stat. 489.103(7)" },
+  { emoji: "⏱", title: "Permits Expire", body: "A permit lapses if work stalls — but the window differs by city, and some run inspection-to-inspection rather than from issue date. Check yours before assuming you still have time.", source: "Varies by city" },
 ];
 
 const TOOLS = [
@@ -159,7 +170,7 @@ export default function Home() {
               <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: "#006a61", color: "#fff", fontFamily: FONTS.headline }}>
                 ⬛
               </span>
-              <span className="text-sm font-bold text-white" style={{ fontFamily: FONTS.headline }}>2023–2024 Florida Law Changes</span>
+              <span className="text-sm font-bold text-white" style={{ fontFamily: FONTS.headline }}>Florida rules worth knowing</span>
             </div>
             <Link to={createPageUrl("ExemptionChecker")} className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity" style={{ color: "#93c5fd", fontFamily: FONTS.body }}>
               <ExternalLink className="w-3 h-3" /> Check your project eligibility
@@ -175,6 +186,9 @@ export default function Home() {
               >
                 <p className="text-xs font-bold mb-1.5 leading-tight" style={{ color: "#93c5fd", fontFamily: FONTS.headline }}>{card.emoji} {card.title}</p>
                 <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.55)", fontFamily: FONTS.body }}>{card.body}</p>
+                {card.source && (
+                  <p className="mt-1.5 text-[10px]" style={{ color: "rgba(255,255,255,0.35)", fontFamily: FONTS.body }}>{card.source}</p>
+                )}
               </div>
             ))}
           </div>

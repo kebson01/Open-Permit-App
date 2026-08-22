@@ -218,10 +218,8 @@ function calculateResult(answers) {
   if (workType === 'fence_gate' && !strictFenceCities.includes(city) && fenceH <= 6 && city !== 'Fort Lauderdale')
     return { result: 'likely_exempt', reason: `Fences 6 feet or under may be exempt under FBC-R R105.2 in ${city}. However, verify with the building department before installing.`, code: 'FBC-R R105.2' };
 
-  // HB 837
-  const hb837ExcludedTypes = ['hvac', 'water_heater', 'electrical', 'pool_spa', 'solar', 'generator', 'room_addition', 'structural'];
-  if (cost > 0 && cost < 2500 && propertyType === 'single_family' && !hb837ExcludedTypes.includes(workType))
-    return { result: 'likely_exempt', reason: `Florida HB 837 (effective July 1, 2024) may exempt residential projects under $2,500 for single-family homes. This does NOT apply to electrical, plumbing, mechanical, or structural work. Always verify with your city before starting.`, code: 'HB 837 / FS 553.79' };
+  // The HB 837 catch-all was removed — see lib/exemptionLogic.js. The bill it
+  // cited is Florida's tort-reform act, not a permit statute.
 
   // MAY NEED PERMIT
   if (workType === 'fence_gate' && (strictFenceCities.includes(city) || city === 'Fort Lauderdale'))
@@ -341,9 +339,6 @@ export default function Step4Result({ answers, currentUser, onReset }) {
               <div style={{ fontSize: 13, color: '#115e59', marginTop: 4, lineHeight: 1.6 }}>{reason}</div>
               {code && <span style={{ display: 'inline-block', marginTop: 8, background: '#ccfbf1', border: '1px solid #5eead4', borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 700, color: '#0f766e', fontFamily: 'monospace' }}>📋 {code}</span>}
             </div>
-          </div>
-          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: 12, fontSize: 13, color: '#1e40af', marginBottom: 8 }}>
-            ℹ HB 837 (effective July 1, 2024) exempts some residential work under $2,500. This does NOT cover electrical, plumbing, mechanical, or structural work.
           </div>
           <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 10, padding: 12, fontSize: 13, color: '#854d0e' }}>
             ⚠ Always verify with your city building department before starting. Exemptions do not override HOA rules or deed restrictions.

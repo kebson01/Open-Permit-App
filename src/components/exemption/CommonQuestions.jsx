@@ -15,8 +15,8 @@ const QA = [
     a: "Yes. Exterior and interior painting is exempt under FBC-R R105.2. However, if the painting involves stucco repair or structural patching, a permit may be required for the repair work itself.",
   },
   {
-    q: "Does HB 837 mean I never need a permit under $2,500?",
-    a: "No. HB 837 provides a possible exemption for certain residential work under $2,500, but it explicitly does NOT cover electrical, plumbing, mechanical, or structural work. HVAC, water heaters, and electrical panels always require permits regardless of cost.",
+    q: "Is small or low-cost work automatically exempt?",
+    a: "No. Florida sets no general dollar threshold below which a permit stops being required. Exemptions turn on the type of work, not its price — and electrical, plumbing, mechanical and structural work need a permit regardless of cost. Your city can tell you whether a specific job is exempt.",
   },
   {
     q: "Do I need a permit for a small shed?",
