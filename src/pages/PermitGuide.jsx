@@ -13,6 +13,8 @@ import PermitsPanel from "../components/map/PermitsPanel";
 import StandalonePhotoAnalyzer from "../components/map/StandalonePhotoAnalyzer";
 import OrdinancesPanel from "../components/map/OrdinancesPanel";
 import AIDrawer from "../components/ai/AIDrawer";
+import CityBar from "@/components/CityBar";
+import { C, F, T } from "@/lib/theme";
 import RoofingSubtype from "../components/permits/RoofingSubtype";
 import PrivateProviderStep from "../components/permits/PrivateProviderStep";
 
@@ -217,54 +219,49 @@ export default function PermitGuide() {
   })();
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] pb-24">
-      {/* Header */}
-      <div className="bg-white px-5 pt-10 pb-5 border-b border-[#c3c6d1]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-xl" style={{ color: "#003466", fontFamily: "'Hanken Grotesk', sans-serif" }}>OpenPermit</span>
-          </div>
-          <Bell className="w-5 h-5 text-gray-400" />
-        </div>
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Permit Checklist</h1>
-        <p className="text-sm text-gray-400 leading-relaxed mb-4">
-          Review the documents and requirements needed to apply for your permit. Mark each item complete as you prepare it.
+    <div style={{ background: C.ground, fontFamily: F.body, color: C.ink }} className="pb-24">
+      {/* The page used to open with a second "OpenPermit" wordmark sitting an
+          inch below the real one in the app header, a bell that did nothing,
+          and a third city selector. City now comes from the shared bar. */}
+      {!singleCity && <CityBar value={city} onChange={(val) => { setCity(val); rememberCity(val); }} />}
+
+      <div className="mx-auto max-w-[900px] px-4 pt-5">
+        <h1 style={{ fontFamily: F.head, fontSize: T.title, fontWeight: 800, letterSpacing: "-0.02em" }}>
+          Permit guide
+        </h1>
+        <p className="mt-1" style={{ color: C.muted, fontSize: T.small, lineHeight: 1.55 }}>
+          Tap a part of the house to see what {city} requires for it — the documents, the
+          inspections and what it costs.
         </p>
 
         {/* Property type toggle */}
-        <div className="flex gap-2">
-          {PROPERTY_TYPES.map(pt => (
-            <button key={pt.value} onClick={() => handlePropertyTypeChange(pt.value)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  propertyType === pt.value
-                    ? "bg-[#003466] text-white shadow-sm"
-                    : "bg-white border border-[#c3c6d1] text-[#424750] hover:border-[#003466]"
-              }`}>
-              {pt.label}
-            </button>
-          ))}
+        <div className="mt-4 flex gap-2">
+          {PROPERTY_TYPES.map(pt => {
+            const on = propertyType === pt.value;
+            return (
+              <button
+                key={pt.value}
+                onClick={() => handlePropertyTypeChange(pt.value)}
+                aria-pressed={on}
+                className="px-4 py-2 transition-colors"
+                style={{
+                  borderRadius: 999,
+                  background: on ? C.brand : C.surface,
+                  color: on ? "#fff" : C.muted,
+                  border: `1px solid ${on ? C.brand : C.line}`,
+                  fontFamily: F.head,
+                  fontSize: T.small,
+                  fontWeight: 700,
+                }}
+              >
+                {pt.label}
+              </button>
+            );
+          })}
         </div>
-
-        {/* City selector */}
-        {!singleCity && (
-          <div className="flex items-center gap-2 mt-3">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <Select value={city} onValueChange={(val) => { setCity(val); rememberCity(val); }}>
-              <SelectTrigger className="h-8 text-xs rounded-xl border-gray-200 bg-gray-50 w-44">
-                <SelectValue placeholder="Choose city..." />
-              </SelectTrigger>
-              <SelectContent>
-                {citiesLoading
-                  ? <SelectItem value="_loading" disabled>Loading...</SelectItem>
-                  : CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
-                }
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
 
-      <div className="w-full max-w-5xl mx-auto px-4 pt-5 space-y-5">
+      <div className="mx-auto w-full max-w-[900px] space-y-5 px-4 pt-5">
         {/* Commercial subtype selector */}
         {propertyType === "commercial" && !commercialSubtype && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">

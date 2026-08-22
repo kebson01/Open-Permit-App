@@ -1,13 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Camera, Building2, HardHat, Menu, X } from "lucide-react";
+import { Home, BookOpen, Camera, Building2, HardHat } from "lucide-react";
 import InstallPrompt from "@/components/InstallPrompt";
+import { C, F, T } from "@/lib/theme";
 
-const PRIMARY = "#003466";
-const FONTS = {
-  logo: "'Hanken Grotesk', system-ui, sans-serif",
-  nav:  "'Public Sans', system-ui, sans-serif",
-};
+/**
+ * The app shell.
+ *
+ * Three things were fighting each other here. The header hid itself on scroll,
+ * which left a gap under anything sticky beneath it. The mobile hamburger
+ * opened the same five links already sitting in the tab bar an inch below it.
+ * And the footer rendered above that tab bar with nothing between them, so the
+ * legal links sat jammed under it and the last one was hard to hit.
+ *
+ * So: the header stays put and is brand only on a phone, navigation lives in
+ * one place per breakpoint, and the footer reserves the tab bar's height.
+ */
 
 // The whole app. Everything else is reached from inside a permit.
 const NAV_ITEMS = [
@@ -18,122 +25,137 @@ const NAV_ITEMS = [
   { to: "/contractors", label: "Contractors",  icon: HardHat },
 ];
 
-export default function Layout({ children, currentPageName }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [navVisible, setNavVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const location    = useLocation();
+const TAB_BAR_HEIGHT = 60;
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 10) setNavVisible(true);
-      else if (y > lastScrollY.current) { setNavVisible(false); setMobileOpen(false); }
-      else setNavVisible(true);
-      lastScrollY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+const FOOTER_LINKS = [
+  { to: "/privacy",       label: "Privacy" },
+  { to: "/terms",         label: "Terms" },
+  { to: "/accessibility", label: "Accessibility" },
+];
+
+export default function Layout({ children, currentPageName }) {
+  const location = useLocation();
 
   const isActive = (path) =>
     location.pathname === path || currentPageName === path.replace("/", "");
 
-  const NavLink = ({ to, children: ch }) => (
-    <Link
-      to={to}
-      onClick={() => setMobileOpen(false)}
-      className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
-        isActive(to)
-          ? "text-[#003466] border-b-2 border-[#003466]"
-          : "text-[#424750] hover:text-[#003466]"
-      }`}
-      style={{ fontFamily: FONTS.nav, textDecoration: "none" }}
-    >
-      {ch}
-    </Link>
-  );
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* NAV */}
-      <nav
-        className="sticky top-0 z-50 transition-transform duration-300 bg-white border-b border-[#c3c6d1]"
-        style={{
-          height: 64,
-          transform: navVisible ? "translateY(0)" : "translateY(-100%)",
-        }}
+    <div className="flex min-h-screen flex-col" style={{ background: C.ground }}>
+
+      {/* ── HEADER ───────────────────────────────────────────────────
+          Fixed height, always visible: the city bar on the pages below
+          sticks to its underside and needs a stable offset. */}
+      <header
+        className="sticky top-0 z-40"
+        style={{ height: 64, background: C.surface, borderBottom: `1px solid ${C.line}` }}
       >
-        <div className="max-w-[1280px] mx-auto px-6 h-full flex items-center gap-6">
-          {/* Logo */}
-          <Link to="/" className="shrink-0 flex items-center gap-2" style={{ textDecoration: "none" }}>
-            <img src="/icon-master.png" alt="Open Permit" className="h-8 w-8 object-contain" />
-            <span className="font-extrabold text-xl tracking-tight" style={{ fontFamily: FONTS.logo, color: PRIMARY }}>
+        <div className="mx-auto flex h-full max-w-[1280px] items-center gap-6 px-4 md:px-6">
+          <Link to="/" className="flex shrink-0 items-center gap-2 no-underline">
+            <img src="/icon-master.png" alt="" className="h-8 w-8 object-contain" />
+            <span
+              className="text-xl tracking-tight"
+              style={{ fontFamily: F.head, fontWeight: 800, color: C.brand }}
+            >
               OpenPermit
             </span>
           </Link>
 
-          <div className="hidden md:block w-px h-5 bg-[#c3c6d1] shrink-0" />
+          <div className="hidden h-5 w-px shrink-0 md:block" style={{ background: C.line }} />
 
-          {/* Primary Nav (desktop) */}
-          <div className="hidden md:flex items-center gap-1 flex-1">
+          {/* Desktop navigation. On a phone this lives in the tab bar instead —
+              duplicating it behind a hamburger only added a second way to reach
+              links that are already one tap away. */}
+          <nav className="hidden flex-1 items-center gap-1 md:flex" aria-label="Main">
             {NAV_ITEMS.map(item => (
-              <NavLink key={item.to} to={item.to}>{item.label}</NavLink>
-            ))}
-          </div>
-
-          {/* Mobile hamburger */}
-          <div className="md:hidden ml-auto">
-            <button onClick={() => setMobileOpen(p => !p)}
-              className="p-2 rounded-lg hover:bg-[#f2f4f6] transition-colors"
-              style={{ color: "#424750" }}>
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile dropdown */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-[#c3c6d1] bg-white pb-3 shadow-lg">
-            {NAV_ITEMS.map(item => (
-              <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b border-[#eceef0] hover:bg-[#f2f4f6]"
-                style={{ fontFamily: FONTS.nav, color: isActive(item.to) ? PRIMARY : "#424750", textDecoration: "none" }}>
-                <item.icon className="w-4 h-4" /> {item.label}
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={isActive(item.to) ? "page" : undefined}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 no-underline transition-colors"
+                style={{
+                  fontFamily: F.head,
+                  fontSize: T.small,
+                  fontWeight: 700,
+                  color: isActive(item.to) ? C.brand : C.muted,
+                  boxShadow: isActive(item.to) ? `inset 0 -2px 0 ${C.brand}` : "none",
+                }}
+              >
+                {item.label}
               </Link>
             ))}
-          </div>
-        )}
-      </nav>
+          </nav>
+        </div>
+      </header>
 
-      {/* MAIN */}
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-[#c3c6d1] bg-white mt-8">
-        <div className="max-w-[1280px] mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <p className="text-sm text-[#737781]" style={{ fontFamily: FONTS.nav }}>
-            © {new Date().getFullYear()} OpenPermit Municipal Services. All rights reserved.
+      {/* ── FOOTER ───────────────────────────────────────────────────
+          The bottom padding is the tab bar's height, so the last link is
+          reachable rather than pinned underneath it. */}
+      <footer
+        style={{ background: C.surface, borderTop: `1px solid ${C.line}` }}
+        className="pb-[60px] md:pb-0"
+      >
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-3 px-4 py-6 md:flex-row md:items-center md:justify-between md:px-6">
+          <p style={{ color: C.faint, fontFamily: F.body, fontSize: T.caption }}>
+            © {new Date().getFullYear()} OpenPermit Municipal Services
           </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <Link to="/privacy" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Privacy Policy</Link>
-            <Link to="/terms" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Terms of Service</Link>
-            <Link to="/accessibility" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Accessibility</Link>
-            <a href="mailto:support@open-permit.com" className="text-sm font-semibold text-[#424750] hover:text-[#003466] transition-colors no-underline" style={{ fontFamily: FONTS.nav }}>Contact Support</a>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {FOOTER_LINKS.map(l => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="no-underline transition-colors"
+                style={{ color: C.muted, fontFamily: F.body, fontSize: T.caption, fontWeight: 600 }}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <a
+              href="mailto:support@open-permit.com"
+              className="no-underline transition-colors"
+              style={{ color: C.muted, fontFamily: F.body, fontSize: T.caption, fontWeight: 600 }}
+            >
+              Contact support
+            </a>
           </div>
         </div>
       </footer>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-[#c3c6d1] flex">
+      {/* ── MOBILE TAB BAR ───────────────────────────────────────────
+          Labels are short enough to fit five across at 360px without
+          truncating; safe-area padding keeps them clear of the gesture bar. */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-30 flex md:hidden"
+        aria-label="Main"
+        style={{
+          height: TAB_BAR_HEIGHT,
+          background: C.surface,
+          borderTop: `1px solid ${C.line}`,
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
         {NAV_ITEMS.map(item => {
           const active = isActive(item.to);
           return (
-            <Link key={item.to} to={item.to}
-              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5"
-              style={{ color: active ? PRIMARY : "#737781", textDecoration: "none" }}>
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] font-semibold" style={{ fontFamily: FONTS.nav }}>{item.label}</span>
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={active ? "page" : undefined}
+              className="flex flex-1 flex-col items-center justify-center gap-1 no-underline"
+              style={{ color: active ? C.brand : C.faint }}
+            >
+              <item.icon
+                className="h-5 w-5"
+                strokeWidth={active ? 2.4 : 1.8}
+                aria-hidden="true"
+              />
+              <span
+                className="leading-none"
+                style={{ fontFamily: F.head, fontSize: 10, fontWeight: active ? 700 : 600 }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

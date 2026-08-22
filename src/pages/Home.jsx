@@ -1,361 +1,304 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import AIDrawer from "../components/ai/AIDrawer";
 import {
-  ChevronRight, MapPin, Send, ShieldCheck, BookOpen,
-  Calculator, Camera, Zap, ExternalLink
+  Camera, BookOpen, Building2, HardHat, ShieldCheck, Calculator,
+  ChevronRight, ChevronDown, Search,
 } from "lucide-react";
+import AIDrawer from "../components/ai/AIDrawer";
+import CityBar from "@/components/CityBar";
 import { useCities } from "@/hooks/useCities";
+import { resolveCity } from "@/lib/permitTypes";
+import { C, F, T, RADIUS, SHADOW } from "@/lib/theme";
+
+/**
+ * The start screen.
+ *
+ * This was a landing page: a stock hero, a three-step "path to approval" for a
+ * wizard that does not exist, 22 city cards each repeating the same sentence,
+ * and a closing call-to-action pointing at a page already in the tab bar. Six
+ * screens of scroll on a phone before anything a homeowner could act on.
+ *
+ * What someone actually arrives with is one question about one piece of work at
+ * one address, so the page is now ordered by that: which city, then ask, then
+ * the ways to find out, then the things worth knowing regardless. Coverage is a
+ * disclosure rather than a list, because it answers a question almost nobody
+ * opens the app to ask.
+ */
 
 // Each of these previously cited a bill number and effective date. Verified
 // against flsenate.gov and leg.state.fl.us:
-//   - "HB 837 – Permit Exemptions (eff. July 1 2024)" — HB 837 (2023) is the
+//   - "HB 837 - Permit Exemptions (eff. July 1 2024)" - HB 837 (2023) is the
 //     Civil Remedies act, effective March 24 2023. Not a permit statute.
-//   - "Private Providers (HB 635)" — the mechanism is real and lives at
-//     FS 553.791, but that bill number and the "10–15 business days" figure
+//   - "Private Providers (HB 635)" - the mechanism is real and lives at
+//     FS 553.791, but that bill number and the "10-15 business days" figure
 //     could not be confirmed.
-//   - "Permit Expiration – 180 Days" — contradicted by cities we cover;
+//   - "Permit Expiration - 180 Days" - contradicted by cities we cover;
 //     Sunrise requires an approved inspection every 90 days.
-// What remains is limited to what a primary source supports. Anything needing
-// a bill number or a dollar threshold is deliberately absent until reviewed.
+// What remains is limited to what a primary source supports.
 const LAW_CARDS = [
-  { emoji: "📄", title: "Notice of Commencement", body: "Florida requires an NOC before the first inspection when the contract is over $5,000 — except HVAC repair or replacement under $15,000 (FS 713.135). Some cities require one sooner.", source: "Fla. Stat. 713.135" },
-  { emoji: "👤", title: "You Can Use a Private Provider", body: "Florida lets you hire a licensed private provider to do plans review and inspections instead of waiting on the city, and the city must reduce its fees when you do.", source: "Fla. Stat. 553.791" },
-  { emoji: "🔨", title: "You Can Be Your Own Contractor", body: "Owners of a single-family home may act as their own contractor on a residence they will occupy. You must appear in person, sign a disclosure statement, and personally supervise the work on site — and selling within a year of completion voids the exemption.", source: "Fla. Stat. 489.103(7)" },
-  { emoji: "⏱", title: "Permits Expire", body: "A permit lapses if work stalls — but the window differs by city, and some run inspection-to-inspection rather than from issue date. Check yours before assuming you still have time.", source: "Varies by city" },
+  {
+    title: "You can be your own contractor",
+    body: "Owners of a single-family home may act as their own contractor on a residence they will occupy. You must appear in person, sign a disclosure statement, and personally supervise the work on site — and selling within a year of completion voids the exemption.",
+    source: "Fla. Stat. 489.103(7)",
+  },
+  {
+    title: "A Notice of Commencement comes first",
+    body: "Florida requires an NOC before the first inspection when the contract is over $5,000 — except HVAC repair or replacement under $15,000. Some cities require one sooner.",
+    source: "Fla. Stat. 713.135",
+  },
+  {
+    title: "You can hire a private provider",
+    body: "Florida lets you hire a licensed private provider to do plans review and inspections instead of waiting on the city, and the city must reduce its fees when you do.",
+    source: "Fla. Stat. 553.791",
+  },
+  {
+    title: "Permits expire",
+    body: "A permit lapses if work stalls — but the window differs by city, and some run inspection-to-inspection rather than from the issue date. Check yours before assuming you still have time.",
+    source: "Varies by city",
+  },
 ];
 
-const TOOLS = [
-  { icon: BookOpen,    title: "Visual Permit Guide", sub: "Point at part of a house to see what it needs", page: "PermitGuide" },
-  { icon: Camera,      title: "Scan an Item",        sub: "Point your camera at it for instant permit info", page: "CameraScan" },
-  { icon: ShieldCheck, title: "Exemption Checker",   sub: "See if your project needs a permit at all",     page: "ExemptionChecker" },
-  { icon: Calculator,  title: "Fee Calculator",      sub: "Estimate city and county permit costs",         page: "FeeCalculator" },
+// Ordered by how a homeowner arrives at the question, not by how the app is
+// built. Pointing a camera needs no vocabulary; the guide needs you to
+// recognise the part of the house; the rest need you to already know the words.
+const ACTIONS = [
+  { icon: Camera,    to: "/CameraScan",  title: "Scan an item",               sub: "Point your camera at it and get an answer" },
+  { icon: BookOpen,  to: "/PermitGuide", title: "Browse the visual guide",    sub: "Tap a part of the house to see what it needs" },
+  { icon: Building2, to: "/property",    title: "Look up a property",         sub: "Zoning and parcel details by address or folio" },
+  { icon: HardHat,   to: "/contractors", title: "Find a licensed contractor", sub: "Search the state licence file by trade and city" },
 ];
 
-const STEPS = [
-  { num: "1", title: "Identify",  body: "Pinpoint your address and project details to see required filings and specific municipal codes." },
-  { num: "2", title: "Calculate", body: "Get a detailed breakdown of all fees and estimated processing times before you spend a dollar." },
-  { num: "3", title: "Compile",   body: "Generate custom checklists of required contractor licenses, insurance forms, and site plans." },
+const SECONDARY = [
+  { icon: ShieldCheck, to: "/ExemptionChecker", label: "Do I need a permit?" },
+  { icon: Calculator,  to: "/FeeCalculator",    label: "Estimate the fee" },
 ];
 
 const AI_CHIPS = [
   "Do I need a fence permit?",
-  "Check my zoning",
-  "Solar panel requirements",
   "What permits for a pool?",
+  "Solar panel requirements",
 ];
 
-const PRIMARY = "#004ac6";
-const FONTS = { headline: "'Manrope', system-ui, sans-serif", body: "'Plus Jakarta Sans', system-ui, sans-serif" };
-
-// Fade-in on scroll
-function useFadeIn() {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.1 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return [ref, visible];
+function ActionRow({ icon: Icon, to, title, sub }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3.5 px-4 py-3.5 no-underline transition-colors hover:bg-[#f7f9fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+      style={{ borderBottom: `1px solid ${C.line}` }}
+    >
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center"
+        style={{ background: C.brandSoft, borderRadius: 10 }}
+      >
+        <Icon className="h-5 w-5" style={{ color: C.brand }} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block" style={{ color: C.ink, fontFamily: F.head, fontSize: T.body, fontWeight: 700 }}>
+          {title}
+        </span>
+        <span className="block" style={{ color: C.muted, fontFamily: F.body, fontSize: T.small, lineHeight: 1.45 }}>
+          {sub}
+        </span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0" style={{ color: C.faint }} aria-hidden="true" />
+    </Link>
+  );
 }
 
-function FadeSection({ children, className = "", style = {} }) {
-  const [ref, visible] = useFadeIn();
+function LawCard({ card, open, onToggle }) {
   return (
-    <div ref={ref} className={className} style={{ transition: "opacity 600ms ease, transform 600ms ease", opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(14px)", ...style }}>
-      {children}
+    <div style={{ borderBottom: `1px solid ${C.line}` }}>
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+      >
+        <span className="min-w-0 flex-1" style={{ color: C.ink, fontFamily: F.head, fontSize: T.small, fontWeight: 700 }}>
+          {card.title}
+        </span>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 transition-transform"
+          style={{ color: C.faint, transform: open ? "rotate(180deg)" : "none" }}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <div className="px-4 pb-3.5">
+          <p style={{ color: C.muted, fontFamily: F.body, fontSize: T.small, lineHeight: 1.6 }}>{card.body}</p>
+          <p className="mt-1.5" style={{ color: C.faint, fontFamily: F.body, fontSize: T.caption }}>{card.source}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Home() {
-  const { cities, loading: citiesLoading } = useCities();
-
-  // Coverage is whatever the database actually holds — permit_type_count is
-  // recomputed from the per-city tables, so this can't drift out of date the
-  // way the old hardcoded six-city list did.
-  const coveredCities = cities
-    .filter(c => (c.permit_type_count || 0) > 0)
-    .sort((a, b) => b.permit_type_count - a.permit_type_count)
-    .map(c => ({
-      name: c.name,
-      badge: c.name === "Weston" ? "Full Coverage" : `${c.permit_type_count} permits`,
-      badgeCls: c.name === "Weston"
-        ? "bg-green-100 text-green-700 border-green-200"
-        : "bg-teal-100 text-teal-700 border-teal-200",
-      detail: c.name === "Weston"
-        ? `${c.permit_type_count} permit types + 138,193 historical permit records`
-        : `${c.permit_type_count} permit types with requirements, documents and fees`,
-    }));
-
-  const [jurisdiction, setJurisdiction] = useState("");
+  const { cities } = useCities();
+  const [city, setCity] = useState(() => resolveCity());
+  const [question, setQuestion] = useState("");
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
-  const [question, setQuestion] = useState("");
+  const [openLaw, setOpenLaw] = useState(null);
+  const [showCoverage, setShowCoverage] = useState(false);
 
-  const handleAsk = (msg) => { setAiInitialMessage(msg); setAiOpen(true); };
-  const heroSearch = () => {
-    const city = jurisdiction || (cities[0]?.name ?? "");
-    window.location.href = createPageUrl("PermitGuide") + (city ? `?city=${encodeURIComponent(city)}` : "");
-  };
+  const ask = (msg) => { setAiInitialMessage(msg); setAiOpen(true); };
+  const submit = () => { if (question.trim()) { ask(question.trim()); setQuestion(""); } };
+
+  // Coverage is whatever the database actually holds — permit_type_count is
+  // recomputed from the per-city tables, so this cannot drift the way the old
+  // hardcoded six-city list did.
+  const covered = cities
+    .filter(c => (c.permit_type_count || 0) > 0)
+    .sort((a, b) => b.permit_type_count - a.permit_type_count);
 
   return (
-    <div style={{ background: "#f5f7ff", fontFamily: FONTS.body, color: "#0d1c2e" }} className="pb-20 md:pb-0">
+    <div style={{ background: C.ground, fontFamily: F.body, color: C.ink }}>
+      <CityBar value={city} onChange={setCity} />
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: 300 }}>
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1600&q=80"
-            alt="City"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, rgba(0,42,91,0.82) 0%, rgba(0,74,198,0.78) 100%)" }} />
-        </div>
-        <div className="relative z-10 w-full max-w-2xl mx-auto px-5 py-16 text-center">
-          <h1
-            className="font-extrabold text-white mb-3 leading-tight"
-            style={{ fontFamily: FONTS.headline, fontSize: "clamp(26px,5vw,40px)", letterSpacing: "-0.02em" }}
-          >
-            Permits made simple &amp; stress-free
-          </h1>
-          <p className="mb-8 text-sm" style={{ color: "rgba(255,255,255,0.78)", fontFamily: FONTS.body, lineHeight: 1.6 }}>
-            Navigate building codes, estimate costs, and track your project with confidence and ease.
-          </p>
+      <div className="mx-auto max-w-[720px] px-4 pb-10 pt-5">
 
-          {/* Search bar — matches screenshot exactly */}
-          <div
-            className="flex items-center overflow-hidden mx-auto"
-            style={{
-              maxWidth: 560,
-              background: "#fff",
-              borderRadius: 10,
-              boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-            }}
-          >
-            <div className="flex items-center gap-2 flex-1 px-4 py-1 min-w-0">
-              <MapPin className="w-4 h-4 shrink-0" style={{ color: "#9ca3af" }} />
-              <select
-                value={jurisdiction}
-                onChange={e => setJurisdiction(e.target.value)}
-                className="flex-1 bg-transparent text-sm focus:outline-none appearance-none cursor-pointer py-2.5 min-w-0"
-                style={{ color: jurisdiction ? "#0d1c2e" : "#9ca3af", fontFamily: FONTS.body }}
-              >
-                <option value="">City / Municipality (e.g. For...</option>
-                {!citiesLoading && cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-            <button
-              onClick={heroSearch}
-              className="shrink-0 flex items-center gap-1.5 m-1 px-4 py-2.5 text-white text-sm font-bold transition-opacity hover:opacity-90 active:scale-[0.98]"
-              style={{ background: PRIMARY, borderRadius: 7, fontFamily: FONTS.headline, whiteSpace: "nowrap" }}
-            >
-              Find Permits For Your Project
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FLORIDA LAW CHANGES ──────────────────────────────────────── */}
-      <FadeSection className="px-4 pt-5 max-w-5xl mx-auto">
-        <div style={{ background: "#1e2d4a", borderRadius: 10, overflow: "hidden" }}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: "#006a61", color: "#fff", fontFamily: FONTS.headline }}>
-                ⬛
-              </span>
-              <span className="text-sm font-bold text-white" style={{ fontFamily: FONTS.headline }}>Florida rules worth knowing</span>
-            </div>
-            <Link to={createPageUrl("ExemptionChecker")} className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity" style={{ color: "#93c5fd", fontFamily: FONTS.body }}>
-              <ExternalLink className="w-3 h-3" /> Check your project eligibility
-            </Link>
-          </div>
-          {/* 4 cards grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4">
-            {LAW_CARDS.map((card, i) => (
-              <div
-                key={card.title}
-                className="px-4 py-4"
-                style={{ borderRight: i < 3 ? "1px solid rgba(255,255,255,0.06)" : "none", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}
-              >
-                <p className="text-xs font-bold mb-1.5 leading-tight" style={{ color: "#93c5fd", fontFamily: FONTS.headline }}>{card.emoji} {card.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.55)", fontFamily: FONTS.body }}>{card.body}</p>
-                {card.source && (
-                  <p className="mt-1.5 text-[10px]" style={{ color: "rgba(255,255,255,0.35)", fontFamily: FONTS.body }}>{card.source}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </FadeSection>
-
-      {/* ── ESSENTIAL PLANNING TOOLS ─────────────────────────────────── */}
-      <FadeSection className="px-4 mt-14 max-w-5xl mx-auto">
-        <h2 className="text-center font-extrabold mb-7" style={{ fontFamily: FONTS.headline, fontSize: 26, color: "#0d1c2e" }}>
-          Essential Planning Tools
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {TOOLS.map(tool => (
-            <Link
-              key={tool.title}
-              to={createPageUrl(tool.page)}
-              className="flex flex-col items-start gap-3 p-4 transition-all"
-              style={{ background: "#fff", borderRadius: 10, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", textDecoration: "none", border: "1px solid #e8eaf0" }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,74,198,0.12)"}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 8px rgba(0,0,0,0.06)"}
-            >
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#eff4ff" }}>
-                <tool.icon className="w-4.5 h-4.5 w-[18px] h-[18px]" style={{ color: PRIMARY }} />
-              </div>
-              <div>
-                <p className="font-bold text-sm mb-0.5" style={{ fontFamily: FONTS.headline, color: "#0d1c2e" }}>{tool.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: "#6b7280", fontFamily: FONTS.body }}>{tool.sub}</p>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 mt-auto" style={{ color: "#c3c6d7" }} />
-            </Link>
-          ))}
-        </div>
-      </FadeSection>
-
-      {/* ── CITY COVERAGE ────────────────────────────────────────────── */}
-      <FadeSection className="px-4 mt-14 max-w-5xl mx-auto">
-        <h2 className="text-center font-extrabold mb-2" style={{ fontFamily: FONTS.headline, fontSize: 22, color: "#0d1c2e" }}>
-          Coverage by City
-        </h2>
-        <p className="text-center text-xs mb-6" style={{ color: "#6b7280", fontFamily: FONTS.body }}>
-          {coveredCities.length > 0
-            ? `Permit requirements loaded for ${coveredCities.length} Broward cities. Weston also includes full historical permit records.`
-            : "Loading coverage…"}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {coveredCities.map(city => (
-            <Link
-              key={city.name}
-              to={`/PermitGuide?city=${encodeURIComponent(city.name)}`}
-              className="flex items-start gap-3 p-4 transition-all"
-              style={{ background: "#fff", borderRadius: 10, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", textDecoration: "none", border: "1px solid #e8eaf0" }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,74,198,0.12)"}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 8px rgba(0,0,0,0.06)"}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#eff4ff" }}>
-                <MapPin className="w-4 h-4" style={{ color: PRIMARY }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-bold text-sm" style={{ fontFamily: FONTS.headline, color: "#0d1c2e" }}>{city.name}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${city.badgeCls}`}>{city.badge}</span>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: "#6b7280", fontFamily: FONTS.body }}>{city.detail}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </FadeSection>
-
-      {/* ── YOUR PATH TO APPROVAL ────────────────────────────────────── */}
-      <FadeSection className="mt-14" style={{ background: "#eef2ff" }}>
-        <div className="px-4 py-14 max-w-5xl mx-auto">
-          <h2 className="text-center font-extrabold mb-12" style={{ fontFamily: FONTS.headline, fontSize: 26, color: "#0d1c2e" }}>
-            Your Path to Approval
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            <div className="hidden md:block absolute top-6 h-px" style={{ left: "calc(33.33% + 8px)", right: "calc(33.33% + 8px)", background: "#c3c6d7" }} />
-            {STEPS.map(step => (
-              <div key={step.num} className="flex flex-col items-center text-center">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-lg text-white mb-5 relative z-10"
-                  style={{ background: PRIMARY, boxShadow: "0 4px 16px rgba(0,74,198,0.3)", fontFamily: FONTS.headline }}
-                >
-                  {step.num}
-                </div>
-                <h3 className="font-bold mb-2 text-sm" style={{ fontFamily: FONTS.headline, color: "#0d1c2e" }}>{step.title}</h3>
-                <p className="text-xs leading-relaxed max-w-[200px]" style={{ color: "#6b7280", fontFamily: FONTS.body }}>{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </FadeSection>
-
-      {/* ── AI SUPPORT ───────────────────────────────────────────────── */}
-      <FadeSection className="px-4 mt-14 max-w-2xl mx-auto">
-        <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", overflow: "hidden", border: "1px solid #e8eaf0" }}>
-          <div className="flex items-center gap-3 px-5 py-4" style={{ background: PRIMARY }}>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm" style={{ fontFamily: FONTS.headline }}>Intelligent Permit Support</p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)", fontFamily: FONTS.body }}>Ask anything about local requirements</p>
-            </div>
-          </div>
-          <div className="px-5 py-4">
-            <div className="flex flex-wrap gap-2 mb-4">
-              {AI_CHIPS.map(chip => (
-                <button
-                  key={chip}
-                  onClick={() => handleAsk(chip)}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all hover:bg-[#004ac6] hover:text-white active:scale-95"
-                  style={{ background: "#eff4ff", color: PRIMARY, fontFamily: FONTS.body }}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                value={question}
-                onChange={e => setQuestion(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && question.trim()) { handleAsk(question.trim()); setQuestion(""); } }}
-                placeholder="Type your questions here..."
-                className="w-full h-11 pl-4 pr-12 rounded-lg text-sm focus:outline-none"
-                style={{ background: "#f8f9ff", border: "1px solid #e8eaf0", color: "#0d1c2e", fontFamily: FONTS.body }}
-                onFocus={e => e.target.style.borderColor = PRIMARY}
-                onBlur={e => e.target.style.borderColor = "#e8eaf0"}
-              />
-              <button
-                onClick={() => { if (question.trim()) { handleAsk(question.trim()); setQuestion(""); } }}
-                className="absolute right-1.5 top-1.5 h-8 w-8 rounded-lg flex items-center justify-center transition-opacity hover:opacity-80"
-                style={{ background: PRIMARY }}
-              >
-                <Send className="w-3.5 h-3.5 text-white" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </FadeSection>
-
-      {/* ── READY TO START CTA ───────────────────────────────────────── */}
-      <FadeSection className="px-4 mt-14 mb-12 max-w-5xl mx-auto">
-        <div
-          className="relative overflow-hidden text-center"
-          style={{ background: PRIMARY, borderRadius: 12, padding: "64px 32px" }}
+        {/* ── ASK ──────────────────────────────────────────────────── */}
+        <h1
+          className="mb-3"
+          style={{ fontFamily: F.head, fontSize: T.title, fontWeight: 800, letterSpacing: "-0.02em", textWrap: "balance" }}
         >
-          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full blur-3xl" style={{ background: "rgba(0,30,100,0.3)" }} />
-          <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full blur-3xl" style={{ background: "rgba(0,106,97,0.2)" }} />
-          <div className="relative z-10">
-            <h2 className="font-extrabold text-white mb-2" style={{ fontFamily: FONTS.headline, fontSize: "clamp(28px,4vw,40px)", letterSpacing: "-0.02em" }}>
-              Ready to start?
-            </h2>
-            <p className="text-sm mb-7" style={{ color: "rgba(255,255,255,0.65)", fontFamily: FONTS.body }}>
-              Simplifying permits for Broward and Miami-Dade counties.
-            </p>
-            <Link
-              to={createPageUrl("PermitGuide")}
-              className="inline-flex items-center gap-2 font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "#fff", color: PRIMARY, padding: "12px 28px", borderRadius: 8, fontFamily: FONTS.headline }}
+          What are you planning to do?
+        </h1>
+
+        <div
+          className="flex items-center gap-2 px-3"
+          style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: RADIUS, boxShadow: SHADOW }}
+        >
+          <Search className="h-4 w-4 shrink-0" style={{ color: C.faint }} aria-hidden="true" />
+          <label htmlFor="home-ask" className="sr-only">Ask about a permit</label>
+          <input
+            id="home-ask"
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            placeholder="Replacing a water heater, adding a fence…"
+            className="h-12 min-w-0 flex-1 bg-transparent focus:outline-none"
+            style={{ fontFamily: F.body, fontSize: T.body, color: C.ink }}
+          />
+          <button
+            onClick={submit}
+            disabled={!question.trim()}
+            className="shrink-0 px-3.5 py-1.5 text-white transition-opacity disabled:opacity-35"
+            style={{ background: C.brand, borderRadius: 8, fontFamily: F.head, fontSize: T.small, fontWeight: 700 }}
+          >
+            Ask
+          </button>
+        </div>
+
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {AI_CHIPS.map(chip => (
+            <button
+              key={chip}
+              onClick={() => ask(chip)}
+              className="px-3 py-1.5 transition-colors hover:brightness-95"
+              style={{ background: C.brandSoft, color: C.brand, borderRadius: 999, fontFamily: F.body, fontSize: T.caption, fontWeight: 600 }}
             >
-              Get Started Now
-            </Link>
+              {chip}
+            </button>
+          ))}
+        </div>
+
+        {/* ── THE WAYS IN ──────────────────────────────────────────── */}
+        <div
+          className="mt-7 overflow-hidden"
+          style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: RADIUS, boxShadow: SHADOW }}
+        >
+          {ACTIONS.map(a => <ActionRow key={a.to} {...a} />)}
+          <div className="flex">
+            {SECONDARY.map((s, i) => (
+              <Link
+                key={s.to}
+                to={s.to}
+                className="flex flex-1 items-center justify-center gap-2 py-3 no-underline transition-colors hover:bg-[#f7f9fb]"
+                style={{ borderLeft: i > 0 ? `1px solid ${C.line}` : "none" }}
+              >
+                <s.icon className="h-4 w-4" style={{ color: C.brand }} aria-hidden="true" />
+                <span style={{ color: C.brand, fontFamily: F.head, fontSize: T.small, fontWeight: 700 }}>{s.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
-      </FadeSection>
+
+        {/* ── FLORIDA RULES ────────────────────────────────────────── */}
+        <h2 className="mb-2 mt-8" style={{ fontFamily: F.head, fontSize: T.lead, fontWeight: 800, letterSpacing: "-0.01em" }}>
+          Worth knowing, wherever you are in Florida
+        </h2>
+        <div
+          className="overflow-hidden"
+          style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: RADIUS }}
+        >
+          {LAW_CARDS.map((card, i) => (
+            <LawCard
+              key={card.title}
+              card={card}
+              open={openLaw === i}
+              onToggle={() => setOpenLaw(openLaw === i ? null : i)}
+            />
+          ))}
+        </div>
+
+        {/* ── COVERAGE ─────────────────────────────────────────────── */}
+        <div
+          className="mt-8 overflow-hidden"
+          style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: RADIUS }}
+        >
+          <button
+            onClick={() => setShowCoverage(v => !v)}
+            aria-expanded={showCoverage}
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block" style={{ color: C.ink, fontFamily: F.head, fontSize: T.small, fontWeight: 700 }}>
+                {covered.length > 0
+                  ? `Permit requirements loaded for ${covered.length} Broward cities`
+                  : "Loading coverage…"}
+              </span>
+              <span className="block" style={{ color: C.muted, fontFamily: F.body, fontSize: T.caption }}>
+                Weston also includes 138,193 historical permit records
+              </span>
+            </span>
+            <ChevronDown
+              className="h-4 w-4 shrink-0 transition-transform"
+              style={{ color: C.faint, transform: showCoverage ? "rotate(180deg)" : "none" }}
+              aria-hidden="true"
+            />
+          </button>
+
+          {showCoverage && (
+            <ul
+              className="grid grid-cols-2 gap-x-4 px-4 pb-4"
+              style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12 }}
+            >
+              {covered.map(c => (
+                <li key={c.name} className="py-1">
+                  <Link
+                    to={`/PermitGuide?city=${encodeURIComponent(c.name)}`}
+                    className="flex items-baseline justify-between gap-2 no-underline"
+                  >
+                    <span className="truncate" style={{ color: C.brand, fontFamily: F.body, fontSize: T.small, fontWeight: 600 }}>
+                      {c.name}
+                    </span>
+                    <span style={{ color: C.faint, fontFamily: F.body, fontSize: T.caption, fontVariantNumeric: "tabular-nums" }}>
+                      {c.permit_type_count}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <p className="mt-6" style={{ color: C.faint, fontFamily: F.body, fontSize: T.caption, lineHeight: 1.6 }}>
+          Open Permit is a guide, not a permitting authority. Confirm anything that matters with your
+          city&rsquo;s building department before you file or begin work.
+        </p>
+      </div>
 
       <AIDrawer
         open={aiOpen}
