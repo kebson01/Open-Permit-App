@@ -248,6 +248,7 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
     building: "Building Permits",
     electrical: "Electrical Permits",
     plumbing: "Plumbing Permits",
+    mechanical: "Mechanical Permits",
     fire: "Fire Code Services",
     certificate: "Certificates",
     planning: "Planning & Zoning",

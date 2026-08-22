@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { X, Search, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-const CATEGORY_ORDER = ["building", "electrical", "plumbing", "fire", "certificate", "planning", "engineering", "additional"];
-const FILTER_TABS = ["all", "building", "electrical", "plumbing", "engineering"];
+const CATEGORY_ORDER = ["building", "electrical", "plumbing", "mechanical", "fire", "certificate", "planning", "engineering", "additional"];
+const FILTER_TABS = ["all", "building", "electrical", "plumbing", "mechanical", "engineering"];
 
 const CATEGORY_META = {
   building:    { label: "Building Permits",     color: "bg-blue-500",   dot: "bg-blue-500" },
   electrical:  { label: "Electrical Permits",   color: "bg-yellow-500", dot: "bg-yellow-500" },
   plumbing:    { label: "Plumbing Permits",     color: "bg-cyan-500",   dot: "bg-cyan-500" },
+  mechanical:  { label: "Mechanical Permits",    color: "bg-teal-500",   dot: "bg-teal-500" },
   fire:        { label: "Fire & Safety",         color: "bg-red-500",    dot: "bg-red-500" },
   certificate: { label: "Certificates",          color: "bg-green-500",  dot: "bg-green-500" },
   planning:    { label: "Planning & Zoning",     color: "bg-purple-500", dot: "bg-purple-500" },
