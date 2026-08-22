@@ -63,6 +63,24 @@ function FadeSection({ children, className = "", style = {} }) {
 
 export default function Home() {
   const { cities, loading: citiesLoading } = useCities();
+
+  // Coverage is whatever the database actually holds — permit_type_count is
+  // recomputed from the per-city tables, so this can't drift out of date the
+  // way the old hardcoded six-city list did.
+  const coveredCities = cities
+    .filter(c => (c.permit_type_count || 0) > 0)
+    .sort((a, b) => b.permit_type_count - a.permit_type_count)
+    .map(c => ({
+      name: c.name,
+      badge: c.name === "Weston" ? "Full Coverage" : `${c.permit_type_count} permits`,
+      badgeCls: c.name === "Weston"
+        ? "bg-green-100 text-green-700 border-green-200"
+        : "bg-teal-100 text-teal-700 border-teal-200",
+      detail: c.name === "Weston"
+        ? `${c.permit_type_count} permit types + 138,193 historical permit records`
+        : `${c.permit_type_count} permit types with requirements, documents and fees`,
+    }));
+
   const [jurisdiction, setJurisdiction] = useState("");
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState("");
@@ -197,17 +215,12 @@ export default function Home() {
           Coverage by City
         </h2>
         <p className="text-center text-xs mb-6" style={{ color: "#6b7280", fontFamily: FONTS.body }}>
-          Permit requirements available for all 6 cities. Weston also includes full historical permit records.
+          {coveredCities.length > 0
+            ? `Permit requirements loaded for ${coveredCities.length} Broward cities. Weston also includes full historical permit records.`
+            : "Loading coverage…"}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            { name: "Weston",          badge: "Full Coverage",  badgeCls: "bg-green-100 text-green-700 border-green-200",  detail: "115,959 permit records + guided application" },
-            { name: "Hollywood",       badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
-            { name: "Coral Springs",   badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
-            { name: "Cooper City",     badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
-            { name: "Fort Lauderdale", badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types (via LauderBuild)" },
-            { name: "Sunrise",         badge: "Guided",         badgeCls: "bg-teal-100 text-teal-700 border-teal-200",     detail: "✓ Guided application — 11 permit types" },
-          ].map(city => (
+          {coveredCities.map(city => (
             <Link
               key={city.name}
               to={`/PermitGuide?city=${encodeURIComponent(city.name)}`}
