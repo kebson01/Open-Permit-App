@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
 import { useCities } from "@/hooks/useCities";
 import CountyRules from "@/components/CountyRules";
+import DocumentList from "@/components/DocumentList";
 import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
 
 /** Link helper so the city always travels with the reader. */
@@ -143,6 +144,7 @@ function PermitDetailView({ permit, city }) {
       icon: FileText,
       items: permit.documents_needed || [],
       color: "bg-emerald-50 text-emerald-600",
+      kind: "documents",
     },
     {
       title: "Inspections Required",
@@ -199,7 +201,9 @@ function PermitDetailView({ permit, city }) {
               </div>
               <h3 className="font-bold text-gray-800">{card.title}</h3>
             </div>
-            {card.items.length > 0 ? (
+            {card.kind === "documents" && card.items.length > 0 ? (
+              <DocumentList documents={card.items} />
+            ) : card.items.length > 0 ? (
               <ul className="space-y-2">
                 {card.items.map((item, j) => (
                   <li key={j} className="text-sm text-gray-600 flex items-start gap-2">

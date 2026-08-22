@@ -8,6 +8,7 @@ import ZonePhotoAnalyzer from "./ZonePhotoAnalyzer";
 import FBCSection from "./FBCSection";
 import CountyRules from "@/components/CountyRules";
 import { useCountyRules, rulesForPermit } from "@/lib/countyRules";
+import { useDocumentExplainers, explainDocument } from "@/lib/documentExplainers";
 
 const SUPABASE_HEADERS = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
@@ -188,8 +189,9 @@ function getDocExplanations(city) {
   };
 }
 
-function DocumentsSection({ documents, plainEnglishMap, city }) {
+function DocumentsSection({ documents, city }) {
   const DOC_EXPLANATIONS = getDocExplanations(city);
+  const explainers = useDocumentExplainers();
   const [checked, setChecked] = useState({});
 
   const toggle = (doc) => setChecked(prev => ({ ...prev, [doc]: !prev[doc] }));
@@ -211,7 +213,7 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
       </div>
       <ul className="space-y-3">
         {documents.map((doc, i) => {
-          const pe = plainEnglishMap?.[doc];
+          const pe = explainDocument(doc, explainers);
           return (
             <li key={i} onClick={() => toggle(doc)} className="flex items-start gap-2.5 cursor-pointer group">
               {checked[doc]
@@ -241,7 +243,7 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
         })}
       </ul>
       <p className="text-xs text-gray-400 mt-3 leading-relaxed">
-        Select an item to mark it complete. Your progress is saved to your project dashboard.
+        Tick items off as you gather them. This list is a working checklist, not a saved record.
       </p>
       {checkedCount === documents.length && documents.length > 0 && (
         <p className="text-xs text-emerald-600 mt-2 font-medium">
@@ -254,17 +256,8 @@ function DocumentsSection({ documents, plainEnglishMap, city }) {
 
 export default function PermitPopup({ permit, city, userMode = "homeowner", onClose }) {
   const [activeIdx, setActiveIdx] = useState(0);
-  const [plainEnglishMap, setPlainEnglishMap] = useState({});
 
   useEffect(() => { setActiveIdx(0); }, [permit]);
-
-  useEffect(() => {
-    fetchPlainEnglishDocs().then(rows => {
-      const map = {};
-      rows.forEach(r => { if (r.official_name) map[r.official_name] = r; });
-      setPlainEnglishMap(map);
-    });
-  }, []);
 
   if (!permit) return null;
 
@@ -365,7 +358,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
           {hasDocuments && (
             <>
               <hr className="border-gray-100" />
-              <DocumentsSection documents={current.documents_needed} plainEnglishMap={plainEnglishMap} city={city} />
+              <DocumentsSection documents={current.documents_needed} city={city} />
             </>
           )}
 
