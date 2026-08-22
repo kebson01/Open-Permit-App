@@ -225,9 +225,11 @@ export default function ResultMayNeedPermit({ answers, cityInfo, currentUser, on
             📞 Call to Verify
           </a>
         )}
-        <Link to="/PermitGuide"
+        {/* "Start Application Anyway" — this app files nothing, and the link
+            went to the reference guide. It now says where it goes. */}
+        <Link to={`/PermitGuide?city=${encodeURIComponent(answers.city || "")}`}
           style={{ flex: 1, minWidth: 140, display: "block", textAlign: "center", background: "white", color: PRIMARY, border: `2px solid ${PRIMARY}`, padding: "12px 16px", borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-          Start Application Anyway
+          See the requirements
         </Link>
         <button onClick={onReset}
           style={{ flex: 1, minWidth: 140, background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 12, padding: "12px 16px", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -275,7 +277,9 @@ export function ContactCard({ cityInfo, city }) {
           {cityInfo.building_department_address && (
             <p style={{ fontSize: 12, color: "#6b7280", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: "0 0 6px" }}>{cityInfo.building_department_address}</p>
           )}
-          <p style={{ fontSize: 11, color: "#9ca3af", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: "0 0 12px" }}>Hours: Monday–Friday, 8:00 AM – 4:30 PM</p>
+          {/* This printed "Hours: Monday–Friday, 8:00 AM – 4:30 PM" for every
+              city. Those are Weston's; we hold no opening hours for the other
+              30, and a wrong time is what sends someone to a locked door. */}
           <div style={{ display: "flex", gap: 8 }}>
             {cityInfo.building_department_phone && (
               <a href={`tel:${cityInfo.building_department_phone}`} style={{ flex: 1, display: "block", textAlign: "center", background: "#eff6ff", color: PRIMARY, border: "1px solid #dbeafe", borderRadius: 8, padding: "8px", fontWeight: 700, fontSize: 12, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>

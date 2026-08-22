@@ -3,17 +3,15 @@ import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import CountyRules from "@/components/CountyRules";
 import { useCountyRules, rulesForExemption } from "@/lib/countyRules";
+import { useCities } from "@/hooks/useCities";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
-const CITY_CONTACTS = {
-  'Weston': { phone: '(954) 385-2600', address: '17200 Royal Palm Blvd, Weston, FL 33326', portal: 'https://www.westonfl.org/Permits', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-  'Hollywood': { phone: '(954) 967-4500', address: '2600 Hollywood Blvd, Hollywood, FL 33020', portal: 'https://www.hollywoodfl.org/permits', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-  'Coral Springs': { phone: '(954) 344-1000', address: '9551 W. Sample Rd, Coral Springs, FL 33065', portal: 'https://www.coralsprings.org/permits', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-  'Cooper City': { phone: '(954) 434-4300', address: '9090 SW 50th Pl, Cooper City, FL 33328', portal: 'https://www.coopercityfl.org/permits', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-  'Fort Lauderdale': { phone: '(954) 828-5900', address: '700 NW 19th Ave, Fort Lauderdale, FL 33311', portal: 'https://lauderbuild.fortlauderdale.gov', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-  'Sunrise': { phone: '(954) 746-3440', address: '10770 W. Oakland Park Blvd, Sunrise, FL 33351', portal: 'https://www.sunrisefl.gov/permits', hours: 'Mon–Fri, 8:00 AM – 4:30 PM' },
-};
+// CITY_CONTACTS lived here: six cities' phone, address, portal and hours,
+// hardcoded. It was the app's third contact table and had drifted out of
+// agreement with the other two — it carried Fort Lauderdale on (954) 828-5900
+// where both the database and the permit popup say (954) 828-6520. Contact
+// details now come from `cities`, which has all 31 and one value per fact.
 
 const FEES = {
   'Weston': {
@@ -263,11 +261,12 @@ export default function Step4Result({ answers, currentUser, onReset }) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const { cities } = useCities();
 
   const resultObj = calculateResult(answers);
   const { result, reason, code, ruleKey, city_rule } = resultObj;
 
-  const contact = CITY_CONTACTS[answers.city] || {};
+  const cityRow = cities.find(c => c.name === answers.city) || null;
 
   function CountyRulesBlock() {
     const { rules } = useCountyRules();
@@ -282,14 +281,47 @@ export default function Step4Result({ answers, currentUser, onReset }) {
     );
   }
 
+  /**
+   * The city's building department, from `cities`.
+   *
+   * This read a hardcoded CITY_CONTACTS table of six — the app's third such
+   * table, and one whose phone numbers had drifted out of agreement with the
+   * other two (it had Fort Lauderdale on 828-5900; the database and the permit
+   * popup both say 828-6520). For the other 25 cities it rendered a row of
+   * icons with nothing beside them.
+   *
+   * Every entry also carried "Mon–Fri, 8:00 AM – 4:30 PM". That is not data we
+   * hold for anyone — it was the same invented string copied six times — so the
+   * hours are gone rather than guessed. A wrong opening time is what sends
+   * someone to a locked door.
+   */
   function CityContact() {
+    if (!cityRow) {
+      return (
+        <div style={{ background: '#f8f9ff', border: '1px solid #e0e4f0', borderRadius: 10, padding: 14, marginBottom: 8 }}>
+          <div style={{ fontWeight: 600, fontSize: 13, color: '#0d1c2e', marginBottom: 6 }}>{answers.city} Building Department</div>
+          <div style={{ fontSize: 12, color: '#6b7280' }}>
+            Contact {answers.city}&rsquo;s building department to confirm this result.
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{ background: '#f8f9ff', border: '1px solid #e0e4f0', borderRadius: 10, padding: 14, marginBottom: 8 }}>
         <div style={{ fontWeight: 600, fontSize: 13, color: '#0d1c2e', marginBottom: 6 }}>{answers.city} Building Department</div>
-        <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>📞 <a href={`tel:${contact.phone}`} style={{ color: '#003466' }}>{contact.phone}</a></div>
-        <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 3 }}>📍 {contact.address}</div>
-        <div style={{ fontSize: 12, marginBottom: 3 }}>🌐 <a href={contact.portal} target="_blank" rel="noopener noreferrer" style={{ color: '#003466' }}>{contact.portal}</a></div>
-        <div style={{ fontSize: 12, color: '#6b7280' }}>🕐 {contact.hours}</div>
+        {cityRow.building_department_phone && (
+          <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>
+            📞 <a href={`tel:${cityRow.building_department_phone.replace(/[^0-9]/g, '')}`} style={{ color: '#003466' }}>{cityRow.building_department_phone}</a>
+          </div>
+        )}
+        {cityRow.building_department_address && (
+          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 3 }}>📍 {cityRow.building_department_address}</div>
+        )}
+        {cityRow.portal_url && (
+          <div style={{ fontSize: 12, marginBottom: 3 }}>
+            🌐 <a href={cityRow.portal_url} target="_blank" rel="noopener noreferrer" style={{ color: '#003466' }}>Permit portal</a>
+          </div>
+        )}
       </div>
     );
   }
@@ -361,7 +393,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         </div>
         <CountyRulesBlock /><CityContact />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
+          <a href={`tel:${(cityRow?.building_department_phone || "").replace(/[^0-9]/g, "")}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
           <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
@@ -414,7 +446,7 @@ export default function Step4Result({ answers, currentUser, onReset }) {
         <CountyRulesBlock /><CityContact />
 
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-          <a href={`tel:${contact.phone}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
+          <a href={`tel:${(cityRow?.building_department_phone || "").replace(/[^0-9]/g, "")}`} style={{ flex: 1, minWidth: 140, background: '#003466', color: 'white', borderRadius: 8, padding: '10px 16px', textAlign: 'center', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>📞 Call to Verify</a>
           <button onClick={() => navigate('/PermitGuide')} style={{ flex: 1, minWidth: 140, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>See Permit Requirements</button>
           <button onClick={onReset} style={{ flex: 1, minWidth: 140, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
@@ -489,11 +521,14 @@ export default function Step4Result({ answers, currentUser, onReset }) {
 
       {/* CTAs */}
       <div style={{ marginTop: 16 }}>
-        <button onClick={() => navigate('/PermitGuide')} style={{ width: '100%', background: '#003466', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
-          Start My Permit Application →
+        {/* Was "Start My Permit Application →", which went to the reference
+            guide. Open Permit files nothing; the city does. The links also
+            carry the city the reader just picked, which they were dropping. */}
+        <button onClick={() => navigate(`/PermitGuide?city=${encodeURIComponent(answers.city || '')}`)} style={{ width: '100%', background: '#003466', color: 'white', border: 'none', borderRadius: 10, padding: '14px 24px', fontFamily: 'Manrope, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+          See what {answers.city} requires →
         </button>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => navigate('/FeeCalculator')} style={{ flex: 1, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#374151' }}>Calculate Exact Fee</button>
+          <button onClick={() => navigate(`/FeeCalculator?city=${encodeURIComponent(answers.city || '')}`)} style={{ flex: 1, background: 'white', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#374151' }}>Estimate the fee</button>
           <button onClick={onReset} style={{ flex: 1, background: 'transparent', border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', color: '#6b7280' }}>Check Another</button>
         </div>
         {currentUser && !saved && (

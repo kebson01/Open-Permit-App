@@ -203,22 +203,35 @@ export default function ResultPermitRequired({ answers, cityInfo, currentUser, o
         </div>
       </div>
 
-      {/* Primary CTA */}
-      <Link to="/PermitGuide"
-        style={{ display: "block", textAlign: "center", background: PRIMARY, color: "white", padding: "15px", borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: "none", fontFamily: "'Manrope', sans-serif", letterSpacing: "-0.01em" }}>
-        Start My Permit Application →
-      </Link>
+      {/* Primary CTA
+          This said "Start My Permit Application →" and went to /PermitGuide —
+          a reference page. Open Permit cannot file anything; only the city can.
+          So the button either goes where you really do apply (the city's own
+          portal) or it says what it actually does. */}
+      {cityInfo?.portal_url ? (
+        <a href={cityInfo.portal_url} target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", textAlign: "center", background: PRIMARY, color: "white", padding: "15px", borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: "none", fontFamily: "'Manrope', sans-serif", letterSpacing: "-0.01em" }}>
+          Apply on {answers.city}&rsquo;s permit portal →
+        </a>
+      ) : (
+        <Link to={`/PermitGuide?city=${encodeURIComponent(answers.city || "")}`}
+          style={{ display: "block", textAlign: "center", background: PRIMARY, color: "white", padding: "15px", borderRadius: 14, fontWeight: 800, fontSize: 16, textDecoration: "none", fontFamily: "'Manrope', sans-serif", letterSpacing: "-0.01em" }}>
+          See what {answers.city} requires →
+        </Link>
+      )}
 
       {/* Secondary buttons */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Link to="/FeeCalculator"
+        <Link to={`/FeeCalculator?city=${encodeURIComponent(answers.city || "")}`}
           style={{ flex: 1, minWidth: 130, display: "block", textAlign: "center", background: "white", color: PRIMARY, border: `1px solid #dbeafe`, padding: "11px", borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-          Calculate Exact Fee
+          Estimate the fee
         </Link>
-        <button onClick={() => alert("Contractor directory coming soon!")}
-          style={{ flex: 1, minWidth: 130, background: "white", color: "#374151", border: "1px solid #e0e4f0", borderRadius: 10, padding: "11px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-          Find a Contractor
-        </button>
+        {/* This popped an alert saying "Contractor directory coming soon!" —
+            the directory exists now, so it just goes there. */}
+        <Link to={`/contractors?city=${encodeURIComponent(answers.city || "")}`}
+          style={{ flex: 1, minWidth: 130, display: "block", textAlign: "center", background: "white", color: "#374151", border: "1px solid #e0e4f0", borderRadius: 10, padding: "11px", fontWeight: 700, fontSize: 13, textDecoration: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          Find a contractor
+        </Link>
         <button onClick={onReset}
           style={{ flex: 1, minWidth: 130, background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, padding: "11px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
           Check Another Project
