@@ -74,7 +74,7 @@ export default function PhotoAnalysisResults({ analysis, city }) {
             {s.notes && <p className="text-xs text-gray-500 mt-1">{s.notes}</p>}
             {s.permit_required && s.permit_name && (
               <Link
-                to={`/PermitInfo?permit=${encodeURIComponent(s.permit_name)}`}
+                to={`/PermitInfo?permit=${encodeURIComponent(s.permit_name)}&city=${encodeURIComponent(startCity || "")}`}
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg no-underline hover:opacity-90 transition-opacity"
                 style={{ background: "#003466" }}
               >

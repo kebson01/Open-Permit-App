@@ -401,7 +401,7 @@ export default function PermitPopup({ permit, city, userMode = "homeowner", onCl
                 Calculate Fee
               </Button>
             </Link>
-            <Link to={createPageUrl("PermitInfo") + `?permit=${encodeURIComponent(current.name)}`}>
+            <Link to={createPageUrl("PermitInfo") + `?permit=${encodeURIComponent(current.name)}&city=${encodeURIComponent(city || "")}`}>
               <Button variant="outline" className="rounded-xl gap-1.5">
                 <ExternalLink className="w-4 h-4" />
                 More Info
