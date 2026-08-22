@@ -8,6 +8,7 @@
 // Adjust the import below to wherever your Supabase client lives.
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import ConfirmWithCity from "@/components/ConfirmWithCity";
 
 const MIN_CONFIDENCE = 0.45;
 
@@ -345,6 +346,8 @@ function Results({ result, lowConfidence }) {
       {supported === false && message && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{message}</p>
       )}
+
+      <ConfirmWithCity city={city} permitFound={opt.permit_required} />
 
       {/* Permit detail (only when a permit is needed) */}
       {opt.permit_required && p && (

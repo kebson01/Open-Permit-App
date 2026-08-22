@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight } from "lucide-react";
+import ConfirmWithCity from "@/components/ConfirmWithCity";
 
 /**
  * Shared display for the `ar-tools` checkPermit response.
@@ -116,20 +117,10 @@ export default function PhotoAnalysisResults({ analysis, city }) {
         </div>
       )}
 
-      {/* City phone */}
-      {analysis.city_phone && (
-        <a
-          href={`tel:${analysis.city_phone}`}
-          className="block text-center bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 no-underline"
-        >
-          <p className="text-sm font-bold text-blue-700">📞 {analysis.city || "City"} Building Dept</p>
-          <p className="text-xs text-gray-500 mt-0.5">{analysis.city_phone} — Tap to call</p>
-        </a>
-      )}
-
-      <p className="text-[10px] text-gray-400 text-center">
-        AI estimates only — always verify with your local building department.
-      </p>
+      <ConfirmWithCity
+        city={startCity}
+        permitFound={(a.structures || []).some(s => s.permit_required)}
+      />
     </div>
   );
 }
