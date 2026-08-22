@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
-  Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight
+  Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight,
+  Phone, ExternalLink, Info
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCities, parseServices } from "@/hooks/useCities";
+import { useCities, cityUsesBrowardCounty } from "@/hooks/useCities";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
 import HouseView from "../components/map/HouseView";
 import PermitPopup from "../components/map/PermitPopup";
@@ -88,6 +89,51 @@ const PERMIT_LIFECYCLE_STEPS = [
 ];
 
 
+function CityNotCovered({ city, cityRow }) {
+  const county = cityUsesBrowardCounty(cityRow);
+  const phone  = cityRow?.building_department_phone;
+  const portal = cityRow?.portal_url;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[#eaf1f8] flex items-center justify-center shrink-0">
+          <Info className="w-5 h-5 text-[#003466]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base font-bold text-gray-900">
+            {county
+              ? `Broward County handles permits for ${city}`
+              : `We haven't loaded ${city}'s permits yet`}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+            {county
+              ? `${city} has no separate building department. Applications, fees and inspections all go through the Broward County Building Division.`
+              : `${city} runs its own building department, but we don't have its permit types on file. Contact them directly — or switch to a city we cover to see how the guide works.`}
+          </p>
+
+          <div className="flex flex-wrap gap-2 mt-4">
+            {portal && (
+              <a href={portal} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white no-underline hover:opacity-90 transition-opacity"
+                style={{ background: "#003466" }}>
+                <ExternalLink className="w-4 h-4" />
+                {county ? "Broward County Building" : `${city} Building Department`}
+              </a>
+            )}
+            {phone && (
+              <a href={`tel:${phone.replace(/[^0-9]/g, "")}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 no-underline hover:bg-gray-50 transition-colors">
+                <Phone className="w-4 h-4" /> {phone}
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PermitGuide() {
   const urlParams      = new URLSearchParams(window.location.search);
   const urlCity        = urlParams.get("city") || "";
@@ -95,10 +141,9 @@ export default function PermitGuide() {
   const urlZone        = urlParams.get("zone") || "";
 
   const { cities, loading: citiesLoading } = useCities();
-  const permitCities = cities.filter(c => {
-    const svcs = parseServices(c.enabled_services);
-    return svcs.includes("permit_types") || svcs.includes("permit_guide") || svcs.length === 0;
-  });
+  // Every city is selectable: those without loaded data get CityNotCovered,
+  // which still hands the reader their building department's phone and portal.
+  const permitCities = cities;
   const CITIES     = urlCity ? [urlCity] : permitCities.map(c => c.name);
   const singleCity = !!urlCity;
 
@@ -120,7 +165,7 @@ export default function PermitGuide() {
   const [showPrivateProviderStep, setShowPrivateProviderStep] = useState(false);
   const [zoneInfoPanel, setZoneInfoPanel]     = useState(null);
 
-  const { data: allPermits = [] } = useQuery({
+  const { data: allPermits = [], isLoading: permitsLoading } = useQuery({
     queryKey: ["supabase-permit-types", city],
     queryFn:  () => fetchPermitTypes(city),
     staleTime: 5 * 60 * 1000,
@@ -257,7 +302,7 @@ export default function PermitGuide() {
         {showPrivateProviderStep && <PrivateProviderStep onAnswer={setPrivateProvider} />}
 
         {/* View toggle (front/back/floor plan) */}
-        {(isResidential || commercialSubtype) && activeViewOptions.length > 1 && (
+        {allPermits.length > 0 && (isResidential || commercialSubtype) && activeViewOptions.length > 1 && (
           <div className="flex gap-1.5 bg-white rounded-2xl border border-gray-100 shadow-sm p-1">
             {activeViewOptions.map(opt => (
               <button key={opt.value} onClick={() => setActiveView(opt.value)}
@@ -270,8 +315,13 @@ export default function PermitGuide() {
           </div>
         )}
 
+        {/* No permit data for this city — say so, and give a real next step */}
+        {!permitsLoading && allPermits.length === 0 && (
+          <CityNotCovered city={city} cityRow={cities.find(c => c.name === city)} />
+        )}
+
         {/* House diagram */}
-        {(isResidential || commercialSubtype) && (
+        {allPermits.length > 0 && (isResidential || commercialSubtype) && (
           <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
             <HouseView view={activeView} showHighlights={showHighlights} onZoneClick={handleZoneClick} />
             <div className="flex gap-2 p-3 border-t border-gray-50">
