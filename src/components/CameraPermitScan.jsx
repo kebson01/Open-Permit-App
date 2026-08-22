@@ -212,7 +212,13 @@ export default function CameraPermitScan() {
 }
 
 function Results({ result, lowConfidence }) {
-  const { detected, city, supported, permits = [], message, contractor_category, alternatives = [] } = result;
+  const { detected, city, supported, permits = [], message, contractor_category, alternatives = [],
+          verdict, deciding_question } = result;
+
+  // The work is in a trade that usually needs a permit, but a photo can't tell a
+  // like-for-like swap from a new installation — so the scan asks rather than
+  // guessing. Answering "no permit" here is the one wrong answer that costs money.
+  const dependsOnScope = verdict === "depends";
 
   // Selectable interpretations of the tapped spot: primary first, then alternatives.
   const options = [];
@@ -331,13 +337,30 @@ function Results({ result, lowConfidence }) {
       <div className="rounded-xl border border-gray-200 p-4">
         <div className="flex items-baseline justify-between">
           <h3 className="text-lg font-semibold capitalize">{opt.item_label}</h3>
-          {opt.confidence != null && <span className="text-xs text-gray-500">{Math.round((opt.confidence || 0) * 100)}% sure</span>}
+          {opt.confidence != null && (
+            <span className="whitespace-nowrap text-xs text-gray-500">
+              {Math.round((opt.confidence || 0) * 100)}% sure it&rsquo;s this
+            </span>
+          )}
         </div>
         <p className="text-sm text-gray-600">{opt.work_type}{city ? ` · ${city}` : ""}</p>
-        <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${opt.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-          {opt.permit_required ? "Permit Required" : "No Permit Needed"}
+        <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          dependsOnScope ? "bg-amber-100 text-amber-800" : opt.permit_required ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+        }`}>
+          {dependsOnScope ? "Depends on the work" : opt.permit_required ? "Permit Required" : "No Permit Needed"}
         </span>
         {!opt.permit_required && p?.description && <p className="mt-2 text-sm text-gray-600">{p.description}</p>}
+        {dependsOnScope && deciding_question && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-semibold text-amber-900">This one turns on the scope</p>
+            <p className="mt-1 text-sm leading-relaxed text-amber-800">{deciding_question}</p>
+            <p className="mt-2 text-xs leading-relaxed text-amber-700">
+              A replacement in the same place is often exempt; adding or moving anything usually is not.
+              Type which one it is in the box above and scan again, or ask {city || "your city"} — they can
+              answer it in a phone call.
+            </p>
+          </div>
+        )}
         {picked === 0 && lowConfidence && (
           <p className="mt-2 text-sm text-amber-700">Not fully sure this is right — try moving closer or rescanning.</p>
         )}
