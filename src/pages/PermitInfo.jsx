@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchPermitTypes, resolveCity, rememberCity } from "@/lib/permitTypes";
-import { useCities, parseServices } from "@/hooks/useCities";
+import { useCities } from "@/hooks/useCities";
 
 /** Link helper so the city always travels with the reader. */
 const infoUrl = (permitName, city) =>
@@ -53,12 +53,10 @@ function CityBadge({ city }) {
 
 function CitySwitcher({ city }) {
   const { cities } = useCities();
-  const withPermits = cities.filter(c => {
-    const svcs = parseServices(c.enabled_services);
-    return svcs.includes("permit_types") || svcs.includes("permit_guide") || svcs.length === 0;
-  });
 
-  if (withPermits.length === 0) return null;
+  // Every city is listed. Ones without loaded data land on the empty state
+  // above, which names their building department rather than going silent.
+  if (cities.length === 0) return null;
 
   return (
     <label className="flex items-center gap-2 text-sm text-gray-500">
@@ -71,7 +69,7 @@ function CitySwitcher({ city }) {
         }}
         className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-gray-800 bg-white focus:border-[#003466] focus:outline-none focus:ring-1 focus:ring-[#003466]"
       >
-        {withPermits.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+        {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
       </select>
     </label>
   );
@@ -273,7 +271,9 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
         <p className="text-gray-500 mt-2">
           {isLoading
             ? "Loading permit types…"
-            : `${permits.length} permit type${permits.length === 1 ? "" : "s"} on file. Open one to see its requirements, documents and inspections.`}
+            : permits.length === 0
+              ? `We don't have ${city}'s permit types on file yet.`
+              : `${permits.length} permit type${permits.length === 1 ? "" : "s"} on file. Open one to see its requirements, documents and inspections.`}
         </p>
         <div className="mt-4"><CitySwitcher city={city} /></div>
       </div>
@@ -325,7 +325,7 @@ function GeneralPermitInfo({ permits, isLoading, city }) {
         </div>
       )}
 
-      <div className="mt-10"><Disclaimer city={city} /></div>
+      {permits.length > 0 && <div className="mt-10"><Disclaimer city={city} /></div>}
     </div>
   );
 }
