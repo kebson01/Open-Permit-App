@@ -87,10 +87,33 @@ export default function ContractorCard({ c }) {
           >
             <Phone className="h-3 w-3" /> {phone.display_phone || phone.phone}
           </a>
-        ) : (
+        ) : phone.message ? (
           <span className="text-[11px] text-gray-500">{phone.message}</span>
+        ) : null}
+
+        {phone?.found && phone.website && (
+          <a
+            href={phone.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-700 no-underline hover:bg-gray-50"
+          >
+            Website
+          </a>
         )}
       </div>
+
+      {/* The licence records the holder's address, often their home; the business
+          may trade from somewhere else. Showing what was matched lets the reader
+          judge whether it is really the same firm. */}
+      {phone?.found && phone.matched_address && (
+        <p className="mt-1.5 text-[11px] leading-relaxed text-gray-500">
+          Matched <span className="font-medium text-gray-700">{phone.match_name}</span> at {phone.matched_address}
+          {phone.matched_address.toLowerCase().includes((c.city || "").toLowerCase())
+            ? ""
+            : " — a different address to the licence record, which is common. Check it is the same firm."}
+        </p>
+      )}
     </div>
   );
 }
