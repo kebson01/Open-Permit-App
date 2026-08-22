@@ -6,7 +6,7 @@
  *
  * THE ONLY EDITABLE VALUE: mainPage
  */
-import ARTools from './pages/ARTools';
+import PropertyLookup from './pages/PropertyLookup';
 import CameraScan from './pages/CameraScan';
 import ExemptionChecker from './pages/ExemptionChecker';
 import FeeCalculator from './pages/FeeCalculator';
@@ -17,7 +17,7 @@ import __Layout from './components/Layout';
 
 
 export const PAGES = {
-    "ARTools": ARTools,
+    "PropertyLookup": PropertyLookup,
     "CameraScan": CameraScan,
     "ExemptionChecker": ExemptionChecker,
     "FeeCalculator": FeeCalculator,
