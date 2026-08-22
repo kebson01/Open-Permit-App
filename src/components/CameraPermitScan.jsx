@@ -127,15 +127,16 @@ export default function CameraPermitScan() {
   const lowConfidence = result?.detected && result.detected.confidence < MIN_CONFIDENCE;
   const permitNeeded = (result?.permits?.length || 0) > 0;
   const ambiguous = (result?.alternatives?.length || 0) > 0;
-  const ballColor = loading
-    ? "#f59e0b"
-    : result
-      ? ambiguous
-        ? "#f59e0b"
-        : permitNeeded
-          ? "#ef4444"
-          : "#22c55e"
-      : "#f59e0b";
+  const scopeDependent = result?.verdict === "depends";
+
+  const AMBER = "#f59e0b", RED = "#ef4444", GREEN = "#22c55e";
+  const ballColor = loading || !result
+    ? AMBER
+    : permitNeeded
+      ? RED
+      : scopeDependent || ambiguous
+        ? AMBER
+        : GREEN;
 
   return (
     <div className="mx-auto max-w-md p-4">
@@ -185,7 +186,7 @@ export default function CameraPermitScan() {
           value={hint}
           onChange={(e) => setHint(e.target.value)}
           disabled={loading}
-          placeholder="Optional: what do you want to do? e.g. replace glass door"
+          placeholder="Optional — e.g. replacing an existing fan"
           className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:border-[#003466] focus:outline-none focus:ring-1 focus:ring-[#003466] disabled:opacity-50"
         />
       </div>
