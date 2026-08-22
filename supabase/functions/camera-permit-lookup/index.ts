@@ -196,13 +196,16 @@ Deno.serve(async (req: Request) => {
       const { data: pros } = await sb.rpc('search_professionals', {
         p_query: null, p_type: 'contractor', p_category: category,
         p_active_only: true, p_statewide_only: false, p_limit: 8,
+        p_city: body.city || null,
       })
       const contractors = (pros || []).map((c: any) => ({
         name: c.name,
         license_type: c.category || category,
-        license: c.license_number || '',
+        // license_number was never a column on this result — it is license_ref.
+        license: c.license_ref || '',
         city: c.city || '',
         expires: c.expiration_date || '',
+        locality: c.locality || '',
       }))
       return json({
         contractors,

@@ -415,8 +415,18 @@ function Results({ result, lowConfidence }) {
           ) : pros.length > 0 ? (
             pros.map((c, i) => (
               <div key={i} className="mt-2 border-b border-gray-100 pb-2">
-                <p className="text-sm font-medium">{c.name}</p>
-                <p className="text-xs text-gray-500">{c.license_type} {c.license} · {c.city} · exp {c.expires}</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="min-w-0 flex-1 text-sm font-medium">{c.name}</p>
+                  {c.locality === "in_city" && (
+                    <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                      In {c.city}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  {[c.license_type, c.license, c.city, c.expires && `licence to ${c.expires}`]
+                    .filter(Boolean).join(" · ")}
+                </p>
               </div>
             ))
           ) : (
