@@ -200,9 +200,13 @@ Deno.serve(async (req: Request) => {
       })
       const contractors = (pros || []).map((c: any) => ({
         name: c.name,
+        // The trading name is what a homeowner recognises and can search for;
+        // the DBPR file lists the licence holder, which often differs.
+        dba: c.secondary || '',
         license_type: c.category || category,
         // license_number was never a column on this result — it is license_ref.
         license: c.license_ref || '',
+        address: c.address || '',
         city: c.city || '',
         expires: c.expiration_date || '',
         locality: c.locality || '',
