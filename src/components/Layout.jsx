@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Camera, Building2, Menu, X } from "lucide-react";
+import { Home, BookOpen, Camera, Building2, HardHat, Menu, X } from "lucide-react";
 import InstallPrompt from "@/components/InstallPrompt";
 
 const PRIMARY = "#003466";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: "/PermitGuide", label: "Permit Guide", icon: BookOpen },
   { to: "/CameraScan",  label: "Scan an Item", icon: Camera },
   { to: "/property",    label: "Property",     icon: Building2 },
+  { to: "/contractors", label: "Contractors",  icon: HardHat },
 ];
 
 export default function Layout({ children, currentPageName }) {

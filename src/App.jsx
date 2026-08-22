@@ -13,6 +13,7 @@ import PermitGuide from './pages/PermitGuide';
 import PermitInfo from './pages/PermitInfo';
 import CameraScan from './pages/CameraScan';
 import PropertyLookup from './pages/PropertyLookup';
+import Contractors from './pages/Contractors';
 
 // Supporting answers, reached from a permit rather than the top nav
 import FeeCalculator from './pages/FeeCalculator';
@@ -55,6 +56,7 @@ function App() {
             <Route path="/PermitInfo" element={<LayoutWrapper currentPageName="PermitInfo"><PermitInfo /></LayoutWrapper>} />
             <Route path="/CameraScan" element={<LayoutWrapper currentPageName="CameraScan"><CameraScan /></LayoutWrapper>} />
             <Route path="/property" element={<LayoutWrapper currentPageName="PropertyLookup"><PropertyLookup /></LayoutWrapper>} />
+            <Route path="/contractors" element={<LayoutWrapper currentPageName="Contractors"><Contractors /></LayoutWrapper>} />
 
             {/* ── PERMIT ANSWERS (linked from permit detail, not the nav) ── */}
             <Route path="/FeeCalculator" element={<LayoutWrapper currentPageName="FeeCalculator"><FeeCalculator /></LayoutWrapper>} />
