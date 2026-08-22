@@ -80,7 +80,7 @@ export default function RoofingSubtype({ onSelect, jobValue }) {
           {showNOC && (
             <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2">
               <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800 font-medium">⚠️ If job value &gt; $2,500 — Notice of Commencement (NOC) required before work begins.</p>
+              <p className="text-xs text-amber-800 font-medium">⚠️ A Notice of Commencement is required before work begins once the job passes your city&rsquo;s threshold — confirm the figure with them.</p>
             </div>
           )}
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-start gap-2">
@@ -106,7 +106,7 @@ export default function RoofingSubtype({ onSelect, jobValue }) {
           {showNOC && (
             <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2">
               <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800 font-medium">⚠️ If job value &gt; $2,500 — Notice of Commencement (NOC) required before work begins.</p>
+              <p className="text-xs text-amber-800 font-medium">⚠️ A Notice of Commencement is required before work begins once the job passes your city&rsquo;s threshold — confirm the figure with them.</p>
             </div>
           )}
           <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">

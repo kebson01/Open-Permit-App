@@ -24,7 +24,7 @@ export async function loadCountyRules() {
   if (_inflight) return _inflight;
 
   _inflight = fetch(
-    `${SUPABASE_URL}/rest/v1/county_requirements?select=requirement_id,category,tags,applies_to,title,short_summary,summary,key_numbers,statute_ref,source_url,effective_date,last_verified,city_overrides&order=sort_order.asc`,
+    `${SUPABASE_URL}/rest/v1/county_requirements?select=requirement_id,category,tags,applies_to,title,short_summary,summary,key_numbers,statute_ref,source_url,effective_date,last_verified,last_verified_on,city_overrides&order=sort_order.asc`,
     { headers: SB_HEADERS }
   )
     .then(r => (r.ok ? r.json() : []))
@@ -57,6 +57,37 @@ export function useCountyRules() {
   }, []);
 
   return { rules, loading };
+}
+
+// Matches the county_requirement_freshness view, so the app and the admin
+// page agree on what counts as stale.
+const AGING_DAYS = 180;
+const STALE_DAYS = 365;
+
+/** Days since a rule was last checked against its source, or null if unknown. */
+export function daysSinceVerified(rule) {
+  if (!rule?.last_verified_on) return null;
+  const then = new Date(rule.last_verified_on + "T00:00:00");
+  if (isNaN(then)) return null;
+  return Math.floor((Date.now() - then.getTime()) / 86400000);
+}
+
+/** "fresh" | "aging" | "stale" | "unknown" */
+export function freshness(rule) {
+  const d = daysSinceVerified(rule);
+  if (d === null) return "unknown";
+  if (d > STALE_DAYS) return "stale";
+  if (d > AGING_DAYS) return "aging";
+  return "fresh";
+}
+
+/** Human date for display — falls back to the legacy free-text field. */
+export function verifiedLabel(rule) {
+  if (rule?.last_verified_on) {
+    const d = new Date(rule.last_verified_on + "T00:00:00");
+    if (!isNaN(d)) return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  }
+  return rule?.last_verified || null;
 }
 
 const asArray = v => (Array.isArray(v) ? v : []);

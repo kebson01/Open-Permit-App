@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import * as db from "@/lib/db";
+import { loadCountyRules, freshness, verifiedLabel, daysSinceVerified } from "@/lib/countyRules";
 import { CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 
 const CITIES = ["Weston", "Hollywood", "Coral Springs", "Cooper City", "Fort Lauderdale"];
@@ -25,11 +26,19 @@ export default function AdminHealth() {
 
   const loadData = async () => {
     setLoading(true);
-    const [questions, feeRules, ...permitTypesArrays] = await Promise.all([
+    const [questions, feeRules, countyRules, ...permitTypesArrays] = await Promise.all([
       db.CityApplicationQuestion.filter({}),
       db.FeeRule.list(),
+      loadCountyRules(),
       ...CITIES.map(city => db.PermitType.filter({ city_name: city })),
     ]);
+
+    // Rules the app attributes to an authority go stale silently — surface the
+    // ones overdue for a re-check, worst first.
+    const needsRecheck = (countyRules || [])
+      .map(r => ({ ...r, _state: freshness(r), _days: daysSinceVerified(r) }))
+      .filter(r => r._state !== "fresh")
+      .sort((a, b) => (b._days ?? 1e9) - (a._days ?? 1e9));
 
     // Per-city breakdown
     const perCity = CITIES.map((city, i) => {
@@ -44,7 +53,7 @@ export default function AdminHealth() {
     const orphanFeeRules = Array.isArray(feeRules) ? feeRules.filter(r => !r.city_name).length : 0;
 
 
-    setData({ perCity, orphanPermitTypes, orphanFeeRules });
+    setData({ perCity, orphanPermitTypes, orphanFeeRules, countyRuleCount: (countyRules || []).length, needsRecheck });
     setLoading(false);
   };
 
@@ -159,6 +168,40 @@ export default function AdminHealth() {
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{data.orphanFeeRules === 0 ? "All fee rules are city-assigned ✓" : "These should be assigned to a city"}</p>
               </div>
+            </div>
+
+            {/* Sourced rules — anything overdue for a re-check against its source */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-bold text-gray-800 text-sm mb-1">
+                Cited rules ({data.countyRuleCount} total)
+              </h2>
+              <p className="text-xs text-gray-500 mb-4">
+                These are shown to users with a source link and a &ldquo;checked&rdquo; date.
+                Aging past 6 months, stale past 12.
+              </p>
+              {data.needsRecheck.length === 0 ? (
+                <p className="text-sm text-green-700">All {data.countyRuleCount} checked within the last 6 months ✓</p>
+              ) : (
+                <ul className="space-y-2">
+                  {data.needsRecheck.map(r => (
+                    <li key={r.requirement_id} className="flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-gray-900">{r.title}</span>
+                        <span className="block text-xs text-gray-500">
+                          {r.statute_ref} · checked {verifiedLabel(r) || "never"}
+                          {r._days != null ? ` · ${r._days} days ago` : ""}
+                        </span>
+                      </span>
+                      {r.source_url && (
+                        <a href={r.source_url} target="_blank" rel="noopener noreferrer"
+                          className="shrink-0 text-xs font-semibold text-amber-800 no-underline hover:underline">
+                          Re-check →
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
           </div>

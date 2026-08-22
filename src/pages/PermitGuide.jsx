@@ -17,14 +17,14 @@ import RoofingSubtype from "../components/permits/RoofingSubtype";
 import PrivateProviderStep from "../components/permits/PrivateProviderStep";
 
 const ZONE_INFO = {
-  "Roof / Re-Roof": "Required for any roof replacement or repair over 25% of roof area. In Broward County (HVHZ), all roofing must meet 170mph wind resistance standards.",
+  "Roof / Re-Roof": "Required for roof replacement, and for repairs above a threshold your city sets. Broward is a High-Velocity Hurricane Zone, so roofing products and fastening are held to stricter standards — see the county rules on the permit.",
   "Solar Panels": "Electrical and building permits required. HOAs cannot prohibit solar installation under Florida Statute 163.04.",
   "Window Replacement": "Impact-resistant windows required in HVHZ (all of Broward County). Permit required for all window replacements.",
   "Door Replacement": "Permit required for exterior door replacements. Impact-rated doors required in HVHZ.",
   "Garage Door": "Permit required. Must meet wind load requirements for HVHZ (170mph).",
-  "A/C Replacement": "Mechanical permit required. NOC required if job value exceeds $15,000 in Weston.",
+  "A/C Replacement": "Mechanical permit required. A Notice of Commencement may also be needed depending on the job value — the threshold differs for HVAC.",
   "Electrical Service": "Electrical permit required for panel upgrades, new circuits, or service changes.",
-  "Pool & Spa": "Building, electrical, and plumbing permits required. Florida barrier law requires 4ft fence enclosure within 90 days.",
+  "Pool & Spa": "Building, electrical, and plumbing permits required. Florida's Pool Safety Act also requires a barrier — see the county rules on the permit for the current requirement.",
   "Pool Equipment": "Permit required for equipment replacement. Electrical permit needed if wiring is involved.",
   "Driveway / Walkway": "Permit required for new driveways or significant expansions. Check setback requirements.",
   "Driveway (Paver)": "Permit required for new driveways or significant expansions. Check setback requirements.",
