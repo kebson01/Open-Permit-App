@@ -3,61 +3,142 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="robots" content="noindex, nofollow" />
 
-    <!-- Open Permit — Favicon & Social Meta Tags -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#004ac6" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
-    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64x64.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">
+    <title>Open Permit — Temporarily Offline</title>
+    <meta
+      name="description"
+      content="Open Permit is temporarily offline for maintenance. We'll be back shortly."
+    />
 
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-
-    <!-- Android Chrome / Maskable -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
-    <link rel="maskable" type="image/png" sizes="512x512" href="/maskable-icon-512x512.png">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#004ac6">
-
-    <!-- Installable PWA (standalone) on Android & iOS -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Open Permit">
-
-    <!-- Open Graph / Facebook / LinkedIn / Slack -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://open-permit.com/">
-    <meta property="og:title" content="Open Permit — Building permits, simplified.">
-    <meta property="og:description" content="Apply, track, and submit permits for all 22 cities in Broward County, Florida.">
-    <meta property="og:image" content="https://open-permit.com/og-image-1200x630.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-
-    <!-- Twitter / X -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://open-permit.com/">
-    <meta name="twitter:title" content="Open Permit — Building permits, simplified.">
-    <meta name="twitter:description" content="Apply, track, and submit permits for all 22 cities in Broward County, Florida.">
-    <meta name="twitter:image" content="https://open-permit.com/twitter-card-1200x630.png">
-
-    <!-- SEO -->
-    <title>Open Permit — Building permits, simplified.</title>
-    <meta name="description" content="Apply for building permits across all 22 cities in Broward County, Florida. Auto-fill applications, calculate fees, and submit through one guided platform.">
+    <style>
+      :root {
+        --brand: #004ac6;
+        --ink: #0f172a;
+        --muted: #475569;
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --border: #e2e8f0;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+        background:
+          radial-gradient(1200px 600px at 50% -10%, rgba(0, 74, 198, 0.10), transparent 60%),
+          var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .card {
+        width: 100%;
+        max-width: 480px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 40px 32px;
+        text-align: center;
+        box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.25);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(0, 74, 198, 0.08);
+        color: var(--brand);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--brand);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.7); }
+      }
+      h1 {
+        margin: 22px 0 10px;
+        font-size: 26px;
+        line-height: 1.2;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 auto;
+        max-width: 40ch;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .brand {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #e2e8f0;
+          --muted: #94a3b8;
+          --bg: #0b1220;
+          --card: #111827;
+          --border: #1f2937;
+        }
+        body {
+          background:
+            radial-gradient(1200px 600px at 50% -10%, rgba(59, 130, 246, 0.14), transparent 60%),
+            var(--bg);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <main class="card">
+      <span class="badge"><span class="dot"></span> Maintenance in progress</span>
+      <h1>We&rsquo;re temporarily offline</h1>
+      <p>
+        Open Permit is down for scheduled maintenance right now. Thanks for your
+        patience &mdash; please check back a little later.
+      </p>
+      <div class="brand">Open Permit</div>
+    </main>
+
+    <script>
+      // Drop any previously-installed PWA so returning visitors don't see a
+      // stale cached copy of the app while we're offline.
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => regs.forEach((r) => r.unregister()))
+          .catch(() => {});
+      }
+      if (window.caches && caches.keys) {
+        caches
+          .keys()
+          .then((keys) => keys.forEach((k) => caches.delete(k)))
+          .catch(() => {});
+      }
+    </script>
   </body>
 </html>
