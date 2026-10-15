@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, EyeOff, List, MapPin, BookOpen, X, ArrowRight,
-  Building2, Sparkles, Camera, HardHat, Layers, Bell, ChevronRight,
+import { Eye, EyeOff, List, BookOpen, X, ArrowRight,
+  Building2, Sparkles, Camera, HardHat, Layers, ChevronRight,
   Phone, ExternalLink, Info
 } from "lucide-react";
 import { useCities, cityUsesBrowardCounty } from "@/hooks/useCities";
