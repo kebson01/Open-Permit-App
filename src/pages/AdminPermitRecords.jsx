@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, fetchTableCount } from "@/lib/supabase";
 import { ClipboardList, Search, Loader2, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const TABLE = "weston_permit_records";
 const PAGE_SIZE = 50;
-const TOTAL_COUNT = 116873;
 
 const MODULES = ["Building", "Planning", "Engineering", "Enforcement", "Landscaping"];
 const NORMALIZED_STATUSES = ["Completed", "Active", "In Review", "Expired", "Cancelled"];
@@ -66,7 +65,15 @@ export default function AdminPermitRecords() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [allRecordsCount, setAllRecordsCount] = useState(null);
   const [statuses, setStatuses] = useState([]);
+
+  // Unfiltered total for the header, read live from the table.
+  useEffect(() => {
+    let alive = true;
+    fetchTableCount(TABLE).then(n => { if (alive) setAllRecordsCount(n); });
+    return () => { alive = false; };
+  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -89,7 +96,7 @@ export default function AdminPermitRecords() {
       filterStatus,
     });
     setRecords(data);
-    setTotalCount(count || TOTAL_COUNT);
+    setTotalCount(count);
     // statuses are fixed normalized values — no need to collect dynamically
     setLoading(false);
   }, [page, debouncedSearch, filterModule, filterStatus]);
@@ -108,8 +115,13 @@ export default function AdminPermitRecords() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Permit Records</h1>
           <p className="text-gray-500 text-sm">
-            Weston municipal permit data ·{" "}
-            <span className="font-semibold text-blue-700">{TOTAL_COUNT.toLocaleString()} total records</span>
+            Weston municipal permit data
+            {allRecordsCount != null && (
+              <>
+                {" · "}
+                <span className="font-semibold text-blue-700">{allRecordsCount.toLocaleString()} total records</span>
+              </>
+            )}
           </p>
         </div>
       </div>

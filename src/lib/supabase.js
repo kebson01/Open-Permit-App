@@ -11,6 +11,22 @@ export const SB_HEADERS = {
   Prefer: "count=none",
 };
 
+// Live row count of a table, read from PostgREST's Content-Range header
+// ("0-0/143772"). Returns null when the count can't be read, so callers can
+// leave the number out instead of showing a stale or wrong one.
+export async function fetchTableCount(table) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=1`, {
+      headers: { ...SB_HEADERS, Prefer: "count=exact" },
+    });
+    if (!res.ok) return null;
+    const n = parseInt(res.headers.get("content-range")?.split("/")[1], 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 // Cache for city records (permit_table_name, permit_records_table_name etc.)
 const _cityCache = {};
 

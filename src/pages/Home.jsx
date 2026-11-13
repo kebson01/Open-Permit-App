@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Camera, BookOpen, Building2, HardHat, ShieldCheck, Calculator,
@@ -9,6 +9,7 @@ import CityBar from "@/components/CityBar";
 import { useCities } from "@/hooks/useCities";
 import { resolveCity } from "@/lib/permitTypes";
 import { C, F, T, RADIUS, SHADOW } from "@/lib/theme";
+import { fetchTableCount } from "@/lib/supabase";
 
 /**
  * The start screen.
@@ -140,6 +141,14 @@ export default function Home() {
   const [aiInitialMessage, setAiInitialMessage] = useState("");
   const [openLaw, setOpenLaw] = useState(null);
   const [showCoverage, setShowCoverage] = useState(false);
+  const [westonRecordCount, setWestonRecordCount] = useState(null);
+
+  // Read the count from the table so it follows each data load.
+  useEffect(() => {
+    let alive = true;
+    fetchTableCount("weston_permit_records").then(n => { if (alive) setWestonRecordCount(n); });
+    return () => { alive = false; };
+  }, []);
 
   const ask = (msg) => { setAiInitialMessage(msg); setAiOpen(true); };
   const submit = () => { if (question.trim()) { ask(question.trim()); setQuestion(""); } };
@@ -260,7 +269,9 @@ export default function Home() {
                   : "Loading coverage…"}
               </span>
               <span className="block" style={{ color: C.muted, fontFamily: F.body, fontSize: T.caption }}>
-                Weston also includes 138,193 historical permit records
+                {westonRecordCount
+                  ? `Weston also includes ${westonRecordCount.toLocaleString()} historical permit records`
+                  : "Weston also includes historical permit records"}
               </span>
             </span>
             <ChevronDown
