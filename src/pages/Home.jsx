@@ -260,7 +260,7 @@ export default function Home() {
                   : "Loading coverage…"}
               </span>
               <span className="block" style={{ color: C.muted, fontFamily: F.body, fontSize: T.caption }}>
-                Weston also includes 138,193 historical permit records
+                Weston also includes historical permit records
               </span>
             </span>
             <ChevronDown
